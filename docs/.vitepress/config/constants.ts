@@ -1,4 +1,4 @@
-const site = 'https://doc.clint-sfy.cn';
+const site = 'https://blog.clint-sfy.cn';
 
 export const metaData = {
   lang: 'zh-CN',

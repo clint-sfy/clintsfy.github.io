@@ -13,7 +13,7 @@ showComment: false
     <img width="200" src="/logosf.png">
 </p>
 <p align="center">
-	<a href="https://doc.clint-sfy.cn/" target="_blank" style="display: inline-block;">
+	<a href="https://blog.clint-sfy.cn/" target="_blank" style="display: inline-block;">
 		<img alt="个人主页" src="https://img.shields.io/badge/个人主页-lightblue?logo=blogger&logoColor=lightblue" />
 	</a>&nbsp;
     <a href="https://github.com/clint-sfy" target="_blank" style="display: inline-block;">

@@ -30,13 +30,13 @@
       clientID: '6e0476400020fd9d7d0d',
       clientSecret: '4e80fc16e01b7c30cfaffaf9e3d2250c155c3096',
       repo: 'clintsfy.github.io',
-      owner: 'clintsfy',
-      admin: ['clintsfy'],
+      owner: 'clint-sfy',
+      admin: ['clint-sfy'],
       id: md5(page.value.relativePath),
       language: 'zh-CN',
       distractionFreeMode: false,
       // https://cors-anywhere.azm.workers.dev/
-      proxy:'https://github.com/login/oauth/access_token'
+      proxy:'https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token'
       // proxy: 'https://vercel.charles7c.top/github_access_token',
     });
   }
