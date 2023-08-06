@@ -36,8 +36,9 @@
       language: 'zh-CN',
       distractionFreeMode: false,
       // https://cors-anywhere.azm.workers.dev/
-      proxy:'https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token'
-      // proxy: 'https://vercel.charles7c.top/github_access_token',
+      // proxy:'https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token'
+      // https://github.com/clint-sfy/cors-server
+      proxy: 'https://gitalk.clint-sfy.cn/github_access_token',
     });
   }
 
