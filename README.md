@@ -4,11 +4,13 @@
 阿源的知识库·文档，采用 Vitepress 开发。如发现文档有误，欢迎提 pr 帮助我们改进
 
 ## 开始
-- 作者原版仓库 https://github.com/Charles7c/charles7c.github.io
+- 作者原版仓库 https://github.com/Charles7c/charles7c.github.io  针不戳呀
 - 本人稍作了下修改，部署到vercel上，可参见根目录下的vercel.json脚本
+
+
 ```bash
-# 1.克隆本仓库
-git clone https://github.com/Charles7c/charles7c.github.io.git
+git clone https://github.com/clint-sfy/clintsfy.github.io
+cd clintsfy.github.io
 # 2.安装 PNPM
 npm install pnpm -g
 # 3.设置淘宝镜像源
@@ -21,10 +23,11 @@ pnpm dev
 # 如果是部署到 GitHub Pages，可以利用 GitHub Actions，在 push 到 GitHub 后自动部署打包
 # 详情见：.github/workflows/deploy-pages.yml，根据个人需要删减工作流配置
 pnpm build
-# 7.部署
-# 7.1 push 到 GitHub 仓库，部署到 GitHub Pages：需要在仓库设置中启用 GitHub Pages（本仓库采用此种部署方式）
-# 7.2 在其他平台部署, 例如：Gitee Pages、Vercel、Netlify、个人虚拟主机、个人服务器等
+
+# vercel的脚本已经写好了，只需要fork到自己的仓库，直接可以一键部署！！！！
 ```
+
+
 
 ## 特别鸣谢
 

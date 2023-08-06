@@ -45,21 +45,10 @@ showComment: false
 <!-- ## 部分截图 -->
 
 
-## 运行·阿源的知识库文档
-```
-yarn install
-yarn dev
-```
-
-## 文档
-
-- 中文文档地址为 [阿源的知识库·官网](https://github.com/clint-sfy/clintsfy.github.io)，采用 Vitepress 开发。如发现文档有误，欢迎提 pr 帮助我们改进。
-
-### 本地运行文档
+### 原作者的项目
 
 如需本地运行文档，请拉取代码到本地。
 - 作者原版仓库 https://github.com/Charles7c/charles7c.github.io
-- 本人修改为自己的知识库，部署在vercel上
 ```bash
 # 1.克隆本仓库
 git clone https://github.com/Charles7c/charles7c.github.io.git
@@ -81,6 +70,31 @@ pnpm build
 # 7.2 在其他平台部署, 例如：Gitee Pages、Vercel、Netlify、个人虚拟主机、个人服务器等
 ```
 
+## 文档
+
+- 中文文档地址为 [阿源的知识库·官网](https://github.com/clint-sfy/clintsfy.github.io)，采用 Vitepress 开发。如发现文档有误，欢迎提 pr 帮助我们改进。
+
+## 本地运行·阿源的知识库文档
+```bash
+git clone https://github.com/clint-sfy/clintsfy.github.io
+cd clintsfy.github.io
+# 2.安装 PNPM
+npm install pnpm -g
+# 3.设置淘宝镜像源
+pnpm config set registry https://registry.npmmirror.com/
+# 4.安装依赖
+pnpm install
+# 5.dev 运行，访问：http://localhost:5173
+pnpm dev
+# 6.打包，文件存放位置：docs/.vitepress/dist
+# 如果是部署到 GitHub Pages，可以利用 GitHub Actions，在 push 到 GitHub 后自动部署打包
+# 详情见：.github/workflows/deploy-pages.yml，根据个人需要删减工作流配置
+pnpm build
+
+# vercel的脚本已经写好了，只需要fork到自己的仓库，直接可以一键部署！！！！
+```
+
+
 ## 基础知识
 
 本项目需要一定前端基础知识，请确保掌握以下基础知识，以便能处理一些常见的问题。
@@ -98,7 +112,7 @@ pnpm build
 
 ## 加入我们
 
-- [阿源的知识库](https://gitee.com/clint_sfy/clint_doc) 还在持续更新中，本项目欢迎您的参与，共同维护。
+- [阿源的知识库](https://github.com/clint-sfy/clintsfy.github.io) 还在持续更新中，本项目欢迎您的参与，共同维护。
 - 如果你想加入我们，可以多提供一些好的建议或者提交 pr，我们会根据你的活跃度邀请你加入。
 - 加入技术交流群，请备注信息:「阿源的知识库」
 
