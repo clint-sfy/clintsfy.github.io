@@ -9,8 +9,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      runs-on: ubuntu-latest
-    steps:
       # 1、检出源码
       - name: Checkout
         uses: actions/checkout@v3
