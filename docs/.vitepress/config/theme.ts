@@ -24,7 +24,7 @@ export const themeConfig: DefaultTheme.Config = {
   },
   // 编辑链接配置
   editLink: {
-    pattern: 'https://github.com/clint-sfy/clint_doc/edit/main/docs/:path',
+    pattern: 'https://github.com/clint-sfy/clintsfy.github.io/edit/main/docs/:path',
     text: '不妥之处，敬请雅正'
   },
   // 搜索配置（二选一）
@@ -61,7 +61,7 @@ export const themeConfig: DefaultTheme.Config = {
   // 自定义扩展: 评论配置
   commentConfig: {
     type: 'gitalk',
-    showComment: false // 是否显示评论
+    showComment: true // 是否显示评论
   },
   // 自定义扩展: 页脚配置
   footerConfig: {

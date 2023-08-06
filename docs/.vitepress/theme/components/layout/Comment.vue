@@ -35,7 +35,8 @@
       id: md5(page.value.relativePath),
       language: 'zh-CN',
       distractionFreeMode: false,
-      proxy:'https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token'
+      // https://cors-anywhere.azm.workers.dev/
+      proxy:'https://github.com/login/oauth/access_token'
       // proxy: 'https://vercel.charles7c.top/github_access_token',
     });
   }

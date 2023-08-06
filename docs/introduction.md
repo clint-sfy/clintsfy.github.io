@@ -35,7 +35,7 @@ showComment: false
 🕙 项目基本保持每日更新，右上随手点个 🌟 Star 关注，这样才有持续下去的动力，谢谢～
 </p>
 
-[阿源的知识库](https://gitee.com/clint_sfy) 是一个基于 [Vue](https://github.com/vuejs/vue-next)、[Vitepress](https://vitepress.dev/)、 [Markdown](http://markdown.p2hp.com/)的web移动端个人项目文档和学习笔记展示的网站，在这里，你可以分享思考、经验和成果。这个网站是展示你专业技能和才华的地方，也是与他人分享知识和见解的平台。通过这个网站，你可以展示自己的学习成果，向别人展示想法和专业技能，同时也可以记录自己的技术成长历程。让我们一起开始记录和分享，让这个网站成为成长和进步的见证！～ 它可以帮助你快速搭建个人项目，该项目有最新的技术笔记，相信不管是从新技术使用还是其他方面，都能帮助到你。
+[阿源的知识库](https://github.com/clint-sfy/clintsfy.github.io) 是一个基于 [Vue](https://github.com/vuejs/vue-next)、[Vitepress](https://vitepress.dev/)、 [Markdown](http://markdown.p2hp.com/)的web移动端个人项目文档和学习笔记展示的网站，在这里，你可以分享思考、经验和成果。这个网站是展示你专业技能和才华的地方，也是与他人分享知识和见解的平台。通过这个网站，你可以展示自己的学习成果，向别人展示想法和专业技能，同时也可以记录自己的技术成长历程。让我们一起开始记录和分享，让这个网站成为成长和进步的见证！～ 它可以帮助你快速搭建个人项目，该项目有最新的技术笔记，相信不管是从新技术使用还是其他方面，都能帮助到你。
 
 <!-- ## 项目体验 -->
 <!-- <p align="center">
@@ -53,7 +53,7 @@ yarn dev
 
 ## 文档
 
-- 中文文档地址为 [阿源的知识库·官网](https://gitee.com/clint_sfy/clint_doc)，采用 Vitepress 开发。如发现文档有误，欢迎提 pr 帮助我们改进。
+- 中文文档地址为 [阿源的知识库·官网](https://github.com/clint-sfy/clintsfy.github.io)，采用 Vitepress 开发。如发现文档有误，欢迎提 pr 帮助我们改进。
 
 ### 本地运行文档
 

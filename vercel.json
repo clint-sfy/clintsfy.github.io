@@ -13,7 +13,7 @@
   "routes": [
     {
       "source": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/$1"
     }
   ]
 }

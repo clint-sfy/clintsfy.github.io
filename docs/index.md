@@ -17,7 +17,7 @@ hero:
       link: /introduction
     - theme: alt
       text: 下载源码
-      link: https://gitee.com/clint_sfy
+      link: https://github.com/clint-sfy/clintsfy.github.io
 
 features:
   - title: 💡 主流技术栈 
