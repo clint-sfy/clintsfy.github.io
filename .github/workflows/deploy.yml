@@ -54,7 +54,7 @@ jobs:
           cache: pnpm
       # 5、安装依赖
       - name: Install dependencies
-        run: pnpm i --frozen-lockfile
+        run: pnpm i --frozen-lockfile && export NODE_OPTIONS=--max_old_space_size=4096
       # 6、打包
       - name: Build
         run: pnpm build
