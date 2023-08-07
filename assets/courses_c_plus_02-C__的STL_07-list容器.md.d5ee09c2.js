@@ -1,0 +1,179 @@
+import{_ as t}from"./chunks/ArticleMetadata.59a467b2.js";import{_ as c,v as l,b as r,t as y,O as i,F as p,L as C,R as A,M as B,C as F,B as D}from"./chunks/framework.5cbdba25.js";import"./chunks/md5.02486a14.js";const T=JSON.parse('{"title":"C++的list容器","description":"","frontmatter":{"title":"C++的list容器","author":"阿源","date":"2023/02/12 21:29","categories":["C++基础快速入门"],"tags":["C++","C++基础","STL"]},"headers":[],"relativePath":"courses/c_plus/02-C++的STL/07-list容器.md","filePath":"courses/c_plus/02-C++的STL/07-list容器.md","lastUpdated":1691397650000}'),d={name:"courses/c_plus/02-C++的STL/07-list容器.md"},E=p("h1",{id:"c-的list容器",tabindex:"-1"},[C("C++的list容器 "),p("a",{class:"header-anchor",href:"#c-的list容器","aria-label":'Permalink to "C++的list容器"'},"​")],-1),b=A(`<h2 id="list链表容器" tabindex="-1">list链表容器 <a class="header-anchor" href="#list链表容器" aria-label="Permalink to &quot;list链表容器&quot;">​</a></h2><p>list是双向循环链表</p><p><img src="https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/img/c_plus/STL6.png" alt=""></p><p>list容器的迭代器是 双向迭代器。</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki github-dark-dimmed vp-code-dark"><code><span class="line"><span style="color:#adbac7;">1 3.6.4.1 list构造函数</span></span>
+<span class="line"><span style="color:#adbac7;">2 list&lt;T&gt; lstT;//list采用采用模板类实现,对象的默认构造形式：</span></span>
+<span class="line"><span style="color:#adbac7;">3 list(beg,end);//构造函数将[beg, end)区间中的元素拷贝给本身。</span></span>
+<span class="line"><span style="color:#adbac7;">4 list(n,elem);//构造函数将n个elem拷贝给本身。</span></span>
+<span class="line"><span style="color:#adbac7;">5 list(const list &amp;lst);//拷贝构造函数。</span></span>
+<span class="line"><span style="color:#adbac7;"></span></span>
+<span class="line"><span style="color:#adbac7;">6 3.6.4.2 list数据元素插入和删除操作</span></span>
+<span class="line"><span style="color:#adbac7;">7 push_back(elem);//在容器尾部加入一个元素</span></span>
+<span class="line"><span style="color:#adbac7;">8 pop_back();//删除容器中最后一个元素</span></span>
+<span class="line"><span style="color:#adbac7;">9 push_front(elem);//在容器开头插入一个元素</span></span>
+<span class="line"><span style="color:#adbac7;">10 pop_front();//从容器开头移除第一个元素</span></span>
+<span class="line"><span style="color:#adbac7;">11 insert(pos,elem);//在pos位置插elem元素的拷贝，返回新数据的位置。</span></span>
+<span class="line"><span style="color:#adbac7;">12 insert(pos,n,elem);//在pos位置插入n个elem数据，无返回值。</span></span>
+<span class="line"><span style="color:#adbac7;">13 insert(pos,beg,end);//在pos位置插入[beg,end)区间的数据，无返回值。</span></span>
+<span class="line"><span style="color:#adbac7;">14 clear();//移除容器的所有数据</span></span>
+<span class="line"><span style="color:#adbac7;">15 erase(beg,end);//删除[beg,end)区间的数据，返回下一个数据的位置。</span></span>
+<span class="line"><span style="color:#adbac7;">16 erase(pos);//删除pos位置的数据，返回下一个数据的位置。</span></span>
+<span class="line"><span style="color:#adbac7;">17 remove(elem);//删除容器中所有与elem值匹配的元素。</span></span>
+<span class="line"><span style="color:#adbac7;"></span></span>
+<span class="line"><span style="color:#adbac7;">18 3.6.4.3 list大小操作</span></span>
+<span class="line"><span style="color:#adbac7;">19 size();//返回容器中元素的个数</span></span>
+<span class="line"><span style="color:#adbac7;">20 empty();//判断容器是否为空</span></span>
+<span class="line"><span style="color:#adbac7;">21 resize(num);//重新指定容器的长度为num，</span></span>
+<span class="line"><span style="color:#adbac7;">22 若容器变长，则以默认值填充新位置。</span></span>
+<span class="line"><span style="color:#adbac7;">23 如果容器变短，则末尾超出容器长度的元素被删除。</span></span>
+<span class="line"><span style="color:#adbac7;">24 resize(num, elem);//重新指定容器的长度为num，</span></span>
+<span class="line"><span style="color:#adbac7;">25 若容器变长，则以elem值填充新位置。</span></span>
+<span class="line"><span style="color:#adbac7;">26 如果容器变短，则末尾超出容器长度的元素被删除。</span></span>
+<span class="line"><span style="color:#adbac7;">    </span></span>
+<span class="line"><span style="color:#adbac7;">27 3.6.4.4 list赋值操作</span></span>
+<span class="line"><span style="color:#adbac7;">28 assign(beg, end);//将[beg, end)区间中的数据拷贝赋值给本身。</span></span>
+<span class="line"><span style="color:#adbac7;">29 assign(n, elem);//将n个elem拷贝赋值给本身。</span></span>
+<span class="line"><span style="color:#adbac7;">30 list&amp; operator=(const list &amp;lst);//重载等号操作符</span></span>
+<span class="line"><span style="color:#adbac7;">31 swap(lst);//将lst与本身的元素互换。</span></span>
+<span class="line"><span style="color:#adbac7;"></span></span>
+<span class="line"><span style="color:#adbac7;">32 3.6.4.5 list数据的存取</span></span>
+<span class="line"><span style="color:#adbac7;">33 front();//返回第一个元素。</span></span>
+<span class="line"><span style="color:#adbac7;">34 back();//返回最后一个元素。</span></span>
+<span class="line"><span style="color:#adbac7;"></span></span>
+<span class="line"><span style="color:#adbac7;">35 3.6.4.6 list反转排序</span></span>
+<span class="line"><span style="color:#adbac7;">36 reverse();//反转链表，比如lst包含1,3,5元素，运行此方法后，lst就包含5,3,1元素。</span></span>
+<span class="line"><span style="color:#adbac7;">37 sort(); //list排序</span></span></code></pre><pre class="shiki github-light vp-code-light"><code><span class="line"><span style="color:#24292e;">1 3.6.4.1 list构造函数</span></span>
+<span class="line"><span style="color:#24292e;">2 list&lt;T&gt; lstT;//list采用采用模板类实现,对象的默认构造形式：</span></span>
+<span class="line"><span style="color:#24292e;">3 list(beg,end);//构造函数将[beg, end)区间中的元素拷贝给本身。</span></span>
+<span class="line"><span style="color:#24292e;">4 list(n,elem);//构造函数将n个elem拷贝给本身。</span></span>
+<span class="line"><span style="color:#24292e;">5 list(const list &amp;lst);//拷贝构造函数。</span></span>
+<span class="line"><span style="color:#24292e;"></span></span>
+<span class="line"><span style="color:#24292e;">6 3.6.4.2 list数据元素插入和删除操作</span></span>
+<span class="line"><span style="color:#24292e;">7 push_back(elem);//在容器尾部加入一个元素</span></span>
+<span class="line"><span style="color:#24292e;">8 pop_back();//删除容器中最后一个元素</span></span>
+<span class="line"><span style="color:#24292e;">9 push_front(elem);//在容器开头插入一个元素</span></span>
+<span class="line"><span style="color:#24292e;">10 pop_front();//从容器开头移除第一个元素</span></span>
+<span class="line"><span style="color:#24292e;">11 insert(pos,elem);//在pos位置插elem元素的拷贝，返回新数据的位置。</span></span>
+<span class="line"><span style="color:#24292e;">12 insert(pos,n,elem);//在pos位置插入n个elem数据，无返回值。</span></span>
+<span class="line"><span style="color:#24292e;">13 insert(pos,beg,end);//在pos位置插入[beg,end)区间的数据，无返回值。</span></span>
+<span class="line"><span style="color:#24292e;">14 clear();//移除容器的所有数据</span></span>
+<span class="line"><span style="color:#24292e;">15 erase(beg,end);//删除[beg,end)区间的数据，返回下一个数据的位置。</span></span>
+<span class="line"><span style="color:#24292e;">16 erase(pos);//删除pos位置的数据，返回下一个数据的位置。</span></span>
+<span class="line"><span style="color:#24292e;">17 remove(elem);//删除容器中所有与elem值匹配的元素。</span></span>
+<span class="line"><span style="color:#24292e;"></span></span>
+<span class="line"><span style="color:#24292e;">18 3.6.4.3 list大小操作</span></span>
+<span class="line"><span style="color:#24292e;">19 size();//返回容器中元素的个数</span></span>
+<span class="line"><span style="color:#24292e;">20 empty();//判断容器是否为空</span></span>
+<span class="line"><span style="color:#24292e;">21 resize(num);//重新指定容器的长度为num，</span></span>
+<span class="line"><span style="color:#24292e;">22 若容器变长，则以默认值填充新位置。</span></span>
+<span class="line"><span style="color:#24292e;">23 如果容器变短，则末尾超出容器长度的元素被删除。</span></span>
+<span class="line"><span style="color:#24292e;">24 resize(num, elem);//重新指定容器的长度为num，</span></span>
+<span class="line"><span style="color:#24292e;">25 若容器变长，则以elem值填充新位置。</span></span>
+<span class="line"><span style="color:#24292e;">26 如果容器变短，则末尾超出容器长度的元素被删除。</span></span>
+<span class="line"><span style="color:#24292e;">    </span></span>
+<span class="line"><span style="color:#24292e;">27 3.6.4.4 list赋值操作</span></span>
+<span class="line"><span style="color:#24292e;">28 assign(beg, end);//将[beg, end)区间中的数据拷贝赋值给本身。</span></span>
+<span class="line"><span style="color:#24292e;">29 assign(n, elem);//将n个elem拷贝赋值给本身。</span></span>
+<span class="line"><span style="color:#24292e;">30 list&amp; operator=(const list &amp;lst);//重载等号操作符</span></span>
+<span class="line"><span style="color:#24292e;">31 swap(lst);//将lst与本身的元素互换。</span></span>
+<span class="line"><span style="color:#24292e;"></span></span>
+<span class="line"><span style="color:#24292e;">32 3.6.4.5 list数据的存取</span></span>
+<span class="line"><span style="color:#24292e;">33 front();//返回第一个元素。</span></span>
+<span class="line"><span style="color:#24292e;">34 back();//返回最后一个元素。</span></span>
+<span class="line"><span style="color:#24292e;"></span></span>
+<span class="line"><span style="color:#24292e;">35 3.6.4.6 list反转排序</span></span>
+<span class="line"><span style="color:#24292e;">36 reverse();//反转链表，比如lst包含1,3,5元素，运行此方法后，lst就包含5,3,1元素。</span></span>
+<span class="line"><span style="color:#24292e;">37 sort(); //list排序</span></span></code></pre></div><div class="language-cpp vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">cpp</span><pre class="shiki github-dark-dimmed vp-code-dark"><code><span class="line"><span style="color:#6CB6FF;">1</span><span style="color:#ADBAC7;"> #include </span><span style="color:#F47067;">&lt;</span><span style="color:#ADBAC7;">iostream</span><span style="color:#F47067;">&gt;</span></span>
+<span class="line"><span style="color:#6CB6FF;">2</span><span style="color:#ADBAC7;"> #include </span><span style="color:#F47067;">&lt;</span><span style="color:#ADBAC7;">list</span><span style="color:#F47067;">&gt;</span></span>
+<span class="line"><span style="color:#6CB6FF;">3</span><span style="color:#ADBAC7;"> #include </span><span style="color:#F47067;">&lt;</span><span style="color:#ADBAC7;">algorithm</span><span style="color:#F47067;">&gt;</span></span>
+<span class="line"><span style="color:#6CB6FF;">4</span><span style="color:#ADBAC7;"> </span><span style="color:#F47067;">using</span><span style="color:#ADBAC7;"> </span><span style="color:#F47067;">namespace</span><span style="color:#ADBAC7;"> </span><span style="color:#F69D50;">std</span><span style="color:#ADBAC7;">;</span></span>
+<span class="line"><span style="color:#6CB6FF;">5</span><span style="color:#ADBAC7;"> </span><span style="color:#F47067;">void</span><span style="color:#ADBAC7;"> </span><span style="color:#DCBDFB;">printListInt</span><span style="color:#ADBAC7;">(list</span><span style="color:#F47067;">&lt;int&gt;</span><span style="color:#ADBAC7;"> </span><span style="color:#F47067;">&amp;</span><span style="color:#ADBAC7;">l)</span></span>
+<span class="line"><span style="color:#6CB6FF;">6</span><span style="color:#ADBAC7;"> {</span></span>
+<span class="line"><span style="color:#6CB6FF;">7</span><span style="color:#ADBAC7;"> </span><span style="color:#F69D50;">list</span><span style="color:#ADBAC7;">&lt;</span><span style="color:#F47067;">int</span><span style="color:#ADBAC7;">&gt;::iterator it;</span></span>
+<span class="line"><span style="color:#6CB6FF;">8</span><span style="color:#ADBAC7;"> </span><span style="color:#F47067;">for</span><span style="color:#ADBAC7;">(it</span><span style="color:#F47067;">=</span><span style="color:#ADBAC7;">l.</span><span style="color:#DCBDFB;">begin</span><span style="color:#ADBAC7;">(); it</span><span style="color:#F47067;">!=</span><span style="color:#ADBAC7;">l.</span><span style="color:#DCBDFB;">end</span><span style="color:#ADBAC7;">();it</span><span style="color:#F47067;">++</span><span style="color:#ADBAC7;">)</span></span>
+<span class="line"><span style="color:#6CB6FF;">9</span><span style="color:#ADBAC7;"> {</span></span>
+<span class="line"><span style="color:#6CB6FF;">10</span><span style="color:#ADBAC7;"> cout</span><span style="color:#F47067;">&lt;&lt;*</span><span style="color:#ADBAC7;">it</span><span style="color:#F47067;">&lt;&lt;</span><span style="color:#96D0FF;">&quot; &quot;</span><span style="color:#ADBAC7;">;</span></span>
+<span class="line"><span style="color:#6CB6FF;">11</span><span style="color:#ADBAC7;"> }</span></span>
+<span class="line"><span style="color:#6CB6FF;">12</span><span style="color:#ADBAC7;"> cout</span><span style="color:#F47067;">&lt;&lt;</span><span style="color:#ADBAC7;">endl;</span></span>
+<span class="line"><span style="color:#6CB6FF;">13</span><span style="color:#ADBAC7;"> }</span></span>
+<span class="line"><span style="color:#6CB6FF;">14</span></span>
+<span class="line"><span style="color:#6CB6FF;">15</span><span style="color:#ADBAC7;"> </span><span style="color:#F47067;">void</span><span style="color:#ADBAC7;"> </span><span style="color:#DCBDFB;">test01</span><span style="color:#ADBAC7;">()</span></span>
+<span class="line"><span style="color:#6CB6FF;">16</span><span style="color:#ADBAC7;"> {</span></span>
+<span class="line"><span style="color:#6CB6FF;">17</span><span style="color:#ADBAC7;"> list</span><span style="color:#F47067;">&lt;int&gt;</span><span style="color:#ADBAC7;"> l1;</span></span>
+<span class="line"><span style="color:#6CB6FF;">18</span><span style="color:#ADBAC7;"> l1.</span><span style="color:#DCBDFB;">push_back</span><span style="color:#ADBAC7;">(</span><span style="color:#6CB6FF;">10</span><span style="color:#ADBAC7;">);</span></span>
+<span class="line"><span style="color:#6CB6FF;">19</span><span style="color:#ADBAC7;"> l1.</span><span style="color:#DCBDFB;">push_back</span><span style="color:#ADBAC7;">(</span><span style="color:#6CB6FF;">20</span><span style="color:#ADBAC7;">);</span></span>
+<span class="line"><span style="color:#6CB6FF;">20</span><span style="color:#ADBAC7;"> l1.</span><span style="color:#DCBDFB;">push_back</span><span style="color:#ADBAC7;">(</span><span style="color:#6CB6FF;">30</span><span style="color:#ADBAC7;">);</span></span>
+<span class="line"><span style="color:#6CB6FF;">21</span><span style="color:#ADBAC7;"> l1.</span><span style="color:#DCBDFB;">push_front</span><span style="color:#ADBAC7;">(</span><span style="color:#6CB6FF;">40</span><span style="color:#ADBAC7;">);</span></span>
+<span class="line"><span style="color:#6CB6FF;">22</span><span style="color:#ADBAC7;"> l1.</span><span style="color:#DCBDFB;">push_front</span><span style="color:#ADBAC7;">(</span><span style="color:#6CB6FF;">50</span><span style="color:#ADBAC7;">);</span></span>
+<span class="line"><span style="color:#6CB6FF;">23</span><span style="color:#ADBAC7;"> l1.</span><span style="color:#DCBDFB;">push_front</span><span style="color:#ADBAC7;">(</span><span style="color:#6CB6FF;">60</span><span style="color:#ADBAC7;">);</span></span>
+<span class="line"><span style="color:#6CB6FF;">24</span></span>
+<span class="line"><span style="color:#6CB6FF;">25</span><span style="color:#ADBAC7;"> </span><span style="color:#DCBDFB;">printListInt</span><span style="color:#ADBAC7;">(l1);</span><span style="color:#768390;">//60 50 40 10 20 30</span></span>
+<span class="line"><span style="color:#6CB6FF;">26</span><span style="color:#768390;"> //list容器 是双向迭代器 不支持+2 支持++</span></span>
+<span class="line"><span style="color:#6CB6FF;">27</span><span style="color:#ADBAC7;"> </span><span style="color:#F69D50;">list</span><span style="color:#ADBAC7;">&lt;</span><span style="color:#F47067;">int</span><span style="color:#ADBAC7;">&gt;::iterator it</span><span style="color:#F47067;">=</span><span style="color:#ADBAC7;">l1.</span><span style="color:#DCBDFB;">begin</span><span style="color:#ADBAC7;">();</span></span>
+<span class="line"><span style="color:#6CB6FF;">28</span><span style="color:#ADBAC7;"> it</span><span style="color:#F47067;">++</span><span style="color:#ADBAC7;">;</span></span>
+<span class="line"><span style="color:#6CB6FF;">29</span><span style="color:#ADBAC7;"> it</span><span style="color:#F47067;">++</span><span style="color:#ADBAC7;">;</span></span>
+<span class="line"><span style="color:#6CB6FF;">30</span><span style="color:#ADBAC7;"> l1.</span><span style="color:#DCBDFB;">insert</span><span style="color:#ADBAC7;">(it, </span><span style="color:#6CB6FF;">3</span><span style="color:#ADBAC7;">, </span><span style="color:#6CB6FF;">100</span><span style="color:#ADBAC7;">);</span></span>
+<span class="line"><span style="color:#6CB6FF;">31</span><span style="color:#ADBAC7;"> </span><span style="color:#DCBDFB;">printListInt</span><span style="color:#ADBAC7;">(l1);</span><span style="color:#768390;">//60 50 100 100 100 40 10 20 30</span></span>
+<span class="line"><span style="color:#6CB6FF;">32</span></span>
+<span class="line"><span style="color:#6CB6FF;">33</span><span style="color:#768390;"> //删除所有100</span></span>
+<span class="line"><span style="color:#6CB6FF;">34</span><span style="color:#ADBAC7;"> l1.</span><span style="color:#DCBDFB;">remove</span><span style="color:#ADBAC7;">(</span><span style="color:#6CB6FF;">100</span><span style="color:#ADBAC7;">);</span></span>
+<span class="line"><span style="color:#6CB6FF;">35</span><span style="color:#ADBAC7;"> </span><span style="color:#DCBDFB;">printListInt</span><span style="color:#ADBAC7;">(l1);</span><span style="color:#768390;">//60 50 40 10 20 30</span></span>
+<span class="line"><span style="color:#6CB6FF;">36</span></span>
+<span class="line"><span style="color:#6CB6FF;">37</span><span style="color:#768390;"> //对链表排序</span></span>
+<span class="line"><span style="color:#6CB6FF;">38</span><span style="color:#768390;"> //STL提供的算法 只支持 随机访问迭代器，而list是双向迭代器 所以sort不支持list</span></span>
+<span class="line"><span style="color:#6CB6FF;">39</span><span style="color:#768390;"> // l1.sort(greater&lt;int&gt;());</span></span>
+<span class="line"><span style="color:#6CB6FF;">40</span><span style="color:#ADBAC7;"> l1.</span><span style="color:#DCBDFB;">sort</span><span style="color:#ADBAC7;">();</span></span>
+<span class="line"><span style="color:#6CB6FF;">41</span><span style="color:#ADBAC7;"> </span><span style="color:#DCBDFB;">printListInt</span><span style="color:#ADBAC7;">(l1);</span><span style="color:#768390;">//10 20 30 40 50 60</span></span>
+<span class="line"><span style="color:#6CB6FF;">42</span><span style="color:#ADBAC7;"> }</span></span>
+<span class="line"><span style="color:#6CB6FF;">43</span></span>
+<span class="line"><span style="color:#6CB6FF;">44</span><span style="color:#ADBAC7;"> </span><span style="color:#F47067;">int</span><span style="color:#ADBAC7;"> </span><span style="color:#DCBDFB;">main</span><span style="color:#ADBAC7;">(</span><span style="color:#F47067;">int</span><span style="color:#ADBAC7;"> argc, </span><span style="color:#F47067;">char</span><span style="color:#ADBAC7;"> </span><span style="color:#F47067;">*</span><span style="color:#ADBAC7;">argv[])</span></span>
+<span class="line"><span style="color:#6CB6FF;">45</span><span style="color:#ADBAC7;"> {</span></span>
+<span class="line"><span style="color:#6CB6FF;">46</span><span style="color:#ADBAC7;"> </span><span style="color:#DCBDFB;">test01</span><span style="color:#ADBAC7;">();</span></span>
+<span class="line"><span style="color:#6CB6FF;">47</span><span style="color:#ADBAC7;"> </span><span style="color:#F47067;">return</span><span style="color:#ADBAC7;"> </span><span style="color:#6CB6FF;">0</span><span style="color:#ADBAC7;">;</span></span>
+<span class="line"><span style="color:#6CB6FF;">48</span><span style="color:#ADBAC7;"> }</span></span>
+<span class="line"><span style="color:#6CB6FF;">49</span></span></code></pre><pre class="shiki github-light vp-code-light"><code><span class="line"><span style="color:#005CC5;">1</span><span style="color:#24292E;"> #include </span><span style="color:#D73A49;">&lt;</span><span style="color:#24292E;">iostream</span><span style="color:#D73A49;">&gt;</span></span>
+<span class="line"><span style="color:#005CC5;">2</span><span style="color:#24292E;"> #include </span><span style="color:#D73A49;">&lt;</span><span style="color:#24292E;">list</span><span style="color:#D73A49;">&gt;</span></span>
+<span class="line"><span style="color:#005CC5;">3</span><span style="color:#24292E;"> #include </span><span style="color:#D73A49;">&lt;</span><span style="color:#24292E;">algorithm</span><span style="color:#D73A49;">&gt;</span></span>
+<span class="line"><span style="color:#005CC5;">4</span><span style="color:#24292E;"> </span><span style="color:#D73A49;">using</span><span style="color:#24292E;"> </span><span style="color:#D73A49;">namespace</span><span style="color:#24292E;"> </span><span style="color:#6F42C1;">std</span><span style="color:#24292E;">;</span></span>
+<span class="line"><span style="color:#005CC5;">5</span><span style="color:#24292E;"> </span><span style="color:#D73A49;">void</span><span style="color:#24292E;"> </span><span style="color:#6F42C1;">printListInt</span><span style="color:#24292E;">(list</span><span style="color:#D73A49;">&lt;int&gt;</span><span style="color:#24292E;"> </span><span style="color:#D73A49;">&amp;</span><span style="color:#24292E;">l)</span></span>
+<span class="line"><span style="color:#005CC5;">6</span><span style="color:#24292E;"> {</span></span>
+<span class="line"><span style="color:#005CC5;">7</span><span style="color:#24292E;"> </span><span style="color:#6F42C1;">list</span><span style="color:#24292E;">&lt;</span><span style="color:#D73A49;">int</span><span style="color:#24292E;">&gt;::iterator it;</span></span>
+<span class="line"><span style="color:#005CC5;">8</span><span style="color:#24292E;"> </span><span style="color:#D73A49;">for</span><span style="color:#24292E;">(it</span><span style="color:#D73A49;">=</span><span style="color:#24292E;">l.</span><span style="color:#6F42C1;">begin</span><span style="color:#24292E;">(); it</span><span style="color:#D73A49;">!=</span><span style="color:#24292E;">l.</span><span style="color:#6F42C1;">end</span><span style="color:#24292E;">();it</span><span style="color:#D73A49;">++</span><span style="color:#24292E;">)</span></span>
+<span class="line"><span style="color:#005CC5;">9</span><span style="color:#24292E;"> {</span></span>
+<span class="line"><span style="color:#005CC5;">10</span><span style="color:#24292E;"> cout</span><span style="color:#D73A49;">&lt;&lt;*</span><span style="color:#24292E;">it</span><span style="color:#D73A49;">&lt;&lt;</span><span style="color:#032F62;">&quot; &quot;</span><span style="color:#24292E;">;</span></span>
+<span class="line"><span style="color:#005CC5;">11</span><span style="color:#24292E;"> }</span></span>
+<span class="line"><span style="color:#005CC5;">12</span><span style="color:#24292E;"> cout</span><span style="color:#D73A49;">&lt;&lt;</span><span style="color:#24292E;">endl;</span></span>
+<span class="line"><span style="color:#005CC5;">13</span><span style="color:#24292E;"> }</span></span>
+<span class="line"><span style="color:#005CC5;">14</span></span>
+<span class="line"><span style="color:#005CC5;">15</span><span style="color:#24292E;"> </span><span style="color:#D73A49;">void</span><span style="color:#24292E;"> </span><span style="color:#6F42C1;">test01</span><span style="color:#24292E;">()</span></span>
+<span class="line"><span style="color:#005CC5;">16</span><span style="color:#24292E;"> {</span></span>
+<span class="line"><span style="color:#005CC5;">17</span><span style="color:#24292E;"> list</span><span style="color:#D73A49;">&lt;int&gt;</span><span style="color:#24292E;"> l1;</span></span>
+<span class="line"><span style="color:#005CC5;">18</span><span style="color:#24292E;"> l1.</span><span style="color:#6F42C1;">push_back</span><span style="color:#24292E;">(</span><span style="color:#005CC5;">10</span><span style="color:#24292E;">);</span></span>
+<span class="line"><span style="color:#005CC5;">19</span><span style="color:#24292E;"> l1.</span><span style="color:#6F42C1;">push_back</span><span style="color:#24292E;">(</span><span style="color:#005CC5;">20</span><span style="color:#24292E;">);</span></span>
+<span class="line"><span style="color:#005CC5;">20</span><span style="color:#24292E;"> l1.</span><span style="color:#6F42C1;">push_back</span><span style="color:#24292E;">(</span><span style="color:#005CC5;">30</span><span style="color:#24292E;">);</span></span>
+<span class="line"><span style="color:#005CC5;">21</span><span style="color:#24292E;"> l1.</span><span style="color:#6F42C1;">push_front</span><span style="color:#24292E;">(</span><span style="color:#005CC5;">40</span><span style="color:#24292E;">);</span></span>
+<span class="line"><span style="color:#005CC5;">22</span><span style="color:#24292E;"> l1.</span><span style="color:#6F42C1;">push_front</span><span style="color:#24292E;">(</span><span style="color:#005CC5;">50</span><span style="color:#24292E;">);</span></span>
+<span class="line"><span style="color:#005CC5;">23</span><span style="color:#24292E;"> l1.</span><span style="color:#6F42C1;">push_front</span><span style="color:#24292E;">(</span><span style="color:#005CC5;">60</span><span style="color:#24292E;">);</span></span>
+<span class="line"><span style="color:#005CC5;">24</span></span>
+<span class="line"><span style="color:#005CC5;">25</span><span style="color:#24292E;"> </span><span style="color:#6F42C1;">printListInt</span><span style="color:#24292E;">(l1);</span><span style="color:#6A737D;">//60 50 40 10 20 30</span></span>
+<span class="line"><span style="color:#005CC5;">26</span><span style="color:#6A737D;"> //list容器 是双向迭代器 不支持+2 支持++</span></span>
+<span class="line"><span style="color:#005CC5;">27</span><span style="color:#24292E;"> </span><span style="color:#6F42C1;">list</span><span style="color:#24292E;">&lt;</span><span style="color:#D73A49;">int</span><span style="color:#24292E;">&gt;::iterator it</span><span style="color:#D73A49;">=</span><span style="color:#24292E;">l1.</span><span style="color:#6F42C1;">begin</span><span style="color:#24292E;">();</span></span>
+<span class="line"><span style="color:#005CC5;">28</span><span style="color:#24292E;"> it</span><span style="color:#D73A49;">++</span><span style="color:#24292E;">;</span></span>
+<span class="line"><span style="color:#005CC5;">29</span><span style="color:#24292E;"> it</span><span style="color:#D73A49;">++</span><span style="color:#24292E;">;</span></span>
+<span class="line"><span style="color:#005CC5;">30</span><span style="color:#24292E;"> l1.</span><span style="color:#6F42C1;">insert</span><span style="color:#24292E;">(it, </span><span style="color:#005CC5;">3</span><span style="color:#24292E;">, </span><span style="color:#005CC5;">100</span><span style="color:#24292E;">);</span></span>
+<span class="line"><span style="color:#005CC5;">31</span><span style="color:#24292E;"> </span><span style="color:#6F42C1;">printListInt</span><span style="color:#24292E;">(l1);</span><span style="color:#6A737D;">//60 50 100 100 100 40 10 20 30</span></span>
+<span class="line"><span style="color:#005CC5;">32</span></span>
+<span class="line"><span style="color:#005CC5;">33</span><span style="color:#6A737D;"> //删除所有100</span></span>
+<span class="line"><span style="color:#005CC5;">34</span><span style="color:#24292E;"> l1.</span><span style="color:#6F42C1;">remove</span><span style="color:#24292E;">(</span><span style="color:#005CC5;">100</span><span style="color:#24292E;">);</span></span>
+<span class="line"><span style="color:#005CC5;">35</span><span style="color:#24292E;"> </span><span style="color:#6F42C1;">printListInt</span><span style="color:#24292E;">(l1);</span><span style="color:#6A737D;">//60 50 40 10 20 30</span></span>
+<span class="line"><span style="color:#005CC5;">36</span></span>
+<span class="line"><span style="color:#005CC5;">37</span><span style="color:#6A737D;"> //对链表排序</span></span>
+<span class="line"><span style="color:#005CC5;">38</span><span style="color:#6A737D;"> //STL提供的算法 只支持 随机访问迭代器，而list是双向迭代器 所以sort不支持list</span></span>
+<span class="line"><span style="color:#005CC5;">39</span><span style="color:#6A737D;"> // l1.sort(greater&lt;int&gt;());</span></span>
+<span class="line"><span style="color:#005CC5;">40</span><span style="color:#24292E;"> l1.</span><span style="color:#6F42C1;">sort</span><span style="color:#24292E;">();</span></span>
+<span class="line"><span style="color:#005CC5;">41</span><span style="color:#24292E;"> </span><span style="color:#6F42C1;">printListInt</span><span style="color:#24292E;">(l1);</span><span style="color:#6A737D;">//10 20 30 40 50 60</span></span>
+<span class="line"><span style="color:#005CC5;">42</span><span style="color:#24292E;"> }</span></span>
+<span class="line"><span style="color:#005CC5;">43</span></span>
+<span class="line"><span style="color:#005CC5;">44</span><span style="color:#24292E;"> </span><span style="color:#D73A49;">int</span><span style="color:#24292E;"> </span><span style="color:#6F42C1;">main</span><span style="color:#24292E;">(</span><span style="color:#D73A49;">int</span><span style="color:#24292E;"> argc, </span><span style="color:#D73A49;">char</span><span style="color:#24292E;"> </span><span style="color:#D73A49;">*</span><span style="color:#24292E;">argv[])</span></span>
+<span class="line"><span style="color:#005CC5;">45</span><span style="color:#24292E;"> {</span></span>
+<span class="line"><span style="color:#005CC5;">46</span><span style="color:#24292E;"> </span><span style="color:#6F42C1;">test01</span><span style="color:#24292E;">();</span></span>
+<span class="line"><span style="color:#005CC5;">47</span><span style="color:#24292E;"> </span><span style="color:#D73A49;">return</span><span style="color:#24292E;"> </span><span style="color:#005CC5;">0</span><span style="color:#24292E;">;</span></span>
+<span class="line"><span style="color:#005CC5;">48</span><span style="color:#24292E;"> }</span></span>
+<span class="line"><span style="color:#005CC5;">49</span></span></code></pre></div>`,6);function m(s,g,u,h,_,f){const o=t,e=B("ClientOnly");return l(),r("div",null,[E,y(e,null,{default:i(()=>{var n,a;return[(((n=s.$frontmatter)==null?void 0:n.aside)??!0)&&(((a=s.$frontmatter)==null?void 0:a.showArticleMetadata)??!0)?(l(),F(o,{key:0,article:s.$frontmatter},null,8,["article"])):D("",!0)]}),_:1}),b])}const I=c(d,[["render",m]]);export{T as __pageData,I as default};
