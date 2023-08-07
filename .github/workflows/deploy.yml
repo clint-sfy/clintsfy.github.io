@@ -57,6 +57,8 @@ jobs:
         run: pnpm i --frozen-lockfile
       # 6、打包
       - name: Build
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
         run: pnpm build
       # 7、部署 GitHub Pages
       - name: Deploy GitHub Pages
