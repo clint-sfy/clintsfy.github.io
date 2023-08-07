@@ -8,7 +8,6 @@ tags:
  - C++
  - C++基础
  - STL
- - stack
 ---
 # C++的stack栈容器
 ## stack栈容器

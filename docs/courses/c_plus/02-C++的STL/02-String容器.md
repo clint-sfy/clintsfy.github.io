@@ -8,7 +8,6 @@ tags:
  - C++
  - C++基础
  - STL
- - string
 ---
 # C++的string容器
 ## C++的string容器

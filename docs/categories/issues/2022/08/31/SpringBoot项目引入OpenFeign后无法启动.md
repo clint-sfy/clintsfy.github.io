@@ -2,6 +2,7 @@
 title: SpringBoot项目引入OpenFeign后无法启动
 author: 查尔斯
 date: 2022/08/31 22:39
+isOriginal: false
 categories:
  - Bug万象集
 tags:

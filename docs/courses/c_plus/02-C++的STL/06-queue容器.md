@@ -8,7 +8,6 @@ tags:
  - C++
  - C++基础
  - STL
- - queue
 ---
 # C++的queue队列容器
 ## queue队列容器

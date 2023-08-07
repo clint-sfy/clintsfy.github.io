@@ -10,7 +10,7 @@ export const sidebar: DefaultTheme.Config['sidebar'] = {
   
   '/categories/issues/': getItemsByDate("categories/issues"),
   '/categories/chatgpt/': getItems("categories/chatgpt"),
-  // '/categories/fragments/': getItemsByDate("categories/fragments"),
+  '/categories/fragments/': getItemsByDate("categories/fragments"),
   // '/categories/solutions/': getItemsByDate("categories/solutions"),
   // '/categories/tools/': getItemsByDate("categories/tools"),
 
@@ -19,6 +19,7 @@ export const sidebar: DefaultTheme.Config['sidebar'] = {
   '/courses/python/': getItems("courses/python"),
   '/courses/tangyudi/': getItems("courses/tangyudi"),
   '/courses/yuanzi/': getItems("courses/yuanzi"),
+  '/courses/algorithm/': getItems("courses/algorithm"),
 }
 
 /**

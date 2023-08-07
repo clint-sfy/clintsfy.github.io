@@ -8,15 +8,15 @@ export const nav: DefaultTheme.Config['nav'] = [
   },
   {
     text: '项目文档',
-    link: '/my_project/01-project/01-项目1/01-介绍.md',
+    link: '/my_project/01-project/01-项目/01-项目1',
     activeMatch: '/my_project/'
   },
   {
     text: '前沿 & 工作',
     items: [
+      { text: 'ChatGPT', link: '/categories/chatgpt/02-ChatGPT项目/01-GPT项目', activeMatch: '/categories/chatgpt/' },
       { text: 'Bug万象集', link: '/categories/issues/index', activeMatch: '/categories/issues/' },
-      { text: 'ChatGPT', link: '/categories/chatgpt/01-ChatGPT开源项目/01-GPT项目', activeMatch: '/categories/chatgpt/' },
-      // { text: '"杂碎"逆袭史', link: '/categories/fragments/index', activeMatch: '/categories/fragments/' },
+      { text: '碎片化知识点', link: '/categories/fragments/index', activeMatch: '/categories/fragments/' },
       // { text: '工具四海谈', link: '/categories/tools/index', activeMatch: '/categories/tools/' },
       // { text: '方案春秋志', link: '/categories/solutions/index', activeMatch: '/categories/solutions/' }
     ],
@@ -28,8 +28,10 @@ export const nav: DefaultTheme.Config['nav'] = [
       { text: 'C语言基础快速入门', link: '/courses/c/index', activeMatch: '/courses/c/' },
       { text: 'C++基础快速入门', link: '/courses/c_plus/01-C++的基础/01-c++对c的扩展', activeMatch: '/courses/c_plus/' },
       { text: 'Python基础快速入门', link: '/courses/python/01-python基础篇/01-python基础', activeMatch: '/courses/python/' },
+      { text: '数据结构与算法', link: '/courses/algorithm/01-左程云算法基础/01-课程简介', activeMatch: '/courses/algorithm/' },
       { text: '唐宇迪AI课程', link: '/courses/tangyudi/02-机器学习篇/01-线性回归', activeMatch: '/courses/tangyudi/' },
-      { text: '正点原子Linux课程', link: '/courses/yuanzi/03-QT应用开发和部署/01-linux安装qt.md', activeMatch: '/courses/yuanzi/' },
+      { text: '正点原子Linux课程', link: '/courses/yuanzi/03-QT应用开发和部署/01-linux安装qt', activeMatch: '/courses/yuanzi/' },
+      
     ],
     activeMatch: '/courses/'
   },

@@ -8,7 +8,6 @@ tags:
  - C++
  - C++基础
  - STL
- - list
 ---
 # C++的list容器
 ## list链表容器

@@ -8,7 +8,6 @@ tags:
  - C++
  - C++基础
  - STL
- - deque
 ---
 # C++的deque容器
 ## deque容器

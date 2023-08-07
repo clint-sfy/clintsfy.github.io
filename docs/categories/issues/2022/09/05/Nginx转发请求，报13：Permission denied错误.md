@@ -2,6 +2,7 @@
 title: "Nginx转发请求，报13：Permission denied错误"
 author: 查尔斯
 date: 2022/09/05 21:44
+isOriginal: false
 categories:
  - Bug万象集
 tags:

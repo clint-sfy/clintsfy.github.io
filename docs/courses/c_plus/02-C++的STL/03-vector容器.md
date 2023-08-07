@@ -8,7 +8,6 @@ tags:
  - C++
  - C++基础
  - STL
- - vector
 ---
 # C++的vector容器
 ## vector容器
