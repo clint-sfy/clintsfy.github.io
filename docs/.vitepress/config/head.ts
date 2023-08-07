@@ -20,13 +20,13 @@ export const head: HeadConfig[] = [
   ['meta', { property: 'og:image', content: metaData.image }],
 
   // 百度统计代码：https://tongji.baidu.com
-  // ['script', {}, `var _hmt = _hmt || [];
-  // (function() {
-  //   var hm = document.createElement("script");
-  //   hm.src = "https://hm.baidu.com/hm.js?53af4b1a12fbe40810ca7ad39f8db9c7";
-  //   var s = document.getElementsByTagName("script")[0]; 
-  //   s.parentNode.insertBefore(hm, s);
-  // })();`],
+  ['script', {}, `var _hmt = _hmt || [];
+  (function() {
+    var hm = document.createElement("script");
+    hm.src = "https://hm.baidu.com/hm.js?c2d7f3de0ad59bc593144255f42653c9";
+    var s = document.getElementsByTagName("script")[0]; 
+    s.parentNode.insertBefore(hm, s);
+  })();`],
   // 页面访问量统计
   // ['script', {}, `
   // window.addEventListener('load', function() {
