@@ -41,7 +41,7 @@ tags:
 - 本穷人用的服务器，一块钱一个小时：https://www.gpuhub.com/login
 :::
 ### 项目截图
-
+![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/project/chatgptglm2b.png)
 
 ### 项目部署
 
@@ -121,6 +121,7 @@ WEB_PORT = 6006
 conda activate gptac           # 激活anaconda环境
 cd ~/autodl-tmp/gpt_academic
 python -m pip install -r requirements.txt # 这个步骤和pip安装一样的步骤
+pip install transformers==4.30.2 # 一定要确定transformers的版本！！ 要不然会失败
 python main.py #运行
 ```
 ## 3. ChatPaper
