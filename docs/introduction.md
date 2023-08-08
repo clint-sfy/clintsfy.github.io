@@ -105,11 +105,6 @@ pnpm build
 - [Es6](https://es6.ruanyifeng.com/)
 
 
-## 作者信息
-- 姓名：申丰源 (clint_sfy)
-- 微信：
-- 邮箱：clint_sfy@163.com
-
 ## 加入我们
 
 - [阿源的知识库](https://github.com/clint-sfy/clintsfy.github.io) 还在持续更新中，本项目欢迎您的参与，共同维护。

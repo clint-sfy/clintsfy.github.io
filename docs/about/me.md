@@ -23,7 +23,7 @@ showComment: false
 </p>
 
 ---
-- 👋 你好呀，我叫申丰源
+- 👋 你好呀，我是阿源
 - 🔭 本科软件工程，目前北京某高校硕士在读
 - 📫 联系我: [clint_sfy@163.com](mailto:clint_sfy@163.com)
 - 📖 当前目标：嵌入式软件工程师（电控？ Linux应用？ Linux驱动？ QT？ 音视频？）  摸索中ing
