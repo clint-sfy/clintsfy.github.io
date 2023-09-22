@@ -40,28 +40,28 @@ data = np.random.normal(size=(20, 6)) + np.arange(6) / 2
 sns.boxplot(data=data)
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/风格1.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/风格1.png)
 
 ```python
 sns.set_style("dark")
 sinplot()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/风格2.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/风格2.png)
 
 ```python
 sns.set_style("white")
 sinplot()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/风格3.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/风格3.png)
 
 ```python
 sns.set_style("ticks")
 sinplot()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/风格4.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/风格4.png)
 
 ```python
 sinplot()
@@ -110,7 +110,7 @@ current_palette = sns.color_palette()
 sns.palplot(current_palette)
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/调色1.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/调色1.png)
 
 6个默认的颜色循环主题： deep, muted, pastel, bright, dark, colorblind
 
@@ -124,7 +124,7 @@ sns.palplot(current_palette)
 sns.palplot(sns.color_palette("hls", 8))
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/调色2.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/调色2.png)
 
 ```python
 data = np.random.normal(size=(20, 8)) + np.arange(8) / 2
@@ -141,13 +141,13 @@ hls_palette()函数来控制颜色的亮度和饱和
 sns.palplot(sns.hls_palette(8, l=.7, s=.9))
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/调色3.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/调色3.png)
 
 ```python
 sns.palplot(sns.color_palette("Paired",8))
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/调色4.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/调色4.png)
 
 ####  使用xkcd颜色来命名颜色 ###
 xkcd包含了一套众包努力的针对随机RGB色的命名。产生了954个可以随时通过xdcd_rgb字典中调用的命名颜色。
@@ -158,14 +158,14 @@ plt.plot([0, 1], [0, 2], sns.xkcd_rgb["medium green"], lw=3)
 plt.plot([0, 1], [0, 3], sns.xkcd_rgb["denim blue"], lw=3)
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/调色5.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/调色5.png)
 
 ```python
 colors = ["windows blue", "amber", "greyish", "faded green", "dusty purple"]
 sns.palplot(sns.xkcd_palette(colors))
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/调色6.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/调色6.png)
 
 ####  连续色板
 色彩随数据变换，比如数据越来越重要则颜色越来越深
@@ -174,14 +174,14 @@ sns.palplot(sns.xkcd_palette(colors))
 sns.palplot(sns.color_palette("Blues"))
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/调色7.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/调色7.png)
 
 ```python
 # 如果想要翻转渐变，可以在面板名称中添加一个_r后缀
 sns.palplot(sns.color_palette("BuGn_r"))
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/调色8.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/调色8.png)
 
 #### cubehelix_palette()调色板
 色调线性变换
@@ -192,7 +192,7 @@ sns.palplot(sns.cubehelix_palette(8, start=.5, rot=-.75))
 sns.palplot(sns.cubehelix_palette(8, start=.75, rot=-.150))
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/调色9.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/调色9.png)
 
 ####  light_palette() 和dark_palette()调用定制连续调色板
 
@@ -202,13 +202,13 @@ sns.palplot(sns.dark_palette("purple"))
 sns.palplot(sns.light_palette("navy", reverse=True))
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/调色10.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/调色10.png)
 
 ```python
 sns.palplot(sns.light_palette((210, 90, 60), input="husl"))
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/调色11.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/调色11.png)
 
 ### 3. 单变量分析绘图
 
@@ -231,21 +231,21 @@ sns.distplot(x,kde=False)
 sns.distplot(x, bins=20, kde=False)
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/单变量分析1.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/单变量分析1.png)
 
 ```python
 x = np.random.gamma(6, size=200)
 sns.distplot(x, kde=False, fit=stats.gamma)
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/单变量分析2.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/单变量分析2.png)
 
 ```python
 # 观测两个变量之间的分布关系最好用散点图
 sns.jointplot(x="x", y="y", data=df);
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/单变量分析3.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/单变量分析3.png)
 
 ```python
 x, y = np.random.multivariate_normal(mean, cov, 1000).T
@@ -253,7 +253,7 @@ with sns.axes_style("white"):
     sns.jointplot(x=x, y=y, kind="hex", color="k")
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/单变量分析4.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/单变量分析4.png)
 
 ```python
 iris = sns.load_dataset("iris")
@@ -261,7 +261,7 @@ sns.pairplot(iris)
 # 有4个特征  观察特征之间的关系
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/单变量分析5.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/单变量分析5.png)
 
 ### 4. REG
 
@@ -391,7 +391,7 @@ g = sns.FacetGrid(tips, col="time")
 g.map(plt.hist, "tip");
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/facet1.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/facet1.png)
 
 ```python
 g = sns.FacetGrid(tips, col="sex", hue="smoker")
@@ -399,14 +399,14 @@ g.map(plt.scatter, "total_bill", "tip", alpha=.7)
 g.add_legend();
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/facet2.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/facet2.png)
 
 ```python
 g = sns.FacetGrid(tips, row="smoker", col="time", margin_titles=True)
 g.map(sns.regplot, "size", "total_bill", color=".1", fit_reg=False, x_jitter=.1);
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/facet3.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/facet3.png)
 
 ```python
 from pandas import Categorical
@@ -418,7 +418,7 @@ g = sns.FacetGrid(tips, row="day", row_order=ordered_days,
 g.map(sns.boxplot, "total_bill");
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/facet4.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/facet4.png)
 
 ```python
 pal = dict(Lunch="seagreen", Dinner="gray")
@@ -427,7 +427,7 @@ g.map(plt.scatter, "total_bill", "tip", s=50, alpha=.7, linewidth=.5, edgecolor=
 g.add_legend();
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/facet5.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/facet5.png)
 
 ```python
 g = sns.FacetGrid(tips, hue="sex", palette="Set1", size=5, hue_kws={"marker": ["^", "v"]})
@@ -435,7 +435,7 @@ g.map(plt.scatter, "total_bill", "tip", s=100, linewidth=.5, edgecolor="white")
 g.add_legend();
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/seaborn/facet6.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/seaborn/facet6.png)
 
 ```python
 iris = sns.load_dataset("iris")

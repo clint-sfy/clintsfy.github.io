@@ -14,7 +14,7 @@ tags:
 
 list是双向循环链表
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/img/c_plus/STL6.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/img/c_plus/STL6.png)
 
 list容器的迭代器是 双向迭代器。
 

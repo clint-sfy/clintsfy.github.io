@@ -19,7 +19,7 @@ vector容器：单端动态数组容器
 必须包含头文件：#include<vector>
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/img/c_plus/STL3.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/img/c_plus/STL3.png)
 
 push_back尾部插入元素、pop_back尾部删除元素
 

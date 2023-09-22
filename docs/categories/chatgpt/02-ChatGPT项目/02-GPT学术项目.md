@@ -24,7 +24,7 @@ tags:
 :::
 为ChatGPT/GLM提供图形交互界面，特别优化论文阅读/润色/写作体验，模块化设计，支持自定义快捷按钮&函数插件，支持Python和C++等项目剖析&自译解功能，PDF/LaTex论文翻译&总结功能，支持并行问询多种LLM模型，支持清华chatglm等本地模型。兼容复旦MOSS, llama, rwkv, 盘古, newbing, claude等
 ### 项目截图
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/project/chatgptgptac.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/project/chatgptgptac.png)
 
 ## 2. gpt_academic   chatglm2-6B版本
 
@@ -41,12 +41,12 @@ tags:
 - 本穷人用的服务器，一块钱一个小时：https://www.gpuhub.com/login
 :::
 ### 项目截图
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/project/chatgptglm2b.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/project/chatgptglm2b.png)
 
 ### 项目部署
 
 在AutoDL上选择显卡为A5000的服务器,镜像选择：
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/project/chatgpt%E6%98%BE%E5%8D%A1%E9%85%8D%E7%BD%AE.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/project/chatgpt%E6%98%BE%E5%8D%A1%E9%85%8D%E7%BD%AE.png)
 ```
 Miniconda  conda3
 Python  3.8(ubuntu20.04)

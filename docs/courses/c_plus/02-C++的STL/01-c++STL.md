@@ -37,4 +37,4 @@ STL的6大组件：容器、算法、迭代器、适配器、仿函数、空间�
 
 迭代器：算法和容器的桥梁
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/img/c_plus/STL1.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/img/c_plus/STL1.png)

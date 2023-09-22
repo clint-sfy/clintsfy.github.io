@@ -59,7 +59,7 @@ novaai官网免费提供
 :::
 
 ### 项目截图
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/project/chatgptfgpt.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/project/chatgptfgpt.png)
 
 ### 支持model
 
@@ -124,7 +124,7 @@ npm run dev
 
 
 ### 项目截图
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/project/chatgptgpt4%E9%83%A8%E7%BD%B2.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/project/chatgptgpt4%E9%83%A8%E7%BD%B2.png)
 
 ### 项目部署
 直接拉去github上的项目，一键部署

@@ -14,7 +14,7 @@ tags:
 
 对组(pair)将一对值组合成一个值，这一对值可以具有不同的数据类型，两个值可以分别用pair的两个公有属性first和second访问
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/img/c_plus/STL10.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/img/c_plus/STL10.png)
 
 ## map容器
 

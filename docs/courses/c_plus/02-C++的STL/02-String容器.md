@@ -198,6 +198,6 @@ hellorldwor
 
 ### 8、 string和c-style字符串转换
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/img/c_plus/STL2.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/img/c_plus/STL2.png)
 
 ## 

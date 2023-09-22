@@ -86,7 +86,7 @@ axes[1].axvline(0,color='grey',linewidth=2)
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图1.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图1.png)
 
 ```python
 fig,ax = plt.subplots()
@@ -97,7 +97,7 @@ for bar,height in zip(v_bars,y):  # 大于0一个颜色 ，小于0一个颜色
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图2.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图2.png)
 
 ```python
 x = np.linspace(0,10,200)
@@ -110,7 +110,7 @@ ax.plot(x,y_mean,color='black')
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图3.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图3.png)
 
 ```python
 mean_values = [1,2,3]
@@ -126,7 +126,7 @@ plt.xticks(x_pos,bar_label)
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图4.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图4.png)
 
 ```python
 x1 = np.array([1,2,3])
@@ -145,7 +145,7 @@ plt.ylim(-1,len(x1)+1)
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图5.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图5.png)
 
 ```python
 green_data = [1, 2, 3]
@@ -163,7 +163,7 @@ plt.bar([p+width*2 for p in pos],red_data,width,alpha=0.5,color='r',label=labels
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图6.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图6.png)
 
 ```python
 data = range(200, 225, 5)
@@ -180,7 +180,7 @@ for b,d in zip(bars,data):
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图7.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图7.png)
 
 ```python
 mean_values = range(10,18)
@@ -200,7 +200,7 @@ plt.bar(x_pos,mean_values,color = cmap2.to_rgba(mean_values))
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图8.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图8.png)
 
 ```python
 patterns = ('-', '+', 'x', '\\', '*', 'o', 'O', '.')
@@ -217,7 +217,7 @@ for bar,pattern in zip(bars,patterns):
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图9.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图9.png)
 
 ### 4. 盒图
 
@@ -234,7 +234,7 @@ plt.xlabel('x')
 plt.title('box plot')
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/盒图1.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/盒图1.png)
 
 ```python
 tang_data = [np.random.normal(0,std,100) for std in range(1,4)]
@@ -250,7 +250,7 @@ for components in bplot.keys():
         line.set_color('black')
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/盒图2.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/盒图2.png)
 
 ```python
 tang_data = [np.random.normal(0,std,100) for std in range(1,4)]
@@ -262,7 +262,7 @@ plt.ylabel('x')
 plt.title('box plot')
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/盒图3.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/盒图3.png)
 
 ```python
 tang_data = [np.random.normal(0,std,100) for std in range(1,4)]
@@ -274,7 +274,7 @@ plt.xlabel('x')
 plt.title('box plot')
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/盒图4.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/盒图4.png)
 
 ```python
 tang_data = [np.random.normal(0,std,100) for std in range(1,4)]
@@ -290,7 +290,7 @@ for pathch,color in zip(bplot['boxes'],colors):
     pathch.set_facecolor(color)
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/盒图5.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/盒图5.png)
 
 ```python
 fig,axes = plt.subplots(nrows=1,ncols=2,figsize=(12,5))
@@ -307,7 +307,7 @@ for ax in axes:
 plt.setp(axes,xticks=[y+1 for y in range(len(tang_data))],xticklabels=['x1','x2','x3','x4'])
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/盒图6.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/盒图6.png)
 
 ### 5. 直方图
 
@@ -323,7 +323,7 @@ plt.xlim([min(data)-5,max(data)+5])
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图10.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图10.png)
 
 ```python
 import random
@@ -337,7 +337,7 @@ plt.legend(loc='best')
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图11.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/直方图11.png)
 
 ### 6. 散点图
 
@@ -357,7 +357,7 @@ plt.legend(loc='best')
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/散点图1.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/散点图1.png)
 
 ```python
 x_coords = [0.13, 0.22, 0.39, 0.59, 0.68, 0.74, 0.93]
@@ -371,7 +371,7 @@ for x,y in zip(x_coords,y_coords):
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/散点图2.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/散点图2.png)
 
 ```python
 mu_vec1 = np.array([0,0])
@@ -386,7 +386,7 @@ plt.scatter(X[:,0],X[:,1],color='grey',marker='o',s=20*R_sum,alpha=0.5)
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/散点图3.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/散点图3.png)
 
 ### 7. 3D图
 
@@ -411,7 +411,7 @@ ax.set_zlim(-2,2)
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/3d图.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/3d图.png)
 
 ```python
 fig = plt.figure()
@@ -427,7 +427,7 @@ ax.plot(x,y,z)
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/3d图2.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/3d图2.png)
 
 ```python
 np.random.seed(1)
@@ -448,7 +448,7 @@ ax.view_init(40,0) # 可以换方向
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/3d图3.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/3d图3.png)
 
 ```python
 fig = plt.figure()  
@@ -462,7 +462,7 @@ for c, z in zip(['r', 'g', 'b', 'y'], [30, 20, 10, 0]):
 plt.show()
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/3d图4.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/3d图4.png)
 
 ### 8. pie与子图
 
@@ -484,7 +484,7 @@ for text in autotexts:
     text.set_color('white')
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/pie.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/pie.png)
 
 ```python
 ax1 = plt.subplot2grid((3,3),(0,0))
@@ -494,7 +494,7 @@ ax4 = plt.subplot2grid((3,3),(2,0),colspan = 2)
 ax5 = plt.subplot2grid((3,3),(0,1),rowspan=2)
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/子图1.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/子图1.png)
 
 ```python
 import numpy as np
@@ -512,7 +512,7 @@ ax1.plot(x,y1)
 ax2.plot(x,y2)
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/子图2.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/子图2.png)
 
 ```python
 import matplotlib.pyplot as plt
@@ -551,4 +551,4 @@ for spine in ax1.spines.values():
 autolabel(tang) 
 ```
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/python/matplotlib/子图3.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/python/matplotlib/子图3.png)

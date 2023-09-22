@@ -16,7 +16,7 @@ tags:
 
 deque:双端动态数组
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/img/c_plus/STL4.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/img/c_plus/STL4.png)
 
 Deque容器和vector容器最大的差异，
 
@@ -24,7 +24,7 @@ Deque容器和vector容器最大的差异，
 
 二在于deque没有容量的概念。
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/img/c_plus/STL5.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/img/c_plus/STL5.png)
 
 ### 2、deque的API
 

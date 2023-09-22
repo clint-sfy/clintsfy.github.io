@@ -92,7 +92,7 @@ make 可以识别系统环境变量，在 makefile 中可直接读取或修改�
 
 ### 3、预定义变量
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/img/c/makefile.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/img/c/makefile.png)
 
 ```make
 1 cc=gcc

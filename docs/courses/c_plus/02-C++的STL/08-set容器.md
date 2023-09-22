@@ -14,7 +14,7 @@ tags:
 
 ### 1、set容器概述
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/img/c_plus/STL7.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/img/c_plus/STL7.png)
 
 ​         但是set容器 只有键值，在插入数据的时候 自动根据 键值 排序。不允许有相同的键值。不能修改set容器的元素值，会破坏set的数据结构。set容器的迭代器是只读迭代器（const_iterator）。
 
@@ -225,7 +225,7 @@ tags:
 
 ### 5、查找元素的上下限
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/img/c_plus/STL8.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/img/c_plus/STL8.png)
 
 ```cpp
 1 void test04()
@@ -274,4 +274,4 @@ set容器：键值不允许重复
 
 multiset容器：键值可以重复
 
-![](https://cdn.staticaly.com/gh/clint-sfy/blogcdn@master/img/c_plus/STL9.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/img/c_plus/STL9.png)
