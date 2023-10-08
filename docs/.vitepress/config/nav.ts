@@ -29,7 +29,7 @@ export const nav: DefaultTheme.Config['nav'] = [
       { text: 'C++基础快速入门', link: '/courses/c_plus/01-C++的基础/01-c++对c的扩展', activeMatch: '/courses/c_plus/' },
       { text: 'Python基础快速入门', link: '/courses/python/01-python基础篇/01-python基础', activeMatch: '/courses/python/' },
       { text: '数据结构与算法', link: '/courses/algorithm/01-左程云算法基础/01-课程简介', activeMatch: '/courses/algorithm/' },
-      { text: '唐宇迪AI课程', link: '/courses/tangyudi/02-机器学习篇/01-线性回归', activeMatch: '/courses/tangyudi/' },
+      { text: '机器学习与深度学习', link: '/courses/tangyudi/02-机器学习篇/01-线性回归', activeMatch: '/courses/tangyudi/' },
       { text: '正点原子Linux课程', link: '/courses/yuanzi/02-QT应用开发和部署/01-linux安装qt', activeMatch: '/courses/yuanzi/' },
       
     ],
