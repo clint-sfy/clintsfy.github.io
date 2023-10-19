@@ -84,8 +84,6 @@ git clone https://github.com/googlecartographer/cartographer.git
 
 由于在cmake的时候，默认是c++11，但是cere需要c++17
 
-修改文件carto_ws/cartographer/CmakeList.txt
-
 修改文件carto_ws/ceres-solver-2.1.0/CmakeList.txt
 
 在cmake_minimum_required(VERSION3.10)下添加这两句
@@ -156,7 +154,7 @@ sudo cp /usr/local/bin/protoc /usr/bin
 
 1. 打开终端并运行以下命令，以添加ROS软件包源的密钥：
 
-```
+```bash
 sudo apt install curl
 
 curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
@@ -164,37 +162,37 @@ curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo ap
 
 2. 运行以下命令，以添加ROS软件包源到软件源列表：
 
-```
+```bash
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 ```
 
 3. 运行以下命令，以更新软件包列表：
 
-```
+```bash
 sudo apt update
 ```
 
 4. 运行以下命令，以安装ROS Melodic的完整桌面安装包：
-```
+```bash
 sudo apt install ros-melodic-desktop-full
 ```
 
 5. 安装完成后，运行以下命令，以初始化ROS环境：
 
-```
+```bash
 echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 ```
 
 6. 运行以下命令，以安装额外的依赖项：
 
-```
+```bash
 sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
 ```
 
 7. 运行以下命令，以初始化rosdep：
 
-```
+```bash
 cd carto_ws
 sudo rosdep init
 rosdep update
@@ -212,6 +210,19 @@ rosversion -d
 
 
 ### 编译cartographer
+
+需要删除或者注释在cartographer 包下package.xml文件里的(<depend>libabsl-dev</depend>) 。
+```
+# 这样子操作
+<!--  <depend>libabsl-dev</depend> -->
+```
+
+```bash
+$ sudo apt-get install stow
+$ sudo chmod +x ~/carto_ws/src/cartographer/scripts/install_abseil.sh
+$ cd ~/carto_ws/src/cartographer/scripts
+$ ./install_abseil.sh
+```
 
 ```bash
 # cd carto_ws
