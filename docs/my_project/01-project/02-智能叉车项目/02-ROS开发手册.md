@@ -18,7 +18,7 @@ tags:
 
 ### 循环控制
 
-```c++
+```cpp
 void turn_on_robot::Control()
 {
   while(ros::ok())
@@ -68,7 +68,7 @@ void turn_on_robot::Control()
 
 只执行一次，用于初始化
 
-```c++
+```cpp
 turn_on_robot::turn_on_robot():Sampling_Time(0),Power_voltage(0)
 {
   //Clear the data
@@ -128,7 +128,7 @@ turn_on_robot::turn_on_robot():Sampling_Time(0),Power_voltage(0)
 
 ### 析构函数
 
-```c++
+```cpp
 #define FRAME_HEADER      0X7B       //Frame head //帧头
 #define FRAME_TAIL        0X7D       //Frame tail //帧尾
 #define RECEIVE_DATA_SIZE 24         //下位机发送过来的数据的长度
@@ -144,7 +144,7 @@ typedef struct _SEND_DATA_
 }SEND_DATA;
 ```
 
-```c++
+```cpp
 turn_on_robot::~turn_on_robot()
 {
   //Sends the stop motion command to the lower machine before the turn_on_robot object ends
@@ -181,7 +181,7 @@ turn_on_robot::~turn_on_robot()
 
 ### 接收下位机数据
 
-```c++
+```cpp
 #define FRAME_HEADER      0X7B       //Frame head //帧头
 #define FRAME_TAIL        0X7D       //Frame tail //帧尾
 #define RECEIVE_DATA_SIZE 24         //下位机发送过来的数据的长度
@@ -205,7 +205,7 @@ typedef struct _RECEIVE_DATA_
 }RECEIVE_DATA;
 ```
 
-```c++
+```cpp
 bool turn_on_robot::Get_Sensor_Data_New()
 {
   short transition_16=0; //Intermediate variable //中间变量
@@ -297,7 +297,7 @@ bool turn_on_robot::Get_Sensor_Data_New()
 
 ### 数据转换函数
 
-```c++
+```cpp
 short turn_on_robot::IMU_Trans(uint8_t Data_High,uint8_t Data_Low)
 {
   short transition_16;
@@ -324,7 +324,7 @@ float turn_on_robot::Odom_Trans(uint8_t Data_High,uint8_t Data_Low)
 
 输入参数： Count_Number：数据包前几个字节加入校验  mode：对发送数据还是接收数据进行校验
 
-```c++
+```cpp
 unsigned char turn_on_robot::Check_Sum(unsigned char Count_Number,unsigned char mode)
 {
   unsigned char check_sum=0,k;
@@ -353,7 +353,7 @@ unsigned char turn_on_robot::Check_Sum(unsigned char Count_Number,unsigned char 
 
 ```
 
-```c++
+```cpp
 void turn_on_robot::Publish_Voltage()
 {
     std_msgs::Float32 voltage_msgs; //Define the data type of the power supply voltage publishing topic //定义电源电压发布话题的数据类型
@@ -369,7 +369,7 @@ void turn_on_robot::Publish_Voltage()
 
 ### 发布IMU数据话题
 
-```c++
+```cpp
 void turn_on_robot::Publish_ImuSensor()
 {
   sensor_msgs::Imu Imu_Data_Pub; //Instantiate IMU topic data //实例化IMU话题数据
@@ -398,7 +398,7 @@ void turn_on_robot::Publish_ImuSensor()
 
 ### 发布里程计话题
 
-```c++
+```cpp
 void turn_on_robot::Publish_Odom()
 {
     //Convert the Z-axis rotation Angle into a quaternion for expression 
