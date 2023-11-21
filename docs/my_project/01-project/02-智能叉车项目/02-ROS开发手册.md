@@ -1,7 +1,7 @@
 ---
 title: ROS开发手册
 author: 阿源
-date: 2023/11/10 12:00
+date: 2023/11/05 12:00
 categories:
  - 个人项目
 tags:
@@ -716,5 +716,51 @@ mapping.launch
  gmapping建图节点：algorithm_gmapping.launch
 ```
 
+## 7. 自主建图
 
+把小车放置在地图起点/rviz手动设置起点
 
+运行导航：
+
+```bash
+roslaunch turn_on_wheeltec_robot navigation.launch
+```
+
+手动发布目标点
+
+```bash
+rostopic pub /move_base_simple/goal
+```
+
+四元数
+x  = ax * sin(theta/2)    
+y  = ay * sin(theta/2)    
+z  = 1* sin(180°/2)  =1
+w = cos(180°/2)  =0
+
+### WHEELTEC.yaml
+
+```yaml
+image: /home/wheeltec/wheeltec_robot/src/turn_on_wheeltec_robot/map/WHEELTEC.pgm
+#地图分辨率,每像素代表0.05
+resolution: 0.050000
+#地图右下角坐标值,修改该值可以改变地图原点
+origin: [-5.000000, -4.000000, 0.000000]
+#大于该值认为是占用的， 0-1对应图片灰度值0-255, rviz内表现为黑色障碍
+occupied_thresh: 0.65
+#小于该值认为是自由的,对应图片灰度值o-255, rviz内表现为白色自由空间
+free_thresh: 0.196
+#占用/自由的判断是否取反，例如negate为1时，小于0.65认为是占用的，大于0.196认为是自由的
+negate: 0
+```
+
+## 8. 多点导航
+
+把小车放置在地图起点/rviz手动设置起点
+
+运行导航：
+roslaunch turn_on_wheeltec_robot navigation.launch
+
+rviz添加path_ponit(MarkerArray数据格式)话题订阅，进行可视化
+
+使用rviz的Publish Point功能
