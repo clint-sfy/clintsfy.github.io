@@ -9,7 +9,19 @@ tags:
  - ROS
 ---
 # Slam基础
+2D 激光雷达SLAM方案有gmapping和Cartographer。目前室内应用还是Cartographer居多，它是谷歌开源的，有闭环功能。
 
+3D激光雷达SLAM。比较知名的有LOAM、ALOAM、LeGO-LOAM、LIO-SAM、LVI-SAM等
+
+- LOAM是卡内基梅隆大学的Ji Zhang早期发表的多线LiDAR SLAM算法。是该领域的鼻祖，不过该代码可读性差，作者后来将其闭源。
+- A-LOAM是港科大秦通（VINS系列一作）在LOAM原有代码基础上，使用Ceres-solver和Eigen库对其进行重构和优化，在保持原有算法原理的基础上，使其可读性大大增加，作为入门多线激光slam最好选择。
+- LeGO-LOAM 是麻省理工学院的Tixiao Shan在原有LOAM基础上，做了一些改进包括:1、对前端里程计的前量化改造，提取地面点更适配水平安装的LiDAR; 2、使用SLAM中的Keyframe概念以及回环检测位姿图优化的方式对后端进行重构。
+- LIO-SAM 是Tixiao Shan在LeGO-LOAM的扩展，添加了IMU预积分因子和GPS因子：前端使用紧耦合的IMU融合方式，替代原有的帧间里程计，使得前端更轻量；后端沿用LeGO-LOAM，在此基础上融入了GPS观测。同时前端后端相互耦合，提高系统精度。
+- LVI-SAM是Tixiao Shan 2021年最新的开源工作，他将LIO-SAM和VINS-Mono进行了结合，是一个通过平滑和建图实现激光雷达-视觉-惯性里程计的紧耦合框架，由两个紧耦合子系统组成：一个视觉惯性系统VIS和一个激光雷达惯性系统LIS。当两个子系统中的一个发生故障时，系统也可以发挥作用，这增加了它在无纹理和无特征环境中的鲁棒性。
+
+FAST-LIO2是香港大学火星实验室（MARS）发表在IEEE-RAL和IEEE-TRO的两篇论文，是一种具有高计算效率、高鲁棒性的雷达惯性里程计（LIO）。它通过紧耦合误差状态卡尔曼滤波器实现IMU和激光雷达融合的状态估计，是目前最先进的开源LIO框架之一。
+
+FAST-LIO2涵盖流形、李群李代数、IMU积分 、雷达残差、卡尔曼滤波等多方位的知识，代码可读性好，学习FAST-LIO2有助于理解多传感器融合原理，夯实理论知识，提高实践能力。
 ## 传感器原理篇
 
 ### 1. 视觉传感器
