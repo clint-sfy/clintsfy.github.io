@@ -9,7 +9,7 @@ tags:
  - ROS
 ---
 # Slam基础
-2D 激光雷达SLAM方案有gmapping和Cartographer。目前室内应用还是Cartographer居多，它是谷歌开源的，有闭环功能。
+2D激光雷达SLAM方案有gmapping和Cartographer。目前室内应用还是Cartographer居多，它是谷歌开源的，有闭环功能。
 
 3D激光雷达SLAM。比较知名的有LOAM、ALOAM、LeGO-LOAM、LIO-SAM、LVI-SAM等
 
