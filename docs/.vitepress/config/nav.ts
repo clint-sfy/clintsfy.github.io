@@ -32,6 +32,7 @@ export const nav: DefaultTheme.Config['nav'] = [
       { text: '机器学习与深度学习', link: '/courses/tangyudi/02-机器学习篇/01-线性回归', activeMatch: '/courses/tangyudi/' },
       { text: '正点原子Linux课程', link: '/courses/yuanzi/02-QT应用开发和部署/01-linux安装qt', activeMatch: '/courses/yuanzi/' },
       { text: 'Ros机器人', link: '/courses/ros/01-视觉slam十四讲/01-三维空间刚体运动', activeMatch: '/courses/ros/' },
+      { text: '单片机开发', link: '/courses/mcu/01-单片机基础/01-通讯篇', activeMatch: '/courses/mcu/' }
     ],
     activeMatch: '/courses/'
   },
