@@ -99,7 +99,7 @@ tags:
 
 **内部触发**输入是使用**一个定时器作为另一个定时器的预分频器**，即实现定时器的级联。  
 
-![image-20240131172532735](C:\Users\clint\AppData\Roaming\Typora\typora-user-images\image-20240131172532735.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/stm32/base/20240201225008.png)
 
 ```
 TIM1 作为 TIM2 的预分频器，需要完成的配置步骤如下
@@ -176,7 +176,7 @@ RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);			//开启TIM2的时钟
 TIM_InternalClockConfig(TIM2);		//选择TIM2为内部时钟，若不调用此函数，TIM默认也为内部时钟
 ```
 
-![image-20240131181908165](C:\Users\clint\AppData\Roaming\Typora\typora-user-images\image-20240131181908165.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/stm32/base/20240201225040.png)
 
 注：没选择时钟，会默认内部时钟
 
