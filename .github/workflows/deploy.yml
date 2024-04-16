@@ -41,10 +41,10 @@ jobs:
           git config --global core.safecrlf true
           git config --global core.ignorecase false  
       # 3、安装 PNPM
-      - name: Setup PNPM
-        uses: pnpm/action-setup@v2
-        with:
-          version: latest
+      # - name: Setup PNPM
+      #   uses: pnpm/action-setup@v2
+      #   with:
+      #     version: latest
       # 4、安装 Node 环境
       # - name: Setup Node
       #   uses: actions/setup-node@v3
