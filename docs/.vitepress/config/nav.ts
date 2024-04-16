@@ -8,7 +8,7 @@ export const nav: DefaultTheme.Config['nav'] = [
   },
   {
     text: '项目文档',
-    link: '/my_project/01-project/02-智能叉车项目/01-Slam基础及部署',
+    link: '/my_project/01-project/01-项目/01-培养方案',
     activeMatch: '/my_project/'
   },
   {
