@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import parseFrontmatter from 'gray-matter';
 
-const excludedFiles = ['index.md', 'tags.md', 'archives.md', 'me.md', 'introduction.md' ,'donate.md','see.md'];
+const excludedFiles = ['index.md', 'tags.md', 'archives.md', 'me.md'];
 
 export default {
   watch: ['./docs/**/*.md'],

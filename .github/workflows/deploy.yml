@@ -17,13 +17,14 @@ on:
   # 3.建议不只是定时执行的时候注意时间，自己 push 时也注意时间，早点休息
   #   例如：笔者多次亲身经历，凌晨时间 pages build and deployment 任务大概能持续 8 分钟的 Current status: deployment_queued 状态，
   #        即使能进入 Current status: deployment_in_progress 和 Current status: syncing_files 状态，如果文件多点，没一会儿就 Error: Timeout reached, aborting! 超时失败了
-  # schedule:
-  #   - cron: 30 17 * * *
+  schedule:
+    - cron: 30 17 * * *
   # 可手动执行
   workflow_dispatch:
 
 jobs:
-  deploy:
+  # 任务1: 部署 GitHub Pages
+  deploy-github-pages:
     runs-on: ubuntu-latest
     steps:
       # 1、检出源码
@@ -41,36 +42,23 @@ jobs:
           git config --global core.safecrlf true
           git config --global core.ignorecase false  
       # 3、安装 PNPM
-      # - name: Setup PNPM
-      #   uses: pnpm/action-setup@v2
-      #   with:
-      #     version: latest
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
       # 4、安装 Node 环境
-      # - name: Setup Node
-      #   uses: actions/setup-node@v3
-      #   with:
-      #     node-version: 16
-      #     registry-url: https://registry.npmjs.org
-      #     cache: pnpm
-      # 5、安装依赖
-      # - name: Install dependencies
-      #   run: pnpm i --frozen-lockfile
-      # 6、打包
-      # - name: Build
-      #   env:
-      #     NODE_OPTIONS: "--max_old_space_size=4096"
-      #   run: pnpm build
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache: yarn # 或 pnpm / yarn
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+      # 5、安装依赖
       - name: Install dependencies
-        run: yarn install # 或 pnpm install / yarn install / bun install
-      - name: Build with VitePress
-        run: yarn docs:build # 或 pnpm docs:build / yarn docs:build / bun run docs:build
+        run: pnpm i --frozen-lockfile
+      # 6、打包
+      - name: Build
+        run: pnpm build
       # 7、部署 GitHub Pages
       - name: Deploy GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
