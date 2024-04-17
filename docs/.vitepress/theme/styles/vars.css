@@ -16,6 +16,12 @@
     #47caff 50%
   );
   --vp-home-hero-image-filter: blur(40px);
+
+  /* 1.0.0-beta.7 及以前版本配色方案 */
+  --vp-c-brand-1: var(--vp-c-green-1);
+  --vp-c-brand-2: var(--vp-c-green-2);
+  --vp-c-brand-3: var(--vp-c-green-3);
+  --vp-c-brand-soft: var(--vp-c-green-soft);
 }
 
 @media (min-width: 640px) {

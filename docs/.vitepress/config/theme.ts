@@ -67,7 +67,7 @@ export const themeConfig: DefaultTheme.Config = {
   footerConfig: {
     showFooter: true, // 是否显示页脚
     icpRecordCode: '蜀ICP备2023001686号-1', // ICP备案号
-    // publicSecurityRecordCode: '蜀公网安备  号', // 联网备案号
+    // publicSecurityRecordCode: '津公网安备12011202000677号', // 联网备案号
     copyright: `Copyright © 2019-${new Date().getFullYear()} clint-sfy` // 版权信息
   }
 }

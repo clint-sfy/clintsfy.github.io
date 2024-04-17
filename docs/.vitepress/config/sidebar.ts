@@ -1,10 +1,10 @@
 import type { DefaultTheme } from 'vitepress';
-import { sync } from 'fast-glob';
-import * as matter from 'gray-matter';
+import fg from 'fast-glob';
+import matter from 'gray-matter';
 import { getChineseZodiac, getChineseZodiacAlias } from '../theme/utils.ts';
+const sync = fg.sync;
 
 export const sidebar: DefaultTheme.Config['sidebar'] = {
-
   '/my_project/01-project/': getItems("my_project/01-project"),
 
   
