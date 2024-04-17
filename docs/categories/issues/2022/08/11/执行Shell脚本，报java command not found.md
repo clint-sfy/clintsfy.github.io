@@ -2,7 +2,6 @@
 title: "执行Shell脚本，报java: command not found"
 author: 查尔斯
 date: 2022/08/11 20:19
-isOriginal: false
 categories:
  - Bug万象集
 tags:
@@ -17,6 +16,8 @@ tags:
 **C：** 今天笔者在公司的 dev 环境服务器上，将一个 Java 程序启动脚本做成了一个系统服务。本来是一件很简单的事情，但是在启动服务时，却报错了。
 
 报的错误也是言简意赅：java: command not found。很直白的告诉了你，它找不到 java 命令。
+
+![202208112010100](../../../../../public/img/2022/08/11/202208112010100.png)
 
 ## 原因分析
 

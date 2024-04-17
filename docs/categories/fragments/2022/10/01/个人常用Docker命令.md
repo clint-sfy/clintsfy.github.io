@@ -3,9 +3,8 @@ title: 个人常用 Docker 命令
 author: 查尔斯
 date: 2022/10/01 22:33
 isTop: true
-isOriginal: false
 categories:
- - 碎片化知识点
+ - 杂碎逆袭史
 tags:
  - Docker
 ---

@@ -3,9 +3,8 @@ title: 个人常用 SQL 函数
 author: 查尔斯
 date: 2022/02/16 15:43
 isTop: true
-isOriginal: false
 categories:
- - 碎片化知识点
+ - 杂碎逆袭史
 tags:
  - SQL
  - SQL函数

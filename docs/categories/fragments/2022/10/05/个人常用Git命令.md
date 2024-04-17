@@ -3,9 +3,8 @@ title: 个人常用 Git 命令
 author: 查尔斯
 date: 2022/10/05 21:30
 isTop: true
-isOriginal: false
 categories:
- - 碎片化知识点
+ - 杂碎逆袭史
 tags:
  - Git
 ---
@@ -127,7 +126,9 @@ git reset --soft HEAD~回退版本的数量/HEAD^/Commit ID
 :::
 
 ```shell
-git commit --amend [--author="用户名 <用户邮箱>"] [-m 提交信息]
+# 如果仅修改用户名这类信息，改完在编辑模式按 : 随后按 wq 保存即可
+# 信息格式参考 git log 输出
+git commit --amend [--author="用户名<用户邮箱>"] [--date "日期信息"] [-m 提交信息]
 ```
 
 ### 修改指定提交的信息
@@ -145,7 +146,8 @@ git commit --amend [--author="用户名 <用户邮箱>"] [-m 提交信息]
 git rebase -i Commit ID
 # 2.打开记事本后，将对应提交前的 pick 改为 e 或 edit，保存退出
 # 3.进行修订，同上
-git commit --amend [--author="用户名 <用户邮箱>"] [-m 提交信息]
+# 信息格式参考 git log 输出
+git commit --amend [--author="用户名<用户邮箱>"] [--date "日期信息"] [-m 提交信息]
 # 4.完成
 git rebase --continue
 ```
@@ -215,7 +217,7 @@ git clone 远程仓库Git地址
 git pull [远程主机名] [远程分支名]:[本地分支名]
 ```
 
-## 多人协作
+## 分支相关
 
 ### 查看本地分支
 
@@ -245,6 +247,12 @@ git switch 分支名
 
 ```shell
 git merge 分支名
+```
+
+### 重命名分支
+
+```shell
+git branch -m old-branch new-branch
 ```
 
 ## 标签相关

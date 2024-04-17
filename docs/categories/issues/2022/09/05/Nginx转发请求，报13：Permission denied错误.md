@@ -2,7 +2,6 @@
 title: "Nginx转发请求，报13：Permission denied错误"
 author: 查尔斯
 date: 2022/09/05 21:44
-isOriginal: false
 categories:
  - Bug万象集
 tags:
@@ -34,6 +33,7 @@ tail -50 error.log
 2022/09/05 10:03:47 [crit] 8431#8431: *45 connect() to 127.0.0.1:18005 failed (13: Permission denied) while connecting to upstream, client: xx.xxx.xx.xxx, server: _, request: "GET /api/captcha?_t=1662344535439 HTTP/1.1", upstream: "http://127.0.0.1:18005/captcha?_t=1662344535439", host: "xx.x.xxx.xx", referrer: "http://xx.x.xxx.xx/"
 ```
 
+![202208112010100](../../../../../public/img/2022/09/05/202209052140666.png)
 
 ## 原因分析
 
@@ -92,6 +92,8 @@ tail -50 /var/log/audit/audit.log
 ```
 
 果然和作者贴的图一模一样。
+
+![202209052232777](../../../../../public/img/2022/09/05/202209052232777.png)
 
 > 根据作者所言，"出现此问题的原因是 SELinux 基于最小权限原则默认拦截了 Nginx 的请求，SELinux 是 Linux 的安全子系统，提供更安全的访问控制。"[1]
 

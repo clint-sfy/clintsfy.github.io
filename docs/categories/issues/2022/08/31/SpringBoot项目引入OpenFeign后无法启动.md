@@ -2,7 +2,6 @@
 title: SpringBoot项目引入OpenFeign后无法启动
 author: 查尔斯
 date: 2022/08/31 22:39
-isOriginal: false
 categories:
  - Bug万象集
 tags:
@@ -140,6 +139,7 @@ public class WebApiApplication {
 
 根据以前的经验到这步也就结束了，该怎么用 Feign 就怎么用了。好的，写完之后启动项目。
 
+![202208312238666](../../../../../public/img/2022/08/31/202208312238666.png)
 
 显然笔者被技术的 "浪潮" 又拍了一个 "跟头"，技术从来都不是停滞不前的，采用新版本就肯定会有这样那样的问题，不提前做版本踩坑和梳理，就必然如此。
 

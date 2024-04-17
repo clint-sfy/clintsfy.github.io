@@ -5,23 +5,14 @@ import { getChineseZodiac, getChineseZodiacAlias } from '../theme/utils.ts';
 const sync = fg.sync;
 
 export const sidebar: DefaultTheme.Config['sidebar'] = {
-  '/my_project/01-project/': getItems("my_project/01-project"),
-
-  
   '/categories/issues/': getItemsByDate("categories/issues"),
-  '/categories/chatgpt/': getItems("categories/chatgpt"),
   '/categories/fragments/': getItemsByDate("categories/fragments"),
-  // '/categories/solutions/': getItemsByDate("categories/solutions"),
-  // '/categories/tools/': getItemsByDate("categories/tools"),
+  '/categories/solutions/': getItemsByDate("categories/solutions"),
+  '/categories/tools/': getItemsByDate("categories/tools"),
 
-  '/courses/c/': getItems("courses/c"),
-  '/courses/c_plus/': getItems("courses/c_plus"),
-  '/courses/python/': getItems("courses/python"),
-  '/courses/tangyudi/': getItems("courses/tangyudi"),
-  '/courses/yuanzi/': getItems("courses/yuanzi"),
-  '/courses/algorithm/': getItems("courses/algorithm"),
-  '/courses/ros/': getItems("courses/ros"),
-  '/courses/mcu/': getItems("courses/mcu"),
+  '/courses/java/': getItems("courses/java"),
+  '/courses/mysql/': getItems("courses/mysql"),
+  '/courses/mybatis/': getItems("courses/mybatis"),
 }
 
 /**

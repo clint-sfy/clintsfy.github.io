@@ -2,9 +2,8 @@
 title: CentOS 安装 Docker、Docker Compose
 author: 查尔斯
 date: 2022/10/31 20:56
-isOriginal: false
 categories:
- - 碎片化知识点
+ - 杂碎逆袭史
 tags:
  - Docker
  - Linux
@@ -90,6 +89,7 @@ curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun && systemctl 
 产品与服务 -> 容器与中间件 -> 容器服务 -> 容器镜像服务 -> 镜像加速器
 :::
 
+![202210312020985](../../../../../public/img/2022/10/31/202210312020985.png)
 
 闲话不多说，配置只需要 3~5 步即可搞定。
 
