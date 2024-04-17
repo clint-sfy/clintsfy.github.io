@@ -2,9 +2,10 @@
 title: 个人 SQL 优化技巧
 author: 查尔斯
 date: 2019/12/28 10:00
+isOriginal: false
 isTop: true
 categories:
- - 杂碎逆袭史
+ - 碎片化知识点
 tags:
  - SQL
  - SQL优化

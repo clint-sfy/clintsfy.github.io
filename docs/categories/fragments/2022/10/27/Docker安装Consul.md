@@ -2,8 +2,9 @@
 title: Docker 安装 Consul 详细步骤
 author: 查尔斯
 date: 2022/10/27 22:00
+isOriginal: false
 categories:
- - 杂碎逆袭史
+ - 碎片化知识点
 tags:
  - Consul
  - Docker

@@ -2,8 +2,9 @@
 title: 内网CentOS服务器设置网络代理
 author: 查尔斯
 date: 2022/08/29 20:53
+isOriginal: false
 categories:
- - 杂碎逆袭史
+ - 碎片化知识点
 tags:
  - Linux
  - CentOS

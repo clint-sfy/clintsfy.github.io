@@ -2,8 +2,9 @@
 title: Docker 安装 MinIO 详细步骤
 author: 查尔斯
 date: 2022/10/28 22:37
+isOriginal: false
 categories:
- - 杂碎逆袭史
+ - 碎片化知识点
 tags:
  - MinIO
  - Docker
@@ -77,11 +78,9 @@ server --address ':9000' --console-address ':9001' /data \
 
 服务器开放好相应端口或设置好安全组规则后，访问 `http://宿主机IP:映射的端口` （例如按上方配置那就是：http://宿主机IP:9001）即可看到 MinIO 管理界面。
 
-![202210282235156](../../../../../public/img/2022/10/28/202210282235156.png)
 
 输入你刚才指定的用户名、密码，登录进来后，可以看到当前一个 Bucket 也没有，可以点击右侧的 [Create Bucket] 来创建。
 
-![202210282236211](../../../../../public/img/2022/10/28/202210282236211.png)
 
 ## Docker Compose脚本
 
