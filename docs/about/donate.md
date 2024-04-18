@@ -3,6 +3,7 @@ title: 赞助
 aside: false
 editLink: false
 lastUpdated: false
+showComment: false
 ---
 ::: tip 赞助
 如果你觉得这个项目帮助到了你，你可以帮作者买一杯果汁表示鼓励 🍹
