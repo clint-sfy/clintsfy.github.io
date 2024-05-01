@@ -6,7 +6,9 @@ categories:
  - FreeRTOS
 tags:
  - FreeRTOS
+
 ---
+
 # FreeRTOS任务相关API
 
  ![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/stm32/freertos/20240430203312.png)
@@ -70,6 +72,7 @@ void start_task(void *pvParameters);        /* 任务函数 */
 TaskHandle_t            Task1Task_Handler;  /* 任务句柄 */
 void task1(void *pvParameters);             /* 任务函数 */
 ```
+
 ### 2.1 入口函数
 
 ```c
@@ -206,7 +209,7 @@ void task3(void *pvParameters)
 
 ### 3.1 任务创建和删除
 
-<img src="C:\Users\clint\AppData\Roaming\Typora\typora-user-images\image-20240501143341595.png" alt="image-20240501143341595" style="zoom:50%;" />
+<img src="https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/stm32/freertos/20240501162151.png" style="zoom: 50%;" />
 
 - 1、寄存器xPSR被初始为0x01000000，其中bit24被置1，表示使用Thumb指令
 
@@ -242,6 +245,7 @@ static StaticTask_t IdleTaskTCB;                                    /* 空闲任
 static StackType_t  TimerTaskStack[configTIMER_TASK_STACK_DEPTH];   /* 定时器服务任务堆栈 */
 static StaticTask_t TimerTaskTCB;                                   /* 定时器服务任务控制块 */
 ```
+
 ### 4.1 手动分配内存的函数
 
 空闲任务内存分配
@@ -268,6 +272,7 @@ void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
 ```
 
 软件定时器任务分配
+
 ```c
 /**
  * @brief       获取定时器服务任务的任务堆栈和任务控制块内存
