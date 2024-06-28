@@ -1,3 +1,11 @@
+/*
+ * @Descripttion: sfy_code
+ * @version: 
+ * @Author: Fengyuan Shen
+ * @Date: 2024-04-17 14:50:32
+ * @LastEditors: Fengyuan Shen
+ * @LastEditTime: 2024-06-28 18:15:41
+ */
 import type { DefaultTheme } from 'vitepress';
 import { nav } from './nav';
 import { sidebar } from './sidebar';
@@ -67,7 +75,7 @@ export const themeConfig: DefaultTheme.Config = {
   footerConfig: {
     showFooter: true, // 是否显示页脚
     icpRecordCode: '蜀ICP备2023001686号-1', // ICP备案号
-    // publicSecurityRecordCode: '津公网安备12011202000677号', // 联网备案号
+    publicSecurityRecordCode: '川公网安备51150402000107号', // 联网备案号
     copyright: `Copyright © 2019-${new Date().getFullYear()} clint-sfy` // 版权信息
   }
 }
