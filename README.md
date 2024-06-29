@@ -1,3 +1,11 @@
+<!--
+ * @Descripttion: sfy_code
+ * @version: 
+ * @Author: Fengyuan Shen
+ * @Date: 2023-10-02 13:27:35
+ * @LastEditors: Fengyuan Shen
+ * @LastEditTime: 2024-06-29 20:35:46
+-->
 # 阿源的知识库
 
 #### 说明
@@ -49,5 +57,5 @@ pnpm build
 ## License
 
 - 文章遵循[ CC 4.0 BY-SA ](http://creativecommons.org/licenses/by-sa/4.0/)版权协议，转载请附上原文出处链接和声明
-- 源码遵循 [MIT](https://github.com/Charles7c/charles7c.github.io/blob/main/LICENSE) 许可协议
-- Copyright © 2019-2022 Charles7c
+- 源码遵循 [MIT](https://github.com/clint-sfy/clintsfy.github.io/blob/main/LICENSE) 许可协议
+- Copyright © 2019-2022 clint-sfy
