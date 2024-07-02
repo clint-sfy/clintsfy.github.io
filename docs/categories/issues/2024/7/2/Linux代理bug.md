@@ -1,11 +1,3 @@
-<!--
- * @Descripttion: sfy_code
- * @version: 
- * @Author: Fengyuan Shen
- * @Date: 2024-07-02 19:21:56
- * @LastEditors: Fengyuan Shen
- * @LastEditTime: 2024-07-02 19:28:56
--->
 ---
 title: Linux代理bug
 author: 阿源
