@@ -142,8 +142,6 @@ BJT包括三个掺杂半导体区域：**发射区、基区和集电区**。这�
 
 ![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/stm32/analog/20240730183943.png)
 
-![image-20240730183958786](C:\Users\clint\AppData\Roaming\Typora\typora-user-images\image-20240730183958786.png)
-
 ![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/stm32/analog/20240730184009.png)
 
 ### 本节问题
