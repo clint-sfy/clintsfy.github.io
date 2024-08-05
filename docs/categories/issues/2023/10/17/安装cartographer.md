@@ -20,7 +20,7 @@ tags:
 
 Ubuntu 18.04.6 LTS (Bionic Beaver)
 
-选择：[ ubuntu-18.04.6-desktop-amd64.iso]
+选择：[ubuntu-18.04.6-desktop-amd64.iso]
 
 ## 源码安装
 
@@ -60,16 +60,24 @@ sudo apt-get install -y \
 这里注意！cmake一定要3.16以上，但是ubuntu自带的版本太低了！！
 
 ```
-wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | sudo apt-key add -
+wget https://cmake.org/files/v3.22/cmake-3.22.1.tar.gz
 
-sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
-sudo apt-get update
-sudo apt-get install cmake
+tar -xvzf cmake-3.22.1.tar.gz
+
+修改CMakeLists.txt，在其中添加set(CMAKE_USE_OPENSSL OFF)
+chmod 777 ./configure
+./configure
+
+make
+
+sudo make install
+
+sudo update-alternatives --install /usr/bin/cmake cmake /usr/local/bin/cmake 1 --force
 ```
 
 ### 安装cere
 
-cere一定要选择2.1.0的版本！！！自己去官网下，用xftp传上去
+cere一定要选择2.1.0及以下的版本！！！自己去官网下，用xftp传上去
 
 ```bash
 mkdir carto_ws
@@ -78,27 +86,14 @@ mkdir src
 cd src
 git clone https://github.com/googlecartographer/cartographer_ros.git
 git clone https://github.com/googlecartographer/cartographer.git
-# 这一步 自己去下载2.1.0的版本 ，放到src的目录里面！！！
+# 这一步 自己去下载2.0.0的版本 ，放到src的目录里面！！！
 # git clone https://github.com/ceres-solver/ceres-solver.git
-```
-
-由于在cmake的时候，默认是c++11，但是cere需要c++17
-
-修改文件carto_ws/ceres-solver-2.1.0/CmakeList.txt
-
-在cmake_minimum_required(VERSION3.10)下添加这两句
-
-```
-cmake_minimum_required(VERSION3.10)
-
-set(CMAKE_CXX_STANDARD 17) 
-set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 ```
 
 ### 构建ceres
 
 ```bash
-cd ceres-solver-2.1.0
+cd ceres-solver-2.0.0
 mkdir ceres-bin
 cd ceres-bin
 cmake ..
@@ -108,6 +103,8 @@ sudo make install
 ```
 
 ### 安装protobuf3
+
+如果是ubuntu18不要使用这种方式
 
 ```bash
 sudo apt-get remove libprotobuf-dev
@@ -145,6 +142,14 @@ which protoc
 这是我们不想要的，因为carto的搜索protoc的路径为/ usr/bin/protoc，选择直接copy过去
 sudo cp /usr/local/bin/protoc /usr/bin
 ```
+
+#### 解决ubuntu18的gazebo与protobuf冲突
+
+gazebo9需要protobuf 3.0
+
+gazebo11需要protobuf3.6
+
+解决办法：https://zhuanlan.zhihu.com/p/573559407
 
 ### 安装ros
 
