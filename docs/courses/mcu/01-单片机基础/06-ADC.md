@@ -255,7 +255,7 @@ ADC1和ADC2的引脚全都是相同的，既然都相同，那要ADC2还有啥�
 - 建议在每次上电后执行一次校准
 - 启动校准前， ADC必须处于关电状态超过至少两个ADC时钟周期
 
-![image-20240208152016147](C:\Users\clint\AppData\Roaming\Typora\typora-user-images\image-20240208152016147.png)
+![](https://cdn.jsdelivr.net/gh/clint-sfy/blogcdn@master/stm32/base/20240819171052.png)
 
 第一个是一个电位器产生一个可调的电压，这里电位器的两个因定端，一端接3.3V，另一端接GND，这样中间的滑动端就可以辅出一个0~3.3V可调的电压输出了，我们这里可以接ADC的输入通道，比如PA0口，当滑动端往上滑时，电压增大，往下滑时，电压减小。
 
