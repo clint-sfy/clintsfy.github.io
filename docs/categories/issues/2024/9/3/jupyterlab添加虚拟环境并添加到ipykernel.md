@@ -1,5 +1,13 @@
+<!--
+ * @Descripttion: sfy_code
+ * @version: 
+ * @Author: Fengyuan Shen
+ * @Date: 2024-09-03 14:55:54
+ * @LastEditors: Fengyuan Shen
+ * @LastEditTime: 2024-09-03 15:44:36
+-->
 ---
-title: Linux代理bug
+title: jupyterlab添加虚拟环境并添加到ipykernel
 author: 阿源
 date: 2024/09/03 14:30
 categories:
@@ -12,7 +20,7 @@ tags:
 临时使用
 
 ```
-1 pip install -i https://pypi.tuna.tsinghua.edu.cn/simple 
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple 
 ```
 
 jupyterlab默认情况下使用base作为虚拟环境，但是不能自由切换虚拟环境。可以通过以下方法切换使用内核：
