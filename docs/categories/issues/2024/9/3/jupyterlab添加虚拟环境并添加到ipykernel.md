@@ -1,11 +1,3 @@
-<!--
- * @Descripttion: sfy_code
- * @version: 
- * @Author: Fengyuan Shen
- * @Date: 2024-09-03 14:55:54
- * @LastEditors: Fengyuan Shen
- * @LastEditTime: 2024-09-03 15:44:36
--->
 ---
 title: jupyterlab添加虚拟环境并添加到ipykernel
 author: 阿源
