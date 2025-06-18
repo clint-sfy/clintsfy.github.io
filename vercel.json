@@ -4,7 +4,7 @@
     },
     "git": {
         "deploymentEnabled": {
-            "gh-pages": false
+            "pages": false
         }
     }
 }
