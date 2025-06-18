@@ -19,7 +19,6 @@
     "markdown-it-mathjax3": "^4.3.2",
     "mermaid": "9.3.0",
     "unplugin-vue-components": "^0.25.2",
-    // "vite": "^5.0.3",
     "vitepress": "1.0.0-rc.31",
     "vitepress-plugin-mermaid": "2.0.8",
     "vue": "^3.3.9"
