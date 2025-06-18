@@ -32,7 +32,8 @@
     "fast-glob": "^3.3.2",
     "gitalk": "^1.8.0",
     "gray-matter": "^4.0.3",
-    "jquery": "^3.7.1"
+    "jquery": "^3.7.1",
+    "vite": "^6.0.6"
   },
   "pnpm": {
     "overrides": {
