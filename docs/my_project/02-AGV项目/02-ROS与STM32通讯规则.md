@@ -1,5 +1,5 @@
 ---
-title: ROS开发手册
+title: ROS与STM32通讯规则
 author: 阿源
 date: 2023/11/05 12:00
 categories:
@@ -8,17 +8,141 @@ tags:
  - 个人项目
  - ROS
 ---
-# ROS开发手册
+# ROS与STM32通讯规则
 
-## 1.roslaunch与参数服务器
+## 1. 通讯规则
+
+### 说明
+
+前进：转向轮在前，叉子在后
+
+其实传x轴线速度时 可以为负数 相当于就是倒车了，叉车前进方向可以弃置
+
+### 通讯规则表
+
+ROS → STM32 数据帧格式 (17字节)
+
+| 帧索引 | 描述           | 单位/数据范围                                        |
+| ------ | -------------- | ---------------------------------------------------- |
+| 0      | 帧头           | `0X7B`                                               |
+| 1      | 叉车当前状态   | enum   AGVForkliftStatus                             |
+| 2      | 叉车当前任务   | enum   ForkliftTaskType                              |
+| 3      | 叉车工作模式   | enum 1：视觉导航 2：电磁导航 3：紧急制动   AGV_MODEL |
+| 4      | 预留位         | -                                                    |
+| 5-6    | X轴目标线速度  | mm/s                                                 |
+| 7-8    | Y轴目标线速度  | mm/s  (仅全向底盘有效)                               |
+| 9-10   | Z轴目标角速度  | rad/s × 1000                                         |
+| 11-12  | *货叉*离地高度 | mm                                                   |
+| 13-14  | 错误码         | 404/405等 (映射语音提示)                             |
+| 15     | BCC校验位      | 前15位按位异或                                       |
+| 16     | 帧尾           | `0X7D `                                              |
+
+------
+
+STM32 → ROS 数据帧格式 (20字节)
+
+| 帧索引  | 描述               | 单位/数据范围                                    |
+| ------- | ------------------ | ------------------------------------------------ |
+| 0       | 帧头               | `0X7B`                                           |
+| 1       | 前轮转角           | rad × 1000                                       |
+| 2-3     | X轴实际线速度      | mm/s                                             |
+| 4-5     | Y轴实际线速度      | mm/s (仅全向底盘有效)                            |
+| 6-7     | Z轴实际角速度      | rad/s × 1000                                     |
+| 8-9     | 电池电压           | mV                                               |
+| *10-11* | *货叉*离地高度     | *mm*                                             |
+| 12      | 托盘任务完成情况   | enum (0：无托盘任务 1：最低位完成  2:最高位完成) |
+| 13      | 预留位             | -                                                |
+| 14      | 右货叉红外避障距离 | mm                                               |
+| 15      | 后方避障距离       | mm                                               |
+| 16      | 预留位             | -                                                |
+| 17      | 预留位             | -                                                |
+| 18      | BCC校验位          | 前18位按位异或                                   |
+| 19      | 帧尾               | `0X7D`                                           |
+
+------
+
+### 关键说明：
 
 
+
+### 枚举类设计
+
+```cpp
+typedef enum {
+	AGV_USE_ROS_MODEL = 1,
+	AGV_ELECTROMAGNETIC_MODEL,
+    AGV_STOP_MODEL,
+}AGV_MODEL;
+```
+
+```cpp
+typedef enum { 
+    FORKLIFT_NO_TASK,               // 待机任务状态
+    FORKLIFT_PICKUP_TASK,           // 取货任务状态
+    FORKLIFT_DROPOFF_TASK,          // 放货任务状态
+    FORKLIFT_PARKING_TASK,          // 停车任务状态
+    FORKLIFT_INIT_LOCATION_TASK,    // 初始化位置任务状态
+    FORKLIFT_PATH_TEST_TASK,        // 路径测试任务
+} ForkliftTaskType;
+```
+
+```cpp
+typedef enum {
+   	AGV_STOPPED,                  // 停止待机
+    AGV_FAULT,                    // 故障
+    AGV_POWER_OFF,                // 关机
+    AGV_PATH_PLANNING_TEST,       // 路径规划测试
+    AGV_PATH_TRACKING_TEST,       // AGV路径跟踪测试
+    AGV_PATH_TEST_COMPLETE,       // 路径测试完成
+    AGV_FORKLIFT_INIT_LOCATION,   // 叉车初始化定位
+    AGV_PICKUP_PATH_PLANNING,     // 取货路径规划中
+    AGV_MOVING_TO_PICKUP,         // 前往任务点取货中
+    AGV_ARRIVED_AT_PICKUP,        // 到达取货点
+    AGV_PALLET_PATH_PLANNING,     // 托盘路径规划中
+    AGV_ALIGNING_WITH_PALLET,     // 托盘对准中
+    AGV_ALIGNMENT_COMPLETE,       // 托盘对准完成
+    AGV_PICKING_UP,               // 取货中
+    AGV_PICKUP_COMPLETE,          // 取货完成
+    AGV_DROPOFF_PATH_PLANNING,    // 放货路径规划中
+    AGV_MOVING_TO_DROPOFF,        // 前往任务点放货中
+    AGV_ARRIVED_AT_DROPOFF,       // 到达放货点
+    AGV_DROPPING_OFF,             // 放货中
+    AGV_DROPOFF_COMPLETE,         // 放货完成
+    AGV_LEAVING_AFTER_DROPOFF,    // 放货后离开托盘中
+    AGV_PARKING_PATH_PLANNING,    // 停车点路径规划中
+    AGV_MOVING_TO_PARKING,        // 前往停车点中
+    AGV_PATH_PLANNING_FAILED      // 路径规划失败
+} AGVForkliftStatus;
+```
+
+```cpp
+typedef enum {
+   	PATH_PLANNING_TOPIC_CLOSED,     // 路径规划话题关闭
+    PATH_PLANNING_WAITING,          // 路径规划等待中
+    PATH_PLANNING,            	    // 路径规划中
+    PATH_PLANNING_FAILED,           // 路径规划失败
+    PATH_PLANNING_COMPLETE,		    // 路径规划完成
+    PATH_PLANNING_PUB,    		    // 路径发布中
+} PathPlanningStatus ;
+```
+
+```cpp
+typedef enum {
+    PATH_TRACKING_FORWARD_PUBLISHING,       // 路径跟踪发布中(正向)
+    PATH_TRACKING_FORWARD_EXECUTING,        // 路径跟踪执行中(正向)
+    PATH_TRACKING_REVERSE_PUBLISHING,       // 路径跟踪发布中(逆向)
+    PATH_TRACKING_REVERSE_EXECUTING,        // 路径跟踪执行中(逆向)
+    PATH_TRACKING_FAILED,           		// 路径跟踪失败
+    PATH_TRACKING_ALL_COMPLETE,      		// 所有路径跟踪完成
+    PATH_TRACKING_WAITING,                  // 路径跟踪等待中
+} PathTrackingStatus;
+```
 
 ## 2. 核心代码
 
 ### 循环控制
 
-```cpp
+```c++
 void turn_on_robot::Control()
 {
   while(ros::ok())
@@ -68,7 +192,7 @@ void turn_on_robot::Control()
 
 只执行一次，用于初始化
 
-```cpp
+```c++
 turn_on_robot::turn_on_robot():Sampling_Time(0),Power_voltage(0)
 {
   //Clear the data
@@ -128,7 +252,7 @@ turn_on_robot::turn_on_robot():Sampling_Time(0),Power_voltage(0)
 
 ### 析构函数
 
-```cpp
+```c++
 #define FRAME_HEADER      0X7B       //Frame head //帧头
 #define FRAME_TAIL        0X7D       //Frame tail //帧尾
 #define RECEIVE_DATA_SIZE 24         //下位机发送过来的数据的长度
@@ -144,7 +268,7 @@ typedef struct _SEND_DATA_
 }SEND_DATA;
 ```
 
-```cpp
+```c++
 turn_on_robot::~turn_on_robot()
 {
   //Sends the stop motion command to the lower machine before the turn_on_robot object ends
@@ -181,7 +305,7 @@ turn_on_robot::~turn_on_robot()
 
 ### 接收下位机数据
 
-```cpp
+```c++
 #define FRAME_HEADER      0X7B       //Frame head //帧头
 #define FRAME_TAIL        0X7D       //Frame tail //帧尾
 #define RECEIVE_DATA_SIZE 24         //下位机发送过来的数据的长度
@@ -205,7 +329,7 @@ typedef struct _RECEIVE_DATA_
 }RECEIVE_DATA;
 ```
 
-```cpp
+```c++
 bool turn_on_robot::Get_Sensor_Data_New()
 {
   short transition_16=0; //Intermediate variable //中间变量
@@ -297,7 +421,7 @@ bool turn_on_robot::Get_Sensor_Data_New()
 
 ### 数据转换函数
 
-```cpp
+```c++
 short turn_on_robot::IMU_Trans(uint8_t Data_High,uint8_t Data_Low)
 {
   short transition_16;
@@ -324,7 +448,7 @@ float turn_on_robot::Odom_Trans(uint8_t Data_High,uint8_t Data_Low)
 
 输入参数： Count_Number：数据包前几个字节加入校验  mode：对发送数据还是接收数据进行校验
 
-```cpp
+```c++
 unsigned char turn_on_robot::Check_Sum(unsigned char Count_Number,unsigned char mode)
 {
   unsigned char check_sum=0,k;
@@ -349,8 +473,11 @@ unsigned char turn_on_robot::Check_Sum(unsigned char Count_Number,unsigned char 
 
 ### 发布电压相关信息
 
+```h
 
-```cpp
+```
+
+```c++
 void turn_on_robot::Publish_Voltage()
 {
     std_msgs::Float32 voltage_msgs; //Define the data type of the power supply voltage publishing topic //定义电源电压发布话题的数据类型
@@ -366,7 +493,7 @@ void turn_on_robot::Publish_Voltage()
 
 ### 发布IMU数据话题
 
-```cpp
+```c++
 void turn_on_robot::Publish_ImuSensor()
 {
   sensor_msgs::Imu Imu_Data_Pub; //Instantiate IMU topic data //实例化IMU话题数据
@@ -395,7 +522,7 @@ void turn_on_robot::Publish_ImuSensor()
 
 ### 发布里程计话题
 
-```cpp
+```c++
 void turn_on_robot::Publish_Odom()
 {
     //Convert the Z-axis rotation Angle into a quaternion for expression 
