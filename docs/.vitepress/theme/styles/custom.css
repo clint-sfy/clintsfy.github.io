@@ -156,24 +156,24 @@ html.dark .VPNavBar .content-body {
 }
 
 @media (min-width: 960px) {
-  html .VPNavBar:not(.has-sidebar):not(.top),
-  html .VPNavBar.has-sidebar:not(.top) {
+  #app .VPNavBar:not(.has-sidebar):not(.top),
+  #app .VPNavBar.has-sidebar:not(.top) {
     background-color: var(--site-page-bg);
   }
 
-  html .VPNavBar:not(.top) .content-body {
+  #app .VPNavBar:not(.top) .content-body {
     background-color: var(--site-page-bg);
     backdrop-filter: saturate(180%) blur(18px);
     -webkit-backdrop-filter: saturate(180%) blur(18px);
   }
 
   @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    html .VPNavBar:not(.has-sidebar):not(.top),
-    html .VPNavBar.has-sidebar:not(.top) {
+    #app .VPNavBar:not(.has-sidebar):not(.top),
+    #app .VPNavBar.has-sidebar:not(.top) {
       background-color: transparent;
     }
 
-    html .VPNavBar:not(.top) .content-body {
+    #app .VPNavBar:not(.top) .content-body {
       background-color: color-mix(in srgb, var(--site-page-bg) 88%, transparent);
     }
   }

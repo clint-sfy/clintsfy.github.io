@@ -206,18 +206,34 @@ test('VitePress navigation controls keep 44px targets and the scrolled nav retai
   assert.match(switchRule, /min-width:\s*44px/)
 
   const scrolledNavRule = customStyles.match(
-    /html\s+\.VPNavBar:not\(\.top\)\s+\.content-body\s*\{([^}]*)\}/s,
+    /#app\s+\.VPNavBar:not\(\.top\)\s+\.content-body\s*\{([^}]*)\}/s,
   )?.[1]
-  assert.ok(scrolledNavRule, 'the desktop scrolled navigation content should override VitePress defaults')
+  assert.ok(scrolledNavRule, 'the desktop scrolled navigation content should outrank VitePress scoped defaults')
   assert.match(scrolledNavRule, /background-color:\s*var\(--site-page-bg\)/)
   assert.match(scrolledNavRule, /backdrop-filter\s*:/)
   assert.ok(
     scrolledNavRule.indexOf('background-color:') < scrolledNavRule.indexOf('backdrop-filter:'),
     'the scrolled navigation should keep its solid fallback before backdrop-filter',
   )
+
+  const backdropSupportRules = customStyles.match(
+    /  @supports \(\(backdrop-filter: blur\(1px\)\) or \(-webkit-backdrop-filter: blur\(1px\)\)\) \{([\s\S]*?)\n  \}\n\}/,
+  )?.[1]
+  assert.ok(backdropSupportRules, 'the translucent scrolled navigation rules should be feature-gated')
+  const translucentNavRule = backdropSupportRules.match(
+    /#app\s+\.VPNavBar:not\(\.top\)\s+\.content-body\s*\{([^}]*)\}/s,
+  )?.[1]
+  assert.ok(translucentNavRule, 'the translucent surface should outrank VitePress scoped defaults')
+  assert.match(translucentNavRule, /background-color:\s*color-mix\(/)
+  const transparentNavWrapperRule = backdropSupportRules.match(
+    /#app\s+\.VPNavBar:not\(\.has-sidebar\):not\(\.top\)\s*,\s*#app\s+\.VPNavBar\.has-sidebar:not\(\.top\)\s*\{([^}]*)\}/s,
+  )?.[1]
+  assert.ok(transparentNavWrapperRule, 'the transparent wrapper should use the same stable specificity')
+  assert.match(transparentNavWrapperRule, /background-color:\s*transparent/)
+
   assert.match(
     customStyles,
-    /html\s+\.VPNavBar:not\(\.has-sidebar\):not\(\.top\)\s*,\s*html\s+\.VPNavBar\.has-sidebar:not\(\.top\)\s*\{[^}]*background-color:\s*var\(--site-page-bg\)/s,
+    /#app\s+\.VPNavBar:not\(\.has-sidebar\):not\(\.top\)\s*,\s*#app\s+\.VPNavBar\.has-sidebar:not\(\.top\)\s*\{[^}]*background-color:\s*var\(--site-page-bg\)/s,
     'the scrolled navigation wrapper should outrank its desktop default background rule',
   )
 })
