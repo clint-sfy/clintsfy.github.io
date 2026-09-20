@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "vitepress dev docs",
     "build": "vitepress build docs",
-    "preview": "vitepress preview docs"
+    "preview": "vitepress preview docs",
+    "test": "node --test"
   },
   "devDependencies": {
     "@arco-design/web-vue": "^2.53.3",
