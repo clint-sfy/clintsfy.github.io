@@ -155,6 +155,30 @@ html.dark .VPNavBar .content-body {
   }
 }
 
+@media (min-width: 960px) {
+  html .VPNavBar:not(.has-sidebar):not(.top),
+  html .VPNavBar.has-sidebar:not(.top) {
+    background-color: var(--site-page-bg);
+  }
+
+  html .VPNavBar:not(.top) .content-body {
+    background-color: var(--site-page-bg);
+    backdrop-filter: saturate(180%) blur(18px);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+  }
+
+  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    html .VPNavBar:not(.has-sidebar):not(.top),
+    html .VPNavBar.has-sidebar:not(.top) {
+      background-color: transparent;
+    }
+
+    html .VPNavBar:not(.top) .content-body {
+      background-color: color-mix(in srgb, var(--site-page-bg) 88%, transparent);
+    }
+  }
+}
+
 :where(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
   outline: 3px solid var(--site-focus-ring);
   outline-offset: 3px;
@@ -164,7 +188,6 @@ html.dark .VPNavBar .content-body {
 .VPButton,
 .VPNavBarMenuLink,
 .VPNavBarAppearance,
-.VPNavBarSearchButton,
 .VPNavBarMenuButton,
 .open-source-card__main,
 .open-source-card__repo {
@@ -172,9 +195,52 @@ html.dark .VPNavBar .content-body {
 }
 
 .VPNavBarAppearance,
-.VPNavBarSearchButton,
 .VPNavBarMenuButton {
   min-width: 44px;
+}
+
+.VPNavBarSearch .DocSearch-Button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+html .VPNavBarAppearance .VPSwitch,
+html .VPNavBarExtra .VPSwitch,
+html .VPNavScreenAppearance .VPSwitch {
+  box-sizing: border-box;
+  position: relative;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 22px;
+  background-color: transparent;
+}
+
+html .VPNavBarAppearance .VPSwitch::before,
+html .VPNavBarExtra .VPSwitch::before,
+html .VPNavScreenAppearance .VPSwitch::before {
+  position: absolute;
+  inset: 11px 2px;
+  border: 1px solid var(--vp-input-border-color);
+  border-radius: 11px;
+  background-color: var(--vp-input-switch-bg-color);
+  content: "";
+  pointer-events: none;
+}
+
+html .VPNavBarAppearance .VPSwitch .check,
+html .VPNavBarExtra .VPSwitch .check,
+html .VPNavScreenAppearance .VPSwitch .check {
+  top: 12px;
+  left: 3px;
+}
+
+html .VPNavBarAppearance .VPSwitch:hover::before,
+html .VPNavBarExtra .VPSwitch:hover::before,
+html .VPNavScreenAppearance .VPSwitch:hover::before {
+  border-color: var(--vp-c-brand-1);
 }
 
 .open-source-grid {

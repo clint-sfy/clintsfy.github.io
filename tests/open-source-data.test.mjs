@@ -183,3 +183,41 @@ test('site visual contract keeps the learning homepage and accessible blue proje
   )
   assert.match(head, /name:\s*['"]theme-color['"]\s*,\s*content:\s*['"]#f5f5f7['"]/, 'the browser theme color should match the light surface')
 })
+
+test('VitePress navigation controls keep 44px targets and the scrolled nav retains its surface', () => {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const customStyles = readFileSync(
+    join(repoRoot, 'docs/.vitepress/theme/styles/custom.css'),
+    'utf8',
+  )
+
+  const searchButtonRule = customStyles.match(
+    /\.VPNavBarSearch\s+\.DocSearch-Button\s*\{([^}]*)\}/s,
+  )?.[1]
+  assert.ok(searchButtonRule, 'the real VitePress search button should receive a size rule')
+  assert.match(searchButtonRule, /min-height:\s*44px/)
+  assert.match(searchButtonRule, /min-width:\s*44px/)
+
+  const switchRule = customStyles.match(
+    /html\s+\.VPNavBarAppearance\s+\.VPSwitch,\s*html\s+\.VPNavBarExtra\s+\.VPSwitch,\s*html\s+\.VPNavScreenAppearance\s+\.VPSwitch\s*\{([^}]*)\}/s,
+  )?.[1]
+  assert.ok(switchRule, 'desktop, tablet, and mobile appearance switches should receive the same target size')
+  assert.match(switchRule, /min-height:\s*44px/)
+  assert.match(switchRule, /min-width:\s*44px/)
+
+  const scrolledNavRule = customStyles.match(
+    /html\s+\.VPNavBar:not\(\.top\)\s+\.content-body\s*\{([^}]*)\}/s,
+  )?.[1]
+  assert.ok(scrolledNavRule, 'the desktop scrolled navigation content should override VitePress defaults')
+  assert.match(scrolledNavRule, /background-color:\s*var\(--site-page-bg\)/)
+  assert.match(scrolledNavRule, /backdrop-filter\s*:/)
+  assert.ok(
+    scrolledNavRule.indexOf('background-color:') < scrolledNavRule.indexOf('backdrop-filter:'),
+    'the scrolled navigation should keep its solid fallback before backdrop-filter',
+  )
+  assert.match(
+    customStyles,
+    /html\s+\.VPNavBar:not\(\.has-sidebar\):not\(\.top\)\s*,\s*html\s+\.VPNavBar\.has-sidebar:not\(\.top\)\s*\{[^}]*background-color:\s*var\(--site-page-bg\)/s,
+    'the scrolled navigation wrapper should outrank its desktop default background rule',
+  )
+})
