@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
+import matter from 'gray-matter'
 import { loadOpenSourceProjects } from '../docs/.vitepress/theme/data/open-source.ts'
 import openSourceLoader, {
   createOpenSourceDataLoader,
@@ -138,4 +139,47 @@ test('real RuoYi content is indexed with three notes and its directory link', ()
   assert.ok(ruoYi, 'RuoYi should be loaded from the real Markdown content')
   assert.equal(ruoYi.noteCount, 3)
   assert.equal(ruoYi.link, '/open-source/01-RuoYi/')
+})
+
+test('site visual contract keeps the learning homepage and accessible blue project grid', () => {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const variables = readFileSync(
+    join(repoRoot, 'docs/.vitepress/theme/styles/vars.css'),
+    'utf8',
+  )
+  const customStyles = readFileSync(
+    join(repoRoot, 'docs/.vitepress/theme/styles/custom.css'),
+    'utf8',
+  )
+  const homepage = matter(readFileSync(join(repoRoot, 'docs/index.md'), 'utf8')).data
+  const head = readFileSync(join(repoRoot, 'docs/.vitepress/config/head.ts'), 'utf8')
+
+  assert.match(variables, /#0071e3/i, 'the brand primary color should be Apple blue')
+  assert.match(customStyles, /\.open-source-grid\b/, 'project cards should use the visual grid styles')
+  assert.match(customStyles, /:focus-visible\b/, 'interactive controls should expose a keyboard focus ring')
+  assert.match(customStyles, /prefers-reduced-motion\s*:\s*reduce/, 'nonessential motion should respect user preferences')
+  assert.match(customStyles, /html\.dark\b/, 'surface colors should include a dark-mode variant')
+
+  const navRule = customStyles.match(/\.VPNavBar\s*\{([^}]*)\}/s)?.[1] ?? ''
+  assert.match(navRule, /background-color\s*:/, 'the navigation should have a solid-color fallback')
+  assert.match(navRule, /backdrop-filter\s*:/, 'the navigation may use a translucent glass effect')
+  assert.ok(
+    navRule.indexOf('background-color:') < navRule.indexOf('backdrop-filter:'),
+    'the solid navigation background should precede backdrop-filter',
+  )
+
+  assert.equal(homepage.hero.name, '阿源的知识库')
+  assert.match(homepage.hero.tagline, /学习|研习|实践/, 'the tagline should focus on learning')
+  assert.deepEqual(
+    homepage.hero.actions.map(({ text, link }) => ({ text, link })),
+    [
+      { text: '学习开源项目', link: '/open-source/' },
+      { text: '开始阅读', link: '/introduction' },
+    ],
+  )
+  assert.deepEqual(
+    homepage.features.map(({ title }) => title),
+    ['开源项目研习', '系统学习笔记', '项目实践', '持续分享'],
+  )
+  assert.match(head, /name:\s*['"]theme-color['"]\s*,\s*content:\s*['"]#f5f5f7['"]/, 'the browser theme color should match the light surface')
 })

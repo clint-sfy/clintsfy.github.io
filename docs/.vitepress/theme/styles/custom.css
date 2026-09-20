@@ -10,6 +10,8 @@
 
 body {
   font-size: 16px;
+  font-family: var(--site-font-family);
+  background-color: var(--site-page-bg);
 }
 
 pre, code, kbd, samp {
@@ -110,4 +112,203 @@ mjx-container > svg {
 
 .mr-\[6px\] {
   margin-right: 6px;
+}
+
+html,
+body,
+#app {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.VPNav {
+  background-color: transparent;
+}
+
+.VPNavBar {
+  background-color: var(--site-page-bg);
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+}
+
+.VPNavBar .content-body {
+  background-color: var(--site-page-bg);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .VPNavBar,
+  .VPNavBar .content-body {
+    background-color: color-mix(in srgb, var(--site-page-bg) 88%, transparent);
+  }
+}
+
+html.dark .VPNavBar,
+html.dark .VPNavBar .content-body {
+  background-color: var(--site-page-bg);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html.dark .VPNavBar,
+  html.dark .VPNavBar .content-body {
+    background-color: color-mix(in srgb, var(--site-page-bg) 88%, transparent);
+  }
+}
+
+:where(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 3px solid var(--site-focus-ring);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.VPButton,
+.VPNavBarMenuLink,
+.VPNavBarAppearance,
+.VPNavBarSearchButton,
+.VPNavBarMenuButton,
+.open-source-card__main,
+.open-source-card__repo {
+  min-height: 44px;
+}
+
+.VPNavBarAppearance,
+.VPNavBarSearchButton,
+.VPNavBarMenuButton {
+  min-width: 44px;
+}
+
+.open-source-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  min-width: 0;
+  width: 100%;
+}
+
+.open-source-card {
+  min-width: 0;
+  border: 1px solid var(--site-border);
+  border-radius: var(--site-radius-card);
+  background-color: var(--site-surface);
+  box-shadow: var(--site-shadow);
+}
+
+.open-source-card__main {
+  display: block;
+  min-width: 0;
+  padding: 22px;
+  color: inherit;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.open-source-card__name {
+  margin: 0;
+  color: var(--vp-c-text-1);
+  font-size: 20px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.open-source-card__summary {
+  margin: 12px 0;
+  color: var(--vp-c-text-2);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.open-source-card__status,
+.open-source-card__note-count {
+  color: var(--vp-c-text-2);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.open-source-card__stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.open-source-card__stack li {
+  max-width: 100%;
+  padding: 5px 10px;
+  border: 1px solid var(--site-border);
+  border-radius: 999px;
+  background-color: var(--site-surface-muted);
+  color: var(--vp-c-text-2);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.open-source-card__note-count {
+  display: inline-flex;
+  margin-top: 14px;
+}
+
+.open-source-card__entry {
+  display: block;
+  margin-top: 14px;
+  color: var(--vp-c-brand-1);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.open-source-card__repo {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 12px 22px;
+  border-top: 1px solid var(--site-border);
+  border-radius: 0 0 var(--site-radius-card) var(--site-radius-card);
+  color: var(--vp-c-brand-1);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 640px) {
+  .open-source-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (min-width: 960px) {
+  .open-source-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .open-source-card {
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      border-color 180ms ease;
+  }
+
+  .open-source-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(0, 113, 227, 0.32);
+    box-shadow: var(--site-shadow-raised);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .open-source-card:hover {
+    transform: none !important;
+  }
 }

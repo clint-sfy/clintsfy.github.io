@@ -8,7 +8,7 @@ export const head: HeadConfig[] = [
 
   ['meta', { name: 'HandheldFriendly', content: 'True' }],
   ['meta', { name: 'MobileOptimized', content: '320' }],
-  ['meta', { name: 'theme-color', content: '#3c8772' }],
+  ['meta', { name: 'theme-color', content: '#f5f5f7' }],
 
   ['meta', { property: 'og:type', content: 'website' }],
   ['meta', { property: 'og:locale', content: metaData.locale }],

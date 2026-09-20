@@ -6,30 +6,26 @@ titleTemplate: 一个用于展示项目文档和个人技术知识内容的web�
 
 hero:
   name: 阿源的知识库
-  text: 专注 & 洞察 & 分享
-  tagline: 一个用于展示项目文档和个人技术知识内容的web网站
+  text: 在实践中学习
+  tagline: 记录学习路径，分享项目实践
   image:
     src: /logo.png
     alt: Logo
   actions:
     - theme: brand
-      text: 快速开始
-      link: /introduction
+      text: 学习开源项目
+      link: /open-source/
     - theme: alt
-      text: 下载源码
-      link: https://github.com/clint-sfy/clintsfy.github.io
+      text: 开始阅读
+      link: /introduction
 
 features:
-  - title: 💡 主流技术栈 
-    details: 有Vue、SpringBoot、Python、Matlab、C++、Linux、QT等最新技术
-  - title: ⚡️ IT技术学习
-    details: 不断实践，不断解决问题是成长的必经之路。革命尚未成功，同志仍需努力
-  - title: 🛠️ 笔记丰富
-    details: 有ChatGPT、机器学习、深度学习、科研小贴士、嵌入式等超多科研和IT笔记
-  - title: 📚 保持专注
-    details: “简单比复杂更难，你必须努力让你的想法变得清晰明了，让它变得简单。一旦你做到了简单，你就能搬动大山。” -- 乔布斯
-  - title: 🕵️ 善于洞察
-    details: “我既没有突出的理解力，也没有过人的机智。只在觉察那些稍纵即逝的事物并对其进行精细观察的能力上，我可能在普通人之上。” -- 达尔文
-  - title: 🏷️ 乐于分享
-    details: 关于分享，有形的物品越分越少，无形的知识越分越多。在记录与分享的过程中, 梳理所学, 交流所得, 必有所获。
+  - title: 开源项目研习
+    details: 从真实代码出发，梳理项目结构、模块职责与关键实现。
+  - title: 系统学习笔记
+    details: 把分散的问题和经验整理成可回顾的知识脉络。
+  - title: 项目实践
+    details: 通过动手验证，把技术理解落实到实际场景中。
+  - title: 持续分享
+    details: 记录过程与收获，让知识能被自己和他人再次使用。
 ---
