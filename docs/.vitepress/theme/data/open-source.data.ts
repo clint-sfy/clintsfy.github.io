@@ -2,11 +2,21 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadOpenSourceProjects } from './open-source.ts'
 
-const docsRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../')
+const watch = ['../../../open-source/*/*.md']
 
-export default {
-  watch: ['../../../open-source/*/*.md'],
-  load() {
-    return loadOpenSourceProjects(docsRoot)
-  },
+export function resolveOpenSourceDocsRoot(moduleUrl: string): string {
+  return resolve(dirname(fileURLToPath(moduleUrl)), '../../../')
 }
+
+export function createOpenSourceDataLoader(rootDir: string) {
+  return {
+    watch,
+    load() {
+      return loadOpenSourceProjects(rootDir)
+    },
+  }
+}
+
+export default createOpenSourceDataLoader(
+  resolveOpenSourceDocsRoot(import.meta.url),
+)

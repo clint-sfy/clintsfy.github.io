@@ -5,7 +5,10 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
 import { loadOpenSourceProjects } from '../docs/.vitepress/theme/data/open-source.ts'
-import openSourceLoader from '../docs/.vitepress/theme/data/open-source.data.ts'
+import openSourceLoader, {
+  createOpenSourceDataLoader,
+  resolveOpenSourceDocsRoot,
+} from '../docs/.vitepress/theme/data/open-source.data.ts'
 
 function addProject(docsRoot, directoryName, frontmatter, notes = []) {
   const projectDir = join(docsRoot, 'open-source', directoryName)
@@ -63,12 +66,37 @@ test('loads projects with stable order, safe defaults, note counts, and director
   }
 })
 
-test('VitePress loader watches project markdown and delegates to the pure data function', async () => {
-  const docsRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../docs')
+test('VitePress loader resolves the docs root and delegates using a non-empty fixture', () => {
+  const tempRoot = mkdtempSync(join(tmpdir(), 'open-source-loader-'))
+  const docsRoot = join(tempRoot, 'docs')
 
-  assert.deepEqual(openSourceLoader.watch, ['../../../open-source/*/*.md'])
-  assert.deepEqual(
-    await openSourceLoader.load(),
-    loadOpenSourceProjects(docsRoot),
-  )
+  try {
+    addProject(
+      docsRoot,
+      '07-Loader-fixture',
+      'name: Loader fixture\nsummary: Loader fixture project\norder: 7\nstatus: learning',
+      ['note.md'],
+    )
+
+    const loader = createOpenSourceDataLoader(docsRoot)
+    const loaderModuleUrl = new URL(
+      '../docs/.vitepress/theme/data/open-source.data.ts',
+      import.meta.url,
+    ).href
+    const expectedDocsRoot = resolve(
+      dirname(fileURLToPath(import.meta.url)),
+      '../docs',
+    )
+
+    assert.deepEqual(loader.watch, ['../../../open-source/*/*.md'])
+    assert.deepEqual(openSourceLoader.watch, ['../../../open-source/*/*.md'])
+    assert.deepEqual(loader.load(), loadOpenSourceProjects(docsRoot))
+    assert.deepEqual(
+      loader.load().map(({ link }) => link),
+      ['/open-source/07-Loader-fixture/'],
+    )
+    assert.equal(resolveOpenSourceDocsRoot(loaderModuleUrl), expectedDocsRoot)
+  } finally {
+    rmSync(tempRoot, { recursive: true, force: true })
+  }
 })
