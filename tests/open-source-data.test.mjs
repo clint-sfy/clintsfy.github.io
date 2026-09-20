@@ -205,6 +205,20 @@ test('VitePress navigation controls keep 44px targets and the scrolled nav retai
   assert.match(switchRule, /min-height:\s*44px/)
   assert.match(switchRule, /min-width:\s*44px/)
 
+  const sidebarLinkRule = customStyles.match(
+    /#app\s+\.VPSidebarItem\s*>\s*\.item\s*>\s*\.link\s*\{([^}]*)\}/s,
+  )?.[1]
+  assert.ok(sidebarLinkRule, 'VitePress document sidebar links should receive a stable touch-target rule')
+  assert.match(sidebarLinkRule, /min-height:\s*44px/)
+
+  const mobileGroupLinkRule = customStyles.match(
+    /#app\s+\.VPNavScreenMenuGroupLink\s*\{([^}]*)\}/s,
+  )?.[1]
+  assert.ok(mobileGroupLinkRule, 'mobile navigation group links should receive a stable touch-target rule')
+  assert.match(mobileGroupLinkRule, /min-height:\s*44px/)
+  assert.match(mobileGroupLinkRule, /display:\s*flex/)
+  assert.match(mobileGroupLinkRule, /align-items:\s*center/)
+
   const scrolledNavRule = customStyles.match(
     /#app\s+\.VPNavBar:not\(\.top\)\s+\.content-body\s*\{([^}]*)\}/s,
   )?.[1]

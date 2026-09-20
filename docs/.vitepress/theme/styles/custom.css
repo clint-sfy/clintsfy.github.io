@@ -243,6 +243,18 @@ html .VPNavScreenAppearance .VPSwitch:hover::before {
   border-color: var(--vp-c-brand-1);
 }
 
+#app .VPSidebarItem > .item > .link {
+  box-sizing: border-box;
+  min-height: 44px;
+}
+
+#app .VPNavScreenMenuGroupLink {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+
 .open-source-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
