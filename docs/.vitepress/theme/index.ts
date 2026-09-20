@@ -1,5 +1,6 @@
 import DefaultTheme from 'vitepress/theme'
 import MyLayout from './MyLayout.vue';
+import OpenSourceProjects from './components/OpenSourceProjects.vue';
 import './styles/vars.css';
 import './styles/custom.css';
 import axios from 'axios';
@@ -11,6 +12,8 @@ export default {
   enhanceApp(ctx) {
     // extend default theme custom behaviour.
     DefaultTheme.enhanceApp(ctx);
+
+    ctx.app.component('OpenSourceProjects', OpenSourceProjects);
 
     // 全局挂载 API 接口
     ctx.app.config.globalProperties.$http = axios

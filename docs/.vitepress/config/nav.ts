@@ -3,13 +3,17 @@ import type { DefaultTheme } from 'vitepress';
 export const nav: DefaultTheme.Config['nav'] = [
   {
     text: '首页',
-    link: '/introduction',
-    activeMatch: '/introduction'
+    link: '/'
   },
   {
     text: '项目文档',
     link: '/my_project/index',
     activeMatch: '/my_project/'
+  },
+  {
+    text: '学习开源项目',
+    link: '/open-source/',
+    activeMatch: '/open-source/'
   },
   {
     text: '前沿 & 工作',

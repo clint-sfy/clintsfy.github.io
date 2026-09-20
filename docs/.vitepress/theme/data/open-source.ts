@@ -109,12 +109,16 @@ export function loadOpenSourceProjects(rootDir: string): OpenSourceProject[] {
     }
 
     const status = readStatus(frontmatter.status)
-    const name = readString(frontmatter.name, directory.name)
+    const name =
+      readOptionalString(frontmatter.projectName) ??
+      readOptionalString(frontmatter.name) ??
+      readOptionalString(frontmatter.title) ??
+      directory.name
 
     projects.push({
       directoryName: directory.name,
       project: {
-        name: name.trim().length > 0 ? name : directory.name,
+        name,
         summary: readString(frontmatter.summary),
         repo: readOptionalString(frontmatter.repo),
         stack: readStack(frontmatter.stack),

@@ -100,3 +100,42 @@ test('VitePress loader resolves the docs root and delegates using a non-empty fi
     rmSync(tempRoot, { recursive: true, force: true })
   }
 })
+
+test('normalizes the project display name from projectName, name, title, or directory', () => {
+  const tempRoot = mkdtempSync(join(tmpdir(), 'open-source-project-name-'))
+  const docsRoot = join(tempRoot, 'docs')
+
+  try {
+    addProject(
+      docsRoot,
+      '01-ProjectName',
+      'projectName: Preferred name\nname: Legacy name\ntitle: Article title\norder: 1',
+    )
+    addProject(
+      docsRoot,
+      '02-LegacyName',
+      'name: Legacy name\ntitle: Article title\norder: 2',
+    )
+    addProject(docsRoot, '03-Title', 'title: Article title\norder: 3')
+    addProject(docsRoot, '04-DirectoryFallback', 'summary: No explicit name\norder: 4')
+
+    const projects = loadOpenSourceProjects(docsRoot)
+
+    assert.deepEqual(
+      projects.map(({ name }) => name),
+      ['Preferred name', 'Legacy name', 'Article title', '04-DirectoryFallback'],
+    )
+  } finally {
+    rmSync(tempRoot, { recursive: true, force: true })
+  }
+})
+
+test('real RuoYi content is indexed with three notes and its directory link', () => {
+  const docsRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../docs')
+  const projects = loadOpenSourceProjects(docsRoot)
+  const ruoYi = projects.find(({ name }) => name === 'RuoYi')
+
+  assert.ok(ruoYi, 'RuoYi should be loaded from the real Markdown content')
+  assert.equal(ruoYi.noteCount, 3)
+  assert.equal(ruoYi.link, '/open-source/01-RuoYi/')
+})

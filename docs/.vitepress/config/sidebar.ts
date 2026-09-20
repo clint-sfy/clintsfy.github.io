@@ -6,6 +6,7 @@ const sync = fg.sync;
 
 export const sidebar: DefaultTheme.Config['sidebar'] = {
   '/my_project/': getItems("my_project"),
+  '/open-source/': getOpenSourceItems('open-source'),
 
   
   '/categories/issues/': getItemsByDate("categories/issues"),
@@ -168,6 +169,62 @@ function getItems (path: string) {
   // 添加序号
   addOrderNumber(groups);
   return groups;
+}
+
+/**
+ * 根据开源项目目录生成项目分组和笔记侧栏。
+ * 项目组按目录名排序；导读固定置顶，其余文章按文件名排序。
+ */
+function getOpenSourceItems(path: string): DefaultTheme.SidebarItem[] {
+  const projectDirectories = sync(`docs/${path}/*`, {
+    onlyDirectories: true,
+    objectMode: true,
+  }).sort((left, right) => compareNames(left.name, right.name));
+
+  return projectDirectories.map(({ name: projectDirectoryName }) => {
+    const projectPath = `docs/${path}/${projectDirectoryName}`;
+    const { data: projectData } = matter.read(`${projectPath}/index.md`);
+    const projectName =
+      typeof projectData.projectName === 'string' && projectData.projectName.trim()
+        ? projectData.projectName
+        : projectDirectoryName;
+    const articles = sync(`${projectPath}/*.md`, {
+      onlyFiles: true,
+      objectMode: true,
+    }).sort((left, right) => compareNames(left.name, right.name));
+    const items: DefaultTheme.SidebarItem[] = [
+      {
+        text: '项目导读',
+        link: `/${path}/${projectDirectoryName}/`,
+      },
+    ];
+
+    articles
+      .filter(({ name }) => name.toLowerCase() !== 'index.md')
+      .forEach((article) => {
+        const { data } = matter.read(article.path);
+        const title =
+          typeof data.title === 'string' && data.title.trim()
+            ? data.title
+            : article.name.replace(/\.md$/i, '');
+
+        items.push({
+          text: title,
+          link: `/${path}/${projectDirectoryName}/${article.name.replace(/\.md$/i, '')}`,
+        });
+      });
+
+    return {
+      text: projectName,
+      items,
+    };
+  });
+}
+
+function compareNames(left: string, right: string): number {
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
 }
 
 /**
