@@ -251,3 +251,15 @@ test('VitePress navigation controls keep 44px targets and the scrolled nav retai
     'the scrolled navigation wrapper should outrank its desktop default background rule',
   )
 })
+
+test('GitHub Pages workflow pins a Node-compatible pnpm toolchain', () => {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const workflow = readFileSync(join(repoRoot, '.github/workflows/deploy.yml'), 'utf8')
+  const packageJson = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8'))
+
+  assert.match(workflow, /uses:\s*pnpm\/action-setup@v4/)
+  assert.match(workflow, /version:\s*9\.15\.9/)
+  assert.match(workflow, /uses:\s*actions\/setup-node@v4/)
+  assert.match(workflow, /node-version:\s*22/)
+  assert.equal(packageJson.packageManager, 'pnpm@9.15.9')
+})
