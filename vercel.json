@@ -2,6 +2,7 @@
     "buildCommand": "corepack pnpm@9.15.9 build",
     "installCommand": "corepack pnpm@9.15.9 install --frozen-lockfile",
     "outputDirectory": "docs/.vitepress/dist",
+    "cleanUrls": true,
     "github": {
         "silent": true
     },
