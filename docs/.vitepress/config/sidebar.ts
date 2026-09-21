@@ -16,6 +16,7 @@ export const sidebar: DefaultTheme.Config['sidebar'] = {
   // '/categories/tools/': getItemsByDate("categories/tools"),
 
   '/courses/c/': getItems("courses/c"),
+  '/courses/agent/': getItems("courses/agent"),
   '/courses/c_plus/': getItems("courses/c_plus"),
   '/courses/python/': getItems("courses/python"),
   '/courses/tangyudi/': getItems("courses/tangyudi"),
@@ -181,7 +182,7 @@ function getOpenSourceItems(path: string): DefaultTheme.SidebarItem[] {
     objectMode: true,
   }).sort((left, right) => compareNames(left.name, right.name));
 
-  return projectDirectories.map(({ name: projectDirectoryName }) => {
+  const projectGroups = projectDirectories.map(({ name: projectDirectoryName }, projectIndex) => {
     const projectPath = `docs/${path}/${projectDirectoryName}`;
     const { data: projectData } = matter.read(`${projectPath}/index.md`);
     const projectName =
@@ -215,10 +216,19 @@ function getOpenSourceItems(path: string): DefaultTheme.SidebarItem[] {
       });
 
     return {
-      text: projectName,
+      text: `${projectName} (${items.length}篇)`,
       items,
+      collapsed: projectIndex !== 0,
     };
   });
+
+  return [
+    {
+      text: '项目总览',
+      link: `/${path}/`,
+    },
+    ...projectGroups,
+  ];
 }
 
 function compareNames(left: string, right: string): number {

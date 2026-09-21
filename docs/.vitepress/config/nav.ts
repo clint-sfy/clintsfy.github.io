@@ -1,4 +1,21 @@
 import type { DefaultTheme } from 'vitepress';
+import fg from 'fast-glob';
+import matter from 'gray-matter';
+
+const openSourceNavItems: DefaultTheme.NavItemWithLink[] = [
+  { text: '项目总览', link: '/open-source/' },
+  ...fg
+    .sync('docs/open-source/*/index.md', { objectMode: true })
+    .sort((left, right) => left.path.localeCompare(right.path))
+    .map((entry) => {
+      const { data } = matter.read(entry.path)
+      const directory = entry.path.replace(/\\/g, '/').split('/').at(-2) ?? ''
+      return {
+        text: typeof data.projectName === 'string' ? data.projectName : directory,
+        link: `/open-source/${directory}/`,
+      }
+    }),
+];
 
 export const nav: DefaultTheme.Config['nav'] = [
   {
@@ -12,7 +29,7 @@ export const nav: DefaultTheme.Config['nav'] = [
   },
   {
     text: '学习开源项目',
-    link: '/open-source/',
+    items: openSourceNavItems,
     activeMatch: '/open-source/'
   },
   {
@@ -29,6 +46,7 @@ export const nav: DefaultTheme.Config['nav'] = [
   {
     text: '学习笔记',
     items: [
+      { text: 'Agent 开发', link: '/courses/agent/index', activeMatch: '/courses/agent/' },
       { text: 'C语言基础快速入门', link: '/courses/c/index', activeMatch: '/courses/c/' },
       { text: 'C++基础快速入门', link: '/courses/c_plus/index', activeMatch: '/courses/c_plus/' },
       { text: 'Python基础快速入门', link: '/courses/python/index', activeMatch: '/courses/python/' },

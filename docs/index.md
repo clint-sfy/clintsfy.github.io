@@ -29,3 +29,5 @@ features:
   - title: 持续分享
     details: 记录过程与收获，让知识能被自己和他人再次使用。
 ---
+
+<HomeOpenSourceProjects />

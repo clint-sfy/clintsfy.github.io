@@ -9,6 +9,9 @@
       <Comment v-if="(theme.commentConfig?.showComment ?? true) && (frontmatter?.showComment ?? true)" :commentConfig="theme.commentConfig" :key="md5(page.relativePath)" />
     </template>
     <template #layout-bottom>
+      <ClientOnly>
+        <SidebarCollapse />
+      </ClientOnly>
       <Footer v-if="!hasSidebar && (theme.footerConfig?.showFooter ?? true) && (frontmatter?.showFooter ?? true)" />
     </template>
   </Layout>
@@ -22,6 +25,7 @@
   import Copyright from './components/layout/Copyright.vue';
   import Comment from './components/layout/Comment.vue';
   import Footer from './components/layout/Footer.vue';
+  import SidebarCollapse from './components/layout/SidebarCollapse.vue';
 
   const { Layout } = DefaultTheme;
   const { page, theme, frontmatter } = useData();

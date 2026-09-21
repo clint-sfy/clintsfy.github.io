@@ -131,14 +131,25 @@ test('normalizes the project display name from projectName, name, title, or dire
   }
 })
 
-test('real RuoYi content is indexed with three notes and its directory link', () => {
+test('real dsh-mytable content is indexed with three notes and its repository', () => {
   const docsRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../docs')
   const projects = loadOpenSourceProjects(docsRoot)
-  const ruoYi = projects.find(({ name }) => name === 'RuoYi')
+  const mytable = projects.find(({ name }) => name === 'dsh-mytable')
 
-  assert.ok(ruoYi, 'RuoYi should be loaded from the real Markdown content')
-  assert.equal(ruoYi.noteCount, 3)
-  assert.equal(ruoYi.link, '/open-source/01-RuoYi/')
+  assert.ok(mytable, 'dsh-mytable should be loaded from the real Markdown content')
+  assert.equal(mytable.noteCount, 3)
+  assert.equal(mytable.link, '/open-source/01-dsh-mytable/')
+  assert.equal(mytable.repo, 'https://github.com/clint-sfy/dsh-mytable')
+})
+
+test('AGV documentation is indexed under open-source learning', () => {
+  const docsRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../docs')
+  const projects = loadOpenSourceProjects(docsRoot)
+  const agv = projects.find(({ name }) => name === 'AGV 智能叉车')
+
+  assert.ok(agv, 'AGV should be migrated into the open-source project collection')
+  assert.equal(agv.noteCount, 7)
+  assert.equal(agv.link, '/open-source/02-AGV项目/')
 })
 
 test('site visual contract keeps the learning homepage and accessible blue project grid', () => {
@@ -155,10 +166,19 @@ test('site visual contract keeps the learning homepage and accessible blue proje
   const head = readFileSync(join(repoRoot, 'docs/.vitepress/config/head.ts'), 'utf8')
 
   assert.match(variables, /#0071e3/i, 'the brand primary color should be Apple blue')
+  assert.match(variables, /#30d158/i, 'the hero title should retain a refined green gradient stop')
+  assert.match(
+    variables,
+    /--vp-home-hero-image-background-image:\s*radial-gradient\([\s\S]*?rgba\(0, 113, 227, 0\.38\)[\s\S]*?radial-gradient\([\s\S]*?rgba\(48, 209, 88, 0\.34\)/,
+    'the whale should have layered blue and green halo gradients',
+  )
+  assert.match(customStyles, /\.VPHomeHero\s+\.image-bg\b/, 'the hero halo should receive explicit visual depth styling')
   assert.match(customStyles, /\.open-source-grid\b/, 'project cards should use the visual grid styles')
   assert.match(customStyles, /:focus-visible\b/, 'interactive controls should expose a keyboard focus ring')
   assert.match(customStyles, /prefers-reduced-motion\s*:\s*reduce/, 'nonessential motion should respect user preferences')
   assert.match(customStyles, /html\.dark\b/, 'surface colors should include a dark-mode variant')
+  assert.match(customStyles, /\.vp-doc\s*>\s*div\s*>\s*p\s*\{[^}]*text-indent:\s*2em/s, 'rendered Markdown prose should use a two-character first-line indent')
+  assert.match(customStyles, /\.vp-doc\s+h2::before/, 'Markdown section headings should use the refined accent')
 
   const navRule = customStyles.match(/\.VPNavBar\s*\{([^}]*)\}/s)?.[1] ?? ''
   assert.match(navRule, /background-color\s*:/, 'the navigation should have a solid-color fallback')
@@ -250,6 +270,52 @@ test('VitePress navigation controls keep 44px targets and the scrolled nav retai
     /#app\s+\.VPNavBar:not\(\.has-sidebar\):not\(\.top\)\s*,\s*#app\s+\.VPNavBar\.has-sidebar:not\(\.top\)\s*\{[^}]*background-color:\s*var\(--site-page-bg\)/s,
     'the scrolled navigation wrapper should outrank its desktop default background rule',
   )
+})
+
+test('documentation navigation scales to many projects and can be collapsed on desktop', () => {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const sidebar = readFileSync(join(repoRoot, 'docs/.vitepress/config/sidebar.ts'), 'utf8')
+  const layout = readFileSync(join(repoRoot, 'docs/.vitepress/theme/MyLayout.vue'), 'utf8')
+  const collapseControl = readFileSync(
+    join(repoRoot, 'docs/.vitepress/theme/components/layout/SidebarCollapse.vue'),
+    'utf8',
+  )
+  const homepage = readFileSync(join(repoRoot, 'docs/index.md'), 'utf8')
+
+  assert.match(sidebar, /text:\s*'项目总览'/)
+  assert.match(sidebar, /collapsed:\s*projectIndex\s*!==\s*0/)
+  assert.match(layout, /<SidebarCollapse\s*\/>/)
+  assert.match(collapseControl, /localStorage/)
+  assert.match(collapseControl, /sidebar-collapsed/)
+  assert.match(collapseControl, /aria-label/)
+  assert.match(collapseControl, /\.VPNavBarTitle\s*>\s*\.title/)
+  assert.match(collapseControl, /font-size:\s*0/)
+  assert.match(homepage, /<HomeOpenSourceProjects\s*\/>/)
+})
+
+test('Agent development notes are exposed through navigation and sidebar', () => {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const nav = readFileSync(join(repoRoot, 'docs/.vitepress/config/nav.ts'), 'utf8')
+  const sidebar = readFileSync(join(repoRoot, 'docs/.vitepress/config/sidebar.ts'), 'utf8')
+  const roadmap = readFileSync(join(repoRoot, 'docs/courses/agent/index.md'), 'utf8')
+
+  assert.match(nav, /text:\s*'Agent 开发'/)
+  assert.match(nav, /\/courses\/agent\/index/)
+  assert.match(sidebar, /'\/courses\/agent\/':\s*getItems\("courses\/agent"\)/)
+  assert.match(roadmap, /MCP/)
+  assert.match(roadmap, /Agent Skills/)
+  assert.match(roadmap, /RAG/)
+  assert.match(roadmap, /LangChain/)
+})
+
+test('open-source projects are exposed as a dynamic top navigation menu', () => {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const nav = readFileSync(join(repoRoot, 'docs/.vitepress/config/nav.ts'), 'utf8')
+
+  assert.match(nav, /openSourceNavItems/)
+  assert.match(nav, /docs\/open-source\/\*\/index\.md/)
+  assert.match(nav, /text:\s*'项目总览'/)
+  assert.match(nav, /items:\s*openSourceNavItems/)
 })
 
 test('GitHub Pages workflow pins a Node-compatible pnpm toolchain', () => {

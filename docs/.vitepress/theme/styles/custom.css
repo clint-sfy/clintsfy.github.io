@@ -14,6 +14,80 @@ body {
   background-color: var(--site-page-bg);
 }
 
+.VPHomeHero .image-bg {
+  opacity: 0.94;
+  transform: translate(-50%, -50%) scale(1.12);
+  transition: opacity 240ms ease, filter 240ms ease;
+}
+
+html.dark .VPHomeHero .image-bg {
+  opacity: 1;
+}
+
+/* Reading typography: keep technical content calm without affecting home/cards. */
+.vp-doc > p,
+.vp-doc > div > p {
+  margin: 1em 0;
+  color: var(--vp-c-text-2);
+  font-size: 16px;
+  line-height: 1.95;
+  text-align: justify;
+  text-indent: 2em;
+  text-wrap: pretty;
+}
+
+.vp-doc h1 {
+  margin-bottom: 24px;
+  font-size: clamp(30px, 4vw, 40px);
+  letter-spacing: -0.035em;
+}
+
+.vp-doc h2 {
+  margin: 42px 0 16px;
+  padding-top: 0;
+  border-top: 0;
+  font-size: 25px;
+  letter-spacing: -0.02em;
+}
+
+.vp-doc h2::before {
+  display: inline-block;
+  width: 4px;
+  height: 0.88em;
+  margin-right: 10px;
+  vertical-align: -0.04em;
+  background: linear-gradient(180deg, #30d158, #0a84ff);
+  border-radius: 999px;
+  content: '';
+}
+
+.vp-doc h3 {
+  margin-top: 30px;
+  font-size: 19px;
+}
+
+.vp-doc blockquote {
+  padding: 14px 18px;
+  color: var(--vp-c-text-2);
+  background: color-mix(in srgb, var(--vp-c-brand-1) 6%, var(--vp-c-bg-soft));
+  border-left: 3px solid color-mix(in srgb, var(--vp-c-brand-1) 70%, #30d158);
+  border-radius: 0 14px 14px 0;
+}
+
+.vp-doc :not(pre) > code {
+  padding: 0.16em 0.42em;
+  color: color-mix(in srgb, var(--vp-c-brand-1) 78%, var(--vp-c-text-1));
+  background: color-mix(in srgb, var(--vp-c-brand-1) 8%, var(--vp-c-bg-soft));
+  border-radius: 6px;
+}
+
+@media (max-width: 639px) {
+  .vp-doc > p,
+  .vp-doc > div > p {
+    text-align: start;
+  }
+}
+
 pre, code, kbd, samp {
   font-family: var(--vp-font-family-mono);
 }
@@ -350,14 +424,13 @@ html .VPNavScreenAppearance .VPSwitch:hover::before {
 
 @media (min-width: 640px) {
   .open-source-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
     gap: 20px;
   }
 }
 
 @media (min-width: 960px) {
   .open-source-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 24px;
   }
 }
