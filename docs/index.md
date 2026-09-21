@@ -6,8 +6,8 @@ titleTemplate: 一个用于展示项目文档和个人技术知识内容的web�
 
 hero:
   name: 阿源的知识库
-  text: 在实践中学习
-  tagline: 记录学习路径，分享项目实践
+  text: 专注 · 洞察 · 分享
+  tagline: 记录持续学习的过程，沉淀开源项目、Agent 开发与工程实践。
   image:
     src: /logo.png
     alt: Logo

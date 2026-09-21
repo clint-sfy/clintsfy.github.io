@@ -24,9 +24,8 @@ showComment: false
 
 ---
 - 👋 你好呀，我是阿源
-- 🔭 目前北京某高校硕士在读
+- 🔭 目前在当牛马工程师
 - 📫 联系我: [clint_sfy@163.com](mailto:clint_sfy@163.com)
-- 📖 当前目标：嵌入式软件工程师（电控？ Linux应用？ Linux驱动？ QT？ 音视频？）  摸索中ing
 - 交流QQ群：
 ---
 

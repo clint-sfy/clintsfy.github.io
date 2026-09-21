@@ -12,6 +12,7 @@ export default withMermaid(
     description: metaData.description,
 
     cleanUrls: true,
+    appearance: 'dark',
     lastUpdated: true, // 显示最后更新时间
 
     head, // <head>内标签配置

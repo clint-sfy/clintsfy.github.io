@@ -81,10 +81,73 @@ html.dark .VPHomeHero .image-bg {
   border-radius: 6px;
 }
 
+.vp-doc table {
+  display: table;
+  width: 100%;
+  margin: 24px 0 32px;
+  overflow: hidden;
+  border: 1px solid var(--site-border);
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+.vp-doc table th,
+.vp-doc table td {
+  padding: 13px 16px;
+  border: 0;
+  border-right: 1px solid var(--site-border);
+  border-bottom: 1px solid var(--site-border);
+  line-height: 1.65;
+  text-align: left;
+  white-space: normal;
+}
+
+.vp-doc table th:last-child,
+.vp-doc table td:last-child {
+  border-right: 0;
+}
+
+.vp-doc table tr:last-child td {
+  border-bottom: 0;
+}
+
+.vp-doc table th {
+  color: var(--vp-c-text-1);
+  font-weight: 650;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, #30d158 9%, var(--vp-c-bg-soft)),
+    color-mix(in srgb, #0a84ff 9%, var(--vp-c-bg-soft))
+  );
+}
+
+.vp-doc table tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--vp-c-bg-soft) 68%, transparent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .vp-doc table tbody tr:hover {
+    background: color-mix(in srgb, var(--vp-c-brand-1) 6%, var(--vp-c-bg));
+  }
+}
+
 @media (max-width: 639px) {
   .vp-doc > p,
   .vp-doc > div > p {
     text-align: start;
+  }
+
+  .vp-doc table {
+    display: block;
+    overflow-x: auto;
+    border-radius: 12px;
+  }
+
+  .vp-doc table th,
+  .vp-doc table td {
+    min-width: 140px;
   }
 }
 
@@ -332,44 +395,129 @@ html .VPNavScreenAppearance .VPSwitch:hover::before {
 .open-source-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
+  gap: 10px;
   min-width: 0;
   width: 100%;
 }
 
 .open-source-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  overflow: hidden;
   min-width: 0;
-  border: 1px solid var(--site-border);
-  border-radius: var(--site-radius-card);
-  background-color: var(--site-surface);
+  border: 1px solid color-mix(in srgb, var(--vp-c-brand-1) 18%, var(--site-border));
+  border-radius: 16px;
+  background:
+    linear-gradient(120deg, color-mix(in srgb, #30d158 4%, transparent), transparent 38%),
+    linear-gradient(300deg, color-mix(in srgb, #2997ff 6%, transparent), transparent 42%),
+    var(--site-surface);
   box-shadow: var(--site-shadow);
 }
 
+.open-source-card::before {
+  position: absolute;
+  top: -74px;
+  left: -46px;
+  width: 190px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, #30d158 15%, transparent), transparent 68%);
+  content: "";
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+.open-source-card:nth-child(even)::before {
+  right: -46px;
+  left: auto;
+  background: radial-gradient(circle, color-mix(in srgb, #2997ff 17%, transparent), transparent 68%);
+}
+
 .open-source-card__main {
-  display: block;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "meta name count"
+    "summary summary summary"
+    "stack stack stack";
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 10px;
   min-width: 0;
-  padding: 22px;
+  padding: 16px 20px 14px;
   color: inherit;
-  text-decoration: none;
   overflow-wrap: anywhere;
+}
+
+.open-source-card__header {
+  grid-area: meta;
+  margin: 0;
+}
+
+.open-source-card__index {
+  color: var(--vp-c-text-3);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.open-source-card__status-pill {
+  padding: 5px 10px;
+  color: color-mix(in srgb, #30d158 74%, var(--vp-c-text-1));
+  font-size: 12px;
+  font-weight: 650;
+  background: color-mix(in srgb, #30d158 10%, var(--vp-c-bg));
+  border: 1px solid color-mix(in srgb, #30d158 24%, var(--site-border));
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .open-source-card__name {
   margin: 0;
   color: var(--vp-c-text-1);
-  font-size: 20px;
+  font-size: 19px;
+  font-weight: 720;
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
 
-.open-source-card__summary {
-  margin: 12px 0;
-  color: var(--vp-c-text-2);
-  line-height: 1.65;
-  overflow-wrap: anywhere;
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .open-source-card__name {
+    background: linear-gradient(100deg, #41d99a 0%, #55b7ff 78%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 }
 
-.open-source-card__status,
+.open-source-card__title-row {
+  grid-area: name;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.vp-doc .open-source-card__name::before {
+  display: none;
+}
+
+.open-source-card__summary {
+  grid-area: summary;
+  max-width: none;
+  margin: 0;
+  color: var(--vp-c-text-2);
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
 .open-source-card__note-count {
   color: var(--vp-c-text-2);
   font-size: 14px;
@@ -377,61 +525,125 @@ html .VPNavScreenAppearance .VPSwitch:hover::before {
 }
 
 .open-source-card__stack {
+  grid-area: stack;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
   gap: 8px;
   max-width: 100%;
-  margin: 16px 0 0;
-  padding: 0;
-  list-style: none;
+  margin: 0;
 }
 
-.open-source-card__stack li {
+.open-source-card__stack span {
+  display: inline-flex;
+  align-items: center;
   max-width: 100%;
-  padding: 5px 10px;
+  padding: 3px 8px;
   border: 1px solid var(--site-border);
   border-radius: 999px;
   background-color: var(--site-surface-muted);
   color: var(--vp-c-text-2);
-  font-size: 13px;
+  font-size: 12px;
   overflow-wrap: anywhere;
 }
 
 .open-source-card__note-count {
-  display: inline-flex;
-  margin-top: 14px;
+  grid-area: count;
+  justify-self: end;
+  margin: 0;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
-.open-source-card__entry {
-  display: block;
-  margin-top: 14px;
+.open-source-card__actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-direction: row;
+  gap: 12px;
+  width: auto;
+  padding: 6px 12px 6px 10px;
+  background: color-mix(in srgb, var(--site-surface-muted) 74%, transparent);
+  border-top: 1px solid var(--site-border);
+}
+
+.open-source-card__entry,
+.open-source-card__repo {
+  min-width: 0;
+  padding: 0 10px;
   color: var(--vp-c-brand-1);
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
   overflow-wrap: anywhere;
+  white-space: nowrap;
+  transition: color 160ms ease, transform 160ms ease;
 }
 
 .open-source-card__repo {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  padding: 12px 22px;
-  border-top: 1px solid var(--site-border);
-  border-radius: 0 0 var(--site-radius-card) var(--site-radius-card);
-  color: var(--vp-c-brand-1);
-  text-decoration: none;
-  overflow-wrap: anywhere;
+  color: var(--vp-c-text-2);
 }
 
 @media (min-width: 640px) {
   .open-source-grid {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-    gap: 20px;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 899px) {
+  .open-source-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .open-source-card__main {
+    display: block;
+    padding: 22px 20px 18px;
+  }
+
+  .open-source-card__header {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .open-source-card__title-row {
+    justify-content: space-between;
+  }
+
+  .open-source-card__summary {
+    display: block;
+    overflow: visible;
+    margin-top: 10px;
+    -webkit-line-clamp: initial;
+  }
+
+  .open-source-card__stack {
+    flex-wrap: wrap;
+    overflow: visible;
+    margin-top: 14px;
+  }
+
+  .open-source-card__note-count {
+    margin-top: 14px;
+  }
+
+  .open-source-card__actions {
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
+    width: auto;
+    padding: 8px 10px;
+    border-top: 1px solid var(--site-border);
+    border-left: 0;
   }
 }
 
 @media (min-width: 960px) {
   .open-source-grid {
-    gap: 24px;
+    gap: 10px;
   }
 }
 
@@ -445,8 +657,14 @@ html .VPNavScreenAppearance .VPSwitch:hover::before {
 
   .open-source-card:hover {
     transform: translateY(-3px);
-    border-color: rgba(0, 113, 227, 0.32);
+    border-color: color-mix(in srgb, #2997ff 44%, var(--site-border));
     box-shadow: var(--site-shadow-raised);
+  }
+
+  .open-source-card__entry:hover,
+  .open-source-card__repo:hover {
+    color: #55b7ff;
+    transform: translateX(2px);
   }
 }
 

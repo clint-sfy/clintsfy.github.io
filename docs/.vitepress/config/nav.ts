@@ -23,11 +23,6 @@ export const nav: DefaultTheme.Config['nav'] = [
     link: '/'
   },
   {
-    text: '项目文档',
-    link: '/my_project/index',
-    activeMatch: '/my_project/'
-  },
-  {
     text: '学习开源项目',
     items: openSourceNavItems,
     activeMatch: '/open-source/'

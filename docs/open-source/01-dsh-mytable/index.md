@@ -1,6 +1,6 @@
 ---
-title: dsh-mytable 项目导读
-projectName: dsh-mytable
+title: DSH MyTable 项目导读
+projectName: DSH MyTable
 repo: https://github.com/clint-sfy/dsh-mytable
 summary: 为 DeepSeek Harness 打造的可分栏工作台，把项目、文件、终端、浏览器、Git 改动和对话收进同一个界面。
 stack: [TypeScript, React, Node.js, DSH Plugin]
@@ -10,7 +10,7 @@ showArticleMetadata: false
 showComment: false
 ---
 
-# dsh-mytable 项目导读
+# DSH MyTable 项目导读
 
 `dsh-mytable` 是我为 DeepSeek Harness Web 界面开发的工作台插件。它不是简单的页面皮肤，而是在 DSH 的插件系统里同时扩展服务端能力和客户端工作区：服务端提供文件、Git、终端和本地资源访问，客户端负责分栏布局、窗口注册、文件预览与状态持久化。
 

@@ -5,6 +5,8 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
 import matter from 'gray-matter'
+import fg from 'fast-glob'
+import articleLoader from '../article.data.js'
 import { loadOpenSourceProjects } from '../docs/.vitepress/theme/data/open-source.ts'
 import openSourceLoader, {
   createOpenSourceDataLoader,
@@ -131,12 +133,12 @@ test('normalizes the project display name from projectName, name, title, or dire
   }
 })
 
-test('real dsh-mytable content is indexed with three notes and its repository', () => {
+test('real DSH MyTable content is indexed with three notes and its repository', () => {
   const docsRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../docs')
   const projects = loadOpenSourceProjects(docsRoot)
-  const mytable = projects.find(({ name }) => name === 'dsh-mytable')
+  const mytable = projects.find(({ name }) => name === 'DSH MyTable')
 
-  assert.ok(mytable, 'dsh-mytable should be loaded from the real Markdown content')
+  assert.ok(mytable, 'DSH MyTable should be loaded from the real Markdown content')
   assert.equal(mytable.noteCount, 3)
   assert.equal(mytable.link, '/open-source/01-dsh-mytable/')
   assert.equal(mytable.repo, 'https://github.com/clint-sfy/dsh-mytable')
@@ -189,6 +191,9 @@ test('site visual contract keeps the learning homepage and accessible blue proje
   )
 
   assert.equal(homepage.hero.name, '阿源的知识库')
+  assert.equal(homepage.hero.text, '专注 · 洞察 · 分享')
+  assert.doesNotMatch(homepage.hero.tagline, /牛马工程师/)
+  assert.match(homepage.hero.tagline, /持续学习/)
   assert.match(homepage.hero.tagline, /学习|研习|实践/, 'the tagline should focus on learning')
   assert.deepEqual(
     homepage.hero.actions.map(({ text, link }) => ({ text, link })),
@@ -316,6 +321,53 @@ test('open-source projects are exposed as a dynamic top navigation menu', () => 
   assert.match(nav, /docs\/open-source\/\*\/index\.md/)
   assert.match(nav, /text:\s*'项目总览'/)
   assert.match(nav, /items:\s*openSourceNavItems/)
+})
+
+test('legacy project documents are not exposed as a top-level navigation column', () => {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const nav = readFileSync(join(repoRoot, 'docs/.vitepress/config/nav.ts'), 'utf8')
+
+  assert.doesNotMatch(nav, /text:\s*'项目文档'/)
+  assert.doesNotMatch(nav, /link:\s*'\/my_project\/index'/)
+})
+
+test('open-source portfolio and Markdown tables use the full readable width', () => {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const projects = readFileSync(
+    join(repoRoot, 'docs/.vitepress/theme/components/OpenSourceProjects.vue'),
+    'utf8',
+  )
+  const customStyles = readFileSync(
+    join(repoRoot, 'docs/.vitepress/theme/styles/custom.css'),
+    'utf8',
+  )
+
+  assert.match(projects, /open-source-card__index/)
+  assert.match(projects, /open-source-card__actions/)
+  assert.doesNotMatch(projects, /open-source-card__status-pill/)
+  assert.match(customStyles, /\.open-source-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/s)
+  assert.match(customStyles, /\.vp-doc\s+table\s*\{[^}]*width:\s*100%/s)
+  assert.match(customStyles, /\.vp-doc\s+table\s*\{[^}]*border-collapse:\s*separate/s)
+})
+
+test('the site defaults to dark mode and the about page reflects the current status', () => {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const config = readFileSync(join(repoRoot, 'docs/.vitepress/config.ts'), 'utf8')
+  const about = readFileSync(join(repoRoot, 'docs/about/me.md'), 'utf8')
+
+  assert.match(config, /appearance:\s*'dark'/)
+  assert.match(about, /目前在当牛马工程师/)
+  assert.doesNotMatch(about, /当前目标/)
+})
+
+test('archive data excludes non-article Markdown without valid dates', () => {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const files = fg.sync(join(repoRoot, 'docs/**/*.md').replace(/\\/g, '/'))
+  const articles = articleLoader.load(files)
+
+  assert.ok(articles.length > 0)
+  assert.ok(articles.every(({ title }) => typeof title === 'string' && title.trim() !== ''))
+  assert.ok(articles.every(({ date }) => typeof date === 'string' && !Number.isNaN(Date.parse(date))))
 })
 
 test('GitHub Pages workflow pins a Node-compatible pnpm toolchain', () => {

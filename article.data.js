@@ -20,6 +20,13 @@ export default {
         ...data,
         path: articleFile.substring(articleFile.lastIndexOf('/docs/') + 6).replace(/\.md$/, ''),
       }
+    }).filter(article => {
+      return (
+        typeof article.title === 'string' &&
+        article.title.trim() !== '' &&
+        typeof article.date === 'string' &&
+        !Number.isNaN(Date.parse(article.date))
+      );
     })
   }
 }

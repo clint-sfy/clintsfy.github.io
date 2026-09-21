@@ -10,48 +10,45 @@ import { data as projects } from '../data/open-source.data'
       <p>这里已经准备好承载多个项目。新项目会自动生成项目卡片、独立导读和可折叠的左侧文档目录。</p>
     </div>
     <article
-      v-for="project in projects"
+      v-for="(project, projectIndex) in projects"
       :key="project.link"
       class="open-source-card"
     >
-      <a
-        class="open-source-card__main"
-        :href="project.link"
-        :aria-label="`${project.name}：${project.summary}。状态：${project.statusLabel}，${project.noteCount} 篇学习笔记。查看项目导读。`"
-      >
-        <h2 class="open-source-card__name">{{ project.name }}</h2>
+      <div class="open-source-card__main">
+        <div class="open-source-card__header">
+          <span class="open-source-card__index">{{ String(projectIndex + 1).padStart(2, '0') }}</span>
+        </div>
+        <div class="open-source-card__title-row">
+          <h2 class="open-source-card__name">{{ project.name }}</h2>
+        </div>
         <p class="open-source-card__summary">{{ project.summary }}</p>
-        <p class="open-source-card__status">状态：{{ project.statusLabel }}</p>
-        <ul class="open-source-card__stack" aria-label="技术栈">
-          <li v-for="technology in project.stack" :key="technology">
+        <div class="open-source-card__stack" aria-label="技术栈">
+          <span v-for="technology in project.stack" :key="technology">
             {{ technology }}
-          </li>
-        </ul>
-        <span class="open-source-card__note-count">
+          </span>
+        </div>
+        <p class="open-source-card__note-count">
           {{ project.noteCount }} 篇学习笔记
-        </span>
-        <span class="open-source-card__entry">项目导读</span>
-      </a>
-      <a
-        v-if="project.repo"
-        class="open-source-card__repo"
-        :href="project.repo"
-        target="_blank"
-        rel="noopener noreferrer"
-        :aria-label="`在新窗口打开 ${project.name} 的源码仓库`"
-      >
-        源码仓库
-      </a>
+        </p>
+      </div>
+      <div class="open-source-card__actions">
+        <a class="open-source-card__entry" :href="project.link">查看项目导读 <span aria-hidden="true">→</span></a>
+        <a
+          v-if="project.repo"
+          class="open-source-card__repo"
+          :href="project.repo"
+          target="_blank"
+          rel="noopener noreferrer"
+          :aria-label="`在新窗口打开 ${project.name} 的源码仓库`"
+        >
+          源码仓库 <span aria-hidden="true">↗</span>
+        </a>
+      </div>
     </article>
   </section>
 </template>
 
 <style scoped>
-.open-source-card__main,
-.open-source-card__repo {
-  min-height: 44px;
-}
-
 .open-source-empty {
   padding: 28px;
   border: 1px dashed var(--vp-c-divider);
@@ -78,12 +75,10 @@ import { data as projects } from '../data/open-source.data'
   line-height: 1.75;
 }
 
-.open-source-card__main {
-  display: block;
-}
-
+.open-source-card__entry,
 .open-source-card__repo {
   display: inline-flex;
   align-items: center;
+  min-height: 44px;
 }
 </style>
