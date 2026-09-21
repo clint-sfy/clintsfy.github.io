@@ -300,7 +300,7 @@ test('Agent development notes are exposed through navigation and sidebar', () =>
   const roadmap = readFileSync(join(repoRoot, 'docs/courses/agent/index.md'), 'utf8')
 
   assert.match(nav, /text:\s*'Agent 开发'/)
-  assert.match(nav, /\/courses\/agent\/index/)
+  assert.match(nav, /link:\s*'\/courses\/agent\/'/)
   assert.match(sidebar, /'\/courses\/agent\/':\s*getItems\("courses\/agent"\)/)
   assert.match(roadmap, /MCP/)
   assert.match(roadmap, /Agent Skills/)

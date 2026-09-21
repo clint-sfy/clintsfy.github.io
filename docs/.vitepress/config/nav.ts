@@ -46,7 +46,7 @@ export const nav: DefaultTheme.Config['nav'] = [
   {
     text: '学习笔记',
     items: [
-      { text: 'Agent 开发', link: '/courses/agent/index', activeMatch: '/courses/agent/' },
+      { text: 'Agent 开发', link: '/courses/agent/', activeMatch: '/courses/agent/' },
       { text: 'C语言基础快速入门', link: '/courses/c/index', activeMatch: '/courses/c/' },
       { text: 'C++基础快速入门', link: '/courses/c_plus/index', activeMatch: '/courses/c_plus/' },
       { text: 'Python基础快速入门', link: '/courses/python/index', activeMatch: '/courses/python/' },
