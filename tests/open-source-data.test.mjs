@@ -328,4 +328,14 @@ test('GitHub Pages workflow pins a Node-compatible pnpm toolchain', () => {
   assert.match(workflow, /uses:\s*actions\/setup-node@v4/)
   assert.match(workflow, /node-version:\s*22/)
   assert.equal(packageJson.packageManager, 'pnpm@9.15.9')
+  assert.equal(packageJson.engines.node, '>=22.13.0')
+})
+
+test('Vercel uses the same pinned toolchain and VitePress output directory', () => {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const vercel = JSON.parse(readFileSync(join(repoRoot, 'vercel.json'), 'utf8'))
+
+  assert.equal(vercel.buildCommand, 'corepack pnpm@9.15.9 build')
+  assert.equal(vercel.installCommand, 'corepack pnpm@9.15.9 install --frozen-lockfile')
+  assert.equal(vercel.outputDirectory, 'docs/.vitepress/dist')
 })
