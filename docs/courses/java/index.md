@@ -1,7 +1,7 @@
 ---
-title: Java系统补习
+title: Java基础快速入门
 date: 2026-09-22
-category: Java系统补习
+category: Java基础快速入门
 tags:
   - Java
   - 学习路线
@@ -13,7 +13,7 @@ lastUpdated: false
 showComment: false
 ---
 
-# Java系统补习
+# Java基础快速入门
 
 这是一套参考“先语言、再库、再运行时、最后工程化”的 Java 补习路线。内容从能写出第一个程序开始，逐步过渡到集合与函数式编程、并发与 JVM，再落到 Maven、测试、数据库和设计实践。每一篇都保留目标、知识点、实践任务、易错点和复习清单，适合边学边写代码。
 

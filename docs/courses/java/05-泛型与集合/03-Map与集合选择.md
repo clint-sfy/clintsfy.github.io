@@ -1,7 +1,7 @@
 ---
 title: Map 与集合选择
 date: 2026-09-22
-category: Java系统补习
+category: Java基础快速入门
 tags:
   - Java
   - 集合

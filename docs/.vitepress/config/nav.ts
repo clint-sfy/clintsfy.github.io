@@ -45,7 +45,7 @@ export const nav: DefaultTheme.Config['nav'] = [
       { text: 'C语言基础快速入门', link: '/courses/c/index', activeMatch: '/courses/c/' },
       { text: 'C++基础快速入门', link: '/courses/c_plus/index', activeMatch: '/courses/c_plus/' },
       { text: 'Python基础快速入门', link: '/courses/python/index', activeMatch: '/courses/python/' },
-      { text: 'Java系统补习', link: '/courses/java/index', activeMatch: '/courses/java/' },
+      { text: 'Java基础快速入门', link: '/courses/java/index', activeMatch: '/courses/java/' },
       { text: '数据结构与算法', link: '/courses/algorithm/index', activeMatch: '/courses/algorithm/' },
       { text: '机器学习与深度学习', link: '/courses/tangyudi/index', activeMatch: '/courses/tangyudi/' },
       { text: '正点原子Linux课程', link: '/courses/yuanzi/index', activeMatch: '/courses/yuanzi/' },

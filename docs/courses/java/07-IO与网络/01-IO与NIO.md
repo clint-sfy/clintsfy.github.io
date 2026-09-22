@@ -1,7 +1,7 @@
 ---
 title: I/O 与 NIO 文件处理
 date: 2026-09-22
-category: Java系统补习
+category: Java基础快速入门
 tags:
   - Java
   - I/O

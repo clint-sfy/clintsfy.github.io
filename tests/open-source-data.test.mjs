@@ -321,7 +321,7 @@ test('Java learning path follows Python and covers the complete fundamentals-to-
 
   assert.match(
     nav,
-    /Python基础快速入门[\s\S]*Java系统补习/,
+    /Python基础快速入门[\s\S]*Java基础快速入门/,
     'Java should appear immediately after Python in the learning navigation',
   )
   assert.match(sidebar, /'\/courses\/java\/':\s*getItems\("courses\/java"\)/)
