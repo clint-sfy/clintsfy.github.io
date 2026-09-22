@@ -313,6 +313,32 @@ test('Agent development notes are exposed through navigation and sidebar', () =>
   assert.match(roadmap, /LangChain/)
 })
 
+test('Java learning path follows Python and covers the complete fundamentals-to-advanced outline', () => {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const nav = readFileSync(join(repoRoot, 'docs/.vitepress/config/nav.ts'), 'utf8')
+  const sidebar = readFileSync(join(repoRoot, 'docs/.vitepress/config/sidebar.ts'), 'utf8')
+  const javaFiles = fg.sync('docs/courses/java/**/*.md', { cwd: repoRoot })
+
+  assert.match(
+    nav,
+    /Python基础快速入门[\s\S]*Java系统补习/,
+    'Java should appear immediately after Python in the learning navigation',
+  )
+  assert.match(sidebar, /'\/courses\/java\/':\s*getItems\("courses\/java"\)/)
+  assert.ok(javaFiles.length >= 24, 'the Java path should contain a substantial chapter outline')
+
+  const javaContent = javaFiles
+    .map((file) => readFileSync(join(repoRoot, file), 'utf8'))
+    .join('\n')
+  for (const topic of [
+    '基础语法', '面向对象', '集合', '泛型', 'Lambda', 'Stream',
+    'I/O', '网络', '并发', 'JVM', '反射', '注解', 'Maven', 'JUnit',
+    'record', '模块化', '虚拟线程',
+  ]) {
+    assert.match(javaContent, new RegExp(topic), `Java outline should cover ${topic}`)
+  }
+})
+
 test('open-source projects are exposed as a dynamic top navigation menu', () => {
   const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
   const nav = readFileSync(join(repoRoot, 'docs/.vitepress/config/nav.ts'), 'utf8')

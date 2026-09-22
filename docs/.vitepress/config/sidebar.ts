@@ -19,6 +19,7 @@ export const sidebar: DefaultTheme.Config['sidebar'] = {
   '/courses/agent/': getItems("courses/agent"),
   '/courses/c_plus/': getItems("courses/c_plus"),
   '/courses/python/': getItems("courses/python"),
+  '/courses/java/': getItems("courses/java"),
   '/courses/tangyudi/': getItems("courses/tangyudi"),
   '/courses/yuanzi/': getItems("courses/yuanzi"),
   '/courses/algorithm/': getItems("courses/algorithm"),
