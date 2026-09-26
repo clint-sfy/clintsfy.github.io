@@ -91,7 +91,40 @@ const QUALITY_ARTICLE_PATHS = ARTICLE_PATHS.filter((file) =>
 )
 
 const REQUIRED_FRONTMATTER_FIELDS = ['title', 'description', 'category', 'tags']
-const REQUIRED_SECTIONS = ['易混点', '课后小问', '本节小结', '快速回顾']
+const REQUIRED_SECTIONS = [
+  '学习目标',
+  '核心知识点',
+  '简单案例',
+  '易混点',
+  '课后小问',
+  '本节小结',
+  '快速回顾',
+]
+const REQUIRED_CORE_SUBSECTIONS = ['专业术语', '白话解释与边界']
+const EXPECTED_JDK20_PREVIEW_ARTICLES = [
+  'docs/courses/java/04-现代Java类型/01-枚举record与sealed.md',
+]
+
+// Keep version policy data-driven: add a rule here when a newer JDK API is
+// discovered, and use the explicit allow pattern only for explanatory prose
+// that compares a later JDK rather than using that API in a Java example.
+const POST_JDK20_API_RULES = [
+  {
+    name: 'Sequenced Collections (JDK 21)',
+    pattern: /\b(?:SequencedCollection|SequencedSet|SequencedMap)\b/gu,
+    allow: /(?:JDK|Java)\s*21|JDK\s*20\s*(?:之后|以后)|更高版本|仅(?:作|供)对比/iu,
+  },
+  {
+    name: 'String templates (JDK 21 preview)',
+    pattern: /\bStringTemplate\b|\bSTR\./gu,
+    allow: /(?:JDK|Java)\s*21|JDK\s*20\s*(?:之后|以后)|更高版本|仅(?:作|供)对比/iu,
+  },
+  {
+    name: 'Scoped values (JDK 21 preview)',
+    pattern: /\bScopedValue\b/gu,
+    allow: /(?:JDK|Java)\s*21|JDK\s*20\s*(?:之后|以后)|更高版本|仅(?:作|供)对比/iu,
+  },
+]
 
 function normalizePath(file) {
   return file.replaceAll('\\', '/')
@@ -129,27 +162,182 @@ function getSection(body, label) {
   return lines.slice(start + 1, end < 0 ? lines.length : end).join('\n').trim()
 }
 
-function hasMeaningfulJavaCode(body) {
-  const blocks = body.matchAll(/```java[^\r\n]*\r?\n([\s\S]*?)```/gi)
-  for (const [, code] of blocks) {
-    const withoutComments = code
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/^\s*\/\/.*$/gm, '')
-      .replace(/^\s*\*.*$/gm, '')
-      .trim()
-    if (withoutComments !== '') return true
+function subsectionMatches(line, label) {
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`^###\\s+${escapedLabel}(?:\\s|[:：，,（(]|$)`).test(line)
+}
+
+function getSubsection(section, label) {
+  if (section === null) return null
+  const lines = section.split(/\r?\n/)
+  const start = lines.findIndex((line) => subsectionMatches(line, label))
+  if (start < 0) return null
+
+  const end = lines.findIndex((line, index) => index > start && /^###\s+/.test(line))
+  return lines.slice(start + 1, end < 0 ? lines.length : end).join('\n').trim()
+}
+
+function removeFencedCode(text) {
+  const lines = text.split(/\r?\n/)
+  const visibleLines = []
+  let inFence = false
+
+  for (const line of lines) {
+    if (/^\s*```/.test(line)) {
+      inFence = !inFence
+      continue
+    }
+    if (!inFence) visibleLines.push(line)
   }
-  return false
+  return visibleLines.join('\n')
+}
+
+function stripMarkdown(text) {
+  return removeFencedCode(text)
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/[*_>#]/g, '')
+    .replace(/^\s*[-*+]\s+/gm, '')
+    .replace(/\s+/g, '')
+    .trim()
+}
+
+function hasConcreteExplanation(text, minimumLength = 20) {
+  const plainText = stripMarkdown(text)
+  return (
+    plainText.length >= minimumLength &&
+    /(?:因为|因此|区别|差异|而不是|适合|不适合|不能|不应|应当|优先|边界|否则|避免|相比|用于|表示|返回|异常|如果)/u.test(
+      plainText,
+    )
+  )
+}
+
+function hasProfessionalTerm(text) {
+  return (
+    stripMarkdown(text).length >= 4 &&
+    /`[^`]+`|\b[A-Za-z][A-Za-z0-9_.]*(?:\([^)]*\))?\b/u.test(text)
+  )
+}
+
+function getTopLevelListItems(text) {
+  return removeFencedCode(text)
+    .split(/\r?\n/)
+    .filter((line) => /^[-*+]\s+\S/.test(line))
+    .map((line) => line.replace(/^[-*+]\s+/, '').trim())
+}
+
+function getJavaBlocks(text) {
+  return [...text.matchAll(/```java[^\r\n]*\r?\n([\s\S]*?)```/gi)].map((match) => match[1])
+}
+
+function stripJavaComments(code) {
+  return code
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '')
+    .replace(/^\s*\*.*$/gm, '')
+    .trim()
+}
+
+function inspectJavaCase(section) {
+  const blocks = getJavaBlocks(section ?? '')
+  if (blocks.length === 0) return ['needs a java code block']
+
+  const executableBlocks = blocks.map(stripJavaComments).filter((code) => code !== '')
+  if (executableBlocks.length === 0) return ['java code block contains comments only']
+
+  const hasTypeDeclaration = executableBlocks.some((code) =>
+    /\b(?:class|record|interface|enum)\s+[A-Za-z_$][\w$]*/.test(code),
+  )
+  const hasObservableResult = executableBlocks.some((code) =>
+    /\bSystem\.out\.(?:print|println|printf)\s*\(/.test(code),
+  )
+  const issues = []
+  if (!hasTypeDeclaration) issues.push('case needs a type declaration')
+  if (!hasObservableResult) issues.push('case needs an observable System.out result')
+  return issues
+}
+
+function matchesPattern(pattern, text) {
+  pattern.lastIndex = 0
+  return pattern.test(text)
+}
+
+function inspectPostJdk20Apis(body) {
+  const lines = body.split(/\r?\n/)
+  const violations = []
+  let inFence = false
+
+  lines.forEach((line, index) => {
+    if (/^\s*```/.test(line)) {
+      inFence = !inFence
+      return
+    }
+    for (const rule of POST_JDK20_API_RULES) {
+      if (!matchesPattern(rule.pattern, line)) continue
+      const context = lines
+        .slice(Math.max(0, index - 1), Math.min(lines.length, index + 2))
+        .join(' ')
+      if (inFence || !rule.allow.test(context)) {
+        violations.push(`${rule.name} at line ${index + 1}`)
+      }
+    }
+  })
+  return violations
 }
 
 function getQuestionChunks(section) {
   if (section === null) return []
-  const starts = [...section.matchAll(/^\s*\d+\.\s+\S.*$/gm)].map((match) => match.index)
-  return starts.map((start, index) => section.slice(start, starts[index + 1] ?? section.length).trim())
+  const lines = section.split(/\r?\n/)
+  const starts = []
+  let inFence = false
+
+  lines.forEach((line, index) => {
+    if (/^\s*```/.test(line)) {
+      inFence = !inFence
+      return
+    }
+    // Questions are top-level ordered-list items. Indented numbered examples
+    // are deliberately not questions.
+    if (!inFence && /^\d+\.\s+\S/.test(line)) starts.push(index)
+  })
+
+  return starts.map((start, index) =>
+    lines.slice(start, starts[index + 1] ?? lines.length).join('\n').trim(),
+  )
 }
 
-function hasLabeledAnswer(chunk, label) {
-  return new RegExp(`${label}\\s*[:：]\\s*[^\\r\\n]+`).test(chunk)
+function inspectQuestionBlock(chunk) {
+  const lines = chunk.split(/\r?\n/)
+  const firstLine = lines.findIndex((line) => line.trim() !== '')
+  if (firstLine < 0) return ['question is empty']
+
+  const answerLine = lines.findIndex(
+    (line, index) => index > firstLine && /^\s*[-*+]?\s*答案\s*[:：]\s*\S/.test(line),
+  )
+  const explanationLine = lines.findIndex(
+    (line, index) => index > (answerLine < 0 ? firstLine : answerLine) && /^\s*[-*+]?\s*解析\s*[:：]\s*\S/.test(line),
+  )
+  const issues = []
+  const firstContentAfterQuestion = lines.findIndex(
+    (line, index) => index > firstLine && line.trim() !== '',
+  )
+  if (
+    answerLine < 0 ||
+    firstContentAfterQuestion < 0 ||
+    answerLine !== firstContentAfterQuestion
+  ) {
+    issues.push('answer must immediately follow its question')
+  }
+  if (explanationLine < 0 || explanationLine <= answerLine) {
+    issues.push('explanation must follow the answer in the same question block')
+  } else {
+    const firstContentAfterAnswer = lines.findIndex(
+      (line, index) => index > answerLine && line.trim() !== '',
+    )
+    if (explanationLine !== firstContentAfterAnswer) {
+      issues.push('explanation must immediately follow its answer')
+    }
+  }
+  return issues
 }
 
 function relativeRoute(relativePath) {
@@ -231,11 +419,39 @@ test('01-06 Java articles use the shared quality structure and runnable examples
         !/^\s*[-*+]\s+\S/m.test(content)
       ) {
         violations.push(`${relativePath} [section:${section}] needs a plain Markdown list`)
+      } else if (section === '易混点' && !hasConcreteExplanation(content, 12)) {
+        violations.push(`${relativePath} [section:易混点] needs a concrete comparison or boundary explanation`)
+      } else if (['本节小结', '快速回顾'].includes(section)) {
+        const items = getTopLevelListItems(content)
+        const minimum = section === '本节小结' ? 3 : 3
+        const maximum = section === '本节小结' ? 5 : 6
+        if (items.length < minimum || items.length > maximum) {
+          violations.push(
+            `${relativePath} [section:${section}] needs ${minimum}-${maximum} top-level list items, found ${items.length}`,
+          )
+        }
+        if (items.some((item) => stripMarkdown(item).length < 8)) {
+          violations.push(`${relativePath} [section:${section}] contains a vague list item`)
+        }
       }
     }
 
-    if (!hasMeaningfulJavaCode(article.body)) {
-      violations.push(`${relativePath} [java-example] needs a non-empty Java code block`)
+    const coreKnowledge = getSection(article.body, '核心知识点')
+    for (const subsection of REQUIRED_CORE_SUBSECTIONS) {
+      const content = getSubsection(coreKnowledge, subsection)
+      if (content === null) {
+        violations.push(`${relativePath} [core:${subsection}] subsection is missing`)
+      } else if (content === '') {
+        violations.push(`${relativePath} [core:${subsection}] body is empty`)
+      } else if (subsection === '专业术语' && !hasProfessionalTerm(content)) {
+        violations.push(`${relativePath} [core:专业术语] needs a Java API or English term`)
+      } else if (subsection === '白话解释与边界' && !hasConcreteExplanation(content)) {
+        violations.push(`${relativePath} [core:白话解释与边界] needs a concrete plain-language explanation`)
+      }
+    }
+
+    for (const issue of inspectJavaCase(getSection(article.body, '简单案例'))) {
+      violations.push(`${relativePath} [java-example] ${issue}`)
     }
   }
 
@@ -267,11 +483,8 @@ test('01-06 Java articles provide two answered review questions and no deprecate
       violations.push(`${relativePath} [review-question-count] expected at least 2 questions, found ${questions.length}`)
     }
     questions.forEach((question, index) => {
-      if (!hasLabeledAnswer(question, '答案')) {
-        violations.push(`${relativePath} [review-question-${index + 1}-answer] concise answer is missing`)
-      }
-      if (!hasLabeledAnswer(question, '解析')) {
-        violations.push(`${relativePath} [review-question-${index + 1}-explanation] explanation is missing`)
+      for (const issue of inspectQuestionBlock(question)) {
+        violations.push(`${relativePath} [review-question-${index + 1}] ${issue}`)
       }
     })
 
@@ -280,6 +493,11 @@ test('01-06 Java articles provide two answered review questions and no deprecate
         violations.push(`${relativePath} [forbidden:${rule}] deprecated or placeholder content found`)
       }
     }
+  }
+
+  const index = readMarkdown(JAVA_INDEX_PATH)
+  if (/实践任务/u.test(index.body)) {
+    violations.push(`${JAVA_INDEX_PATH} [forbidden:实践任务] entry page still advertises deprecated practice tasks`)
   }
 
   assert.deepEqual(violations, [], `rule java-review-and-forbidden-content${formatViolations(violations)}`)
@@ -302,17 +520,28 @@ test('Java index stage links resolve to the existing article path set', () => {
 })
 
 test('JDK 20 preview and incubator articles document status and paired commands', () => {
-  const previewArticles = [
-    'docs/courses/java/04-现代Java类型/01-枚举record与sealed.md',
-  ]
   const violations = []
+  const scopedBodies = new Map()
 
-  for (const relativePath of previewArticles) {
-    let body
+  for (const relativePath of QUALITY_ARTICLE_PATHS) {
     try {
-      body = readMarkdown(relativePath).body
+      scopedBodies.set(relativePath, readMarkdown(relativePath).body)
     } catch (error) {
       violations.push(`${relativePath} [article-read] ${error.message}`)
+    }
+  }
+
+  const previewArticles = new Set(EXPECTED_JDK20_PREVIEW_ARTICLES)
+  for (const [relativePath, body] of scopedBodies) {
+    if (/--enable-preview/iu.test(body)) {
+      previewArticles.add(relativePath)
+    }
+  }
+
+  for (const relativePath of previewArticles) {
+    const body = scopedBodies.get(relativePath)
+    if (body === undefined) {
+      violations.push(`${relativePath} [article-read] article is outside the scoped path set`)
       continue
     }
     if (!/预览特性|preview/iu.test(body) || !/JDK\s*20/iu.test(body)) {
@@ -335,26 +564,31 @@ test('JDK 20 preview and incubator articles document status and paired commands'
   // The current 01-06 scope has no planned incubator article. Keep this guard
   // data-driven so a scoped article cannot introduce incubator APIs without the
   // required JDK 20 status and paired --add-modules commands.
-  for (const relativePath of QUALITY_ARTICLE_PATHS) {
-    let body
-    try {
-      body = readMarkdown(relativePath).body
-    } catch {
-      continue
-    }
+  for (const [relativePath, body] of scopedBodies) {
     if (!/jdk\.incubator\.|孵化 API|孵化模块|结构化并发/iu.test(body)) continue
 
-    if (!/孵化 API|孵化模块|incubator/iu.test(body)) {
-      violations.push(`${relativePath} [incubator-status] must identify the incubator API status`)
+    if (!/孵化\s*(?:API|模块)|incubator\s*(?:API|module)|非稳定\s*API/iu.test(body)) {
+      violations.push(`${relativePath} [incubator-status] must explicitly identify a non-stable incubator API`)
     }
+    const needsPreviewFlag = /预览特性|preview|--enable-preview/iu.test(body)
     const compileCommand = body.split(/\r?\n/).some(
-      (line) => /\bjavac\b/.test(line) && /--add-modules\s+jdk\.incubator\.concurrent/.test(line),
+      (line) =>
+        /\bjavac\b/.test(line) &&
+        /--release\s+20/.test(line) &&
+        /--add-modules\s+jdk\.incubator\.concurrent/.test(line) &&
+        (!needsPreviewFlag || /--enable-preview/.test(line)),
     )
     if (!compileCommand) {
-      violations.push(`${relativePath} [incubator-compile-command] needs javac --add-modules jdk.incubator.concurrent`)
+      violations.push(
+        `${relativePath} [incubator-compile-command] needs javac --release 20 --add-modules jdk.incubator.concurrent`,
+      )
     }
     const runCommand = body.split(/\r?\n/).some(
-      (line) => /\bjava\b/.test(line) && !/\bjavac\b/.test(line) && /--add-modules\s+jdk\.incubator\.concurrent/.test(line),
+      (line) =>
+        /\bjava\b/.test(line) &&
+        !/\bjavac\b/.test(line) &&
+        /--add-modules\s+jdk\.incubator\.concurrent/.test(line) &&
+        (!needsPreviewFlag || /--enable-preview/.test(line)),
     )
     if (!runCommand) {
       violations.push(`${relativePath} [incubator-run-command] needs java --add-modules jdk.incubator.concurrent`)
@@ -362,4 +596,23 @@ test('JDK 20 preview and incubator articles document status and paired commands'
   }
 
   assert.deepEqual(violations, [], `rule jdk20-preview-contract${formatViolations(violations)}`)
+})
+
+test('01-06 Java examples reject JDK 20+ APIs unless an allowed comparison is explicit', () => {
+  const violations = []
+
+  for (const relativePath of QUALITY_ARTICLE_PATHS) {
+    let body
+    try {
+      body = readMarkdown(relativePath).body
+    } catch (error) {
+      violations.push(`${relativePath} [article-read] ${error.message}`)
+      continue
+    }
+    for (const issue of inspectPostJdk20Apis(body)) {
+      violations.push(`${relativePath} [jdk20-api] ${issue}`)
+    }
+  }
+
+  assert.deepEqual(violations, [], `rule jdk20-api-compatibility${formatViolations(violations)}`)
 })
