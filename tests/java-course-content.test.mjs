@@ -108,6 +108,16 @@ const EXPECTED_JDK20_PREVIEW_ARTICLES = [
   'docs/courses/java/04-现代Java类型/01-枚举record与sealed.md',
 ]
 
+const QUICK_REFERENCE_SECTIONS = {
+  'docs/courses/java/02-数组与文本/01-数组与多维数组.md': ['常用 API 速查'],
+  'docs/courses/java/02-数组与文本/02-String与文本处理.md': [
+    'String API 速查',
+    '项目常用：Hutool JSONUtil',
+  ],
+  'docs/courses/java/05-泛型与集合/02-集合框架与数据结构.md': ['常用 API 速查'],
+  'docs/courses/java/05-泛型与集合/03-Map与集合选择.md': ['常用 API 速查'],
+}
+
 // Keep version policy data-driven: add a rule here when a newer JDK API is
 // discovered, and use the explicit allow pattern only for explanatory prose
 // that compares a later JDK rather than using that API in a Java example.
@@ -178,6 +188,22 @@ function getSubsection(section, label) {
 
   const end = lines.findIndex((line, index) => index > start && /^###\s+/.test(line))
   return lines.slice(start + 1, end < 0 ? lines.length : end).join('\n').trim()
+}
+
+function getQuickReferenceSubsections(body, sectionLabel) {
+  const section = getSection(body, sectionLabel)
+  if (section === null) return []
+  const lines = section.split(/\r?\n/)
+  const starts = []
+
+  lines.forEach((line, index) => {
+    if (/^###\s+\S/.test(line)) starts.push(index)
+  })
+
+  return starts.map((start, index) => ({
+    heading: lines[start].replace(/^###\s+/, '').trim(),
+    content: lines.slice(start + 1, starts[index + 1] ?? lines.length).join('\n'),
+  }))
 }
 
 function removeFencedCode(text) {
@@ -618,4 +644,40 @@ test('01-06 Java examples reject JDK 20+ APIs unless an allowed comparison is ex
   }
 
   assert.deepEqual(violations, [], `rule jdk20-api-compatibility${formatViolations(violations)}`)
+})
+
+test('Java quick-reference API headings put a Java example immediately below the heading', () => {
+  const violations = []
+
+  for (const [relativePath, sectionLabels] of Object.entries(QUICK_REFERENCE_SECTIONS)) {
+    let article
+    try {
+      article = readMarkdown(relativePath)
+    } catch (error) {
+      violations.push(`${relativePath} [article-read] ${error.message}`)
+      continue
+    }
+
+    for (const sectionLabel of sectionLabels) {
+      const subsections = getQuickReferenceSubsections(article.body, sectionLabel)
+      if (subsections.length === 0) {
+        violations.push(`${relativePath} [quick-reference:${sectionLabel}] needs API subsections`)
+        continue
+      }
+      for (const { heading, content } of subsections) {
+        if (/^常见边界(?:\s|：|:|$)/u.test(heading)) continue
+        const firstContentLine = content
+          .split(/\r?\n/)
+          .find((line) => line.trim() !== '')
+          ?.trim()
+        if (firstContentLine !== '```java') {
+          violations.push(
+            `${relativePath} [quick-reference:${sectionLabel}/${heading}] first content must be a java fenced code block`,
+          )
+        }
+      }
+    }
+  }
+
+  assert.deepEqual(violations, [], `rule java-quick-reference-examples${formatViolations(violations)}`)
 })
