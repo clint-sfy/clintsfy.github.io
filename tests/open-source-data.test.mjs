@@ -343,7 +343,7 @@ test('the first Java chapter contains complete lessons with runnable examples', 
   const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
   const firstChapter = fg.sync('docs/courses/java/01-Java基础/*.md', { cwd: repoRoot })
 
-  assert.equal(firstChapter.length, 4)
+  assert.equal(firstChapter.length, 7)
   for (const file of firstChapter) {
     const lesson = readFileSync(join(repoRoot, file), 'utf8')
     assert.ok(lesson.length >= 1200, `${file} should contain a useful knowledge-point reference`)

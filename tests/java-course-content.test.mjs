@@ -34,6 +34,9 @@ const EXPECTED_ARTICLES_BY_CHAPTER = {
     '02-基础语法与程序结构.md',
     '03-数据类型与运算符.md',
     '04-控制流与方法.md',
+    '05-类型转换与数值精度.md',
+    '06-运算符与表达式.md',
+    '07-方法参数重载与递归.md',
   ],
   '02-数组与文本': [
     '01-数组与多维数组.md',
@@ -348,7 +351,7 @@ function formatViolations(violations) {
   return violations.length === 0 ? '' : `\n${violations.join('\n')}`
 }
 
-test('Java course keeps 33 Markdown files, 32 articles, 12 chapters, and the baseline paths', () => {
+test('Java course keeps 36 Markdown files, 35 articles, 12 chapters, and the baseline paths', () => {
   const markdownPaths = fg
     .sync(JAVA_GLOB, { cwd: REPO_ROOT, onlyFiles: true })
     .map(normalizePath)
@@ -358,11 +361,11 @@ test('Java course keeps 33 Markdown files, 32 articles, 12 chapters, and the bas
     .map((entry) => entry.name)
     .sort()
 
-  assert.equal(markdownPaths.length, 33, 'rule java-markdown-count: expected 33 Markdown files')
+  assert.equal(markdownPaths.length, 36, 'rule java-markdown-count: expected 36 Markdown files')
   assert.equal(
     markdownPaths.filter((file) => file !== JAVA_INDEX_PATH).length,
-    32,
-    'rule java-article-count: expected 32 course articles',
+    35,
+    'rule java-article-count: expected 35 course articles',
   )
   assert.equal(chapterDirectories.length, 12, 'rule java-chapter-count: expected 12 chapter directories')
   assert.deepEqual(
