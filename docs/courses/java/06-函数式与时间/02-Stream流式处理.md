@@ -62,7 +62,9 @@ public class StreamDemo {
                 .toList();
 
         System.out.println("totals=" + totals);
+        // 输出：totals={alice=55.00}
         System.out.println("items=" + itemNames);
+        // 输出：items=[BOOK, CUP, PEN]
     }
 }
 ```

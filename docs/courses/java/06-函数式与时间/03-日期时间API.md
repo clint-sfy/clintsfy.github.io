@@ -53,8 +53,11 @@ public class TimeDemo {
         Clock fixed = Clock.fixed(event, ZoneId.of("UTC"));
 
         System.out.println("shanghai=" + formatter.format(local));
+        // 输出：shanghai=2026-09-26 20:00 CST
         System.out.println("newYork=" + formatter.format(event.atZone(newYork)));
+        // 输出：newYork=2026-09-26 08:00 EDT
         System.out.println("testNow=" + Instant.now(fixed));
+        // 输出：testNow=2026-09-26T12:00:00Z
     }
 }
 ```

@@ -256,7 +256,7 @@ test('VitePress navigation controls keep 44px targets and the scrolled nav retai
   )
 
   const backdropSupportRules = customStyles.match(
-    /  @supports \(\(backdrop-filter: blur\(1px\)\) or \(-webkit-backdrop-filter: blur\(1px\)\)\) \{([\s\S]*?)\n  \}\n\}/,
+    /  @supports \(\(backdrop-filter: blur\(1px\)\) or \(-webkit-backdrop-filter: blur\(1px\)\)\) \{([\s\S]*?)\r?\n  \}\r?\n\}/,
   )?.[1]
   assert.ok(backdropSupportRules, 'the translucent scrolled navigation rules should be feature-gated')
   const translucentNavRule = backdropSupportRules.match(

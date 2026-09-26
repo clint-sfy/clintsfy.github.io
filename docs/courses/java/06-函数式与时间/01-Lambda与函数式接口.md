@@ -60,6 +60,7 @@ public class LambdaDemo {
         Function<Product, String> label = Product::name;
 
         System.out.println(labels(products, available.and(affordable), label));
+        // 输出：[book]
     }
 }
 ```

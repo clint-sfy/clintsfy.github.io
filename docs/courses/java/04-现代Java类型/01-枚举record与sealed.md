@@ -66,7 +66,9 @@ public class ModernTypesDemo {
     public static void main(String[] args) {
         PaymentResult result = new Success("P-1", new BigDecimal("12.50"));
         System.out.println(message(result));
+        // 输出：success:P-1:12.50
         System.out.println(PaymentKind.CARD);
+        // 输出：CARD
     }
 }
 ```
