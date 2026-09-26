@@ -248,13 +248,13 @@ function addOrderNumber(groups) {
     for (let j = 0; j < groups[i].items.length; j++) {
       const items = groups[i].items;
       const index = j + 1;
-      let indexStyle = `<div class="text-color-gray mr-[6px]" style="font-weight: 550; display: inline-block;">${index}</div>`;
+      let indexStyle = `<span class="text-color-gray mr-[6px]" style="font-weight: 550; display: inline-block;">${index}</span>`;
       if (index == 1) {
-        indexStyle = `<div class="text-color-red mr-[6px]" style="font-weight: 550; display: inline-block;">${index}</div>`;
+        indexStyle = `<span class="text-color-red mr-[6px]" style="font-weight: 550; display: inline-block;">${index}</span>`;
       } else if (index == 2) {
-        indexStyle = `<div class="text-color-orange mr-[6px]" style="font-weight: 550; display: inline-block;">${index}</div>`;
+        indexStyle = `<span class="text-color-orange mr-[6px]" style="font-weight: 550; display: inline-block;">${index}</span>`;
       } else if (index == 3) {
-        indexStyle = `<div class="text-color-yellow mr-[6px]" style="font-weight: 550; display: inline-block;">${index}</div>`;
+        indexStyle = `<span class="text-color-yellow mr-[6px]" style="font-weight: 550; display: inline-block;">${index}</span>`;
       }
       items[j].text = `${indexStyle}${items[j].text}`;
     }
