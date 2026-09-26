@@ -24,7 +24,7 @@ description: 掌握 HashMap、LinkedHashMap、TreeMap、ConcurrentHashMap 和集
 
 - **Map**：键到值的映射，键唯一；`entrySet`、`keySet`、`values` 是原 Map 的视图集合。
 - **HashMap**：基于哈希桶的通用 Map，平均查找接近 O(1)，容量和负载因子影响扩容。
-- **LinkedHashMap**：在哈希表上维护链表，可保留插入顺序或访问顺序，适合简单 LRU 结构。
+- **LinkedHashMap**：在哈希表上维护链表，可保留插入顺序或访问顺序；access-order 是 LRU 的基础，但容量淘汰仍需额外策略。
 - **TreeMap**：基于平衡树按键排序，支持范围查询但基本操作通常为 O(log n)。
 - **ConcurrentHashMap**：为并发读写设计的 Map，提供 `compute`、`merge` 等原子复合操作，但不接受 `null` 键和值。
 
@@ -32,7 +32,7 @@ description: 掌握 HashMap、LinkedHashMap、TreeMap、ConcurrentHashMap 和集
 
 Map 的键必须在放入后保持 equals/hashCode 或排序关系稳定；修改参与哈希或比较的字段会让条目“还在桶里却找不到”。`get` 后再 `put` 是两个步骤，并发下可能丢失更新；单线程也可用 `merge` 表达频次累加。`ConcurrentHashMap` 的计算函数应短小、无阻塞且不要递归修改同一 Map，复合原子性只覆盖该次计算，不会自动包住整段业务流程。
 
-HashMap 不承诺遍历顺序，LinkedHashMap 的顺序语义需要在构造时选插入或访问模式，TreeMap 则把比较器视为键身份的一部分。需要线程安全时，优先选择并发实现仍不等于所有复合操作都安全，外部状态仍需单独同步。
+HashMap 不承诺遍历顺序，LinkedHashMap 的顺序语义需要在构造时选插入或访问模式，TreeMap 则把比较器视为键身份的一部分。access-order 只提供“最近访问顺序”，不是完整的容量受限 LRU；需要淘汰最旧项时可重写 `removeEldestEntry`，或显式实现容量策略。需要线程安全时，优先选择并发实现仍不等于所有复合操作都安全，外部状态仍需单独同步。
 
 ## 简单案例
 
@@ -50,14 +50,14 @@ public class MapDemo {
         }
 
         Map<String, Integer> sorted = new TreeMap<>(frequency);
-        LinkedHashMap<String, Integer> lru = new LinkedHashMap<>(2, 0.75f, true);
-        lru.put("A", 1);
-        lru.put("B", 2);
-        lru.get("A"); // A 移到访问顺序末尾
-        lru.put("C", 3);
+        LinkedHashMap<String, Integer> accessOrder = new LinkedHashMap<>(2, 0.75f, true);
+        accessOrder.put("A", 1);
+        accessOrder.put("B", 2);
+        accessOrder.get("A"); // A 移到访问顺序末尾
+        accessOrder.put("C", 3);
 
         System.out.println("frequency=" + frequency);
-        System.out.println("sorted=" + sorted + ", accessOrder=" + lru.keySet());
+        System.out.println("sorted=" + sorted + ", accessOrder=" + accessOrder.keySet());
     }
 }
 ```
