@@ -6,6 +6,8 @@ tags:
   - Java
   - String
   - Unicode
+  - Hutool
+  - JSON
 description: 掌握不可变字符串、字符编码、StringBuilder 和正则表达式的基础用法。
 ---
 
@@ -35,6 +37,112 @@ description: 掌握不可变字符串、字符编码、StringBuilder 和正则�
 
 `String.length()` 返回 UTF-16 码元数量，不一定等于 Unicode 码点数量，更不等于用户看到的字素簇数量；复杂排版还可能需要更高层的文本分段。正则适合字段级清洗，嵌套语法或需要精确错误位置的格式应使用专门解析器。
 
+## String API 速查
+
+### 字面量/`new String`：创建字符串
+
+优先使用字面量或已有值；只有在字节解码、明确复制等边界才使用构造器。示例：`String text = "Java"; String decoded = new String(bytes, StandardCharsets.UTF_8);`。
+
+### `isEmpty`/`isBlank`：判空字符串
+
+`isEmpty()` 只判断长度为零，`isBlank()` 还把空格、换行等空白视为空；两者都不接受 `null`。示例：`if (value != null && value.isBlank()) { ... }`。
+
+### `length()`：获取 UTF-16 长度
+
+返回 `char` 码元数量，不是 Unicode 码点或用户看到的字符数；表情等补充平面字符通常占两个码元。示例：`int units = text.length();`。
+
+### `charAt`/`codePointAt`/`codePoints`：访问字符与码点
+
+`charAt` 取一个 UTF-16 码元，完整 Unicode 字符应使用 `codePointAt` 或 `codePoints`；索引仍按码元位置计算。示例：`int first = text.codePointAt(0); IntStream stream = text.codePoints();`。
+
+### `equals`/`equalsIgnoreCase`：比较内容
+
+用 `equals` 比较内容，不用 `==`；可能为 `null` 时让常量调用 `"java".equals(value)`，忽略大小写前先确认业务是否允许。示例：`boolean same = "java".equalsIgnoreCase(input);`。
+
+### `compareTo`/`compareToIgnoreCase`：按字典序比较
+
+返回负数、零或正数，适合排序和范围判断，不应把返回值当作固定的 `-1/1`。示例：`int order = left.compareToIgnoreCase(right);`。
+
+### `indexOf`/`lastIndexOf`/`contains`：查找文本
+
+`indexOf` 找首次位置，`lastIndexOf` 找最后位置，找不到返回 `-1`；`contains` 只返回布尔值，三者都按字面文本查找而不是正则。示例：`if (path.contains("/api/") && path.indexOf('?') >= 0) { ... }`。
+
+### `startsWith`/`endsWith`：判断前后缀
+
+用于协议、文件名或路由前后缀判断，可传起始偏移；它们不做路径规范化或大小写自动转换。示例：`boolean json = fileName.endsWith(".json");`。
+
+### `substring`/`subSequence`：截取文本
+
+区间是左闭右开 `[begin, end)`，越界会抛 `StringIndexOutOfBoundsException`；`subSequence` 返回 `CharSequence`，通常仍优先 `substring`。示例：`String prefix = text.substring(0, Math.min(8, text.length()));`。
+
+### `replace`：按字面替换
+
+`replace(char, char)` 和 `replace(CharSequence, CharSequence)` 都按字面匹配，不把参数当正则；原字符串不变。示例：`String normalized = text.replace('，', ',').replace("JAVA", "Java");`。
+
+### `split`：按正则分割
+
+参数是正则表达式，默认丢弃末尾空字段；需要保留时传负 `limit`，元字符要转义。示例：`String[] fields = csv.split(",", -1);`。
+
+### `String.join`/`concat`：拼接字符串
+
+`String.join` 适合分隔符和多个元素，`concat` 只拼接一个非 `null` 字符串（传入 `null` 会失败）；循环拼接不要反复使用 `+`。示例：`String path = String.join("/", "api", "users", id);`。
+
+### `formatted`/`String.format`：格式化字符串
+
+`formatted` 以当前字符串作格式模板，`String.format` 适合静态模板；格式说明符和参数类型必须匹配，日志拼接还要考虑性能和敏感信息。示例：`String line = "id=%d, name=%s".formatted(id, name);`。
+
+### `toUpperCase`/`toLowerCase`：转换大小写
+
+默认受当前 Locale 影响，协议字段、键名等稳定文本应指定 `Locale.ROOT`；转换会返回新字符串。示例：`String key = text.toLowerCase(Locale.ROOT);`。
+
+### `trim`/`strip`：去除两端空白
+
+`trim` 主要按较旧的 `U+0020` 范围处理，`strip` 按 Unicode 空白处理；两者都不修改原字符串。示例：`String clean = input.strip();`。
+
+### `repeat`：重复字符串
+
+重复次数不能为负，零次返回空字符串；大次数可能造成内存压力。示例：`String indent = "  ".repeat(level);`。
+
+### `toCharArray`/`getBytes`：转换为字符数组与字节
+
+`toCharArray` 得到 UTF-16 码元数组；`getBytes` 跨边界时必须显式指定字符集，避免平台默认编码。示例：`byte[] utf8 = text.getBytes(StandardCharsets.UTF_8);`。
+
+### `String.valueOf`：把值转为字符串
+
+支持基本类型和对象，传入 `null` 对象会得到字符串 `"null"`；不要把它与 `null.toString()` 混用。示例：`String label = String.valueOf(maybeNull);`。
+
+### `StringBuilder.append/insert/delete`：高效拼接
+
+单线程循环拼接优先使用可变的 `StringBuilder`，最后调用 `toString()`；它不是线程安全容器，初始容量可按估算设置。示例：`String result = new StringBuilder().append("id=").append(id).toString();`。
+
+### `matches`/`replaceAll`：正则匹配与替换
+
+`matches` 要求整个字符串匹配，`replaceAll` 的参数是正则；大量重复模式应预编译 `Pattern`，替换字面文本优先使用 `replace`。示例：`String digits = text.replaceAll("[^0-9]", "");`。
+
+### `replaceFirst`：替换首个正则匹配（低频）
+
+只替换第一个符合正则的片段，替换文本中的 `$1` 等组引用也有特殊含义；字面替换优先用 `replace`。示例：`String first = text.replaceFirst("\\d+", "N");`。
+
+### `lines`：按行流式处理（低频）
+
+返回按换行符拆分的 `Stream<String>`，适合逐行过滤；流只能消费一次。示例：`long nonEmpty = text.lines().filter(line -> !line.isBlank()).count();`。
+
+### `indent`：统一增加或删除缩进（低频）
+
+按行调整缩进并规范换行，正数增加、负数尝试删除；不要把它当作代码格式化器。示例：`String indented = text.indent(2);`。
+
+### `stripIndent`：移除公共缩进（低频）
+
+去除多行文本的公共前导空白，适合文本块整理；单行或不齐的缩进要先验证结果。示例：`String plain = text.stripIndent();`。
+
+### `translateEscapes`：解析转义序列（低频）
+
+将字符串中的 `\\n`、`\\t` 等 Java 转义转成对应字符，不等同于 JSON 解析；输入含非法转义会抛异常。示例：`String actual = escaped.translateEscapes();`。
+
+### `StringBuffer`：线程安全拼接（低频）
+
+提供与 `StringBuilder` 类似的同步方法，只有确实需要共享可变字符缓冲区时才考虑；普通局部拼接优先 `StringBuilder`。示例：`StringBuffer shared = new StringBuffer();`。
+
 ## 项目常用：Hutool JSONUtil
 
 `JSONUtil` 来自 Hutool，是第三方库，不是 JDK 20 标准库；本仓库当前没有新增 Hutool 运行依赖，下面只作为项目速查示例。示例使用 `5.8.38`，这是文档示例版本，不代表仓库已锁定该版本；接入项目时应以项目的 `dependencyManagement` 和 Maven Central 可用版本为准。
@@ -47,7 +155,7 @@ description: 掌握不可变字符串、字符编码、StringBuilder 和正则�
 </dependency>
 ```
 
-### 高频转换
+### `JSONUtil`：高频转换总览
 
 | 任务 | 写法 | 说明 |
 | --- | --- | --- |
@@ -56,6 +164,34 @@ description: 掌握不可变字符串、字符编码、StringBuilder 和正则�
 | 解析对象 | `JSONObject obj = JSONUtil.parseObj(json);` | 再用 `obj.getStr("name")`、`obj.getInt("age")` 按字段读取。 |
 | 解析数组 | `JSONArray array = JSONUtil.parseArray(json);` | 可用 `array.getJSONObject(index)` 读取数组中的对象。 |
 | JSON 数组转 `List<T>` | `JSONUtil.toList(JSONUtil.parseArray(json), User.class)` | 显式给出元素类型，避免只得到原始 `List`。 |
+
+### `JSONUtil.toJsonStr`：对象转 JSON
+
+将 Bean、Map 或集合序列化为 JSON 字符串；字段别名、`null` 和日期表现受 Hutool 配置及对象属性影响。示例：`String json = JSONUtil.toJsonStr(user);`。
+
+### `JSONUtil.toBean`：JSON 转 Bean
+
+把一个 JSON 对象映射为明确的 JavaBean，目标类应有可写属性或符合映射要求的构造方式；字段缺失不等于输入校验通过。示例：`User user = JSONUtil.toBean(json, User.class);`。
+
+### `JSONUtil.parseObj`：解析 JSONObject
+
+把 JSON 对象文本解析成 `JSONObject`，适合少量字段读取或先观察结构；字段读取要考虑缺失值和类型转换。示例：`JSONObject obj = JSONUtil.parseObj(json); String name = obj.getStr("name");`。
+
+### `JSONUtil.parseArray`：解析 JSONArray
+
+把 JSON 数组文本解析成 `JSONArray`，可按索引读取对象或标量；输入必须是数组形状，不能把对象文本当数组解析。示例：`JSONArray array = JSONUtil.parseArray(json); JSONObject first = array.getJSONObject(0);`。
+
+### `JSONUtil.toList`：JSON 数组转 `List<T>`
+
+显式传入元素类型，把 `JSONArray` 转为带泛型的 Bean 列表，默认得到可变 `ArrayList`；不要只使用 `List.class` 丢失元素类型。示例：`List<User> users = JSONUtil.toList(array, User.class);`。
+
+### `JSONUtil.toBean` + `TypeReference`：解析嵌套泛型
+
+`Class<T>` 无法表达 `Map<String, List<User>>` 等嵌套参数，使用 `TypeReference` 捕获泛型，并明确 `ignoreError` 策略。示例：`Map<String, List<User>> grouped = JSONUtil.toBean(json, new TypeReference<Map<String, List<User>>>() {}, false);`。
+
+### `JSONConfig.setDateFormat`：固定日期格式
+
+日期字符串和时间戳的转换依赖格式、时区及配置，不应依赖机器默认值；跨服务协议优先统一 ISO-8601。示例：`JSONConfig config = JSONConfig.create().setDateFormat("yyyy-MM-dd HH:mm:ss");`。
 
 ```java
 String userJson = JSONUtil.toJsonStr(user);
@@ -76,7 +212,17 @@ System.out.println("name=" + name + ", users=" + users.size());
 - **日期格式**：JSON 里的日期通常是字符串或时间戳，格式和时区不应依赖机器默认值；项目应统一 ISO-8601 或在 `JSONConfig` 中显式设置格式，并覆盖时区测试。
 - **泛型与嵌套类型**：`User.class` 只能表达一个具体根类型，`List.class` 无法保留元素泛型；嵌套结构使用 `TypeReference` 捕获参数化类型，例如 `JSONUtil.toBean(json, new TypeReference<Map<String, List<User>>>() {}, false)`。
 
-低频补充：`JSONUtil.toJsonPrettyStr` 用于人类阅读的缩进输出，`JSONUtil.parse` 返回更宽的 JSON 抽象，`JSONConfig` 用于日期、忽略大小写等序列化配置；跨服务协议仍应优先固定 schema 并做校验。
+### `JSONUtil.toJsonPrettyStr`：格式化 JSON（低频）
+
+输出带缩进的 JSON，主要用于日志和人工阅读，不建议直接作为协议格式。示例：`String pretty = JSONUtil.toJsonPrettyStr(user);`。
+
+### `JSONUtil.parse`：解析为通用 JSON 抽象（低频）
+
+返回更宽的 `JSON` 类型，适合暂时不确定根节点形状的场景；后续仍需转成明确对象。示例：`JSON parsed = JSONUtil.parse(json);`。
+
+### `JSONUtil.readJSON`：从文件读取 JSON（低频）
+
+提供文件读取快捷入口，生产代码仍需明确字符集、文件大小和异常处理。示例：`JSON json = JSONUtil.readJSON(file, StandardCharsets.UTF_8);`。
 
 ## 简单案例
 
@@ -146,3 +292,4 @@ public class TextDemo {
 - 能区分 `length()`、码点数量和用户可见字符数量。
 - 能发现 `split` 正则元字符与 `limit` 参数带来的差异。
 - 能用 `JSONUtil.toJsonStr`、`toBean`、`parseObj` 和 `toList` 完成常见转换，并说出其第三方与泛型边界。
+- 能按字面匹配、正则匹配、Unicode 码点和显式字符集选择合适的 String API。

@@ -36,7 +36,7 @@ HashMap 不承诺遍历顺序，LinkedHashMap 的顺序语义需要在构造时�
 
 ## 常用 API 速查
 
-### 基本读写与遍历
+### `Map`：基本读写与遍历总览
 
 | 任务 | 高频写法 | 说明 |
 | --- | --- | --- |
@@ -61,7 +61,27 @@ for (Map.Entry<String, Integer> entry : scores.entrySet()) {
 }
 ```
 
-### 复合更新
+### `Map.put/get`：写入与读取键值
+
+`put` 会新增或替换并返回旧值，`get` 找不到键时返回 `null`；如果 Map 允许 `null` 值，不能只靠 `get` 判断存在性。示例：`Integer old = map.put("java", 95); Integer score = map.get("java");`。
+
+### `Map.remove`：删除键值
+
+`remove(key)` 按键删除，`remove(key, value)` 只有键和值同时匹配才删除，适合避免误删并发更新后的新值。示例：`map.remove("draft", "old");`。
+
+### `Map.getOrDefault`：读取默认值
+
+只提供读取时的兜底，不会把默认值写回 Map；键存在但值为 `null` 时，`getOrDefault` 仍可能返回 `null`，应先明确是否允许空值。示例：`int count = map.getOrDefault("missing", 0);`。
+
+### `containsKey/containsValue`：判断键和值
+
+`containsKey` 判断键是否存在，`containsValue` 扫描值；判断键优先使用前者，不要用 `get(...) != null` 替代。示例：`boolean present = map.containsKey("java");`。
+
+### `entrySet/keySet/values`：遍历 Map 视图
+
+同时需要键和值时首选 `entrySet`；三个结果都是原 Map 的视图，结构性修改要遵守迭代规则。示例：`for (Map.Entry<K, V> entry : map.entrySet()) { consume(entry.getKey(), entry.getValue()); }`。
+
+### `Map`：复合更新总览
 
 | 任务 | 高频写法 | 关键边界 |
 | --- | --- | --- |
@@ -81,9 +101,31 @@ System.out.println("count=" + count + ", groups=" + groups);
 // 输出：count={java=2, map=1}, groups={even=[2]}（HashMap 遍历顺序不作保证）
 ```
 
-不常用补充：`compute`/`computeIfPresent` 按存在性统一计算，`replaceAll` 批量替换值，`Map.of`/`Map.ofEntries` 创建小型不可变 Map，`Map.copyOf` 创建不可变副本。
+### `Map.putIfAbsent`：缺失键才写入
 
-### 排序、顺序与并发选择
+键不存在或当前值为 `null` 时写入，已有非 `null` 值不会覆盖；并发 Map 也常用它表达单键原子更新。示例：`map.putIfAbsent("java", 95);`。
+
+### `Map.computeIfAbsent`：缺失键时计算
+
+已有非 `null` 值时不执行计算，计算结果为 `null` 时不写入；常用于惰性创建集合。示例：`map.computeIfAbsent("tags", key -> new ArrayList<>()).add("java");`。
+
+### `Map.merge`：按旧值合并
+
+缺失键直接放入给定值，已有值才调用合并函数；合并结果为 `null` 会删除键。示例：`count.merge(word, 1, Integer::sum);`。
+
+### `Map.replace`：条件替换
+
+`replace(key, value)` 只替换已有键，三参数重载还要求旧值匹配，适合避免覆盖别人的更新。示例：`map.replace("java", 90, 95);`。
+
+### `Map.compute/computeIfPresent`：按存在性计算（低频）
+
+统一处理存在与缺失分支，回调返回 `null` 可能删除键；逻辑较复杂时才使用。示例：`map.computeIfPresent("java", (key, old) -> old + 1);`。
+
+### `Map.replaceAll`：批量替换值（低频）
+
+对每个键值执行一次重映射，不能在回调里递归结构性修改同一 Map。示例：`map.replaceAll((key, value) -> value == null ? 0 : value);`。
+
+### `HashMap`/`LinkedHashMap`/`TreeMap`：排序、顺序与并发总览
 
 | 需求 | 推荐实现/写法 | 说明 |
 | --- | --- | --- |
@@ -96,6 +138,42 @@ System.out.println("count=" + count + ", groups=" + groups);
 | 简单同步包装 | `Collections.synchronizedMap(map)` | 单次调用同步；遍历和多步组合仍要按文档外部同步。 |
 
 并发更新时，优先用 `ConcurrentHashMap` 的 `putIfAbsent`、`computeIfAbsent` 或 `merge` 表达按键原子操作；这不等于自动保护跨多个键的业务事务。
+
+### `HashMap`：通用 Map 与无序边界
+
+平均查找接近 O(1)，不承诺遍历顺序；需要顺序或并发语义时不要仅凭性能印象继续使用它。示例：`Map<String, Integer> map = new HashMap<>();`。
+
+### `LinkedHashMap`：保留插入或访问顺序
+
+默认按插入顺序遍历，构造器最后传 `true` 可改为访问顺序，适合简单 LRU 基础结构但不自动淘汰。示例：`Map<String, Integer> recent = new LinkedHashMap<>(16, 0.75f, true);`。
+
+### `TreeMap`/`new TreeMap`：按键排序与范围查询
+
+按自然顺序或比较器维护键，支持 `firstKey`、`subMap` 等范围 API，基本操作通常为 O(log n)。示例：`Map<String, Integer> sorted = new TreeMap<>(map);`。
+
+### `entrySet().stream().sorted`：按值排序
+
+按值排序会得到排序后的条目流/列表，而不是把原 `HashMap` 原地变成有序 Map；需要稳定并列顺序时再提供次级比较器。示例：`List<Map.Entry<String, Integer>> rows = map.entrySet().stream().sorted(Map.Entry.comparingByValue()).toList();`。
+
+### `ConcurrentHashMap`：并发读写与原子复合更新
+
+支持并发访问和单键 `putIfAbsent`/`compute`/`merge` 操作，但不接受 `null` 键和值，也不自动保护跨多个键的事务。示例：`ConcurrentMap<String, Integer> counts = new ConcurrentHashMap<>();`。
+
+### `Collections.synchronizedMap`：简单同步包装（低频）
+
+包装单次方法调用的同步，不会自动保护遍历或多步组合；遍历时按文档对包装对象加锁。示例：`Map<String, Integer> sync = Collections.synchronizedMap(new HashMap<>());`。
+
+### `Map.of`/`Map.ofEntries`：创建小型不可变 Map（低频）
+
+适合常量配置，不接受 `null` 且不能修改；条目很多时应考虑配置对象或可变实现。示例：`Map<String, Integer> codes = Map.of("ok", 200, "notFound", 404);`。
+
+### `Map.copyOf`：创建不可变 Map 副本（低频）
+
+复制当前键值并拒绝 `null`，后续源 Map 修改不会改变副本。示例：`Map<String, Integer> snapshot = Map.copyOf(map);`。
+
+### 可变 key：保持键的哈希与比较稳定
+
+键放入后不要修改参与 `equals`/`hashCode` 或比较器的字段，否则条目可能仍在原位置却无法查找；优先使用 `String`、不可变值对象或 `record`。示例：`Map<UserKey, Integer> safe = new HashMap<>();`。
 
 ## 简单案例
 
