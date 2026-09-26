@@ -339,6 +339,20 @@ test('Java learning path follows Python and covers the complete fundamentals-to-
   }
 })
 
+test('the first Java chapter contains complete lessons with runnable examples', () => {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const firstChapter = fg.sync('docs/courses/java/01-Java基础/*.md', { cwd: repoRoot })
+
+  assert.equal(firstChapter.length, 4)
+  for (const file of firstChapter) {
+    const lesson = readFileSync(join(repoRoot, file), 'utf8')
+    assert.ok(lesson.length >= 1200, `${file} should contain a useful knowledge-point reference`)
+    assert.match(lesson, /```java[\s\S]+?```/, `${file} should contain runnable Java code`)
+    assert.doesNotMatch(lesson, /## 实战练习/)
+    assert.match(lesson, /## 本节小结/)
+  }
+})
+
 test('open-source projects are exposed as a dynamic top navigation menu', () => {
   const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
   const nav = readFileSync(join(repoRoot, 'docs/.vitepress/config/nav.ts'), 'utf8')
