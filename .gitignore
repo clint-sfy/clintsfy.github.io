@@ -28,3 +28,4 @@ cache/
 pnpm-global
 TODOs.md
 .superpowers/
+.worktrees/
