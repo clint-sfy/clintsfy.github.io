@@ -33,6 +33,207 @@ Lambda 不是“自动多线程”，只是把一段行为交给一个有唯一�
 
 函数式接口让过滤、映射和通知策略可替换，但副作用会让组合难以推理。`Consumer` 改共享列表、写文件或更新计数器时要明确执行顺序和线程安全；逻辑复杂、需要名字或错误处理时，提取成普通方法通常更清楚。
 
+## 常用用法
+
+### `Predicate<T>`：表达真假条件
+
+```java
+import java.util.function.Predicate;
+
+Predicate<String> longName = name -> name.length() >= 4;
+System.out.println(longName.test("Java"));
+// 输出：true
+```
+
+`test` 返回布尔值，适合过滤、校验和权限判断；不要在谓词里偷偷修改共享状态。
+
+### `Predicate.and/or/negate`：组合条件
+
+```java
+import java.util.function.Predicate;
+
+Predicate<String> notBlank = text -> !text.isBlank();
+Predicate<String> javaName = text -> text.startsWith("Java");
+Predicate<String> valid = notBlank.and(javaName).or(text -> text.equals("JDK"));
+System.out.println(valid.test("Java 20"));
+// 输出：true
+```
+
+组合顺序会影响短路和可读性；条件复杂时应拆成有名字的谓词。
+
+### `Function<T, R>`：把输入转换为输出
+
+```java
+import java.util.function.Function;
+
+Function<String, Integer> length = String::length;
+System.out.println(length.apply("Java"));
+// 输出：4
+```
+
+`Function` 适合 `map`、字段提取和格式转换；转换失败时要明确是返回默认值还是抛出异常。
+
+### `Function.compose/andThen`：串联转换步骤
+
+```java
+import java.util.function.Function;
+
+Function<String, String> trim = String::trim;
+Function<String, String> upper = String::toUpperCase;
+System.out.println(upper.compose(trim).apply(" java "));
+// 输出：JAVA
+System.out.println(trim.andThen(upper).apply(" java "));
+// 输出：JAVA
+```
+
+`compose` 先执行参数函数，`andThen` 先执行当前函数；阅读时要确认数据流方向。
+
+### `Consumer<T>`：接收值并执行动作
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
+List<String> log = new ArrayList<>();
+Consumer<String> record = log::add;
+record.accept("saved");
+System.out.println(log);
+// 输出：[saved]
+```
+
+`Consumer` 没有返回值，常用于日志、通知和写入；并行流中使用它修改普通集合通常不安全。
+
+### `Consumer.andThen`：按顺序组合副作用
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
+List<String> output = new ArrayList<>();
+Consumer<String> print = text -> output.add("value=" + text);
+Consumer<String> count = text -> output.add("length=" + text.length());
+print.andThen(count).accept("Java");
+System.out.println(output);
+// 输出：[value=Java, length=4]
+```
+
+组合的两个动作按顺序执行；前一个动作抛异常时，后一个动作不会执行。
+
+### `Supplier<T>`：延迟提供一个值
+
+```java
+import java.util.function.Supplier;
+
+Supplier<String> requestId = () -> "REQ-20";
+System.out.println(requestId.get());
+// 输出：REQ-20
+```
+
+`Supplier` 不接收参数，可用于延迟构造默认值；只有调用 `get()` 才会计算。
+
+### `UnaryOperator<T>`：同类型的一进一出
+
+```java
+import java.util.function.UnaryOperator;
+
+UnaryOperator<String> normalize = String::trim;
+System.out.println(normalize.apply(" Java "));
+// 输出：Java
+```
+
+它是 `Function<T, T>` 的语义别名，适合原类型变换，如规范化、递增和复制。
+
+### `BinaryOperator<T>`：两个同类型值合并
+
+```java
+import java.util.function.BinaryOperator;
+
+BinaryOperator<Integer> add = Integer::sum;
+System.out.println(add.apply(20, 22));
+// 输出：42
+```
+
+它是 `BiFunction<T, T, T>` 的语义别名，常用于 `reduce`；合并操作最好满足结合律，便于并行处理。
+
+### 方法引用：复用已有方法
+
+```java
+import java.util.List;
+
+List<String> names = List.of("Bob", "Ann");
+names.stream().map(String::toUpperCase).forEach(System.out::println);
+// 输出：BOB
+// 输出：ANN
+```
+
+方法引用必须放在目标函数式接口的上下文中；有重载或额外分支时，显式 Lambda 往往更清楚。
+
+## 不常用但需要知道
+
+### `BiPredicate`/`BiFunction`/`BiConsumer`：处理两个输入
+
+```java
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
+
+BiPredicate<String, Integer> longEnough = (text, min) -> text.length() >= min;
+BiFunction<String, String, String> join = (left, right) -> left + ":" + right;
+System.out.println(longEnough.test("Java", 4));
+// 输出：true
+System.out.println(join.apply("id", "20"));
+// 输出：id:20
+```
+
+三参数以上通常应使用自定义类型，避免把参数顺序藏在 Lambda 里。
+
+### `Function.identity()`：原样返回元素
+
+```java
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+List<String> names = List.of("Ann", "Bob");
+var same = names.stream().collect(Collectors.toMap(Function.identity(), String::length));
+System.out.println(same);
+// 输出：{Ann=3, Bob=3}
+```
+
+只在收集器需要一个“键就是元素本身”的函数时使用；直接写 `name -> name` 也完全可以。
+
+### 自定义函数式接口：给策略补充领域名字
+
+```java
+@FunctionalInterface
+interface DiscountRule {
+    int priceAfterDiscount(int price);
+}
+
+DiscountRule memberRule = price -> price - 10;
+System.out.println(memberRule.priceAfterDiscount(80));
+// 输出：70
+```
+
+自定义接口适合表达领域语义或补充文档，不能为了少写一个方法而滥造通用接口。
+
+### Lambda 捕获变量：`final` 或 effectively final
+
+```java
+int limit = 10;
+java.util.function.Predicate<Integer> underLimit = value -> value < limit;
+System.out.println(underLimit.test(8));
+// 输出：true
+```
+
+局部变量创建 Lambda 后不能再次赋值；需要变化的状态应显式传参或使用受控的对象。
+
+## 专题导航
+
+- 需要处理可能缺失的返回值，查看 [Optional 常用 API](./04-Optional常用API)。
+- 需要批量转换、过滤和聚合，查看 [Stream 流式处理](./02-Stream流式处理) 与 [Stream 分组聚合与扁平化](./06-Stream分组聚合与扁平化)。
+
 ## 简单案例
 
 ```java

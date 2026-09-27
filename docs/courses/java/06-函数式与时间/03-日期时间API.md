@@ -33,6 +33,139 @@ description: 使用 java.time 处理日期、时间、时区、格式化和周�
 
 `java.time` 类型不可变且线程安全，每次 `plus` 或 `with` 都返回新对象。`Period` 按日历单位计算日期，`Duration` 按时间线秒/纳秒计算时长；测试不要直接调用 `now()`，应注入固定 `Clock`，否则测试会随机器时间漂移。
 
+## 常用用法
+
+### `LocalDate`/`LocalTime`/`LocalDateTime`：表达本地日历值
+
+```java
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+
+LocalDate date = LocalDate.of(2026, 9, 27);
+LocalTime time = LocalTime.of(9, 30);
+LocalDateTime meeting = LocalDateTime.of(date, time);
+System.out.println(meeting);
+// 输出：2026-09-27T09:30
+```
+
+这三类值都没有时区，适合生日、营业时间和尚未绑定地区的表单输入；跨地区事件要补充 `ZoneId`。
+
+### `Instant`：记录时间线上的唯一时刻
+
+```java
+import java.time.Instant;
+
+Instant event = Instant.parse("2026-09-27T01:30:00Z");
+System.out.println(event.plusSeconds(60));
+// 输出：2026-09-27T01:31:00Z
+```
+
+`Instant` 适合数据库、日志和消息传输；它不直接携带用户要看的地区时间。
+
+### `ZoneId`/`ZonedDateTime`：按地区显示同一时刻
+
+```java
+import java.time.Instant;
+import java.time.ZoneId;
+
+Instant event = Instant.parse("2026-09-27T01:30:00Z");
+System.out.println(event.atZone(ZoneId.of("Asia/Shanghai")));
+// 输出：2026-09-27T09:30+08:00[Asia/Shanghai]
+```
+
+区域时区包含历史和夏令时规则，不要用一个固定偏移量替代所有地区。
+
+### `DateTimeFormatter`：格式化与解析文本
+
+```java
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
+DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd");
+LocalDate date = LocalDate.parse("2026-09-27", formatter);
+System.out.println(formatter.format(date));
+// 输出：2026-09-27
+```
+
+外部协议应固定格式和 Locale；`DateTimeFormatter` 可共享，因为它是不可变且线程安全的。
+
+### `Duration`/`Period`：分别计算时长与日历周期
+
+```java
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.Period;
+
+System.out.println(Duration.ofHours(2).toMinutes());
+// 输出：120
+System.out.println(Period.between(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 3)).getDays());
+// 输出：2
+```
+
+`Duration` 面向时间线秒和纳秒，`Period` 面向年/月/日；跨夏令时或月底时不要混用两者的语义。
+
+### `Clock`：让当前时间可替换
+
+```java
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+
+Clock fixed = Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC);
+System.out.println(Instant.now(fixed));
+// 输出：2026-09-27T00:00:00Z
+```
+
+生产代码可使用系统时钟，测试使用固定时钟；不要把直接 `now()` 藏在难以替换的业务逻辑里。
+
+## 不常用但需要知道
+
+### `ZoneOffset`：使用固定偏移量
+
+```java
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+
+OffsetDateTime value = OffsetDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneOffset.ofHours(8));
+System.out.println(value.getOffset());
+// 输出：+08:00
+```
+
+固定偏移不包含地区规则，适合协议中已明确偏移的时间，不等于 `Asia/Shanghai` 这样的区域时区。
+
+### `TemporalAdjusters`：寻找下一个日历位置
+
+```java
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+
+LocalDate date = LocalDate.of(2026, 9, 27);
+System.out.println(date.with(TemporalAdjusters.firstDayOfNextMonth()));
+// 输出：2026-10-01
+```
+
+它适合账期、月初和月末等规则日期；复杂节假日仍需要业务日历，而不是简单调节器。
+
+### `YearMonth`/`MonthDay`：不完整的日历值
+
+```java
+import java.time.MonthDay;
+import java.time.YearMonth;
+
+System.out.println(YearMonth.of(2026, 9));
+// 输出：2026-09
+System.out.println(MonthDay.of(9, 27));
+// 输出：--09-27
+```
+
+账期或生日等确实缺少日、年的场景可用它们；不要为了凑成完整时间而随意补一个日期。
+
+## 专题导航
+
+- 需要解析、格式化和严格校验文本，查看 [日期格式化与解析](./07-日期格式化与解析)。
+- 需要时间线、时区转换和固定时钟，查看 [时区、Instant 与 ZonedDateTime](./08-时区Instant与ZonedDateTime)。
+
 ## 简单案例
 
 ```java
