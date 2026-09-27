@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -12,6 +12,118 @@ import openSourceLoader, {
   createOpenSourceDataLoader,
   resolveOpenSourceDocsRoot,
 } from '../docs/.vitepress/theme/data/open-source.data.ts'
+
+const EXPECTED_JAVA_ARTICLES_BY_CHAPTER = {
+  '01-Java基础': [
+    '01-开发环境与第一个程序.md',
+    '02-基础语法与程序结构.md',
+    '03-数据类型与运算符.md',
+    '04-控制流与方法.md',
+    '05-类型转换与数值精度.md',
+    '06-运算符与表达式.md',
+    '07-方法参数重载与递归.md',
+  ],
+  '02-数组与文本': [
+    '01-数组与多维数组.md',
+    '02-String与文本处理.md',
+    '03-常用类与包装类型.md',
+    '04-正则表达式与文本匹配.md',
+    '05-JSON与Java对象转换.md',
+    '06-大数与精确计算.md',
+  ],
+  '03-面向对象': [
+    '01-类与对象.md',
+    '02-封装继承与多态.md',
+    '03-接口与抽象类.md',
+    '04-内部类枚举基础.md',
+    '05-构造器与初始化顺序.md',
+    '06-Object方法与对象相等.md',
+    '07-static-final与代码组织.md',
+  ],
+  '04-现代Java类型': [
+    '01-枚举record与sealed.md',
+    '02-异常体系与资源管理.md',
+    '03-record数据载体.md',
+    '04-sealed受限继承.md',
+    '05-异常处理常用写法.md',
+    '06-自定义异常与异常转换.md',
+  ],
+  '05-泛型与集合': [
+    '01-泛型与类型安全.md',
+    '02-集合框架与数据结构.md',
+    '03-Map与集合选择.md',
+    '04-List常用API.md',
+    '05-Set去重与集合运算.md',
+    '06-Queue与Deque.md',
+    '07-Map常用API.md',
+    '08-集合排序与不可变集合.md',
+  ],
+  '06-函数式与时间': [
+    '01-Lambda与函数式接口.md',
+    '02-Stream流式处理.md',
+    '03-日期时间API.md',
+    '04-Optional常用API.md',
+    '05-Collectors收集器速查.md',
+    '06-Stream分组聚合与扁平化.md',
+    '07-日期格式化与解析.md',
+    '08-时区Instant与ZonedDateTime.md',
+  ],
+  '07-IO与网络': [
+    '01-IO与NIO.md',
+    '02-网络编程.md',
+    '03-Path与Files常用API.md',
+    '04-字节流字符流与缓冲.md',
+    '05-NIO-Buffer与Channel.md',
+    '06-HTTP-Client常用API.md',
+    '07-Socket与网络边界.md',
+  ],
+  '08-反射与模块': [
+    '01-反射与注解.md',
+    '02-模块化系统.md',
+    '03-Class与反射常用API.md',
+    '04-注解定义与运行时读取.md',
+    '05-动态代理与反射边界.md',
+    '06-module-info模块速查.md',
+    '07-ServiceLoader服务发现.md',
+  ],
+  '09-并发编程': [
+    '01-线程基础与执行器.md',
+    '02-并发工具与线程安全.md',
+    '03-JMM与并发内存模型.md',
+    '04-虚拟线程.md',
+    '05-synchronized互斥锁.md',
+    '06-ReentrantLock与Condition.md',
+    '07-volatile原子类与可见性.md',
+    '08-线程池Callable与Future.md',
+    '09-CompletableFuture异步编排.md',
+    '10-并发集合与阻塞队列.md',
+    '11-CountDownLatch-Semaphore与CyclicBarrier.md',
+    '12-死锁定位与避免.md',
+  ],
+  '10-JVM': [
+    '01-JVM内存与类加载.md',
+    '02-垃圾回收与调优.md',
+    '03-类加载初始化与类加载器.md',
+    '04-JVM诊断命令与JFR.md',
+    '05-GC日志与问题定位.md',
+  ],
+  '11-工程实践': ['01-Maven与测试工程.md', '02-JDBC与事务.md'],
+  '12-设计与项目': ['01-设计原则模式与综合复习.md'],
+}
+
+const EXPECTED_JAVA_PATHS = [
+  'docs/courses/java/index.md',
+  ...Object.entries(EXPECTED_JAVA_ARTICLES_BY_CHAPTER).flatMap(([chapter, articles]) =>
+    articles.map((article) => `docs/courses/java/${chapter}/${article}`),
+  ),
+].sort()
+
+const EXPECTED_JAVA_CHAPTER_COUNTS = [7, 6, 7, 6, 8, 8, 7, 7, 12, 5, 2, 1]
+const EXPECTED_JAVA_ROADMAP_PATHS = [
+  'docs/courses/java/11-工程实践/01-Maven与测试工程.md',
+  'docs/courses/java/11-工程实践/02-JDBC与事务.md',
+  'docs/courses/java/12-设计与项目/01-设计原则模式与综合复习.md',
+]
 
 function addProject(docsRoot, directoryName, frontmatter, notes = []) {
   const projectDir = join(docsRoot, 'open-source', directoryName)
@@ -325,7 +437,7 @@ test('Java learning path follows Python and covers the complete fundamentals-to-
     'Java should appear immediately after Python in the learning navigation',
   )
   assert.match(sidebar, /'\/courses\/java\/':\s*getItems\("courses\/java"\)/)
-  assert.equal(javaFiles.length, 56, 'the Java path should contain 56 Markdown files including the index')
+  assert.equal(javaFiles.length, 77, 'the Java path should contain 77 Markdown files including the index')
 
   const javaContent = javaFiles
     .map((file) => readFileSync(join(repoRoot, file), 'utf8'))
@@ -337,6 +449,44 @@ test('Java learning path follows Python and covers the complete fundamentals-to-
   ]) {
     assert.match(javaContent, new RegExp(topic), `Java outline should cover ${topic}`)
   }
+})
+
+test('Java course keeps the exact 77-page path set and 01-10 quality range', () => {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const javaPaths = fg
+    .sync('docs/courses/java/**/*.md', { cwd: repoRoot, onlyFiles: true })
+    .map((file) => file.replaceAll('\\', '/'))
+    .sort()
+  const chapterPaths = Object.keys(EXPECTED_JAVA_ARTICLES_BY_CHAPTER)
+    .map((chapter) => `docs/courses/java/${chapter}`)
+    .sort()
+  const actualChapterPaths = readdirSync(join(repoRoot, 'docs/courses/java'), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => `docs/courses/java/${entry.name}`)
+    .sort()
+  const actualChapterCounts = actualChapterPaths.map(
+    (chapterPath) => fg.sync(`${chapterPath}/*.md`, { cwd: repoRoot, onlyFiles: true }).length,
+  )
+
+  assert.deepEqual(javaPaths, EXPECTED_JAVA_PATHS, 'the Java path set must stay exact')
+  assert.equal(javaPaths.length, 77, 'the Java path should contain 77 Markdown files')
+  assert.equal(
+    javaPaths.filter((file) => file !== 'docs/courses/java/index.md').length,
+    76,
+    'the Java path should contain 76 article pages',
+  )
+  assert.deepEqual(actualChapterPaths, chapterPaths, 'the Java chapter directory range must stay exact')
+  assert.deepEqual(actualChapterCounts, EXPECTED_JAVA_CHAPTER_COUNTS, 'the Java chapter counts must stay exact')
+
+  const qualityPaths = javaPaths.filter((file) =>
+    /^docs\/courses\/java\/(?:0[1-9]-|10-)/u.test(file) && file !== 'docs/courses/java/index.md',
+  )
+  assert.equal(qualityPaths.length, 73, 'chapters 01-10 must contain 73 quality-gated articles')
+  assert.deepEqual(
+    javaPaths.filter((file) => /^(?:docs\/courses\/java\/11-|docs\/courses\/java\/12-)/u.test(file)),
+    EXPECTED_JAVA_ROADMAP_PATHS,
+    'chapters 11-12 must remain the three roadmap article paths',
+  )
 })
 
 test('the first Java chapter contains complete lessons with runnable examples', () => {

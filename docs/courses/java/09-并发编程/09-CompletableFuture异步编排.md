@@ -226,7 +226,7 @@ public class ThenAcceptDemo {
 }
 ```
 
-thenAccept 返回 CompletableFuture<Void)，适合通知、写日志等末端动作；需要返回新业务结果时使用 thenApply。
+thenAccept 返回 `CompletableFuture<Void>`，适合通知、写日志等末端动作；需要返回新业务结果时使用 thenApply。
 
 ## 不常用但需要知道
 

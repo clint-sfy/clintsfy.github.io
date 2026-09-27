@@ -92,7 +92,7 @@ import java.nio.charset.StandardCharsets;
 public class SocketTextDemo {
     public static void main(String[] args) throws Exception {
         try (ServerSocket server = new ServerSocket(0)) {
-            Thread service = Thread.ofPlatform().start(() -> {
+            Thread service = new Thread(() -> {
                 try (Socket socket = server.accept();
                      var reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
                      var writer = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8)) {
@@ -100,7 +100,8 @@ public class SocketTextDemo {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            });
+            }, "socket-text-service");
+            service.start();
             try (Socket client = new Socket("127.0.0.1", server.getLocalPort());
                  var reader = new BufferedReader(new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
                  var writer = new PrintWriter(client.getOutputStream(), true, StandardCharsets.UTF_8)) {
@@ -126,10 +127,10 @@ import java.net.SocketTimeoutException;
 public class SocketTimeoutDemo {
     public static void main(String[] args) throws Exception {
         try (ServerSocket server = new ServerSocket(0)) {
-            Thread.ofPlatform().start(() -> {
+            new Thread(() -> {
                 try (Socket ignored = server.accept()) { }
                 catch (Exception ignored) { }
-            });
+            }, "socket-timeout-service").start();
             try (Socket socket = new Socket("127.0.0.1", server.getLocalPort())) {
                 socket.setSoTimeout(50);
                 try {
@@ -198,14 +199,14 @@ import java.net.Socket;
 public class SocketHalfCloseDemo {
     public static void main(String[] args) throws Exception {
         try (ServerSocket server = new ServerSocket(0)) {
-            Thread.ofPlatform().start(() -> {
+            new Thread(() -> {
                 try (Socket socket = server.accept()) {
                     System.out.println(socket.getInputStream().read() == -1);
                     // 输出：true
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            });
+            }, "socket-half-close-service").start();
             try (Socket client = new Socket("127.0.0.1", server.getLocalPort())) {
                 client.shutdownOutput();
             }
@@ -339,7 +340,7 @@ import java.nio.charset.StandardCharsets;
 public class SocketDemo {
     public static void main(String[] args) throws Exception {
         try (ServerSocket server = new ServerSocket(0)) {
-            Thread service = Thread.ofPlatform().start(() -> {
+            Thread service = new Thread(() -> {
                 try (Socket socket = server.accept();
                      var in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
                      var out = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8)) {
@@ -347,7 +348,8 @@ public class SocketDemo {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            });
+            }, "socket-echo-service");
+            service.start();
             try (Socket client = new Socket("127.0.0.1", server.getLocalPort());
                  var in = new BufferedReader(new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
                  var out = new PrintWriter(client.getOutputStream(), true, StandardCharsets.UTF_8)) {

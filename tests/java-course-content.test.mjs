@@ -26,7 +26,7 @@ const CHAPTER_NAMES = [
   '12-设计与项目',
 ]
 
-const QUALITY_CHAPTER_NAMES = CHAPTER_NAMES.slice(0, 6)
+const QUALITY_CHAPTER_NAMES = CHAPTER_NAMES.slice(0, 10)
 
 const EXPECTED_ARTICLES_BY_CHAPTER = {
   '01-Java基础': [
@@ -83,15 +83,45 @@ const EXPECTED_ARTICLES_BY_CHAPTER = {
     '07-日期格式化与解析.md',
     '08-时区Instant与ZonedDateTime.md',
   ],
-  '07-IO与网络': ['01-IO与NIO.md', '02-网络编程.md'],
-  '08-反射与模块': ['01-反射与注解.md', '02-模块化系统.md'],
+  '07-IO与网络': [
+    '01-IO与NIO.md',
+    '02-网络编程.md',
+    '03-Path与Files常用API.md',
+    '04-字节流字符流与缓冲.md',
+    '05-NIO-Buffer与Channel.md',
+    '06-HTTP-Client常用API.md',
+    '07-Socket与网络边界.md',
+  ],
+  '08-反射与模块': [
+    '01-反射与注解.md',
+    '02-模块化系统.md',
+    '03-Class与反射常用API.md',
+    '04-注解定义与运行时读取.md',
+    '05-动态代理与反射边界.md',
+    '06-module-info模块速查.md',
+    '07-ServiceLoader服务发现.md',
+  ],
   '09-并发编程': [
     '01-线程基础与执行器.md',
     '02-并发工具与线程安全.md',
     '03-JMM与并发内存模型.md',
     '04-虚拟线程.md',
+    '05-synchronized互斥锁.md',
+    '06-ReentrantLock与Condition.md',
+    '07-volatile原子类与可见性.md',
+    '08-线程池Callable与Future.md',
+    '09-CompletableFuture异步编排.md',
+    '10-并发集合与阻塞队列.md',
+    '11-CountDownLatch-Semaphore与CyclicBarrier.md',
+    '12-死锁定位与避免.md',
   ],
-  '10-JVM': ['01-JVM内存与类加载.md', '02-垃圾回收与调优.md'],
+  '10-JVM': [
+    '01-JVM内存与类加载.md',
+    '02-垃圾回收与调优.md',
+    '03-类加载初始化与类加载器.md',
+    '04-JVM诊断命令与JFR.md',
+    '05-GC日志与问题定位.md',
+  ],
   '11-工程实践': ['01-Maven与测试工程.md', '02-JDBC与事务.md'],
   '12-设计与项目': ['01-设计原则模式与综合复习.md'],
 }
@@ -106,8 +136,8 @@ const EXPECTED_JAVA_PATHS = [
 ].sort()
 
 const ARTICLE_PATHS = EXPECTED_JAVA_PATHS.filter((file) => file !== JAVA_INDEX_PATH)
-// Task scope: only chapters 01-06 are being completed in this batch. Chapters
-// 07-12 remain available for later batches and are covered here only by the
+// Chapters 01-10 are the completed quality-gated learning path. Chapters
+// 11-12 remain the unchanged follow-up roadmap and are covered only by the
 // global path/frontmatter/navigation guards.
 const QUALITY_ARTICLE_PATHS = ARTICLE_PATHS.filter((file) =>
   QUALITY_CHAPTER_NAMES.some((chapter) => file.startsWith(`docs/courses/java/${chapter}/`)),
@@ -291,6 +321,10 @@ function getJavaBlocks(text) {
   return [...text.matchAll(/```java[^\r\n]*\r?\n([\s\S]*?)```/gi)].map((match) => match[1])
 }
 
+function hasStandaloneOutputComment(code) {
+  return /^\s*\/\/\s*输出\s*[:：]\s*\S.*$/mu.test(code)
+}
+
 function stripJavaComments(code) {
   return code
     .replace(/\/\*[\s\S]*?\*\//g, '')
@@ -410,7 +444,7 @@ function formatViolations(violations) {
   return violations.length === 0 ? '' : `\n${violations.join('\n')}`
 }
 
-test('Java course keeps 56 Markdown files, 55 articles, 12 chapters, and the baseline paths', () => {
+test('Java course keeps 77 Markdown files, 76 articles, 12 chapters, exact counts, and baseline paths', () => {
   const markdownPaths = fg
     .sync(JAVA_GLOB, { cwd: REPO_ROOT, onlyFiles: true })
     .map(normalizePath)
@@ -420,17 +454,22 @@ test('Java course keeps 56 Markdown files, 55 articles, 12 chapters, and the bas
     .map((entry) => entry.name)
     .sort()
 
-  assert.equal(markdownPaths.length, 56, 'rule java-markdown-count: expected 56 Markdown files')
+  assert.equal(markdownPaths.length, 77, 'rule java-markdown-count: expected 77 Markdown files')
   assert.equal(
     markdownPaths.filter((file) => file !== JAVA_INDEX_PATH).length,
-    55,
-    'rule java-article-count: expected 55 course articles',
+    76,
+    'rule java-article-count: expected 76 course articles',
   )
   assert.equal(chapterDirectories.length, 12, 'rule java-chapter-count: expected 12 chapter directories')
   assert.deepEqual(
     chapterDirectories,
     [...CHAPTER_NAMES].sort(),
     'rule java-chapter-paths: chapter directory set changed',
+  )
+  assert.deepEqual(
+    chapterDirectories.map((chapter) => EXPECTED_ARTICLES_BY_CHAPTER[chapter].length),
+    [7, 6, 7, 6, 8, 8, 7, 7, 12, 5, 2, 1],
+    'rule java-chapter-article-counts: chapter article counts changed',
   )
   assert.deepEqual(
     markdownPaths,
@@ -458,7 +497,7 @@ test('Java articles keep the required frontmatter fields', () => {
   assert.deepEqual(violations, [], `rule java-frontmatter${formatViolations(violations)}`)
 })
 
-test('01-06 Java articles use the shared quality structure and runnable examples', () => {
+test('01-10 Java articles use the shared quality structure and runnable examples', () => {
   const violations = []
 
   for (const relativePath of QUALITY_ARTICLE_PATHS) {
@@ -520,7 +559,7 @@ test('01-06 Java articles use the shared quality structure and runnable examples
   assert.deepEqual(violations, [], `rule java-article-structure${formatViolations(violations)}`)
 })
 
-test('01-06 Java articles expose standard common and less-common usage headings with Java examples', () => {
+test('01-10 Java articles expose standard common and less-common usage headings with Java examples', () => {
   const violations = []
 
   for (const relativePath of QUALITY_ARTICLE_PATHS) {
@@ -556,7 +595,7 @@ test('01-06 Java articles expose standard common and less-common usage headings 
   assert.deepEqual(violations, [], `rule java-usage-headings${formatViolations(violations)}`)
 })
 
-test('01-06 Java articles provide two answered review questions and no deprecated task markers', () => {
+test('01-10 Java articles provide two answered review questions and no deprecated task markers', () => {
   const violations = []
   const forbiddenPatterns = [
     { rule: 'checkbox', pattern: /^\s*[-*+]\s*\[[ xX]\](?:\s|$)/m },
@@ -601,19 +640,26 @@ test('01-06 Java articles provide two answered review questions and no deprecate
   assert.deepEqual(violations, [], `rule java-review-and-forbidden-content${formatViolations(violations)}`)
 })
 
-test('Java index stage links resolve to the existing article path set', () => {
-  const index = readMarkdown(JAVA_INDEX_PATH)
+test('All 77 Java pages keep Java cross-links free of dead routes', () => {
   const articleRoutes = new Set(ARTICLE_PATHS.map(relativeRoute))
-  const stageLinks = [...index.body.matchAll(/\]\((\/courses\/java\/[^)#\s]+)(?:#[^)]*)?\)/g)].map(
-    (match) => match[1],
-  )
-  const brokenLinks = stageLinks.filter((link) => !articleRoutes.has(link))
+  const brokenLinks = []
+  let linkCount = 0
 
-  assert.ok(stageLinks.length > 0, 'rule java-index-stage-links: no Java stage links found')
+  for (const relativePath of [JAVA_INDEX_PATH, ...ARTICLE_PATHS]) {
+    const { body } = readMarkdown(relativePath)
+    for (const match of body.matchAll(/\]\((\/courses\/java\/[^)#\s]+)(?:#[^)]*)?\)/g)) {
+      linkCount += 1
+      if (!articleRoutes.has(match[1])) {
+        brokenLinks.push(`${relativePath} -> ${match[1]}`)
+      }
+    }
+  }
+
+  assert.ok(linkCount > 0, 'rule java-cross-links: no Java links found')
   assert.deepEqual(
     brokenLinks,
     [],
-    `rule java-index-stage-links: broken links${formatViolations(brokenLinks)}`,
+    `rule java-cross-links: broken links${formatViolations(brokenLinks)}`,
   )
 })
 
@@ -668,7 +714,11 @@ test('JDK 20 preview and incubator articles document status and paired commands'
     if (!/孵化\s*(?:API|模块)|incubator\s*(?:API|module)|非稳定\s*API/iu.test(body)) {
       violations.push(`${relativePath} [incubator-status] must explicitly identify a non-stable incubator API`)
     }
-    const needsPreviewFlag = /预览特性|preview|--enable-preview/iu.test(body)
+    // Structured concurrency is an incubator API in JDK 20, not a preview
+    // language/API feature. A page may document both it and a separate
+    // preview API (for example virtual threads), so do not incorrectly force
+    // --enable-preview onto the incubator module's paired commands.
+    const needsPreviewFlag = false
     const compileCommand = body.split(/\r?\n/).some(
       (line) =>
         /\bjavac\b/.test(line) &&
@@ -696,7 +746,7 @@ test('JDK 20 preview and incubator articles document status and paired commands'
   assert.deepEqual(violations, [], `rule jdk20-preview-contract${formatViolations(violations)}`)
 })
 
-test('01-06 Java examples reject JDK 20+ APIs unless an allowed comparison is explicit', () => {
+test('01-10 Java examples reject JDK 20+ APIs unless an allowed comparison is explicit', () => {
   const violations = []
 
   for (const relativePath of QUALITY_ARTICLE_PATHS) {
@@ -744,9 +794,83 @@ test('Java quick-reference API headings put a Java example immediately below the
             `${relativePath} [quick-reference:${sectionLabel}/${heading}] first content must be a java fenced code block`,
           )
         }
+        const javaBlocks = getJavaBlocks(content)
+        if (
+          javaBlocks.some((code) => /\bSystem\.out\.(?:print|println|printf)\s*\(/.test(code)) &&
+          !javaBlocks.some(hasStandaloneOutputComment)
+        ) {
+          violations.push(
+            `${relativePath} [quick-reference:${sectionLabel}/${heading}] observable output needs a standalone // 输出： comment`,
+          )
+        }
       }
     }
   }
 
   assert.deepEqual(violations, [], `rule java-quick-reference-examples${formatViolations(violations)}`)
+})
+
+test('01-10 Java examples keep standalone output comments and concurrency resource boundaries', () => {
+  const violations = []
+
+  for (const relativePath of QUALITY_ARTICLE_PATHS) {
+    const { body } = readMarkdown(relativePath)
+    for (const [index, code] of getJavaBlocks(body).entries()) {
+      if (
+        /\bSystem\.out\.(?:print|println|printf)\s*\(/.test(code) &&
+        !hasStandaloneOutputComment(code)
+      ) {
+        violations.push(`${relativePath} [java-block-${index + 1}] observable output needs a standalone // 输出： comment`)
+      }
+    }
+  }
+
+  const concurrencyPaths = ARTICLE_PATHS.filter((file) =>
+    file.startsWith('docs/courses/java/09-并发编程/'),
+  )
+  for (const relativePath of concurrencyPaths) {
+    const { body } = readMarkdown(relativePath)
+    for (const [index, code] of getJavaBlocks(body).entries()) {
+      if (/\.(?:lock|lockInterruptibly|tryLock)\s*\(/.test(code)) {
+        if (!/\.unlock(?:Read|Write)?\s*\(/.test(code)) {
+          violations.push(`${relativePath} [java-block-${index + 1}] lock acquisition must have a matching unlock`)
+        }
+        if (!/finally/u.test(code)) {
+          violations.push(`${relativePath} [java-block-${index + 1}] lock release must be in finally`)
+        }
+      }
+      if (/\.(?:acquire|acquireUninterruptibly|acquireInterruptibly|tryAcquire)\s*\(/.test(code)) {
+        if (!/\.release\s*\(/.test(code)) {
+          violations.push(`${relativePath} [java-block-${index + 1}] permit acquisition must have a matching release`)
+        }
+      }
+      if (/(?:Executors\.new|new\s+ThreadPoolExecutor\s*\()/.test(code) &&
+          !/(?:\bshutdown(?:Now)?\s*\(|\bclose\s*\(|try\s*\()/u.test(code)) {
+        violations.push(`${relativePath} [java-block-${index + 1}] executor must have a close/shutdown boundary`)
+      }
+    }
+  }
+
+  const futureArticle = readMarkdown('docs/courses/java/09-并发编程/08-线程池Callable与Future.md').body
+  if (!/ExecutionException/u.test(futureArticle) || !/TimeoutException/u.test(futureArticle) || !/\.cancel\(/u.test(futureArticle)) {
+    violations.push('docs/courses/java/09-并发编程/08-线程池Callable与Future.md [future-contract] needs exception, timeout, and cancellation coverage')
+  }
+
+  const completableFutureArticle = readMarkdown('docs/courses/java/09-并发编程/09-CompletableFuture异步编排.md').body
+  if (!/supplyAsync\([\s\S]*?,\s*executor\)/u.test(completableFutureArticle)) {
+    violations.push('docs/courses/java/09-并发编程/09-CompletableFuture异步编排.md [executor-boundary] supplyAsync should show an explicit executor')
+  }
+  if (!/thenApplyAsync\([\s\S]*?,\s*executor\)/u.test(completableFutureArticle)) {
+    violations.push('docs/courses/java/09-并发编程/09-CompletableFuture异步编排.md [executor-boundary] thenApplyAsync should show an explicit executor')
+  }
+  if (!/commonPool/u.test(completableFutureArticle)) {
+    violations.push('docs/courses/java/09-并发编程/09-CompletableFuture异步编排.md [executor-boundary] should explain the default commonPool')
+  }
+
+  const deadlockArticle = readMarkdown('docs/courses/java/09-并发编程/12-死锁定位与避免.md').body
+  if (!/DeadlockReproductionDemo/u.test(deadlockArticle) || !/仅用于受控诊断[\s\S]*不能直接放进生产/u.test(deadlockArticle)) {
+    violations.push('docs/courses/java/09-并发编程/12-死锁定位与避免.md [deadlock-safety] deliberate deadlock must be marked diagnostic-only')
+  }
+
+  assert.deepEqual(violations, [], `rule java-executable-safety${formatViolations(violations)}`)
 })

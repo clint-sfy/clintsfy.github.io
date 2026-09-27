@@ -29,7 +29,7 @@ description: 直接用 Java module-info.java 案例速查 module、requires、ex
 
 ### 白话解释与边界
 
-模块描述符解决三类问题：谁能被读取、哪些包对外公开、哪些运行时服务可以被发现。`exports` 不等于 `opens`，`requires` 也不等于把依赖的包导出给下游。模块系统要求命名和路径一致可解析，迁移 classpath 时要逐步处理自动模块、未命名模块和 split package。
+模块描述符解决三类问题：谁能被读取、哪些包对外公开、哪些运行时服务可以被发现。相比 classpath，模块系统会显式检查可读性和封装边界；`exports` 不等于 `opens`，`requires` 也不等于把依赖的包导出给下游。模块系统要求命名和路径一致可解析，迁移 classpath 时要逐步处理自动模块、未命名模块和 split package。
 
 ## 常用用法
 
@@ -263,6 +263,8 @@ public class Main {
 - `requires` 是当前模块的依赖，`requires transitive` 才会影响下游模块可读性。
 - `uses/provides` 是服务声明，ServiceLoader 才是运行时发现入口。
 - `open module` 只是反射开放范围更大，不会自动让包成为公共 API。
+
+模块路径与 classpath 的区别是解析和封装规则不同；open module 也只是扩大反射入口，而不是替代 `exports` 的公共 API 声明。
 
 ## 课后小问
 

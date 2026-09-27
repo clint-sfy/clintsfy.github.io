@@ -32,7 +32,7 @@ description: 配置 ThreadPoolExecutor，使用 Callable/Future 获取结果、�
 
 线程池是“有限工人 + 等待队列”。提交任务时先用核心线程，再放队列，队列满后才扩展到最大线程，仍满才触发拒绝策略。无界队列会让最大线程数几乎不起作用并把压力推到内存；有界队列要配合业务降级、超时或重试。
 
-Future 只代表一个结果，不会自动完成超时后的清理。`get(timeout)` 超时只是调用方停止等待，任务可能仍在运行；需要取消时显式调用 cancel，并让任务响应中断。
+Future 只代表一个结果，不会自动完成超时后的清理。与直接调用同步方法相比，`get(timeout)` 超时只是调用方停止等待，任务可能仍在运行；需要取消时显式调用 cancel，并让任务响应中断。
 
 ## 常用用法
 
@@ -56,22 +56,52 @@ public class CallableFutureDemo {
 
 Callable 适合需要结果或声明异常的任务；执行异常会在 `get()` 时包装为 ExecutionException，调用方要区分任务失败、等待被中断和调用方超时。
 
+### Future.get：观察任务异常
+
+```java
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+
+public class FutureExceptionDemo {
+    public static void main(String[] args) {
+        try (var executor = Executors.newSingleThreadExecutor()) {
+            Callable<Void> task = () -> {
+                throw new IllegalArgumentException("bad input");
+            };
+            var future = executor.submit(task);
+            try {
+                future.get();
+            } catch (ExecutionException ex) {
+                System.out.println(ex.getCause().getClass().getSimpleName());
+                // 输出：IllegalArgumentException
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+}
+```
+
+`submit` 不会把任务异常直接抛到提交线程；只有读取对应 Future 时才会以 `ExecutionException` 观察到。生产代码应记录 cause，并区分可重试失败和编程错误。
+
 ### Future.get(timeout)：有界等待
 
 ```java
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class FutureTimeoutDemo {
     public static void main(String[] args) {
+        FutureTask<String> future = new FutureTask<>(() -> "ready");
         try {
-            var future = new java.util.concurrent.FutureTask<>(() -> "ready");
-            future.run();
-            System.out.println(future.get(1, TimeUnit.SECONDS));
+            System.out.println(future.get(1, TimeUnit.MILLISECONDS));
             // 输出：ready
         } catch (TimeoutException ex) {
             System.out.println("timed out");
-            // 输出：timed out（可能）
+            // 输出：timed out
+            future.cancel(false);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -264,23 +294,41 @@ invokeAny 返回第一个成功结果，并取消其他未完成任务；“最�
 ### CallerRunsPolicy：提交者承担背压
 
 ```java
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadPoolExecutor;
 
 public class CallerRunsPolicyDemo {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         var executor = new ThreadPoolExecutor(
                 1, 1, 0, java.util.concurrent.TimeUnit.SECONDS,
                 new java.util.concurrent.SynchronousQueue<>(),
                 new ThreadPoolExecutor.CallerRunsPolicy());
-        executor.shutdown();
-        executor.getRejectedExecutionHandler();
-        System.out.println("caller-runs policy configured");
-        // 输出：caller-runs policy configured
+        var workerStarted = new CountDownLatch(1);
+        var releaseWorker = new CountDownLatch(1);
+        try {
+            executor.execute(() -> {
+                workerStarted.countDown();
+                try {
+                    releaseWorker.await();
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+            workerStarted.await();
+            executor.execute(() -> {
+                System.out.println("caller-runs");
+                // 输出：caller-runs
+            });
+        } finally {
+            releaseWorker.countDown();
+            executor.shutdown();
+            executor.awaitTermination(1, java.util.concurrent.TimeUnit.SECONDS);
+        }
     }
 }
 ```
 
-真正触发 CallerRunsPolicy 需要执行器处于运行但暂时无容量的状态；它会让提交线程同步执行任务，能形成背压但会拖慢请求线程，不能用于不允许阻塞的事件循环。
+第一个任务占住唯一工作线程后，第二个任务会触发 CallerRunsPolicy 并在提交线程同步执行。它能形成背压但会拖慢请求线程，不能用于不允许阻塞的事件循环。
 
 ### prestartAllCoreThreads：提前创建核心线程
 
@@ -291,10 +339,13 @@ public class PrestartThreadsDemo {
     public static void main(String[] args) {
         var executor = (java.util.concurrent.ThreadPoolExecutor)
                 Executors.newFixedThreadPool(2);
-        int started = executor.prestartAllCoreThreads();
-        System.out.println("started=" + started);
-        // 输出：started=2
-        executor.shutdown();
+        try {
+            int started = executor.prestartAllCoreThreads();
+            System.out.println("started=" + started);
+            // 输出：started=2
+        } finally {
+            executor.shutdown();
+        }
     }
 }
 ```

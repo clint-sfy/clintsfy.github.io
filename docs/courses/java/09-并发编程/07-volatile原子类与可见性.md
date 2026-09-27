@@ -187,14 +187,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class WeakCasDemo {
     public static void main(String[] args) {
         AtomicInteger value = new AtomicInteger();
-        boolean changed = value.weakCompareAndSet(0, 1);
+        boolean changed;
+        do {
+            changed = value.weakCompareAndSet(0, 1);
+        } while (!changed);
         System.out.println(changed + ", value=" + value.get());
         // 输出：true, value=1
     }
 }
 ```
 
-弱 CAS 允许无理由失败，通常放在循环算法里；简单业务代码优先使用 compareAndSet，语义更容易读懂。特定 JDK 文档对内存语义的说明优先于经验。
+弱 CAS 允许无理由失败，必须放在循环算法里；简单业务代码优先使用 compareAndSet，语义更容易读懂。特定 JDK 文档对内存语义的说明优先于经验。
 
 ### LongAccumulator：自定义结合运算
 
