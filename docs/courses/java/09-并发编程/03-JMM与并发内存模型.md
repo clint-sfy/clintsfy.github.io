@@ -1,40 +1,286 @@
 ---
 title: JMM 与并发内存模型
-date: 2026-09-22
+date: 2026-09-27
 category: Java基础快速入门
 tags:
   - Java
   - JMM
   - 并发
-description: 理解 Java 内存模型、happens-before、volatile 和安全发布。
+description: 用 happens-before、volatile、锁和安全发布推理 Java 并发读写。
 ---
 
 # JMM 与并发内存模型
 
 ## 学习目标
 
-- 理解线程工作内存、主内存和可见性/有序性/原子性。
-- 用 happens-before 关系推断并发程序是否正确。
-- 正确使用 volatile、final、锁和并发集合完成安全发布。
+- 理解可见性、有序性和原子性的含义及其边界。
+- 会使用 happens-before 关系判断一次写入何时对另一个线程可见。
+- 知道 volatile、锁、Atomic 和安全发布分别解决什么问题。
 
 ## 核心知识点
 
-JMM 规定跨线程读写的可见性、有序性与同步语义，不等同于硬件缓存的直观模型。对同一监视器的解锁先于后续加锁；volatile 写先于后续读；线程启动、结束以及 Future 完成也建立 happens-before。volatile 适合状态标志和发布引用，不适合复合更新。final 字段的构造安全发布有特殊保证，但对象仍应通过安全方式共享。数据竞争使推理失效，应先建立同步边界。
+### 专业术语
 
-## 实践任务
+- **Java Memory Model（JMM）**：规定线程读写共享变量时可见性、有序性和同步语义的抽象模型。
+- **happens-before**：如果 A happens-before B，A 的结果对 B 可见，且 A 的执行顺序先于 B。
+- **可见性（visibility）**：一个线程写入后，其他线程能观察到最新值。
+- **有序性（ordering）**：同步边界约束了编译器、JIT 和处理器重排对观察结果的影响。
+- **原子性（atomicity）**：一个操作不会被其他线程观察到中间状态。
 
-编写一个可停止的工作线程和一次性初始化组件：分别用 volatile 标志、synchronized 和静态 holder 实现；用 jcstress 风格测试或循环压力测试观察错误发布，并解释结果。
+### 白话解释与边界
 
-## 易错点
+JMM 不是“每个线程都有一份永久独立内存”的实现承诺，而是给出跨线程观察规则。单线程里看起来顺序正确的代码，跨线程没有同步时可能看不到最新值，也可能看到不完整的复合状态。
 
-- 以为 volatile 同时提供互斥和计数原子性。
-- 双重检查锁缺少 volatile，读取到未完整构造对象。
-- 只凭单次运行结果断言“没有竞态”。
-- 在锁外发布可变对象，调用方绕过保护修改状态。
+常见 happens-before 边包括：同一锁的解锁先于后续加锁；volatile 写先于后续读；`Thread.start()` 先于新线程动作；线程中的动作先于成功的 `join()` 返回；Future 完成先于 `get()` 返回。它们建立可见性，但是否足以保证整个业务不变式还要看原子边界。
 
-## 复习清单
+## 常用用法
 
-- [ ] 能列出常见 happens-before 边。
-- [ ] 能判断 volatile 是否足够解决一个并发需求。
-- [ ] 能写出安全发布和停止线程的最小实现。
+### volatile：发布状态标志
 
+```java
+public class VolatileFlagDemo {
+    private static volatile boolean stopped;
+
+    public static void main(String[] args) {
+        stopped = false;
+        stopped = true;
+        if (stopped) {
+            System.out.println("stop requested");
+            // 输出：stop requested
+        }
+    }
+}
+```
+
+volatile 读写具有可见性和有序性，适合停止标志、配置快照引用等单变量发布。它不提供互斥，也不能保护 `count++`、检查再写入等复合操作。
+
+### synchronized：用锁建立可见性与互斥
+
+```java
+public class SynchronizedVisibilityDemo {
+    private int value;
+
+    synchronized void set(int value) {
+        this.value = value;
+    }
+
+    synchronized int get() {
+        return value;
+    }
+
+    public static void main(String[] args) {
+        var box = new SynchronizedVisibilityDemo();
+        box.set(42);
+        System.out.println(box.get());
+        // 输出：42
+    }
+}
+```
+
+同一个监视器的 unlock→lock 建立 happens-before，并且临界区互斥。读写必须使用同一个锁对象；只给写方法加锁、读方法不加锁并不能形成完整的保护。
+
+### Thread.start 与 join：线程之间的 happens-before
+
+```java
+public class ThreadHappensBeforeDemo {
+    private static int value;
+
+    public static void main(String[] args) throws InterruptedException {
+        value = 41;
+        Thread worker = new Thread(() -> value++);
+        worker.start();
+        worker.join();
+        System.out.println(value);
+        // 输出：42
+    }
+}
+```
+
+启动前的写入对新线程可见，线程完成前的写入对成功 join 的线程可见。`join(timeout)` 超时返回时不代表后续写入已经可见或任务已经完成。
+
+### AtomicInteger：CAS 保证单变量更新
+
+```java
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class AtomicCasDemo {
+    public static void main(String[] args) {
+        AtomicInteger version = new AtomicInteger(1);
+        boolean updated = version.compareAndSet(1, 2);
+        System.out.println(updated + ", version=" + version.get());
+        // 输出：true, version=2
+    }
+}
+```
+
+CAS 会比较当前值，只有仍等于期望值才写入新值；失败时通常重试或走冲突路径。CAS 适合无锁更新独立状态，不代表任意多字段操作都能无锁完成。
+
+### 安全发布：用不可变对象传递快照
+
+```java
+public class SafePublicationDemo {
+    record Config(String host, int port) { }
+    private static volatile Config config = new Config("localhost", 8080);
+
+    public static void main(String[] args) {
+        Config snapshot = config;
+        System.out.println(snapshot.host() + ":" + snapshot.port());
+        // 输出：localhost:8080
+    }
+}
+```
+
+把不可变对象引用通过 volatile、锁、静态初始化或并发容器发布，可以让读取线程看到完整构造结果。只把普通可变对象引用放出去，仍可能被调用方绕过保护修改内部字段。
+
+### Future.get：等待完成并取得可见结果
+
+```java
+import java.util.concurrent.Executors;
+
+public class FutureHappensBeforeDemo {
+    public static void main(String[] args) throws Exception {
+        try (var executor = Executors.newSingleThreadExecutor()) {
+            var future = executor.submit(() -> "ready");
+            System.out.println(future.get());
+            // 输出：ready
+        }
+    }
+}
+```
+
+Future 完成后调用 `get()` 能读取任务结果；如果只查询 `isDone()` 而不取结果，业务仍需要决定异常和取消如何传播。
+
+## 不常用但需要知道
+
+### final 字段：构造完成后的特殊可见性
+
+```java
+public class FinalFieldDemo {
+    static final class User {
+        private final String name;
+
+        User(String name) {
+            this.name = name;
+        }
+
+        String name() {
+            return name;
+        }
+    }
+
+    public static void main(String[] args) {
+        System.out.println(new User("Ann").name());
+        // 输出：Ann
+    }
+}
+```
+
+final 字段在构造器正常完成后有额外的初始化安全保证，但不等于整个对象天然线程安全；可变字段和 `this` 逃逸仍需同步。
+
+### VarHandle：低层次内存访问工具
+
+```java
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+
+public class VarHandleDemo {
+    private int value;
+
+    public static void main(String[] args) throws Exception {
+        VarHandle handle = MethodHandles.lookup().findVarHandle(
+                VarHandleDemo.class, "value", int.class);
+        var box = new VarHandleDemo();
+        handle.set(box, 42);
+        System.out.println(handle.get(box));
+        // 输出：42
+    }
+}
+```
+
+VarHandle 可以精细选择普通、opaque、acquire/release 或 volatile 访问语义，常用于并发库和高性能底层组件。业务代码优先用 Atomic、Lock 和并发集合，避免自己组合错误的内存语义。
+
+### lazySet：较弱的最终发布
+
+```java
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class LazySetDemo {
+    public static void main(String[] args) {
+        AtomicInteger state = new AtomicInteger();
+        state.lazySet(1);
+        System.out.println(state.get());
+        // 输出：1
+    }
+}
+```
+
+`lazySet` 允许延迟传播，适合不需要立即同步观察的状态清理；若后续代码依赖写入马上对其他线程可见，使用普通 `set` 更直白。
+
+### 数据竞争：没有同步就没有可靠推理
+
+```java
+public class DataRaceDemo {
+    private static int count;
+
+    public static void main(String[] args) {
+        count++;
+        System.out.println(count);
+        // 输出：1
+    }
+}
+```
+
+单线程输出确定不代表多线程安全；并发地执行 `count++` 会拆成读、加一、写回，更新可能丢失。遇到数据竞争应先建立同步边界，再谈性能优化。
+
+## 简单案例
+
+```java
+import java.util.concurrent.atomic.AtomicBoolean;
+
+public class StopSignalDemo {
+    public static void main(String[] args) {
+        AtomicBoolean running = new AtomicBoolean(true);
+        running.set(false);
+        System.out.println("running=" + running.get());
+        // 输出：running=false
+    }
+}
+```
+
+停止信号只需要单变量可见性；如果停止时还要更新队列、统计和资源状态，就应设计完整的关闭协议，而不是堆叠多个 volatile 字段。
+
+## 易混点
+
+- volatile 解决“看见最新值”，不解决“多个线程同时改值”的互斥和复合原子性。
+- happens-before 是可见性与顺序关系，不是所有业务动作自动串行。
+- `Thread.start()`/`join()` 的边界只覆盖对应线程生命周期，普通轮询没有同等保证。
+- final 字段有初始化安全语义，但对象内部的集合、数组和可变字段仍可能被并发修改。
+- Atomic 的 CAS 失败表示竞争发生了，不应把“无锁”误解成“永远不会重试”。
+
+## 课后小问
+
+1. 为什么 volatile 不能安全实现 `count++`？
+答案：自增由读、加法、写回组成，多个线程可能读到同一个旧值并覆盖彼此的结果。
+解析：需要 AtomicInteger、LongAdder 或锁把复合更新变成一个受保护的原子边界。
+
+2. `join()` 返回后为什么可以读取线程写入的普通字段？
+答案：线程动作先于成功的 join 返回，建立了 happens-before 关系。
+解析：这只说明该线程结束前的写入对 join 调用线程可见，不等于其他线程自动同步。
+
+3. 为什么“加了 final”不等于对象完全不可变？
+答案：final 只约束引用或字段不能重新赋值，引用指向的集合、数组等内部对象仍可能变化。
+解析：不可变对象还要求状态不暴露可变引用，并在构造过程中不让 this 逃逸。
+
+## 本节小结
+
+- JMM 用 happens-before 描述跨线程的可见性与有序性。
+- volatile 适合状态发布，synchronized/Lock 负责互斥，Atomic/CAS 适合单变量竞争更新。
+- start、join、锁、volatile 和 Future 都能建立特定的同步边界。
+- 先消除数据竞争并明确安全发布，再用基准测试决定是否需要低层 VarHandle。
+
+## 快速回顾
+
+- 能解释可见性、有序性和原子性的区别。
+- 能列出至少五条常见 happens-before 边。
+- 能判断 volatile、Atomic 和锁各自的适用边界。
+- 能说明安全发布为什么需要不可变对象或明确同步。
