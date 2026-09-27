@@ -1,616 +1,140 @@
 ---
-title: Python基础
+title: Python基础学习路线
 author: 阿源
-date: 2023/05/01 21:29
+date: 2026/09/27 00:00
 categories:
  - Python基础快速入门
 tags:
  - python
  - python基础
 ---
-# Python基础
+# Python基础学习路线
 
-## python语言基础
+这 17 篇按“能读懂代码 → 能写出脚本 → 能维护项目”的顺序整理。每个专题都同时照顾学习和速查：先看常用用法，再按 API 标题定位细节。
 
-### 1. 数值运算
+## 学习目标
 
-基本数值操作
+- 熟悉 Python 3.11+ 的对象、容器、控制流和函数模型。
+- 能用标准库完成文件、路径、序列化、命令行和日期处理。
+- 能读懂模块、异常、类、生成器、装饰器和类型提示。
+- 能使用虚拟环境、pytest 和代码质量工具维护小项目。
 
+## 专题导航
+
+1. [变量、数据类型与运算](./02-变量与数据类型.md)
+2. [字符串常用 API](./03-字符串.md)
+3. [列表与元组常用 API](./04-列表与元组.md)
+4. [字典与集合常用 API](./05-字典与集合.md)
+5. [条件、循环与推导式](./06-条件与循环.md)
+6. [函数、参数与作用域](./07-函数.md)
+7. [模块、包与脚本入口](./08-模块与包.md)
+8. [异常处理与错误边界](./09-异常处理.md)
+9. [文件、路径与序列化](./10-文件与路径.md)
+10. [面向对象与 dataclass](./11-面向对象.md)
+11. [迭代器与生成器](./12-迭代器与生成器.md)
+12. [装饰器与上下文管理](./13-装饰器.md)
+13. [类型提示与静态检查](./14-类型提示.md)
+14. [Python 标准库速查](./15-标准库速查.md)
+15. [虚拟环境与包管理](./16-虚拟环境与包管理.md)
+16. [测试、调试与代码质量](./17-测试与调试.md)
+
+## 核心知识点
+
+Python 是动态类型、强类型语言：变量名绑定到对象，类型属于对象而不是变量名。缩进是语法的一部分，表达式、可迭代对象和异常处理构成日常代码的骨架。
+
+学习边界：本篇是目录和概念地图，不重复每个 API 的长示例；要查具体语法，直接进入对应专题。数据分析见 Python 进阶篇，深度学习见 [PyTorch 速查入口](/courses/tangyudi/03-深度学习篇/01-Pytorch)。
+
+## 常用用法
+
+### 学习路线与入口
 ```python
-abs(15.6)
-15.6
-
-round(15.6)
-16
-
-round(15.4)
-15
-
-min(2,3,4,5)
-2
-max(2,3,4,5)
-5
-
-1.3e-5
-1.3e-05
-
-1.3e5
-130000.0
-
-0xFF
-255
+lessons = {
+    "数据与表达式": "02-变量与数据类型、03-字符串、04-列表与元组、05-字典与集合",
+    "程序流程": "06-条件与循环、07-函数、08-模块与包、09-异常处理",
+    "工程基础": "10-文件与路径、11-面向对象、12-迭代器与生成器、13-装饰器",
+    "项目维护": "14-类型提示、15-标准库速查、16-虚拟环境与包管理、17-测试与调试",
+}
+print(list(lessons))
+# 输出：['数据与表达式', '程序流程', '工程基础', '项目维护']
 ```
+先掌握前两组，再按工作需要查工程和维护专题。
 
-### 2.  字符串
-
-```
-tang_str = 'hello python'
-
-tang = 'hello'+'python'
-tang
-'hellopython'
-
-tang_str * 3
-```
-
-#### 字符串操作
-
+### Python版本信息
 ```python
-tang = '1 2 3 4 5'
-tang.split
-['1', '2', '3', '4', '5']
+import sys
 
-tang = '1,2,3,4,5'
-tang = tang.split(',')
+major_minor = sys.version_info[:2]
+print(major_minor)
+# 输出：(3, 11)
 ```
+实际输出会随解释器版本变化；项目文档以 Python 3.11+ 为基线。
 
-```
-tang_str = ' '
-tang_str.join(tang)
-'1 2 3 4 5'
-```
-
-```
-tang = 'hello python'
-tang.replace('python','world')
-
-'hello world'
-```
-
-```
-tang2.upper()
-'HELLO WORLD'
-```
-
+### 运行一个脚本
 ```python
-tang = '    hello python    '
-tang.strip()  # 去空操作
-'hello python'
+def main() -> None:
+    print("hello, Python")
+    # 输出：hello, Python
 
-tang.lstrip()
-'hello python    '
-tang.rstrip()
-'    hello python'
+
+if __name__ == "__main__":
+    main()
 ```
+`__name__ == "__main__"` 让文件既能被导入又能直接运行。
 
+### 速查页面的阅读方式
 ```python
-'{} {} {}'.format('tang','yu','di')
-'tang yu di'
-'{2} {1} {0}'.format('tang','yu','di')
-'di yu tang'
-'{tang} {yu} {di}'.format(tang = 10, yu =5, di = 1)
-'10 5 1'
+query = "dict.get"
+kind = "常用 API"
+print(f"先查 {query}，再看{kind}的易混点")
+# 输出：先查 dict.get，再看常用 API的易混点
 ```
+遇到陌生代码时，先识别对象类型，再查该类型的方法；不要只凭方法名猜返回值。
 
+## 不常用但需要知道
+
+### `help()` 与 `dir()`
 ```python
-tang = 'tang yu di:'
-b = 456.0
-c = 789 
-result = '%s %f %d' % (tang,b,c) 
-result
-'tang yu di: 456.000000 789'
+value = "python"
+names = [name for name in dir(value) if name.startswith("is")]
+print(names[:3])
+# 输出：['isascii', 'isdecimal', 'isdigit']
 ```
+`help()` 会在终端打开较长说明，适合临时探索；项目文档应优先链接稳定的官方 API。
 
-### 3. 索引
-
+### `__annotations__`
 ```python
-tang = 'tang yu di'
-tang[0]
-'t'
-tang[5]
-'y'
-tang[-1]
-'i
+count: int = 3
+print(__annotations__)
+# 输出：{'count': <class 'int'>}
 ```
+注解主要服务于阅读器、类型检查器和 IDE，不会自动把运行时值转换成声明的类型。
 
-```python
-tang[0:4] # 切片 左闭右开
-'tang'
-tang[5:]
-'yu di'
-tang[:7]
-'tang yu'
-tang[1:-2] 
-'ang yu '
-tang[-3:]
-' di'
-tang[:]
-'tang yu di'
-tang[::2] # 步长为2 取偶数列
-'tn ud'
-```
+## 易混点
 
-### 4. list结构
+- `=` 是赋值，`==` 是相等比较，`is` 比较是否为同一个对象。
+- `list`、`dict`、`set` 可变；`str`、`tuple`、`int` 不可变。
+- Python 没有“变量声明后才可使用”的独立语句，赋值时才建立绑定。
+- 代码块必须使用一致的缩进，推荐 4 个空格，不混用 Tab。
+- 速查中的示例输出是示意；地址、时间和版本相关输出不要写死。
 
-```python
-tang = []
-type(tang)
-list
-```
+## 课后小问
 
-```python
-tang = [1,2,3,4]
-tang = ['1','2','3','4']
-tang = [1,'tangyudi',3.5]
-tang = list([1,2,3])
-tang
-```
+1. 为什么 `x = 1` 后不能说“x 的类型永远是 int”？
+答案：因为变量名只是绑定，对象才有类型。
+解析：执行 `x = "one"` 后同一个名字可以重新绑定到字符串对象，动态类型并不等于弱类型。
 
-#### 操作
+2. 直接运行模块时，为什么常见 `if __name__ == "__main__":`？
+答案：为了只在直接运行该文件时执行入口代码。
+解析：被 `import` 时，模块的 `__name__` 是模块名；直接运行时才是 `"__main__"`。
 
-```python
-a = [123,456]
-b = ['tang','yudi']
-a + b
-[123, 456, 'tang', 'yudi']
+## 本节小结
 
+Python 基础的关键不是背完所有函数，而是建立“对象—容器—流程—函数—模块—工程”的地图。后续页面把每个节点展开为可复制的例子。
 
-a * 3
-[123, 456, 123, 456, 123, 456]
+## 快速回顾
 
-
-a[0:]
-[123, 456]
-```
-
-```python
-a
-[1, 2, 3, 4, 5, 6, 7, 8, 9]
-del a[0]
-a
-[2, 3, 4, 5, 6, 7, 8, 9]
-del a[3:]
-a
-[2, 3, 4]
-```
-
-```python
-a = [1,2,3,4,5,6,7,8,9]
-8 in a
-False
-
-tang = 'tang yu di'
-'tang' in tang
-True
-```
-
-```python
-a = [1,2,[3,4]]
-a
-[1, 2, [3, 4]]
-
-a[2]
-[3, 4]
-```
-
-```python
-tang =['apple','banana','apple','apple','apple','banana','banana']
-tang.count('apple')
-4
-
-tang =['apple','1','2','3','4','5','6']
-tang.index('apple') # 找索引
-0
-```
-
-#### 列表添加
-
-```python
-tang = []
-tang.append(['tang','yudi'])
-tang
-['tang', 'tang', 'tang', ['tang', 'yudi']]
-
-
-tang.insert(2,'python')
-tang
-['tang', 'tang', 'python', 'tang', ['tang', 'yudi'], 'tang', 'tang']
-
-
-tang.remove(['tang', 'yudi'])
-tang
-['tang', 'tang', 'python', 'tang', 'tang', 'tang']
-
-tang.pop(1)
-```
-
-```python 
-tang = [1,2,3,9,6,3,2]
-tang.sort()
-tang
-[1, 2, 2, 3, 3, 6, 9]
-
-tang = [1,2,3,9,6,3,2]
-tang2 = sorted(tang)
-[1, 2, 2, 3, 3, 6, 9]
-
-tang = ['di','yu','tang']
-tang.reverse()
-['tang', 'yu', 'di']
-```
-
-### 5. 字典
-
-```python
-tang = {}
-type(tang)
-dict
-
-tang = dict()
-type(tang)
-
-tang = dict()
-type(tang)
-dict
-```
-
-#### 字典结构操作
-
-```python
-tang['first'] = 123
-tang
-{'first': 123, 'python': 456}
-
-tang['python']
-456
-
-
-
-tang = {'tang':123,'yu':456,'di':789}
-tang
-{'di': 789, 'tang': 123, 'yu': 456}
-
-tang_value = [1,2,3]
-tang = {}
-tang['yudi'] = tang_value
-tang['yudi2'] = 3
-tang['yudi2'] = '4'
-{'yudi': [1, 2, 3], 'yudi2': '4'}
-
-
-tang = dict([('tang',123),('yudi',456)])
-tang
-{'tang': 123, 'yudi': 456}
-
-
-tang['tang'] += 1
-tang
-{'tang': 125, 'yudi': 456}
-
-tang.get('tang') # 取值
-
-tang.pop('tang')
-tang
-{'yudi': 456}
-
-del tang['yudi']
-
-
-tang = {'tang':123,'yudi':456}
-tang2 = {'tang':789,'python':888}
-tang.update(tang2)
-tang
-{'python': 888, 'tang': 789, 'yudi': 456}
-```
-
-```python
-tang.keys()
-dict_keys(['tang', 'python', 'yudi'])
-
-tang.values()
-dict_values([789, 888, 456])
-
-tang.items()
-dict_items([('tang', 789), ('python', 888), ('yudi', 456)])
-```
-
-### 6. 集合
-
-```python
-tang = set([123,123,123,456,456,456,789])
-tang
-{123, 456, 789}
-```
-
-```python
-a = {1,2,3,4}
-b = {2,3,4,5}
-a.union(b)  # 并集
-{1, 2, 3, 4, 5}
-
-a|b # 并集
-{1, 2, 3, 4, 5}
-
-b.intersection(a) # 交集
-{2, 3, 4}
-a & b
-{2, 3, 4}
-
-a.difference(b) # 差集
-{1}
-b.difference(a)
-{5}
-a - b
-{1}
-b - a
-{5}
-
-a = {1,2,3,4,5,6}
-b = {2,3,4}
-b.issubset(a) # 是否
-True
-a.issubset(b)
-False
-
-b <= a
-True
-b > a
-False
-a <= a
-True
-a < a
-False
-
-a = {1,2,3}
-a.add(4)
-a
-{1, 2, 3, 4}
-
-a.update([4,5,6])
-a
-{1, 2, 3, 4, 5, 6}
-
-a.remove(1)
-a
-{2, 3, 4, 5, 6}
-
-a.pop()
-a
-{3, 4, 5, 6}
-```
-
-### 7. 赋值机制
-
-为了提高内存效率，如果值较小，两个地址是一样的
-
-```python
-tang = 1000
-yudi = tang
-id(tang)
-2683811812688
-id(yudi)
-2683811812688
-```
-
-### 8. 判断结构 
-
-```python
-tang = 50
-if tang >200:
-    print ('200')
-elif tang < 100:
-    print ('100')
-else:
-    print ('100-200')
-    
-
-tang = [123,456,789]
-if 123 in tang:
-    print ('ok')
-ok
-
-tang = {'tang':123,'yudi':456}
-if 'tang' in tang:
-    print  ('ok')
-ok
-```
-
-### 9.  循环结构
-
-```python
-tangs = set(['tang','yu','di'])
-while tangs:
-    tang = tangs.pop()
-    print (tang)
-    
-for name in tangs:
-    print (name)
-```
-
-### 10. python函数
-
-```python
-def add_ab(a=1,b=2):
-    return (a+b)
-tang = add_ab()
-tang
-
-
-def add_number(a,*args):  # 可以不指定输入个数
-    b = 0
-    for i in args:
-        a += i
-        b += a
-    return a,b
-a,b = add_number(1,2,3)
-print (a,b)
-6 9
-
-
-def add_number2(a,**kwargs):
-    for arg,value in kwargs.items():
-        print (arg,value)
-add_number2(1,x=2,y=3)
-y 3
-x 2
-```
-
-### 11. python模块和包
-
-```python
-%%writefile tang.py   # 写成一个脚本
-tang_v = 10
-
-def tang_add(tang_list):
-    tang_sum = 0
-    for i in range(len(tang_list)):
-        tang_sum += tang_list[i]
-    return tang_sum
-tang_list = [1,2,3,4,5]
-print (tang_add(tang_list))
-
-%run tang.py
-15
-
-import tang
-15
-```
-
-### 12. 异常
-
-```python
-import math
-
-for i in range(10):
-    try:
-        input_number = input('write a number')
-        
-        if input_number == 'q':
-            break
-        result = 1/math.log(float(input_number))
-        print (result)
-    except ValueError:
-        print ('ValueError: input must > 0')
-    except ZeroDivisionError:
-        print ('log(value) must != 0')
-    except Exception:
-        print ('ubknow error')
-```
-
-```python
-class TangError(ValueError):
-    pass
-
-cur_list = ['tang','yu','di']
-while True:
-    cur_input = input()
-    if cur_input not in cur_list:
-        raise TangError('Invalid input: %s' %cur_input)
-```
-
-### 13. 文件操作
-
-```python
-%%writefile tang.txt
-hello python
-tang yu di
-jin tian tian qi bu cuo
-
-txt = open('./data/tang.txt')
-txt_read = txt.read()
-
-
-lines = txt.readlines()
-print (type(lines))
-print (lines)
-<class 'list'>
-['hello python\n', 'tang yu di\n', 'jin tian tian qi bu cuo']
-
-txt.close()
-```
-
-```python
-txt = open('tang_write.txt','w')
-txt.write('jin tian tian qi bu cuo')
-txt.write('\n')
-txt.write('tang yu di')
-txt.close()
-
-txt = open('tang_write.txt','w')
-for i in range(100):
-    txt.write(str(i)+'\n')
-txt2 = open('tang_write.txt','r')
-print (txt2.read())
-```
-
-```python
-txt = open('tang_write.txt','w')
-try:
-    for i in range(100):
-        10/(i-50)
-        txt.write(str(i)+'\n')
-except Exception:
-    print ('error:',i)
-finally:
-    txt.close()
-    
-with open('tang_write.txt','w') as f:
-    f.write('jin tian tian qi bu cuo')
-```
-
-### 14. 类
-
-```python
-class people:
-    '帮助信息：XXXXXX'
-    #所有实力都会共享
-    number = 100
-    #构造函数，初始化的方法，当创建一个类的时候，首先会调用它
-    def __init__(self,name,age):
-        self.name = name
-        self.age = age
-    def display(self):
-        print ('number = :',people.number)
-    def display_name(self):
-        print (self.name)
-```
-
-```python 
-people.__doc__
-'帮助信息：XXXXXX'
-
-p1 = people('tangyudi',30)
-```
-
-### 15. 时间
-
-```python
-import time
-
-print (time.time())
-
-
-print (time.localtime(time.time()))
-time.struct_time(tm_year=2017, tm_mon=11, tm_mday=15, tm_hour=14, tm_min=59, tm_sec=5, tm_wday=2, tm_yday=319, tm_isdst=0)
-
-
-print (time.asctime(time.localtime(time.time())))
-Wed Nov 15 15:00:15 2017
-        
-print (time.strftime('%Y-%m-%d %H:%M:%S',time.localtime()))
-2017-11-15 15:02:07
-
-import calendar
-print (calendar.month(2017,11))
-#print (help(calendar.month))
-```
+- 语言基线：Python 3.11+
+- 核心模型：名字绑定对象，类型属于对象
+- 编程骨架：表达式、容器、条件、循环、函数、异常
+- 工程骨架：模块、文件、环境、测试
+- 查找方法：先看对象类型，再定位 API 标题
