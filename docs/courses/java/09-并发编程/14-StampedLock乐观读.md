@@ -12,6 +12,8 @@ description: 掌握 StampedLock 的读写 stamp、乐观读校验和转换锁边
 
 # StampedLock 乐观读
 
+> 版本基线：本文按 JDK 20 的 `java.util.concurrent.locks` API 编写；示例优先使用可直接编译运行的标准库能力。
+
 ## 学习目标
 
 - 会使用 `writeLock`、`readLock` 和 `tryOptimisticRead` 保护共享状态。
@@ -39,6 +41,8 @@ stamp 不是线程身份，也不是可以随意保存和复用的令牌；它�
 
 ### StampedLock()：创建锁
 
+需要乐观读或锁模式转换时创建 `StampedLock`；先确认业务能接受 stamp 管理、非可重入和无 `Condition` 的边界。
+
 ```java
 import java.util.concurrent.locks.StampedLock;
 
@@ -54,6 +58,8 @@ public class StampedLockCreateDemo {
 `StampedLock` 不接受公平策略参数，也不提供 `Condition`。创建它之前应先确认业务能接受 stamp 管理、非重入和更复杂的异常路径。
 
 ### writeLock()/unlockWrite(stamp)：独占写入
+
+修改受保护状态时使用写锁；每次成功获取返回的 stamp 都必须在 `finally` 中传给 `unlockWrite`。
 
 ```java
 import java.util.concurrent.locks.StampedLock;
@@ -84,6 +90,8 @@ public class StampedWriteLockDemo {
 
 ### readLock()/unlockRead(stamp)：悲观读
 
+读取必须在锁保护下保持一致时使用悲观读锁；它允许读者并行，但会阻塞写者。
+
 ```java
 import java.util.concurrent.locks.StampedLock;
 
@@ -111,6 +119,8 @@ public class StampedReadLockDemo {
 悲观读会真正占用读锁，允许多个读者并行但会阻塞写者。无法保证读期间没有写入时，用它比错误地使用乐观读更可靠。
 
 ### tryOptimisticRead()/validate(stamp)：乐观读
+
+读多写少且冲突较低时适合使用乐观读；复制字段后必须调用 `validate`，失败就丢弃快照并回退到读锁。
 
 ```java
 import java.util.concurrent.locks.StampedLock;
@@ -148,6 +158,8 @@ public class OptimisticReadDemo {
 
 ### tryOptimisticRead：检查是否有可用的乐观凭证
 
+只想快速探测是否能进行无阻塞读取时使用该方法；stamp 只有通过 `validate` 校验后才可使用。
+
 ```java
 import java.util.concurrent.locks.StampedLock;
 
@@ -166,6 +178,8 @@ public class OptimisticStampDemo {
 ## 不常用但需要知道
 
 ### tryReadLock(timeout)：带超时的真实读锁
+
+不能无限等待读锁时使用带超时的获取；返回零 stamp 时应及时降级或返回，而不是继续解锁无效凭证。
 
 ```java
 import java.util.concurrent.TimeUnit;
@@ -188,6 +202,8 @@ public class StampedReadTimeoutDemo {
 
 ### tryWriteLock(timeout)：可被中断的有界写锁等待
 
+写锁等待需要时间上限且可响应中断时使用该方法；成功后仍要在 `finally` 中释放对应 stamp。
+
 ```java
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.StampedLock;
@@ -209,6 +225,8 @@ public class StampedWriteTimeoutDemo {
 
 ### readLockInterruptibly()/writeLockInterruptibly()：可中断地获取读写锁
 
+线程需要响应取消而又必须拿真实读写锁时使用可中断版本；处理中断异常时要恢复状态或传播取消。
+
 ```java
 import java.util.concurrent.locks.StampedLock;
 
@@ -229,6 +247,8 @@ public class StampedInterruptibleLockDemo {
 基础 `readLock()`/`writeLock()` 在等待时不会因为中断而抛出异常；`readLockInterruptibly()` 和 `writeLockInterruptibly()` 则会响应中断。两组方法都返回 stamp，成功后仍必须在 `finally` 中用对应的 `unlockRead` 或 `unlockWrite` 释放。
 
 ### tryConvertToWriteLock(stamp)：尝试读锁转写锁
+
+已持有读 stamp 且希望原子升级时可以尝试转换；转换返回零表示失败，不能假设升级一定成功。
 
 ```java
 import java.util.concurrent.locks.StampedLock;
@@ -277,6 +297,8 @@ public class StampedConvertWriteDemo {
 
 ### tryConvertToReadLock(stamp)：写锁降级为读锁
 
+写入完成后还需保持读保护时使用转换降级；转换成功后要用新的读 stamp 解锁，失败则继续使用旧模式。
+
 ```java
 import java.util.concurrent.locks.StampedLock;
 
@@ -311,6 +333,8 @@ public class StampedConvertReadDemo {
 
 ### 非可重入：同一线程不能重复获得写锁
 
+同一线程需要多层调用时不要把 `StampedLock` 当可重入锁；重复获取可能阻塞，应改用显式协议或 `ReentrantLock`。
+
 ```java
 import java.util.concurrent.locks.StampedLock;
 
@@ -335,6 +359,8 @@ public class StampedNonReentrantDemo {
 `tryWriteLock()` 在当前线程已经持有写锁时不会像 `ReentrantLock` 一样自动成功；如果把它换成阻塞式 `writeLock()`，同一线程可能永久等待。嵌套调用前必须重新设计锁边界，或改用可重入锁。
 
 ### tryWriteLock(timeout)：用超时获取响应中断
+
+需要同时限制等待时间并观察中断时使用超时获取；失败和中断都必须明确返回、重试或取消路径。
 
 ```java
 import java.util.concurrent.TimeUnit;

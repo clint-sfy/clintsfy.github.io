@@ -74,8 +74,8 @@ state = model.state_dict()
 path = "model-state.pt"
 torch.save(state, path)
 loaded = torch.load(path, map_location=device, weights_only=True)
-model.load_state_dict(loaded)
 model.to(device)
+model.load_state_dict(loaded)
 print(next(model.parameters()).device)
 # 输出：cpu，或可用时的 cuda:0
 ```

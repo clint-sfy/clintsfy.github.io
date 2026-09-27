@@ -13,6 +13,8 @@ description: 掌握 LockSupport 的许可语义、park/unpark 与中断边界，
 
 # LockSupport 与锁选择
 
+> 版本基线：本文按 JDK 20 的并发锁与同步器 API 编写；示例优先使用可直接编译运行的标准库能力。
+
 ## 学习目标
 
 - 会用 `LockSupport.park/unpark` 构造最小的线程阻塞与唤醒协议。
@@ -41,6 +43,8 @@ description: 掌握 LockSupport 的许可语义、park/unpark 与中断边界，
 
 ### LockSupport.park()/unpark(thread)：阻塞并唤醒线程
 
+需要构造最小的线程阻塞与唤醒协议时使用 `park/unpark`；它只管理许可，不负责保护共享数据或判断业务条件。
+
 ```java
 import java.util.concurrent.locks.LockSupport;
 
@@ -62,6 +66,8 @@ public class ParkUnparkDemo {
 
 ### unpark(thread) 先发生：许可不会累积
 
+通知可能早于等待发生时可依赖 `unpark` 的许可语义；每个线程最多保存一个许可，队列或信号量用于表达多个事件。
+
 ```java
 import java.util.concurrent.locks.LockSupport;
 
@@ -78,6 +84,8 @@ public class PermitBeforeParkDemo {
 每个线程最多一个许可；连续调用两次 `unpark` 也只保证下一次 `park` 通过一次，不能当作计数信号量使用。需要多个事件时使用队列、`Semaphore` 或其他同步器表达计数语义。
 
 ### parkNanos(nanos)：限制阻塞时间
+
+只需要限制等待上限时使用 `parkNanos`；返回后仍要循环检查条件，不能把超时返回当成业务成功。
 
 ```java
 import java.util.concurrent.TimeUnit;
@@ -96,6 +104,8 @@ public class ParkNanosDemo {
 
 ### park() 遇到中断：返回但保留中断状态
 
+等待协议需要观察取消信号时使用 `park` 并检查中断；它不会抛出 `InterruptedException`，调用方要决定传播或退出。
+
 ```java
 import java.util.concurrent.locks.LockSupport;
 
@@ -113,6 +123,8 @@ public class ParkInterruptDemo {
 `park` 因中断返回时不会像 `Object.wait()` 那样抛出 `InterruptedException`，中断标志仍为 `true`。清除标志前要先决定调用方是否应退出或把取消信号继续向上层传播。
 
 ### while 条件循环：防止虚假返回
+
+条件可能虚假返回或被多个线程竞争时必须在 `while` 中重查；先更新条件，再调用 `unpark` 唤醒等待者。
 
 ```java
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -144,6 +156,8 @@ public class ParkConditionLoopDemo {
 
 ### park(Object blocker)/getBlocker(thread)：提供阻塞诊断对象
 
+需要在线程转储中标识等待原因时传入 blocker；它只用于诊断，不是锁，也不会自动建立条件同步协议。
+
 ```java
 import java.util.concurrent.locks.LockSupport;
 
@@ -169,6 +183,8 @@ blocker 只用于线程转储和诊断，不是锁，也不会自动建立条件
 
 ### parkUntil(deadline)：按绝对时间等待
 
+等待必须对齐一个绝对截止时间时使用 `parkUntil`；返回后仍需检查条件和中断状态，避免把提前唤醒当作完成。
+
 ```java
 import java.util.concurrent.locks.LockSupport;
 
@@ -184,6 +200,8 @@ public class ParkUntilDemo {
 `parkUntil` 使用墙上时钟的绝对时间，系统时钟调整可能影响等待时长；需要稳定的相对超时通常优先 `parkNanos`，并用 `System.nanoTime()` 计算剩余时间。
 
 ### synchronized：简单互斥的默认选择
+
+临界区简单且只需互斥与可见性时适合优先使用 `synchronized`；它由语言自动管理释放，通常比手写锁更不易出错。
 
 ```java
 public class SynchronizedChoiceDemo {
@@ -205,6 +223,8 @@ public class SynchronizedChoiceDemo {
 `synchronized` 可重入、释放可靠，适合短小明确的单一互斥临界区。它没有可配置的超时或可中断获取；需要这些能力时再考虑显式锁。
 
 ### ReentrantLock：需要中断、超时或 Condition
+
+需要可中断、超时获取或多个条件队列时选择 `ReentrantLock`；每次成功 `lock` 都要在 `finally` 中 `unlock`。
 
 ```java
 import java.util.concurrent.TimeUnit;
@@ -232,6 +252,8 @@ public class ReentrantLockChoiceDemo {
 
 ### ReadWriteLock：读多写少时分离访问
 
+读操作明显多于写操作且临界区值得并行时适合评估 `ReadWriteLock`；读写协议必须覆盖所有访问路径。
+
 ```java
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -253,6 +275,8 @@ public class ReadWriteChoiceDemo {
 
 ### StampedLock：低冲突读场景的乐观校验
 
+低冲突的短读可能从乐观读受益时选择 `StampedLock`；它不可重入、没有 `Condition`，读取后必须校验 stamp。
+
 ```java
 import java.util.concurrent.locks.StampedLock;
 
@@ -271,6 +295,8 @@ public class StampedChoiceDemo {
 
 ### CAS：独立变量的原子更新，不是普通互斥锁
 
+只有一个独立变量需要比较更新时使用 CAS；它没有持有与释放生命周期，不能保护多字段复合不变式。
+
 ```java
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -287,6 +313,8 @@ public class CasChoiceDemo {
 CAS 没有“持有者必须释放”的锁生命周期，也不能自动把多个字段绑定为一个不变式。它适合单变量状态机、计数器或无锁数据结构；竞争激烈时要注意自旋成本和 ABA 等问题。
 
 ### Semaphore：并发名额，不是普通互斥锁
+
+需要限制并发名额或管理资源池时使用 `Semaphore`；许可证数量可大于一，获取成功后必须在释放路径归还。
 
 ```java
 import java.util.concurrent.Semaphore;
@@ -309,6 +337,8 @@ public class SemaphoreChoiceDemo {
 
 ### 不可变性：消除共享写入
 
+状态可以整体替换或复制快照时优先使用不可变对象；减少共享写入通常比引入更复杂的锁更容易维护。
+
 ```java
 public class ImmutableChoiceDemo {
     record Snapshot(int version, String value) {}
@@ -325,6 +355,8 @@ public class ImmutableChoiceDemo {
 不可变对象创建后不再修改，线程之间只需安全发布新的整体快照，通常比保护多个可变字段更简单。若快照较大或更新频繁，可配合 `AtomicReference` 进行整体替换。
 
 ### ConcurrentHashMap：用并发容器代替手写容器锁
+
+业务只需要标准容器的并发操作时选择 `ConcurrentHashMap`；单次方法安全不等于跨多个操作或系统的不变式安全。
 
 ```java
 import java.util.concurrent.ConcurrentHashMap;
@@ -360,6 +392,8 @@ CAS 和 Semaphore 都很有用，但它们不是“另一种普通互斥锁”�
 
 ### 先确认是否真的需要锁
 
+准备增加同步工具前先确认共享可变状态确实存在；线程私有数据、不可变对象或消息传递通常更简单。
+
 ```java
 public class LockNeedDecisionDemo {
     record UserView(String name, int level) {}
@@ -375,6 +409,8 @@ public class LockNeedDecisionDemo {
 优先顺序通常是：线程私有数据或不可变对象，其次是消息传递/阻塞队列，再考虑并发容器或单变量 CAS，最后才为复杂可变不变式选择锁。减少共享写入往往比选择更“高级”的锁更有效。
 
 ### 用需求反查工具
+
+无法凭性能直觉选锁时按可重入、超时、中断、条件队列和读写并发需求反查；需求比“哪把锁最快”更可靠。
 
 ```java
 import java.util.concurrent.locks.ReentrantLock;

@@ -114,6 +114,9 @@ const EXPECTED_ARTICLES_BY_CHAPTER = {
     '10-并发集合与阻塞队列.md',
     '11-CountDownLatch-Semaphore与CyclicBarrier.md',
     '12-死锁定位与避免.md',
+    '13-ReadWriteLock读写锁.md',
+    '14-StampedLock乐观读.md',
+    '15-LockSupport与锁选择.md',
   ],
   '10-JVM': [
     '01-JVM内存与类加载.md',
@@ -167,6 +170,12 @@ const QUICK_REFERENCE_SECTIONS = {
   'docs/courses/java/05-泛型与集合/02-集合框架与数据结构.md': ['常用 API 速查'],
   'docs/courses/java/05-泛型与集合/03-Map与集合选择.md': ['常用 API 速查'],
 }
+
+const NEW_LOCK_ARTICLE_PATHS = [
+  'docs/courses/java/09-并发编程/13-ReadWriteLock读写锁.md',
+  'docs/courses/java/09-并发编程/14-StampedLock乐观读.md',
+  'docs/courses/java/09-并发编程/15-LockSupport与锁选择.md',
+]
 
 // Keep version policy data-driven: add a rule here when a newer JDK API is
 // discovered, and use the explicit allow pattern only for explanatory prose
@@ -267,6 +276,36 @@ function getQuickReferenceSubsections(body, sectionLabel) {
       content: lines.slice(start + 1, starts[index + 1] ?? lines.length).join('\n'),
     }))
   })
+}
+
+function inspectUsageSubsection(content, { requireExplanation = false } = {}) {
+  const lines = content.split(/\r?\n/)
+  const firstContentIndex = lines.findIndex((line) => line.trim() !== '')
+  if (firstContentIndex < 0) return ['needs a java code block']
+
+  const firstContentLine = lines[firstContentIndex].trim()
+  if (firstContentLine === '```java') {
+    return requireExplanation
+      ? ['needs a concise what/when explanation before the java code block']
+      : []
+  }
+
+  const codeIndex = lines.findIndex(
+    (line, index) => index >= firstContentIndex && line.trim() === '```java',
+  )
+  if (codeIndex < 0) return ['needs a java code block after the explanation']
+
+  const explanation = lines
+    .slice(firstContentIndex, codeIndex)
+    .filter((line) => line.trim() !== '')
+    .join(' ')
+  const plainExplanation = stripMarkdown(explanation)
+  if (plainExplanation.length < 12) return ['needs a concise what/when explanation before the java code block']
+  if (plainExplanation.length > 220) return ['explanation before the java code block is too long']
+  if (!/(?:用于|适合|不适合|需要|保证|避免|表示|返回|创建|读取|写入|阻塞|唤醒|保护|转换|选择|当)/u.test(plainExplanation)) {
+    return ['explanation before the java code block must state what/when or a key boundary']
+  }
+  return []
 }
 
 function removeFencedCode(text) {
@@ -444,7 +483,7 @@ function formatViolations(violations) {
   return violations.length === 0 ? '' : `\n${violations.join('\n')}`
 }
 
-test('Java course keeps 77 Markdown files, 76 articles, 12 chapters, exact counts, and baseline paths', () => {
+test('Java course keeps 80 Markdown files, 79 articles, 12 chapters, exact counts, and baseline paths', () => {
   const markdownPaths = fg
     .sync(JAVA_GLOB, { cwd: REPO_ROOT, onlyFiles: true })
     .map(normalizePath)
@@ -454,11 +493,11 @@ test('Java course keeps 77 Markdown files, 76 articles, 12 chapters, exact count
     .map((entry) => entry.name)
     .sort()
 
-  assert.equal(markdownPaths.length, 77, 'rule java-markdown-count: expected 77 Markdown files')
+  assert.equal(markdownPaths.length, 80, 'rule java-markdown-count: expected 80 Markdown files')
   assert.equal(
     markdownPaths.filter((file) => file !== JAVA_INDEX_PATH).length,
-    76,
-    'rule java-article-count: expected 76 course articles',
+    79,
+    'rule java-article-count: expected 79 course articles',
   )
   assert.equal(chapterDirectories.length, 12, 'rule java-chapter-count: expected 12 chapter directories')
   assert.deepEqual(
@@ -468,7 +507,7 @@ test('Java course keeps 77 Markdown files, 76 articles, 12 chapters, exact count
   )
   assert.deepEqual(
     chapterDirectories.map((chapter) => EXPECTED_ARTICLES_BY_CHAPTER[chapter].length),
-    [7, 6, 7, 6, 8, 8, 7, 7, 12, 5, 2, 1],
+    [7, 6, 7, 6, 8, 8, 7, 7, 15, 5, 2, 1],
     'rule java-chapter-article-counts: chapter article counts changed',
   )
   assert.deepEqual(
@@ -579,14 +618,10 @@ test('01-10 Java articles expose standard common and less-common usage headings 
       }
 
       for (const subsection of getQuickReferenceSubsections(article.body, sectionLabel)) {
-        const firstContentLine = subsection.content
-          .split(/\r?\n/)
-          .find((line) => line.trim() !== '')
-          ?.trim()
-        if (firstContentLine !== '```java') {
-          violations.push(
-            `${relativePath} [usage:${sectionLabel}/${subsection.heading}] first content must be a java fenced code block`,
-          )
+        for (const issue of inspectUsageSubsection(subsection.content, {
+          requireExplanation: NEW_LOCK_ARTICLE_PATHS.includes(relativePath),
+        })) {
+          violations.push(`${relativePath} [usage:${sectionLabel}/${subsection.heading}] ${issue}`)
         }
       }
     }
@@ -640,7 +675,7 @@ test('01-10 Java articles provide two answered review questions and no deprecate
   assert.deepEqual(violations, [], `rule java-review-and-forbidden-content${formatViolations(violations)}`)
 })
 
-test('All 77 Java pages keep Java cross-links free of dead routes', () => {
+test('All 80 Java pages keep Java cross-links free of dead routes', () => {
   const articleRoutes = new Set(ARTICLE_PATHS.map(relativeRoute))
   const brokenLinks = []
   let linkCount = 0
@@ -746,6 +781,17 @@ test('JDK 20 preview and incubator articles document status and paired commands'
   assert.deepEqual(violations, [], `rule jdk20-preview-contract${formatViolations(violations)}`)
 })
 
+test('new Java lock articles state the JDK 20 API baseline', () => {
+  const violations = []
+  for (const relativePath of NEW_LOCK_ARTICLE_PATHS) {
+    const { body } = readMarkdown(relativePath)
+    if (!/JDK\s*20/iu.test(body)) {
+      violations.push(`${relativePath} [jdk20-baseline] must state the JDK 20 baseline`)
+    }
+  }
+  assert.deepEqual(violations, [], `rule jdk20-lock-baseline${formatViolations(violations)}`)
+})
+
 test('01-10 Java examples reject JDK 20+ APIs unless an allowed comparison is explicit', () => {
   const violations = []
 
@@ -765,7 +811,7 @@ test('01-10 Java examples reject JDK 20+ APIs unless an allowed comparison is ex
   assert.deepEqual(violations, [], `rule jdk20-api-compatibility${formatViolations(violations)}`)
 })
 
-test('Java quick-reference API headings put a Java example immediately below the heading', () => {
+test('Java quick-reference API headings put a concise explanation before the Java example', () => {
   const violations = []
 
   for (const [relativePath, sectionLabels] of Object.entries(QUICK_REFERENCE_SECTIONS)) {
@@ -785,13 +831,9 @@ test('Java quick-reference API headings put a Java example immediately below the
       }
       for (const { heading, content } of subsections) {
         if (/^常见边界(?:\s|：|:|$)/u.test(heading)) continue
-        const firstContentLine = content
-          .split(/\r?\n/)
-          .find((line) => line.trim() !== '')
-          ?.trim()
-        if (firstContentLine !== '```java') {
+        for (const issue of inspectUsageSubsection(content)) {
           violations.push(
-            `${relativePath} [quick-reference:${sectionLabel}/${heading}] first content must be a java fenced code block`,
+            `${relativePath} [quick-reference:${sectionLabel}/${heading}] ${issue}`,
           )
         }
         const javaBlocks = getJavaBlocks(content)

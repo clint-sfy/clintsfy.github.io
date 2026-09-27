@@ -43,13 +43,13 @@ const PYTHON_ADVANCED_ARTICLES = [
 
 const PYTORCH_QUALITY_ARTICLES = [
   '01-Pytorch.md',
-  '05-Tensor基础.md',
-  '06-Autograd自动求导.md',
-  '07-Dataset与DataLoader.md',
-  '08-nn.Module与模型构建.md',
-  '09-训练循环与评估.md',
-  '10-保存加载与推理.md',
-  '11-GPU与迁移学习.md',
+  '05-PyTorch-Tensor与设备.md',
+  '06-PyTorch-Autograd与反向传播.md',
+  '07-PyTorch-Dataset与DataLoader.md',
+  '08-PyTorch-nn.Module与模型结构.md',
+  '09-PyTorch-损失函数优化器与训练循环.md',
+  '10-PyTorch-模型保存加载与推理.md',
+  '11-PyTorch-GPU与迁移学习.md',
 ]
 
 const PYTORCH_OTHER_ARTICLES = ['02-MMLAB实战.md', '03-OpenCV.md', '04-YOLO.md']
@@ -254,7 +254,11 @@ function runAstParse(code) {
   const result = spawnSync(
     'python',
     ['-c', 'import ast, sys; ast.parse(sys.stdin.read())'],
-    { input: code, encoding: 'utf8' },
+    {
+      input: code,
+      encoding: 'utf8',
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+    },
   )
   if (result.error) return { error: `python ast.parse unavailable: ${result.error.message}` }
   if (result.status !== 0) return { error: (result.stderr || 'ast.parse failed').trim() }
@@ -447,6 +451,44 @@ test('Python examples keep explicit output contracts and avoid Notebook magic', 
   }
 
   assert.deepEqual(violations, [], `rule python-code-quality\n${violations.join('\n')}`)
+})
+
+test('PyTorch quick references keep modern training, checkpoint, inference, and device contracts', () => {
+  const readBody = (filename) => readMarkdown(`${PYTORCH_ROOT}/${filename}`).body
+  const trainingBody = readBody('09-PyTorch-损失函数优化器与训练循环.md')
+  const trainingBlocks = scanFences(trainingBody).blocks
+    .filter(({ language }) => language === 'python' || language === 'py')
+    .map(({ code }) => code)
+  const trainingLoop = trainingBlocks.find((code) => code.includes('model.train()') && code.includes('optimizer.step()'))
+  assert.ok(trainingLoop, 'PyTorch training page must include a runnable model.train loop')
+  assert.ok(
+    trainingLoop.indexOf('optimizer.zero_grad') < trainingLoop.indexOf('loss.backward()') &&
+      trainingLoop.indexOf('loss.backward()') < trainingLoop.indexOf('optimizer.step()'),
+    'training loop must order zero_grad before backward before optimizer.step',
+  )
+
+  const validationLoop = trainingBlocks.find((code) => code.includes('model.eval()') && code.includes('torch.inference_mode()'))
+  assert.ok(validationLoop, 'PyTorch training page must show eval plus inference_mode validation')
+  assert.ok(
+    validationLoop.indexOf('model.eval()') < validationLoop.indexOf('torch.inference_mode()'),
+    'validation must switch model mode before entering inference_mode',
+  )
+
+  const checkpointBody = readBody('10-PyTorch-模型保存加载与推理.md')
+  assert.match(checkpointBody, /state_dict\(\)/u, 'checkpoint page must use state_dict')
+  assert.match(checkpointBody, /map_location\s*=/u, 'checkpoint page must document map_location')
+  assert.match(checkpointBody, /model\.eval\(\)[\s\S]*torch\.inference_mode\(\)/u, 'checkpoint page must pair eval and inference_mode')
+
+  const gpuBody = readBody('11-PyTorch-GPU与迁移学习.md')
+  assert.match(gpuBody, /torch\.cuda\.is_available\(\)/u, 'GPU page must keep a CPU-safe CUDA branch')
+  assert.match(gpuBody, /weights\s*=\s*ResNet18_Weights\.DEFAULT/u, 'GPU page must use the modern torchvision weights API')
+
+  const qualityCode = ['01-Pytorch.md', ...PYTORCH_QUALITY_ARTICLES.slice(1)]
+    .flatMap((filename) => scanFences(readBody(filename)).blocks)
+    .filter(({ language }) => language === 'python' || language === 'py')
+    .map(({ code }) => code)
+    .join('\n')
+  assert.doesNotMatch(qualityCode, /\bloss\.data\b|\bpretrained\s*=\s*True\b/u, 'PyTorch quality code must avoid deprecated APIs')
 })
 
 test('Python and PyTorch target pages do not contain dead internal Markdown links', () => {

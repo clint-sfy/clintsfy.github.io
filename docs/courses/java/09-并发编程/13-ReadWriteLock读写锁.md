@@ -12,6 +12,8 @@ description: 使用 ReentrantReadWriteLock 分离读写临界区，掌握锁降�
 
 # ReadWriteLock 读写锁
 
+> 版本基线：本文按 JDK 20 的 `java.util.concurrent.locks` API 编写；示例优先使用可直接编译运行的标准库能力。
+
 ## 学习目标
 
 - 会用 `ReentrantReadWriteLock` 的读锁和写锁分别保护共享状态。
@@ -39,6 +41,8 @@ description: 使用 ReentrantReadWriteLock 分离读写临界区，掌握锁降�
 
 ### ReentrantReadWriteLock()：创建非公平读写锁
 
+默认构造器适合先验证读多写少的并发模型；非公平策略通常吞吐更高，但不保证等待顺序。
+
 ```java
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -54,6 +58,8 @@ public class ReadWriteLockCreateDemo {
 默认构造器使用非公平策略，通常吞吐更高，但不承诺严格的先来先得顺序。先用默认策略写出正确的锁协议，再根据等待时间和饥饿证据评估公平锁。
 
 ### readLock()：用读锁保护只读临界区
+
+只读临界区需要允许多个线程并行访问时使用读锁；读取必须短小，不能把未知 I/O 长时间放在锁内。
 
 ```java
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -83,6 +89,8 @@ public class ReadLockDemo {
 
 ### writeLock()：用写锁保护独占更新
 
+更新共享状态或维护多个字段不变式时适合使用写锁；成功获取后必须在 `finally` 中释放。
+
 ```java
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -111,6 +119,8 @@ public class WriteLockDemo {
 写锁同时排斥读者和其他写者，适合维护多个字段之间的不变式。每次成功获得写锁都要在 `finally` 中释放，不能因为方法提前 `return` 或抛异常而跳过解锁。
 
 ### 锁降级：写锁转为读锁
+
+写入后还要继续读取同一份状态时使用锁降级；先取得读锁再释放写锁，避免中间被其他写者插入。
 
 ```java
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -147,6 +157,8 @@ public class LockDowngradeDemo {
 
 ### ReentrantReadWriteLock(boolean fair)：创建公平读写锁
 
+等待顺序和饥饿风险需要更可控时选择公平构造器；公平策略会增加排队成本，不能替代超时和取消。
+
 ```java
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -164,6 +176,8 @@ public class FairReadWriteLockDemo {
 ## 不常用但需要知道
 
 ### 读锁升级：不要在读锁内直接申请写锁
+
+读操作发现需要更新时不要直接升级；先释放读锁再重新竞争写锁，否则可能因其他读者而永久等待。
 
 ```java
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -187,6 +201,8 @@ public class LockUpgradeRiskDemo {
 
 ### readLock().tryLock(timeout)：有界等待读锁
 
+调用方不能无限等待读锁时使用带超时的获取；超时后必须走降级、返回或重试策略。
+
 ```java
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -195,10 +211,13 @@ public class ReadLockTimeoutDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new ReentrantReadWriteLock();
         boolean acquired = lock.readLock().tryLock(1, TimeUnit.MILLISECONDS);
-        System.out.println("acquired=" + acquired);
-        // 输出：acquired=true（没有其他线程持有写锁时）
-        if (acquired) {
-            lock.readLock().unlock();
+        try {
+            System.out.println("acquired=" + acquired);
+            // 输出：acquired=true（没有其他线程持有写锁时）
+        } finally {
+            if (acquired) {
+                lock.readLock().unlock();
+            }
         }
     }
 }
@@ -207,6 +226,8 @@ public class ReadLockTimeoutDemo {
 超时获取让调用方可以选择降级、重试或返回忙碌，而不是无限等待。获取失败时没有持有锁，不能无条件调用 `unlock()`。
 
 ### writeLock().lockInterruptibly()：可中断地等待写锁
+
+线程需要响应取消信号时使用可中断的写锁获取；捕获中断异常后应恢复中断状态或向上层传播。
 
 ```java
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -229,6 +250,8 @@ public class WriteLockInterruptibleDemo {
 
 ### getReadLockCount()：只用于诊断当前读者数量
 
+需要观测当前读者数量时使用该方法做诊断；返回值是瞬时估计，不能作为业务同步条件。
+
 ```java
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -249,6 +272,8 @@ public class ReadLockCountDemo {
 `getReadLockCount()` 适合监控和诊断，不应作为业务判断依据；返回值可能在并发环境中随时变化。当前线程自己的重入次数可用 `getReadHoldCount()` 观察，但同样不应代替状态协议。
 
 ### readLock().newCondition()：读锁不支持 Condition
+
+需要条件队列时应改用写锁或 `ReentrantLock`；读锁不支持 `newCondition()`，不能把读锁当作条件同步器。
 
 ```java
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -271,6 +296,8 @@ public class ReadLockConditionDemo {
 ## 简单案例
 
 ### 读多写少缓存：读写路径分离
+
+缓存命中远多于刷新且读临界区足够长时才考虑读写锁；先用基准确认收益，避免为单字段读取增加复杂度。
 
 ```java
 import java.util.HashMap;
