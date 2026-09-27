@@ -1,114 +1,211 @@
 ---
-title: 枚举、record 与 sealed 类型
-date: 2026-09-22
+title: 枚举、record 与 sealed 总览
+date: 2026-09-27
 category: Java基础快速入门
 tags:
   - Java
   - record
   - sealed
   - 枚举
-description: 学习现代 Java 的数据载体、受限继承和 record patterns 基础。
+description: 快速区分 enum、record、sealed 和 record patterns，并跳转到对应的细粒度案例。
 ---
 
-# 枚举、record 与 sealed 类型
+# 枚举、record 与 sealed 总览
 
 ## 学习目标
 
-- 用 `record` 表达数据载体，并理解其浅不可变边界与构造器校验。
-- 用 `sealed`、`permits`、`final` 和 `non-sealed` 描述受限继承层次。
-- 了解 JDK 20 预览中的 record patterns 与模式 `switch`，按成对命令运行案例。
+- 知道 enum、record、sealed 分别解决固定取值、数据承载和受限继承问题。
+- 能根据领域模型选择对应类型，而不是把所有状态都塞进普通 class。
+- 知道 JDK 20 的 record patterns 与模式 switch 仍是预览特性。
 
 ## 核心知识点
 
 ### 专业术语
 
-- **record**：以组件声明数据的特殊类，自动生成 `private final` 组件字段、访问器、规范构造器、`equals`、`hashCode` 和 `toString`。
-- **紧凑构造器（compact constructor）**：record 中省略参数列表的构造器，可在字段赋值前校验和规范化组件。
-- **浅不可变（shallow immutability）**：record 自身组件引用不能重新赋值，但引用指向的 `List` 或 `Map` 仍可能可变。
-- **sealed type**：通过 `permits` 限制直接子类型的接口或类；直接子类必须声明 `final`、`sealed` 或 `non-sealed`。
-- **record pattern**：把 record 组件直接绑定到模式变量的语法；JDK 20 中仍是预览特性。
+- **enum**：由编译器管理固定实例集合的枚举类型。
+- **record**：用组件声明数据并自动提供值语义成员的数据载体。
+- **sealed**：限制直接子类型集合的接口或类。
+- **record pattern**：把 record 组件直接绑定到模式变量的预览语法。
 
 ### 白话解释与边界
 
-record 适合“数据是什么”比“生命周期怎么变”更重要的值载体，不是自动深复制或自动校验的魔法。组件引用在构造后不能换，但可变集合内容仍可改；`List.copyOf` 将元素引用复制到新的不可修改列表容器，属于浅拷贝，不会深度冻结其中的可变元素。要得到深不可变结果，需要使用不可变元素类型或逐元素复制。`sealed` 把可扩展范围写进类型定义，使编译器知道已知子类型，适合表达有限的领域结果，但开放扩展的插件模型不应强行封闭。
+enum 表达“只能从这几个值中选一个”，record 表达“这些字段共同构成一个值”，sealed 表达“继承树只允许这些分支”。它们可以组合，但不是替代关系：enum 不适合承载任意业务对象，record 不负责实体生命周期，sealed 也不等于运行时权限控制。
 
-record patterns 和模式 `switch` 在 JDK 20 是非稳定预览能力，必须同时给 `javac --release 20 --enable-preview` 与 `java --enable-preview`。它们与普通 `switch` 表达式不同，不能因为代码看起来简洁就省略预览开关。
+细节案例按用途拆在以下页面：
+
+- [record 数据载体](./03-record数据载体)：组件、构造器、浅不可变、泛型 record、record patterns。
+- [sealed 受限继承](./04-sealed受限继承)：permits、final、sealed、non-sealed 和继承边界。
+
+## 常用用法
+
+### 用 enum 表达固定状态
+
+```java
+enum OrderStatus {
+    CREATED, PAID, CANCELLED
+}
+
+public class EnumOverviewDemo {
+    public static void main(String[] args) {
+        OrderStatus status = OrderStatus.PAID;
+        System.out.println(status.name() + ", " + status.ordinal());
+        // 输出：PAID, 1
+    }
+}
+```
+
+enum 实例数量和身份由类型定义控制，适合订单状态、权限级别、月份等稳定集合。ordinal 只适合展示，不要把它持久化为业务编号。
+
+### 用 record 表达小型值对象
+
+```java
+record Money(String currency, long cents) {}
+
+public class RecordOverviewDemo {
+    public static void main(String[] args) {
+        System.out.println(new Money("CNY", 1999).currency());
+        // 输出：CNY
+    }
+}
+```
+
+需要校验、规范化或保护可变组件时，跳转到 record 数据载体页面查看完整写法。
+
+### 用 sealed 描述有限结果集合
+
+```java
+sealed interface LoginResult permits LoginSuccess, LoginFailure {}
+record LoginSuccess(String userId) implements LoginResult {}
+record LoginFailure(String reason) implements LoginResult {}
+
+public class SealedOverviewDemo {
+    public static void main(String[] args) {
+        LoginResult result = new LoginSuccess("u-1");
+        System.out.println(result instanceof LoginSuccess);
+        // 输出：true
+    }
+}
+```
+
+sealed 让新增结果分支变成显式的类型变更，适合编译器帮助检查有限状态模型。
+
+### 使用 record pattern 拆出 record 组件（JDK 20 预览）
+
+```java
+record User(String name, int age) {}
+
+public class PatternOverviewDemo {
+    static String label(Object value) {
+        if (value instanceof User(String name, int age)) {
+            return name + ":" + age;
+        }
+        return "unknown";
+    }
+
+    public static void main(String[] args) {
+        System.out.println(label(new User("Alice", 20)));
+        // 输出：Alice:20
+    }
+}
+```
+
+这是 JDK 20 预览语法，保存为 PatternOverviewDemo.java 后成对运行：
+
+```powershell
+javac --release 20 --enable-preview PatternOverviewDemo.java
+java --enable-preview PatternOverviewDemo
+```
+
+## 不常用但需要知道
+
+### 用 enum 实现字段和方法
+
+```java
+enum Level {
+    LOW(1), HIGH(2);
+
+    private final int code;
+
+    Level(int code) {
+        this.code = code;
+    }
+
+    int code() {
+        return code;
+    }
+}
+
+public class EnumFieldDemo {
+    public static void main(String[] args) {
+        System.out.println(Level.HIGH.code());
+        // 输出：2
+    }
+}
+```
+
+枚举可以有字段、构造器和方法，但实例构造器不能由调用方直接调用；需要外部配置或动态扩展时不要硬编码为 enum。
+
+### 用 sealed 的 non-sealed 分支保留扩展点
+
+```java
+sealed interface Event permits BuiltInEvent, ExtensionEvent {}
+record BuiltInEvent() implements Event {}
+non-sealed class ExtensionEvent implements Event {}
+class VendorEvent extends ExtensionEvent {}
+
+public class SealedExtensionOverviewDemo {
+    public static void main(String[] args) {
+        System.out.println(new VendorEvent() instanceof Event);
+        // 输出：true
+    }
+}
+```
+
+non-sealed 会从该分支恢复开放继承；具体层次边界和模块规则见 sealed 受限继承页面。
 
 ## 简单案例
 
 ```java
-import java.math.BigDecimal;
+enum Status { NEW, DONE }
+record Task(String id, Status status) {}
 
-enum PaymentKind { CARD, BALANCE }
-
-sealed interface PaymentResult permits Success, RetryableFailure, Rejected { }
-
-record Success(String id, BigDecimal amount) implements PaymentResult {
-    public Success {
-        if (id == null || id.isBlank() || amount == null || amount.signum() <= 0) {
-            throw new IllegalArgumentException("invalid success");
-        }
-    }
-}
-
-record RetryableFailure(String reason) implements PaymentResult { }
-record Rejected(String code) implements PaymentResult { }
-
-public class ModernTypesDemo {
-    static String message(PaymentResult result) {
-        return switch (result) {
-            case Success(var id, var amount) -> "success:" + id + ":" + amount;
-            case RetryableFailure(var reason) -> "retry:" + reason;
-            case Rejected(var code) -> "rejected:" + code;
-        };
-    }
-
+public class ModernTypesOverviewDemo {
     public static void main(String[] args) {
-        PaymentResult result = new Success("P-1", new BigDecimal("12.50"));
-        System.out.println(message(result));
-        // 输出：success:P-1:12.50
-        System.out.println(PaymentKind.CARD);
-        // 输出：CARD
+        System.out.println(new Task("t-1", Status.DONE));
+        // 输出：Task[id=t-1, status=DONE]
     }
 }
 ```
 
-在 JDK 20 下，保存为 `ModernTypesDemo.java` 后使用以下成对命令：
-
-```powershell
-javac --release 20 --enable-preview ModernTypesDemo.java
-java --enable-preview ModernTypesDemo
-```
-
-输出为 `success:P-1:12.50` 和 `CARD`。`switch` 能覆盖 sealed 层次的三个结果；新增允许的子类型时，编译器会提醒所有穷尽分支需要重新检查。
+这个最小案例把 enum 的固定状态和 record 的数据载体放在一起；需要受限继承时再组合 sealed。
 
 ## 易混点
 
-- record 的 `final` 组件只阻止重新指向，不能让组件引用的可变集合自动深不可变。
-- sealed 限制直接子类型，`non-sealed` 子类又重新开放扩展；它不是“所有后代都不可扩展”。
-- record patterns 是 JDK 20 预览语法，必须配套 `--release 20 --enable-preview` 编译和 `--enable-preview` 运行。
-- `enum` 的固定实例、record 的数据载体和 sealed 的继承约束解决不同问题，不能互相替代。
+- enum 的 ordinal 不是稳定业务编号；需要持久化时定义明确 code，因为序号会随声明顺序变化。
+- record 的 final 组件只保护引用，不会自动深冻结 List、Map 或可变元素。
+- sealed 限制直接子类型，non-sealed 后代仍可继续扩展。
+- record patterns 与模式 switch 在 JDK 20 需要编译和运行两侧的 preview 开关。
 
 ## 课后小问
 
-1. 为什么 `record Order(List<String> items)` 仍可能被外部修改？
-答案：record 只保证 `items` 引用组件不能重新赋值，引用指向的列表内容仍可能可变。
-解析：构造器可以保存 `List.copyOf(items)` 来阻止调用者修改列表结构；这仍是浅拷贝，元素自身若可变，还需要不可变元素或逐元素复制才能保护集合内容。
+1. 为什么 enum、record、sealed 不能互相替代？
+答案：它们分别约束值集合、数据结构和继承范围，解决的问题不同。
+解析：例如订单状态适合 enum，订单快照适合 record，有限支付结果适合 sealed；组合使用比强行选择一种更清楚。
 
-2. 运行 record pattern 案例为什么需要两个 `--enable-preview` 位置？
-答案：编译阶段需要让 `javac` 接受 JDK 20 预览语法，运行阶段需要让 JVM 接受对应预览字节码。
-解析：只在一侧加开关会导致编译失败或运行时拒绝；`--release 20` 还应与所学习的基准版本保持一致。
+2. 什么时候应该跳转到细粒度页面而不是继续看本页？
+答案：需要具体 API、构造器校验、浅不可变或 permits 规则时，应直接打开对应细粒度页面。
+解析：本页负责建立选择地图，细节页按每个用法提供可复制 Java 案例，适合作为速查入口。
 
 ## 本节小结
 
-- record 自动生成值语义成员，适合数据载体，但只提供浅不可变保证。
-- 紧凑构造器可建立组件校验和规范化不变式，嵌套可变对象仍需显式复制。
-- sealed/permits 把可扩展类型集合写进契约，子类型必须声明后续继承策略。
-- JDK 20 的 record patterns 和模式 switch 是预览特性，编译与运行命令必须成对。
+- enum 表达固定实例集合，record 表达值对象，sealed 表达受限继承。
+- record 和 sealed 常组合表达有限的领域结果，enum 可以承载固定状态。
+- JDK 20 record patterns 属于预览语法，命令必须配套。
+- 复杂用法分别见 record 数据载体和 sealed 受限继承页面。
 
 ## 快速回顾
 
-- 能列出 record 自动生成的主要成员。
-- 能判断 record 组件的不可变边界是否只停留在引用层。
-- 能解释 sealed、permits、final 和 non-sealed 的关系。
+- 能说出 enum、record、sealed 的核心职责。
+- 能判断状态、值对象和有限层次分别该用什么类型。
+- 能解释 record 的浅不可变边界。
 - 能写出 JDK 20 preview 的编译与运行命令。
