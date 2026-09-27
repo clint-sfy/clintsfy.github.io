@@ -31,7 +31,7 @@ description: 速查 HashSet、LinkedHashSet、TreeSet、EnumSet 的去重、排�
 
 ### 白话解释与边界
 
-去重的依据不是对象地址，而是 equals 和 hashCode；自定义对象放入 HashSet 后，不要修改参与这两个方法的字段。要保留输入顺序用 LinkedHashSet，要排序或找大于等于某值的元素用 TreeSet。Set 不支持按索引读取，若业务需要位置语义应选 List。
+去重的依据不是对象地址，而是 equals 和 hashCode；自定义对象放入 HashSet 后，不要修改参与这两个方法的字段。因此要保留输入顺序用 LinkedHashSet，要排序或找大于等于某值的元素用 TreeSet。Set 不支持按索引读取，若业务需要位置语义应选 List。
 
 ## 常用用法
 

@@ -380,7 +380,7 @@ List 的常见路径就是创建、追加、读取和遍历；需要去重或队
 
 ## 易混点
 
-- remove(1) 对 List&lt;Integer&gt; 是按索引，不是删除值 1；按值写 Integer.valueOf(1)。
+- remove(1) 对 List&lt;Integer&gt; 是按索引，而不是删除值 1；按值写 Integer.valueOf(1)。
 - subList、Arrays.asList 和 unmodifiableList 可能是视图，不等于独立不可变副本。
 - List.of、List.copyOf 拒绝 null；ArrayList 可以保存 null，但业务上是否允许要先约定。
 - 遍历中直接结构性修改可能触发 ConcurrentModificationException，应使用 Iterator.remove 或 removeIf。

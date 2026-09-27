@@ -257,7 +257,7 @@ public class SealedSummaryDemo {
 
 - sealed 只限制直接子类型；后代是否开放取决于中间层的 final、sealed 或 non-sealed 声明。
 - record 默认 final，普通 class 不会自动 final，必须显式选择继承策略。
-- non-sealed 不是“少限制一点”，而是从该分支开始恢复普通开放继承。
+- non-sealed 不是“少限制一点”，而是从该分支开始恢复普通开放继承，而不是继续限制所有后代。
 - sealed 不是运行时权限控制，也不会阻止反射、模块配置或业务数据错误；它主要提供编译期类型契约。
 
 ## 课后小问

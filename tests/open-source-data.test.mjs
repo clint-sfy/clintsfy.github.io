@@ -325,7 +325,7 @@ test('Java learning path follows Python and covers the complete fundamentals-to-
     'Java should appear immediately after Python in the learning navigation',
   )
   assert.match(sidebar, /'\/courses\/java\/':\s*getItems\("courses\/java"\)/)
-  assert.ok(javaFiles.length >= 24, 'the Java path should contain a substantial chapter outline')
+  assert.equal(javaFiles.length, 56, 'the Java path should contain 56 Markdown files including the index')
 
   const javaContent = javaFiles
     .map((file) => readFileSync(join(repoRoot, file), 'utf8'))
@@ -342,8 +342,18 @@ test('Java learning path follows Python and covers the complete fundamentals-to-
 test('the first Java chapter contains complete lessons with runnable examples', () => {
   const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
   const firstChapter = fg.sync('docs/courses/java/01-Java基础/*.md', { cwd: repoRoot })
+  const expectedFirstChapter = [
+    'docs/courses/java/01-Java基础/01-开发环境与第一个程序.md',
+    'docs/courses/java/01-Java基础/02-基础语法与程序结构.md',
+    'docs/courses/java/01-Java基础/03-数据类型与运算符.md',
+    'docs/courses/java/01-Java基础/04-控制流与方法.md',
+    'docs/courses/java/01-Java基础/05-类型转换与数值精度.md',
+    'docs/courses/java/01-Java基础/06-运算符与表达式.md',
+    'docs/courses/java/01-Java基础/07-方法参数重载与递归.md',
+  ]
 
   assert.equal(firstChapter.length, 7)
+  assert.deepEqual(firstChapter.sort(), expectedFirstChapter)
   for (const file of firstChapter) {
     const lesson = readFileSync(join(repoRoot, file), 'utf8')
     assert.ok(lesson.length >= 1200, `${file} should contain a useful knowledge-point reference`)

@@ -34,7 +34,7 @@ description: 速查 Object、Objects、equals、hashCode、toString 和对象身
 
 `==` 像比较两张地址卡是否指向同一间房，`equals` 像比较房子的业务编号和内容是否相同。`HashMap`、`HashSet` 先用哈希定位，再用 `equals` 确认；只重写一个方法会导致查找、去重或删除出现反直觉结果。参与相等判断的字段应稳定，放入哈希集合后不要再改变它们。
 
-默认 `Object.equals` 只判断身份，默认 `hashCode` 和 `toString` 也只反映对象身份。`Objects.equals` 可安全处理 `null`，但不会替你决定大小写、时区或领域规范化规则。
+默认 `Object.equals` 只判断身份，默认 `hashCode` 和 `toString` 也只反映对象身份。因此 `Objects.equals` 虽可安全处理 `null`，但不会替你决定大小写、时区或领域规范化规则。
 
 ## 常用用法
 

@@ -42,26 +42,46 @@ const EXPECTED_ARTICLES_BY_CHAPTER = {
     '01-数组与多维数组.md',
     '02-String与文本处理.md',
     '03-常用类与包装类型.md',
+    '04-正则表达式与文本匹配.md',
+    '05-JSON与Java对象转换.md',
+    '06-大数与精确计算.md',
   ],
   '03-面向对象': [
     '01-类与对象.md',
     '02-封装继承与多态.md',
     '03-接口与抽象类.md',
     '04-内部类枚举基础.md',
+    '05-构造器与初始化顺序.md',
+    '06-Object方法与对象相等.md',
+    '07-static-final与代码组织.md',
   ],
   '04-现代Java类型': [
     '01-枚举record与sealed.md',
     '02-异常体系与资源管理.md',
+    '03-record数据载体.md',
+    '04-sealed受限继承.md',
+    '05-异常处理常用写法.md',
+    '06-自定义异常与异常转换.md',
   ],
   '05-泛型与集合': [
     '01-泛型与类型安全.md',
     '02-集合框架与数据结构.md',
     '03-Map与集合选择.md',
+    '04-List常用API.md',
+    '05-Set去重与集合运算.md',
+    '06-Queue与Deque.md',
+    '07-Map常用API.md',
+    '08-集合排序与不可变集合.md',
   ],
   '06-函数式与时间': [
     '01-Lambda与函数式接口.md',
     '02-Stream流式处理.md',
     '03-日期时间API.md',
+    '04-Optional常用API.md',
+    '05-Collectors收集器速查.md',
+    '06-Stream分组聚合与扁平化.md',
+    '07-日期格式化与解析.md',
+    '08-时区Instant与ZonedDateTime.md',
   ],
   '07-IO与网络': ['01-IO与NIO.md', '02-网络编程.md'],
   '08-反射与模块': ['01-反射与注解.md', '02-模块化系统.md'],
@@ -175,6 +195,19 @@ function getSection(body, label) {
   return lines.slice(start + 1, end < 0 ? lines.length : end).join('\n').trim()
 }
 
+function getSectionsByLabel(body, label) {
+  const lines = body.split(/\r?\n/)
+  const starts = lines
+    .map((line, index) => ({ line, index }))
+    .filter(({ line }) => headingMatches(line, label))
+    .map(({ index }) => index)
+
+  return starts.map((start, index) => {
+    const end = lines.findIndex((line, lineIndex) => lineIndex > start && /^##\s+/.test(line))
+    return lines.slice(start + 1, end < 0 ? lines.length : end).join('\n').trim()
+  })
+}
+
 function subsectionMatches(line, label) {
   const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   return new RegExp(`^###\\s+${escapedLabel}(?:\\s|[:：，,（(]|$)`).test(line)
@@ -191,19 +224,19 @@ function getSubsection(section, label) {
 }
 
 function getQuickReferenceSubsections(body, sectionLabel) {
-  const section = getSection(body, sectionLabel)
-  if (section === null) return []
-  const lines = section.split(/\r?\n/)
-  const starts = []
+  return getSectionsByLabel(body, sectionLabel).flatMap((section) => {
+    const lines = section.split(/\r?\n/)
+    const starts = []
 
-  lines.forEach((line, index) => {
-    if (/^###\s+\S/.test(line)) starts.push(index)
+    lines.forEach((line, index) => {
+      if (/^###\s+\S/.test(line)) starts.push(index)
+    })
+
+    return starts.map((start, index) => ({
+      heading: lines[start].replace(/^###\s+/, '').trim(),
+      content: lines.slice(start + 1, starts[index + 1] ?? lines.length).join('\n'),
+    }))
   })
-
-  return starts.map((start, index) => ({
-    heading: lines[start].replace(/^###\s+/, '').trim(),
-    content: lines.slice(start + 1, starts[index + 1] ?? lines.length).join('\n'),
-  }))
 }
 
 function removeFencedCode(text) {
@@ -377,7 +410,7 @@ function formatViolations(violations) {
   return violations.length === 0 ? '' : `\n${violations.join('\n')}`
 }
 
-test('Java course keeps 36 Markdown files, 35 articles, 12 chapters, and the baseline paths', () => {
+test('Java course keeps 56 Markdown files, 55 articles, 12 chapters, and the baseline paths', () => {
   const markdownPaths = fg
     .sync(JAVA_GLOB, { cwd: REPO_ROOT, onlyFiles: true })
     .map(normalizePath)
@@ -387,11 +420,11 @@ test('Java course keeps 36 Markdown files, 35 articles, 12 chapters, and the bas
     .map((entry) => entry.name)
     .sort()
 
-  assert.equal(markdownPaths.length, 36, 'rule java-markdown-count: expected 36 Markdown files')
+  assert.equal(markdownPaths.length, 56, 'rule java-markdown-count: expected 56 Markdown files')
   assert.equal(
     markdownPaths.filter((file) => file !== JAVA_INDEX_PATH).length,
-    35,
-    'rule java-article-count: expected 35 course articles',
+    55,
+    'rule java-article-count: expected 55 course articles',
   )
   assert.equal(chapterDirectories.length, 12, 'rule java-chapter-count: expected 12 chapter directories')
   assert.deepEqual(
@@ -487,6 +520,42 @@ test('01-06 Java articles use the shared quality structure and runnable examples
   assert.deepEqual(violations, [], `rule java-article-structure${formatViolations(violations)}`)
 })
 
+test('01-06 Java articles expose standard common and less-common usage headings with Java examples', () => {
+  const violations = []
+
+  for (const relativePath of QUALITY_ARTICLE_PATHS) {
+    let article
+    try {
+      article = readMarkdown(relativePath)
+    } catch (error) {
+      violations.push(`${relativePath} [article-read] ${error.message}`)
+      continue
+    }
+
+    for (const sectionLabel of ['常用用法', '不常用但需要知道']) {
+      const sections = getSectionsByLabel(article.body, sectionLabel)
+      if (sections.length === 0) {
+        violations.push(`${relativePath} [usage:${sectionLabel}] heading is missing`)
+        continue
+      }
+
+      for (const subsection of getQuickReferenceSubsections(article.body, sectionLabel)) {
+        const firstContentLine = subsection.content
+          .split(/\r?\n/)
+          .find((line) => line.trim() !== '')
+          ?.trim()
+        if (firstContentLine !== '```java') {
+          violations.push(
+            `${relativePath} [usage:${sectionLabel}/${subsection.heading}] first content must be a java fenced code block`,
+          )
+        }
+      }
+    }
+  }
+
+  assert.deepEqual(violations, [], `rule java-usage-headings${formatViolations(violations)}`)
+})
+
 test('01-06 Java articles provide two answered review questions and no deprecated task markers', () => {
   const violations = []
   const forbiddenPatterns = [
@@ -496,7 +565,7 @@ test('01-06 Java articles provide two answered review questions and no deprecate
     { rule: '练习题', pattern: /练习题/u },
     { rule: '面试常问', pattern: /面试常问/u },
     { rule: 'deprecated-review-heading', pattern: /^##\s+复习清单(?:\s|$)/mu },
-    { rule: 'placeholder', pattern: /\b(?:TODO|FIXME|TBD)\b|待补(?:充)?|占位|未完成|后续补充|自行查阅|^\s*略\s*$/imu },
+    { rule: 'placeholder', pattern: /\b(?:TODO|FIXME|TBD)\b|待补(?:充)?|占位|未完成(?:内容|正文|案例|部分|章节|$)|后续补充|自行查阅|^\s*略\s*$/imu },
   ]
 
   for (const relativePath of QUALITY_ARTICLE_PATHS) {

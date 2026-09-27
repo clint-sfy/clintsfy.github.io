@@ -428,7 +428,7 @@ Map 常用路径是按 key 读写和用 merge 表达复合更新。
 
 ## 易混点
 
-- getOrDefault 不会写回默认值，computeIfAbsent 才会在需要时创建并保存。
+- getOrDefault 不会写回默认值，而不是“读取后自动保存”；computeIfAbsent 才会在需要时创建并保存。
 - HashMap 无序，LinkedHashMap 保序，TreeMap 按键排序；按值排序应得到条目列表。
 - Map 的 keySet、values、entrySet 是视图，不是自动快照。
 - ConcurrentHashMap 不接受 null，且单键原子不等于跨多键事务安全。
