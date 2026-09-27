@@ -38,6 +38,8 @@ await 类方法可被中断或超时，返回后必须检查业务条件。同�
 
 ### CountDownLatch.await/countDown：等待初始化
 
+计数归零后所有 await 都会通过，之后新增的 await 也会立即通过；它不能 reset。计数必须与实际参与者数量匹配，漏掉 countDown 会让等待永久阻塞。
+
 ```java
 import java.util.concurrent.CountDownLatch;
 
@@ -53,9 +55,9 @@ public class LatchInitDemo {
 }
 ```
 
-计数归零后所有 await 都会通过，之后新增的 await 也会立即通过；它不能 reset。计数必须与实际参与者数量匹配，漏掉 countDown 会让等待永久阻塞。
-
 ### CountDownLatch.await(timeout)：有界等待
+
+超时返回 false 表示门闩尚未归零；调用方应选择降级、重试或终止，而不是假设初始化成功。
 
 ```java
 import java.util.concurrent.CountDownLatch;
@@ -71,9 +73,9 @@ public class LatchTimeoutDemo {
 }
 ```
 
-超时返回 false 表示门闩尚未归零；调用方应选择降级、重试或终止，而不是假设初始化成功。
-
 ### Semaphore.acquire/release：限制并发名额
+
+许可证不是线程所有权锁，任意线程都可以 release；这既方便资源归还，也意味着必须由业务保证 release 次数和所有权协议。
 
 ```java
 import java.util.concurrent.Semaphore;
@@ -92,9 +94,9 @@ public class SemaphoreDemo {
 }
 ```
 
-许可证不是线程所有权锁，任意线程都可以 release；这既方便资源归还，也意味着必须由业务保证 release 次数和所有权协议。
-
 ### Semaphore.tryAcquire：拒绝或降级
+
+tryAcquire 不等待，适合快速失败；带超时版本允许有限等待。失败分支要明确返回、排队或降级，不能静默丢掉请求。
 
 ```java
 import java.util.concurrent.Semaphore;
@@ -117,9 +119,9 @@ public class SemaphoreTryDemo {
 }
 ```
 
-tryAcquire 不等待，适合快速失败；带超时版本允许有限等待。失败分支要明确返回、排队或降级，不能静默丢掉请求。
-
 ### CyclicBarrier.await：阶段汇合
+
+参与者全部 await 后屏障动作执行一次并放行；通过后 barrier 可以再次使用。真实多线程场景中一个参与者异常或超时会让屏障破坏，其他参与者应处理 BrokenBarrierException。
 
 ```java
 import java.util.concurrent.CyclicBarrier;
@@ -136,9 +138,9 @@ public class BarrierDemo {
 }
 ```
 
-参与者全部 await 后屏障动作执行一次并放行；通过后 barrier 可以再次使用。真实多线程场景中一个参与者异常或超时会让屏障破坏，其他参与者应处理 BrokenBarrierException。
-
 ### CyclicBarrier.reset：重置破坏的屏障
+
+reset 会让当前 generation 失效，正在等待的线程可能收到 BrokenBarrierException。不要在不清楚参与者状态时随意 reset，最好让整个阶段以失败结束再重新创建。
 
 ```java
 import java.util.concurrent.CyclicBarrier;
@@ -152,12 +154,11 @@ public class BarrierResetDemo {
     }
 }
 ```
-
-reset 会让当前 generation 失效，正在等待的线程可能收到 BrokenBarrierException。不要在不清楚参与者状态时随意 reset，最好让整个阶段以失败结束再重新创建。
-
 ## 不常用但需要知道
 
 ### Phaser：动态注册与多阶段
+
+Phaser 的参与者可动态注册，phase 可以推进多次；参与者固定、只等待一次时 CountDownLatch 更直观。`arriveAndAwaitAdvance` 返回的是推进后的 phase 值，业务不要依赖具体编号做脆弱判断。
 
 ```java
 import java.util.concurrent.Phaser;
@@ -173,9 +174,9 @@ public class PhaserDemo {
 }
 ```
 
-Phaser 的参与者可动态注册，phase 可以推进多次；参与者固定、只等待一次时 CountDownLatch 更直观。`arriveAndAwaitAdvance` 返回的是推进后的 phase 值，业务不要依赖具体编号做脆弱判断。
-
 ### Phaser.register/bulkRegister：动态参与者
+
+注册和注销必须成对，否则 phase 永远等不到；Phaser 还支持 onAdvance 自定义终止条件，复杂度明显高于 latch/barrier。
 
 ```java
 import java.util.concurrent.Phaser;
@@ -192,9 +193,9 @@ public class PhaserRegisterDemo {
 }
 ```
 
-注册和注销必须成对，否则 phase 永远等不到；Phaser 还支持 onAdvance 自定义终止条件，复杂度明显高于 latch/barrier。
-
 ### Exchanger：交换两个线程的缓冲区
+
+Exchanger 只有两个参与方，适合成对交换缓冲区；一般生产/消费流程应使用 BlockingQueue。
 
 ```java
 import java.util.concurrent.Exchanger;
@@ -218,9 +219,9 @@ public class ExchangerDemo {
 }
 ```
 
-Exchanger 只有两个参与方，适合成对交换缓冲区；一般生产/消费流程应使用 BlockingQueue。
-
 ### Semaphore(fair)：公平许可证队列
+
+公平 Semaphore 按等待顺序倾向授予许可证，但会付出排队成本；它和公平 ReentrantLock 一样需要基准证明。
 
 ```java
 import java.util.concurrent.Semaphore;
@@ -238,9 +239,6 @@ public class FairSemaphoreDemo {
     }
 }
 ```
-
-公平 Semaphore 按等待顺序倾向授予许可证，但会付出排队成本；它和公平 ReentrantLock 一样需要基准证明。
-
 ## 简单案例
 
 ```java

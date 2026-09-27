@@ -36,6 +36,8 @@ Stream 负责逐个处理元素，Collector 负责把处理结果装进目标结
 
 ### `toList`/`toSet`：收集列表或集合
 
+`toList` 保留重复元素，`toSet` 去重但不保证迭代顺序；JDK 16 以后也可使用 `Stream.toList()`。
+
 ```java
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,9 +50,9 @@ System.out.println(set.contains("sql") + ", " + set.size());
 // 输出：true, 2
 ```
 
-`toList` 保留重复元素，`toSet` 去重但不保证迭代顺序；JDK 16 以后也可使用 `Stream.toList()`。
-
 ### `toUnmodifiableList`/`toUnmodifiableSet`：收集不可变结果
+
+需要把结果作为只读快照交给调用方时使用；修改它会抛 `UnsupportedOperationException`。
 
 ```java
 import java.util.List;
@@ -61,9 +63,9 @@ System.out.println(result);
 // 输出：[java, sql]
 ```
 
-需要把结果作为只读快照交给调用方时使用；修改它会抛 `UnsupportedOperationException`。
-
 ### `joining`：连接文本
+
+`joining` 适合日志、标签和 CSV 片段；需要转义、引号或复杂协议时应使用专门序列化器。
 
 ```java
 import java.util.List;
@@ -74,9 +76,9 @@ System.out.println(csv);
 // 输出：[Java, SQL]
 ```
 
-`joining` 适合日志、标签和 CSV 片段；需要转义、引号或复杂协议时应使用专门序列化器。
-
 ### `groupingBy`：按键分组
+
+默认值类型是 `Map<K, List<T>>`；一个键有多个元素时最自然，顺序与 Map 实现仍需单独确认。
 
 ```java
 import java.util.List;
@@ -90,9 +92,9 @@ System.out.println(byTeam.get("A").size());
 // 输出：2
 ```
 
-默认值类型是 `Map<K, List<T>>`；一个键有多个元素时最自然，顺序与 Map 实现仍需单独确认。
-
 ### `groupingBy` + `counting`：统计每组数量
+
+下游收集器把每组的 List 换成计数结果；需要排序的 Map 时选择明确的 Map 工厂。
 
 ```java
 import java.util.List;
@@ -104,9 +106,9 @@ System.out.println(counts);
 // 输出：{3=3, 4=1}
 ```
 
-下游收集器把每组的 List 换成计数结果；需要排序的 Map 时选择明确的 Map 工厂。
-
 ### `partitioningBy`：按真假分成两组
+
+`partitioningBy` 固定得到真假两个分区；只有一个布尔条件时比 `groupingBy` 更能表达意图。
 
 ```java
 import java.util.List;
@@ -118,9 +120,9 @@ System.out.println(parts);
 // 输出：{false=[1, 3], true=[2, 4]}
 ```
 
-`partitioningBy` 固定得到真假两个分区；只有一个布尔条件时比 `groupingBy` 更能表达意图。
-
 ### `mapping`：分组后只收集某个字段
+
+`mapping` 适合下游先提取字段再连接、去重或继续聚合；它不是顶层 Stream 的 `map` 替代品。
 
 ```java
 import java.util.List;
@@ -135,9 +137,9 @@ System.out.println(names);
 // 输出：{A=Ann/Kai, B=Bob}
 ```
 
-`mapping` 适合下游先提取字段再连接、去重或继续聚合；它不是顶层 Stream 的 `map` 替代品。
-
 ### `toMap`：收集唯一键值对
+
+默认 `toMap` 遇到重复键会抛 `IllegalStateException`；数据不保证唯一时必须提供合并函数。
 
 ```java
 import java.util.List;
@@ -152,9 +154,9 @@ System.out.println(byId.get(2).name());
 // 输出：Bob
 ```
 
-默认 `toMap` 遇到重复键会抛 `IllegalStateException`；数据不保证唯一时必须提供合并函数。
-
 ### `toMap` + 合并函数：处理重复键
+
+合并函数应明确“保留、相加还是报错”；需要保留插入顺序时使用 `toMap` 的 Map 工厂重载。
 
 ```java
 import java.util.List;
@@ -169,9 +171,9 @@ System.out.println(best);
 // 输出：{java=95}
 ```
 
-合并函数应明确“保留、相加还是报错”；需要保留插入顺序时使用 `toMap` 的 Map 工厂重载。
-
 ### `reducing`：按自定义规则归约
+
+`reducing` 适合需要下游归约或自定义初始值的场景；普通数值求和也可直接使用 `mapToInt().sum()`。
 
 ```java
 import java.util.List;
@@ -182,9 +184,9 @@ System.out.println(total);
 // 输出：60
 ```
 
-`reducing` 适合需要下游归约或自定义初始值的场景；普通数值求和也可直接使用 `mapToInt().sum()`。
-
 ### `summarizingInt`：一次得到数值摘要
+
+`summarizingInt` 同时提供数量、总和、最小、最大和平均值；`summarizingLong`、`summarizingDouble` 对应其他数值类型。
 
 ```java
 import java.util.List;
@@ -195,9 +197,9 @@ System.out.println(summary.getCount() + ", " + summary.getAverage() + ", " + sum
 // 输出：3, 20.0, 30
 ```
 
-`summarizingInt` 同时提供数量、总和、最小、最大和平均值；`summarizingLong`、`summarizingDouble` 对应其他数值类型。
-
 ### `counting`/`maxBy`/`minBy`：下游统计与极值
+
+极值收集器返回 `Optional`，空组不会伪造一个默认元素；需要简单数值极值时也可使用原始类型流。
 
 ```java
 import java.util.Comparator;
@@ -209,12 +211,11 @@ var max = List.of("java", "stream", "api").stream()
 System.out.println(max.orElse("none"));
 // 输出：stream
 ```
-
-极值收集器返回 `Optional`，空组不会伪造一个默认元素；需要简单数值极值时也可使用原始类型流。
-
 ## 不常用但需要知道
 
 ### `collectingAndThen`：收集完成后再转换
+
+它适合把可变中间结果包装成不可变快照；转换函数应保持结果语义清晰。
 
 ```java
 import java.util.List;
@@ -226,9 +227,9 @@ System.out.println(result);
 // 输出：[java, sql]
 ```
 
-它适合把可变中间结果包装成不可变快照；转换函数应保持结果语义清晰。
-
 ### `filtering`：在下游分组内过滤（Java 9+）
+
+下游过滤可以保留空组；如果不需要空组，直接在顶层 `filter` 更简单。
 
 ```java
 import java.util.List;
@@ -243,9 +244,9 @@ System.out.println(active);
 // 输出：{false=[], true=[Ann]}
 ```
 
-下游过滤可以保留空组；如果不需要空组，直接在顶层 `filter` 更简单。
-
 ### `flatMapping`：分组后摊平嵌套值（Java 9+）
+
+`flatMapping` 是下游版本的 `flatMap`；嵌套关系简单时直接先 `flatMap` 再收集更易读。
 
 ```java
 import java.util.List;
@@ -260,9 +261,9 @@ System.out.println(skills);
 // 输出：{A=[Java, SQL, HTTP]}
 ```
 
-`flatMapping` 是下游版本的 `flatMap`；嵌套关系简单时直接先 `flatMap` 再收集更易读。
-
 ### `teeing`：同时计算两个结果再合并（Java 12+）
+
+`teeing` 会同时维护两个下游结果，适合一个遍历需要多个统计值；逻辑过于复杂时拆成清晰的两次计算反而更容易维护。
 
 ```java
 import java.util.List;
@@ -276,9 +277,9 @@ System.out.println(range);
 // 输出：10..30
 ```
 
-`teeing` 会同时维护两个下游结果，适合一个遍历需要多个统计值；逻辑过于复杂时拆成清晰的两次计算反而更容易维护。
-
 ### `toConcurrentMap`：并发收集到 ConcurrentHashMap
+
+只有并行收集和共享并发 Map 的需求才使用；小数据或串行代码使用普通 `toMap` 更简单。
 
 ```java
 import java.util.List;
@@ -291,9 +292,9 @@ System.out.println(lengths.get("java"));
 // 输出：4
 ```
 
-只有并行收集和共享并发 Map 的需求才使用；小数据或串行代码使用普通 `toMap` 更简单。
-
 ### `groupingBy` 的 Map 工厂：明确分组顺序
+
+默认 `HashMap` 不承诺键顺序；只有输出协议依赖顺序时才指定 `LinkedHashMap` 或排序 Map。
 
 ```java
 import java.util.List;
@@ -305,9 +306,6 @@ var result = List.of("b", "a", "b").stream().collect(Collectors.groupingBy(
 System.out.println(result);
 // 输出：{b=2, a=1}
 ```
-
-默认 `HashMap` 不承诺键顺序；只有输出协议依赖顺序时才指定 `LinkedHashMap` 或排序 Map。
-
 ## 简单案例
 
 ```java

@@ -37,6 +37,8 @@ description: 速查 HashSet、LinkedHashSet、TreeSet、EnumSet 的去重、排�
 
 ### HashSet.add、contains、remove：去重与查找
 
+add 返回是否真正新增；HashSet 平均查找快，但遍历顺序不属于契约。
+
 ```java
 import java.util.HashSet;
 import java.util.Set;
@@ -54,9 +56,9 @@ public class HashSetBasicDemo {
 }
 ```
 
-add 返回是否真正新增；HashSet 平均查找快，但遍历顺序不属于契约。
-
 ### LinkedHashSet：去重并保留插入顺序
+
+LinkedHashSet 在 HashSet 的去重基础上维护插入顺序，适合去重后稳定展示；需要排序时改用 TreeSet。
 
 ```java
 import java.util.LinkedHashSet;
@@ -74,9 +76,9 @@ public class LinkedHashSetDemo {
 }
 ```
 
-LinkedHashSet 在 HashSet 的去重基础上维护插入顺序，适合去重后稳定展示；需要排序时改用 TreeSet。
-
 ### Set.addAll：并集
+
+addAll 把另一个集合的元素加入当前集合，重复元素自动忽略；这是原地操作，需要保留原集合时先复制。
 
 ```java
 import java.util.LinkedHashSet;
@@ -92,9 +94,9 @@ public class SetUnionDemo {
 }
 ```
 
-addAll 把另一个集合的元素加入当前集合，重复元素自动忽略；这是原地操作，需要保留原集合时先复制。
-
 ### Set.retainAll：交集
+
+retainAll 只保留当前集合和参数集合共有的元素，属于原地修改。
 
 ```java
 import java.util.LinkedHashSet;
@@ -110,9 +112,9 @@ public class SetIntersectionDemo {
 }
 ```
 
-retainAll 只保留当前集合和参数集合共有的元素，属于原地修改。
-
 ### Set.removeAll：差集
+
+removeAll 删除当前集合中出现在参数集合里的元素；参数集合很大时可考虑它的查找复杂度。
 
 ```java
 import java.util.LinkedHashSet;
@@ -128,9 +130,9 @@ public class SetDifferenceDemo {
 }
 ```
 
-removeAll 删除当前集合中出现在参数集合里的元素；参数集合很大时可考虑它的查找复杂度。
-
 ### size、isEmpty、clear：查看与清空
+
+clear 清空当前集合，不会让其他引用自动切换到新集合。
 
 ```java
 import java.util.HashSet;
@@ -148,9 +150,9 @@ public class SetStateDemo {
 }
 ```
 
-clear 清空当前集合，不会让其他引用自动切换到新集合。
-
 ### Set.copyOf：创建不可修改快照
+
+Set.copyOf 复制当前元素结构并拒绝 null；结果不能 add、remove，元素本身如果可变仍不自动深复制。
 
 ```java
 import java.util.HashSet;
@@ -167,9 +169,9 @@ public class SetCopyOfDemo {
 }
 ```
 
-Set.copyOf 复制当前元素结构并拒绝 null；结果不能 add、remove，元素本身如果可变仍不自动深复制。
-
 ### TreeSet：自动排序与边界元素
+
+TreeSet 依靠自然顺序或 Comparator 排序，first/last 在空集合上会抛 NoSuchElementException。
 
 ```java
 import java.util.TreeSet;
@@ -186,9 +188,9 @@ public class TreeSetOrderDemo {
 }
 ```
 
-TreeSet 依靠自然顺序或 Comparator 排序，first/last 在空集合上会抛 NoSuchElementException。
-
 ### TreeSet.ceiling、floor：邻近元素
+
+ceiling 找大于等于目标的最小值，floor 找小于等于目标的最大值；找不到时返回 null。
 
 ```java
 import java.util.TreeSet;
@@ -204,12 +206,11 @@ public class TreeSetNearestDemo {
     }
 }
 ```
-
-ceiling 找大于等于目标的最小值，floor 找小于等于目标的最大值；找不到时返回 null。
-
 ## 不常用但需要知道
 
 ### TreeSet.lower、higher：严格邻近元素
+
+lower 和 higher 排除等于目标的元素，边界不存在时返回 null。
 
 ```java
 import java.util.TreeSet;
@@ -223,9 +224,9 @@ public class TreeSetStrictNearestDemo {
 }
 ```
 
-lower 和 higher 排除等于目标的元素，边界不存在时返回 null。
-
 ### TreeSet.subSet、headSet、tailSet：范围视图
+
+范围方法返回排序集合的视图，参数的包含边界要看重载；需要独立结果时复制到新集合。
 
 ```java
 import java.util.TreeSet;
@@ -239,9 +240,9 @@ public class TreeSetRangeDemo {
 }
 ```
 
-范围方法返回排序集合的视图，参数的包含边界要看重载；需要独立结果时复制到新集合。
-
 ### EnumSet.of：枚举状态集合
+
+EnumSet 只能保存同一种枚举，适合权限或标志集合；它通常比 HashSet 更紧凑。
 
 ```java
 import java.util.EnumSet;
@@ -257,9 +258,9 @@ public class EnumSetDemo {
 }
 ```
 
-EnumSet 只能保存同一种枚举，适合权限或标志集合；它通常比 HashSet 更紧凑。
-
 ### EnumSet.complementOf：枚举补集
+
+补集只在同一个枚举类型内有意义；空集合需要用 EnumSet.noneOf(Permission.class) 提供类型。
 
 ```java
 import java.util.EnumSet;
@@ -276,9 +277,9 @@ public class EnumSetComplementDemo {
 }
 ```
 
-补集只在同一个枚举类型内有意义；空集合需要用 EnumSet.noneOf(Permission.class) 提供类型。
-
 ### Collections.disjoint：判断两个集合是否没有交集
+
+disjoint 只回答是否相交，不会生成交集；需要结果集合时使用 retainAll 的副本。
 
 ```java
 import java.util.Collections;
@@ -293,9 +294,9 @@ public class DisjointSetDemo {
 }
 ```
 
-disjoint 只回答是否相交，不会生成交集；需要结果集合时使用 retainAll 的副本。
-
 ### 用自定义 Comparator 构造 TreeSet
+
+TreeSet 把 Comparator 的比较结果当作元素身份；本例中长度相同的 bb 和 cc 会被视为重复，比较器必须符合业务语义。
 
 ```java
 import java.util.Comparator;
@@ -312,9 +313,6 @@ public class TreeSetComparatorDemo {
     }
 }
 ```
-
-TreeSet 把 Comparator 的比较结果当作元素身份；本例中长度相同的 bb 和 cc 会被视为重复，比较器必须符合业务语义。
-
 ## 简单案例
 
 ```java

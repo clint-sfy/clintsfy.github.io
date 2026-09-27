@@ -35,6 +35,8 @@ description: 直接用 Java 案例速查 HttpClient 的请求、响应、超时�
 
 ### `HttpClient.newBuilder`：设置连接超时
 
+连接超时覆盖建立连接阶段，DNS、TLS、服务器处理和响应读取仍可能耗时；不要把它当成完整请求超时。
+
 ```java
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -50,9 +52,9 @@ public class HttpClientTimeoutDemo {
 }
 ```
 
-连接超时覆盖建立连接阶段，DNS、TLS、服务器处理和响应读取仍可能耗时；不要把它当成完整请求超时。
-
 ### `HttpClient.Redirect`：配置重定向
+
+`NORMAL` 遵循常见浏览器式重定向规则，`ALWAYS` 更激进，`NEVER` 交给业务处理；跨域重定向还要重新审视凭证和敏感请求头。
 
 ```java
 import java.net.http.HttpClient;
@@ -68,9 +70,9 @@ public class HttpRedirectDemo {
 }
 ```
 
-`NORMAL` 遵循常见浏览器式重定向规则，`ALWAYS` 更激进，`NEVER` 交给业务处理；跨域重定向还要重新审视凭证和敏感请求头。
-
 ### `HttpRequest.newBuilder` 与 `GET`
+
+Request 是不可变对象，构建后可以安全地交给同步或异步发送；URI 要在边界校验 scheme、host、端口和允许的重定向范围。
 
 ```java
 import java.net.URI;
@@ -88,9 +90,9 @@ public class HttpGetRequestDemo {
 }
 ```
 
-Request 是不可变对象，构建后可以安全地交给同步或异步发送；URI 要在边界校验 scheme、host、端口和允许的重定向范围。
-
 ### `POST` 与 `BodyPublishers.ofString`
+
+请求体字符串默认使用 UTF-8；真实 JSON 仍需使用可信序列化器并设置正确 Content-Type。POST 等非幂等方法不能无条件自动重试。
 
 ```java
 import java.net.URI;
@@ -108,9 +110,9 @@ public class HttpPostRequestDemo {
 }
 ```
 
-请求体字符串默认使用 UTF-8；真实 JSON 仍需使用可信序列化器并设置正确 Content-Type。POST 等非幂等方法不能无条件自动重试。
-
 ### `HttpClient.send` 与 `BodyHandlers.ofString`
+
+`send` 会阻塞当前线程，适合简单同步流程；必须先检查状态码，再决定是否解析响应字符串，且要防止不受控大响应占满内存。
 
 ```java
 import java.net.URI;
@@ -130,9 +132,9 @@ public class HttpSendDemo {
 }
 ```
 
-`send` 会阻塞当前线程，适合简单同步流程；必须先检查状态码，再决定是否解析响应字符串，且要防止不受控大响应占满内存。
-
 ### `statusCode`、`headers` 与 `body`
+
+响应头名称不区分大小写，但一个名称可能有多个值；`body` 的类型由 BodyHandler 决定，状态码和业务 JSON 要分开验证。
 
 ```java
 import java.net.URI;
@@ -153,9 +155,9 @@ public class HttpResponseDemo {
 }
 ```
 
-响应头名称不区分大小写，但一个名称可能有多个值；`body` 的类型由 BodyHandler 决定，状态码和业务 JSON 要分开验证。
-
 ### `HttpRequest.timeout`：请求级超时
+
+请求超时是一次 Request 的等待边界，触发时通常以 `HttpTimeoutException` 表示；重试前仍要判断操作是否幂等。
 
 ```java
 import java.net.URI;
@@ -173,9 +175,9 @@ public class HttpRequestTimeoutDemo {
 }
 ```
 
-请求超时是一次 Request 的等待边界，触发时通常以 `HttpTimeoutException` 表示；重试前仍要判断操作是否幂等。
-
 ### `sendAsync`：异步请求与结果链
+
+`sendAsync` 返回 `CompletableFuture`，`join` 会重新抛出包装后的异常；生产代码要在链上使用 `exceptionally`/`handle`，不要无条件阻塞等待所有 Future。
 
 ```java
 import java.net.URI;
@@ -196,9 +198,9 @@ public class HttpAsyncDemo {
 }
 ```
 
-`sendAsync` 返回 `CompletableFuture`，`join` 会重新抛出包装后的异常；生产代码要在链上使用 `exceptionally`/`handle`，不要无条件阻塞等待所有 Future。
-
 ### `BodyHandlers.ofByteArray`：处理二进制响应
+
+二进制响应不要强行转 String；图片、压缩数据和协议字节应使用 byte[] 或文件 BodyHandler，并设置大小保护。
 
 ```java
 import java.net.URI;
@@ -217,9 +219,9 @@ public class HttpBytesResponseDemo {
 }
 ```
 
-二进制响应不要强行转 String；图片、压缩数据和协议字节应使用 byte[] 或文件 BodyHandler，并设置大小保护。
-
 ### `BodyHandlers.ofFile`：直接写入文件
+
+`ofFile` 适合下载大响应，目标文件的覆盖、权限、磁盘空间和失败清理仍由调用方负责。
 
 ```java
 import java.net.URI;
@@ -242,9 +244,9 @@ public class HttpFileResponseDemo {
 }
 ```
 
-`ofFile` 适合下载大响应，目标文件的覆盖、权限、磁盘空间和失败清理仍由调用方负责。
-
 ### `BodyHandlers.ofLines`：按行处理响应
+
+响应行 Stream 也要关闭；它适合边读边处理，但不应在没有协议限制时无限累积到集合。
 
 ```java
 import java.net.URI;
@@ -265,9 +267,9 @@ public class HttpLinesResponseDemo {
 }
 ```
 
-响应行 Stream 也要关闭；它适合边读边处理，但不应在没有协议限制时无限累积到集合。
-
 ### `headers`：设置请求头与读取响应头
+
+认证、Cookie、Trace ID 等头必须有明确的信任边界；不要把密码、Token 或内部地址写进日志。
 
 ```java
 import java.net.URI;
@@ -284,12 +286,11 @@ public class HttpHeadersDemo {
     }
 }
 ```
-
-认证、Cookie、Trace ID 等头必须有明确的信任边界；不要把密码、Token 或内部地址写进日志。
-
 ## 不常用但需要知道
 
 ### `HttpClient.Version`：偏好 HTTP/2 或 HTTP/1.1
+
+这是偏好而不是对端强制结果；HTTP/2 需要服务端、TLS 和代理链路共同支持。
 
 ```java
 import java.net.http.HttpClient;
@@ -303,9 +304,9 @@ public class HttpVersionDemo {
 }
 ```
 
-这是偏好而不是对端强制结果；HTTP/2 需要服务端、TLS 和代理链路共同支持。
-
 ### `CompletableFuture.cancel`：取消异步请求
+
+取消是协作式的，可能已经建立连接或收到部分响应；业务代码还要停止后续解析、重试和界面更新。
 
 ```java
 import java.net.URI;
@@ -324,9 +325,9 @@ public class HttpCancelDemo {
 }
 ```
 
-取消是协作式的，可能已经建立连接或收到部分响应；业务代码还要停止后续解析、重试和界面更新。
-
 ### `BodyPublishers.ofFile`：从文件上传请求体
+
+上传要设置大小上限、内容类型和重试策略；文件变更、权限和删除时机都属于调用方责任。
 
 ```java
 import java.net.URI;
@@ -348,9 +349,9 @@ public class HttpFileUploadDemo {
 }
 ```
 
-上传要设置大小上限、内容类型和重试策略；文件变更、权限和删除时机都属于调用方责任。
-
 ### `Authenticator`：代理或服务端认证回调
+
+不要在源码中硬编码凭证；认证回调可能被多次触发，需结合 host、port、protocol 和凭证存储做限制。
 
 ```java
 import java.net.Authenticator;
@@ -370,9 +371,9 @@ public class HttpAuthenticatorDemo {
 }
 ```
 
-不要在源码中硬编码凭证；认证回调可能被多次触发，需结合 host、port、protocol 和凭证存储做限制。
-
 ### 自定义 `BodyHandler`：限制响应大小
+
+示例展示响应大小保护的入口；生产代码还要考虑流式限制，避免先把超大响应完整收进内存再判断。
 
 ```java
 import java.net.http.HttpResponse;
@@ -390,9 +391,6 @@ public class HttpBodyHandlerBoundaryDemo {
     }
 }
 ```
-
-示例展示响应大小保护的入口；生产代码还要考虑流式限制，避免先把超大响应完整收进内存再判断。
-
 ## 简单案例
 
 ```java

@@ -37,6 +37,8 @@ description: 速查 FIFO 队列、双端队列、栈、优先级队列及并发�
 
 ### ArrayDeque.offer、poll、peek：FIFO 队列
 
+offer 入队，poll 取出并删除队首，peek 只查看队首；空队列时 poll 和 peek 返回 null。
+
 ```java
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -52,9 +54,9 @@ public class QueueBasicDemo {
 }
 ```
 
-offer 入队，poll 取出并删除队首，peek 只查看队首；空队列时 poll 和 peek 返回 null。
-
 ### Queue.add、remove、element：必须成功的操作
+
+add、remove、element 在容量不足或队列为空时抛异常；业务循环通常优先 offer、poll、peek。
 
 ```java
 import java.util.ArrayDeque;
@@ -72,9 +74,9 @@ public class QueueStrictDemo {
 }
 ```
 
-add、remove、element 在容量不足或队列为空时抛异常；业务循环通常优先 offer、poll、peek。
-
 ### Deque.offerFirst、offerLast：两端入队
+
+offerFirst 和 offerLast 分别从头尾放入；取出时使用对应的 pollFirst、pollLast，能把业务优先级写在代码中。
 
 ```java
 import java.util.ArrayDeque;
@@ -91,9 +93,9 @@ public class DequeEndsDemo {
 }
 ```
 
-offerFirst 和 offerLast 分别从头尾放入；取出时使用对应的 pollFirst、pollLast，能把业务优先级写在代码中。
-
 ### Deque.pollFirst、pollLast、peekFirst、peekLast：两端取出与查看
+
+peek 不删除，poll 删除；空 Deque 时返回 null，适合把“没有任务”作为正常控制流。
 
 ```java
 import java.util.ArrayDeque;
@@ -112,9 +114,9 @@ public class DequeReadDemo {
 }
 ```
 
-peek 不删除，poll 删除；空 Deque 时返回 null，适合把“没有任务”作为正常控制流。
-
 ### Deque.push、pop、peek：用 Deque 实现栈
+
+push 等价于头部压入，pop 取出头部；普通栈场景优先 Deque，不要使用遗留 Stack。
 
 ```java
 import java.util.ArrayDeque;
@@ -131,9 +133,9 @@ public class DequeStackDemo {
 }
 ```
 
-push 等价于头部压入，pop 取出头部；普通栈场景优先 Deque，不要使用遗留 Stack。
-
 ### PriorityQueue.offer、poll、peek：按优先级取出
+
+默认自然顺序最小值优先；遍历 PriorityQueue 不等于排序遍历，只保证每次 poll 取出当前最高优先级元素。
 
 ```java
 import java.util.PriorityQueue;
@@ -151,9 +153,9 @@ public class PriorityQueueDemo {
 }
 ```
 
-默认自然顺序最小值优先；遍历 PriorityQueue 不等于排序遍历，只保证每次 poll 取出当前最高优先级元素。
-
 ### 使用 Comparator 自定义优先级
+
+构造器传 Comparator 后，poll 按比较器取出元素；比较器要稳定，否则优先级变化会破坏预期。
 
 ```java
 import java.util.Comparator;
@@ -170,12 +172,11 @@ public class CustomPriorityQueueDemo {
     }
 }
 ```
-
-构造器传 Comparator 后，poll 按比较器取出元素；比较器要稳定，否则优先级变化会破坏预期。
-
 ## 不常用但需要知道
 
 ### BlockingQueue.put、take：阻塞式生产消费
+
+put 在容量满时等待，take 在队列空时等待；它适合线程间交接，不要在不需要阻塞的单线程逻辑中使用。
 
 ```java
 import java.util.concurrent.ArrayBlockingQueue;
@@ -191,9 +192,9 @@ public class BlockingQueueDemo {
 }
 ```
 
-put 在容量满时等待，take 在队列空时等待；它适合线程间交接，不要在不需要阻塞的单线程逻辑中使用。
-
 ### BlockingQueue.offer、poll：带边界的非阻塞操作
+
+offer 和 poll 不等待，适合由调用方决定“满了丢弃、重试还是降级”的场景；带 timeout 的重载会抛 InterruptedException。
 
 ```java
 import java.util.concurrent.ArrayBlockingQueue;
@@ -210,9 +211,9 @@ public class BlockingQueueTimedBoundaryDemo {
 }
 ```
 
-offer 和 poll 不等待，适合由调用方决定“满了丢弃、重试还是降级”的场景；带 timeout 的重载会抛 InterruptedException。
-
 ### ConcurrentLinkedQueue：无界非阻塞并发队列
+
+ConcurrentLinkedQueue 适合多线程下非阻塞入队出队，但不提供等待能力，也不适合把 size 当作精确并发协调条件。
 
 ```java
 import java.util.Queue;
@@ -228,9 +229,9 @@ public class ConcurrentQueueDemo {
 }
 ```
 
-ConcurrentLinkedQueue 适合多线程下非阻塞入队出队，但不提供等待能力，也不适合把 size 当作精确并发协调条件。
-
 ### Deque.removeFirstOccurrence、removeLastOccurrence：按值清理
+
+这两个方法按 equals 从指定方向删除一个匹配项；如果队列通常只按首尾消费，不必引入中间删除。
 
 ```java
 import java.util.ArrayDeque;
@@ -249,9 +250,9 @@ public class DequeOccurrenceDemo {
 }
 ```
 
-这两个方法按 equals 从指定方向删除一个匹配项；如果队列通常只按首尾消费，不必引入中间删除。
-
 ### Queue.toArray：查看当前快照
+
+toArray 只得到某一时刻的数组，在并发队列中不能把它当作后续操作的事务快照。
 
 ```java
 import java.util.ArrayDeque;
@@ -268,9 +269,6 @@ public class QueueToArrayDemo {
     }
 }
 ```
-
-toArray 只得到某一时刻的数组，在并发队列中不能把它当作后续操作的事务快照。
-
 ## 简单案例
 
 ```java

@@ -35,15 +35,17 @@ description: 直接用 Java module-info.java 案例速查 module、requires、ex
 
 ### `module`：声明模块
 
+模块名是依赖和运行命令使用的标识；建议使用稳定、唯一且可读的反向域名形式。
+
 ```java
 // 文件：src/com.example.app/module-info.java
 module com.example.app {
 }
 ```
 
-模块名是依赖和运行命令使用的标识；建议使用稳定、唯一且可读的反向域名形式。
-
 ### `requires`：读取另一个模块
+
+`requires` 只声明可读性和编译依赖，不会把 `com.example.core` 的包自动暴露给 `com.example.app` 的下游。
 
 ```java
 // 文件：src/com.example.app/module-info.java
@@ -53,9 +55,9 @@ module com.example.app {
 }
 ```
 
-`requires` 只声明可读性和编译依赖，不会把 `com.example.core` 的包自动暴露给 `com.example.app` 的下游。
-
 ### `exports`：导出公共 API 包
+
+只有导出的包才能被其他模块正常 import；实现包可留在模块内部，避免把内部类和可变细节变成公共契约。
 
 ```java
 // 文件：src/com.example.core/module-info.java
@@ -64,9 +66,9 @@ module com.example.core {
 }
 ```
 
-只有导出的包才能被其他模块正常 import；实现包可留在模块内部，避免把内部类和可变细节变成公共契约。
-
 ### `exports ... to`：限定导出对象
+
+限定导出适合只给指定模块的 SPI 或兼容层；新增授权模块时要同步检查依赖图，避免出现隐含耦合。
 
 ```java
 // 文件：src/com.example.core/module-info.java
@@ -75,9 +77,9 @@ module com.example.core {
 }
 ```
 
-限定导出适合只给指定模块的 SPI 或兼容层；新增授权模块时要同步检查依赖图，避免出现隐含耦合。
-
 ### `opens`：开放深度反射
+
+开放包允许运行时反射访问非公开成员，但不允许其他模块直接编译调用其中的公共类型；开放范围应尽量小。
 
 ```java
 // 文件：src/com.example.model/module-info.java
@@ -86,9 +88,9 @@ module com.example.model {
 }
 ```
 
-开放包允许运行时反射访问非公开成员，但不允许其他模块直接编译调用其中的公共类型；开放范围应尽量小。
-
 ### `opens ... to`：只给指定框架开放
+
+限定 opens 比整体开放更能保留封装，适合序列化或依赖注入框架；框架模块名必须真实存在并可解析。
 
 ```java
 // 文件：src/com.example.model/module-info.java
@@ -97,9 +99,9 @@ module com.example.model {
 }
 ```
 
-限定 opens 比整体开放更能保留封装，适合序列化或依赖注入框架；框架模块名必须真实存在并可解析。
-
 ### `requires transitive`：向下游传递可读性
+
+只有公共 API 的签名暴露 `java.logging` 类型时才考虑传递依赖；实现细节普通 requires 即可。
 
 ```java
 // 文件：src/com.example.api/module-info.java
@@ -107,12 +109,11 @@ module com.example.api {
     requires transitive java.logging;
 }
 ```
-
-只有公共 API 的签名暴露 `java.logging` 类型时才考虑传递依赖；实现细节普通 requires 即可。
-
 ## 不常用但需要知道
 
 ### `requires static`：编译时可选依赖
+
+`requires static` 让编译时可见而运行时可以缺席，适合注解和编译辅助库；实际执行路径使用的库仍必须在运行时提供。
 
 ```java
 // 文件：src/com.example.core/module-info.java
@@ -121,9 +122,9 @@ module com.example.core {
 }
 ```
 
-`requires static` 让编译时可见而运行时可以缺席，适合注解和编译辅助库；实际执行路径使用的库仍必须在运行时提供。
-
 ### `uses`：声明服务使用方
+
+声明 uses 后，模块中的 `ServiceLoader.load(Formatter.class)` 才能按模块服务配置发现实现；它不会自动创建任何实现实例。
 
 ```java
 // 文件：src/com.example.app/module-info.java
@@ -132,9 +133,9 @@ module com.example.app {
 }
 ```
 
-声明 uses 后，模块中的 `ServiceLoader.load(Formatter.class)` 才能按模块服务配置发现实现；它不会自动创建任何实现实例。
-
 ### `provides ... with`：声明服务提供方
+
+实现类必须实现服务接口，通常需要 public 无参构造器或符合服务提供者约定的 provider 方法；具体组合见 [ServiceLoader 服务发现](/courses/java/08-反射与模块/07-ServiceLoader服务发现)。
 
 ```java
 // 文件：src/com.example.json/module-info.java
@@ -145,9 +146,9 @@ module com.example.json {
 }
 ```
 
-实现类必须实现服务接口，通常需要 public 无参构造器或符合服务提供者约定的 provider 方法；具体组合见 [ServiceLoader 服务发现](/courses/java/08-反射与模块/07-ServiceLoader服务发现)。
-
 ### `open module`：整体开放
+
+open module 允许所有包被深度反射，但仍不等于 exports；它适合迁移阶段，长期最好收敛到具体包和框架模块。
 
 ```java
 // 文件：src/com.example.legacy/module-info.java
@@ -156,9 +157,9 @@ open module com.example.legacy {
 }
 ```
 
-open module 允许所有包被深度反射，但仍不等于 exports；它适合迁移阶段，长期最好收敛到具体包和框架模块。
-
 ### `requires` 与 `exports` 的最小可运行模块
+
+编译时使用 `javac -d out --module-source-path src -m lib,app`，运行时使用 `java --module-path out -m app/app.Main`；删掉 `exports lib.api` 就会失去跨模块可见性。
 
 ```java
 // 文件：src/lib/module-info.java
@@ -191,9 +192,9 @@ public class Main {
 }
 ```
 
-编译时使用 `javac -d out --module-source-path src -m lib,app`，运行时使用 `java --module-path out -m app/app.Main`；删掉 `exports lib.api` 就会失去跨模块可见性。
-
 ### 模块路径与 classpath 迁移
+
+模块路径按模块描述解析依赖，classpath 上的旧 JAR 会落入未命名模块；迁移时先检查第三方 JAR 的自动模块名、重复包和反射需求。
 
 ```java
 // Windows PowerShell 示例
@@ -201,9 +202,9 @@ javac -d out --module-source-path src -m app
 java --module-path out --module app/app.Main
 ```
 
-模块路径按模块描述解析依赖，classpath 上的旧 JAR 会落入未命名模块；迁移时先检查第三方 JAR 的自动模块名、重复包和反射需求。
-
 ### `jdeps`：静态依赖审计
+
+jdeps 能发现静态引用和模块关系，但反射、ServiceLoader、配置文件和动态类名可能不在结果中；它不是运行时完整测试。
 
 ```java
 // Windows PowerShell 示例
@@ -211,17 +212,14 @@ jdeps --module-path lib --check app
 jdeps --module-path lib -s app.jar
 ```
 
-jdeps 能发现静态引用和模块关系，但反射、ServiceLoader、配置文件和动态类名可能不在结果中；它不是运行时完整测试。
-
 ### `jlink`：裁剪运行时
+
+jlink 只适用于模块化依赖图，生成结果与操作系统和 CPU 平台相关；打包后仍要验证 TLS、字体、本地库和服务发现。
 
 ```java
 // Windows PowerShell 示例
 jlink --module-path "$env:JAVA_HOME/jmods;out" --add-modules app --output runtime
 ```
-
-jlink 只适用于模块化依赖图，生成结果与操作系统和 CPU 平台相关；打包后仍要验证 TLS、字体、本地库和服务发现。
-
 ## 简单案例
 
 ```java

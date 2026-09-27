@@ -40,6 +40,8 @@ description: 速查 static、final、常量、静态导入和嵌套类型，建�
 
 ### `static` 字段：类级共享数据
 
+静态字段只有一份，所有实例共享；并发计数器要使用合适的同步或原子类型，不能把普通 `++` 当成线程安全操作。
+
 ```java
 class Sequence {
     private static int next = 1;
@@ -53,9 +55,9 @@ System.out.println(Sequence.nextValue() + ", " + Sequence.nextValue());
 // 输出：1, 2
 ```
 
-静态字段只有一份，所有实例共享；并发计数器要使用合适的同步或原子类型，不能把普通 `++` 当成线程安全操作。
-
 ### `static` 方法：调用不依赖实例的行为
+
+静态方法通过类名调用，不能直接访问实例字段；如果行为要替换或依赖对象状态，应考虑实例方法和接口。
 
 ```java
 class Texts {
@@ -68,9 +70,9 @@ System.out.println(Texts.quote("Java"));
 // 输出：[Java]
 ```
 
-静态方法通过类名调用，不能直接访问实例字段；如果行为要替换或依赖对象状态，应考虑实例方法和接口。
-
 ### `static final`：定义稳定常量
+
+常量名通常使用大写下划线；值应稳定且不依赖可变运行时状态，配置项不要伪装成编译期常量。
 
 ```java
 class Limits {
@@ -81,9 +83,9 @@ System.out.println(Limits.MAX_RETRY);
 // 输出：3
 ```
 
-常量名通常使用大写下划线；值应稳定且不依赖可变运行时状态，配置项不要伪装成编译期常量。
-
 ### `final` 局部变量：防止重复赋值
+
+局部 `final` 只能赋值一次，适合表达不应被后续分支覆盖的中间值；effectively final 的局部变量也能被 Lambda 或内部类捕获。
 
 ```java
 final int port = 8080;
@@ -91,9 +93,9 @@ System.out.println(port);
 // 输出：8080
 ```
 
-局部 `final` 只能赋值一次，适合表达不应被后续分支覆盖的中间值；effectively final 的局部变量也能被 Lambda 或内部类捕获。
-
 ### `final` 字段：构造后固定对象状态
+
+`final` 字段必须在声明处、初始化块或每个构造器路径赋值；它能固定引用，但引用指向的对象仍可能可变。
 
 ```java
 class User {
@@ -112,9 +114,9 @@ System.out.println(new User("U-1").id());
 // 输出：U-1
 ```
 
-`final` 字段必须在声明处、初始化块或每个构造器路径赋值；它能固定引用，但引用指向的对象仍可能可变。
-
 ### `final` 引用：固定指向，不固定对象内容
+
+引用不能重新指向另一个列表，但列表内容仍可修改；需要不可变结果时用 `List.copyOf` 或防御性复制。
 
 ```java
 import java.util.ArrayList;
@@ -126,9 +128,9 @@ System.out.println(names);
 // 输出：[Ann]
 ```
 
-引用不能重新指向另一个列表，但列表内容仍可修改；需要不可变结果时用 `List.copyOf` 或防御性复制。
-
 ### `final` 方法：禁止子类重写
+
+`final` 方法适合固定算法骨架或安全不变式；可变步骤可以委托给受控的私有/抽象方法。
 
 ```java
 class Template {
@@ -141,9 +143,9 @@ System.out.println(new Template().run());
 // 输出：fixed
 ```
 
-`final` 方法适合固定算法骨架或安全不变式；可变步骤可以委托给受控的私有/抽象方法。
-
 ### `final` 类：禁止继承
+
+`final` 类可避免被扩展破坏不变式，但不自动保证字段对象深层不可变；设计时仍要处理可变引用和公开 API。
 
 ```java
 final class Token {
@@ -162,9 +164,9 @@ System.out.println(new Token("abc").value());
 // 输出：abc
 ```
 
-`final` 类可避免被扩展破坏不变式，但不自动保证字段对象深层不可变；设计时仍要处理可变引用和公开 API。
-
 ### 静态嵌套类：组织不需要外部实例的类型
+
+静态嵌套类只借用外部类的命名空间，不持有外部实例；与成员内部类的生命周期差异见[内部类与枚举基础](/courses/java/03-面向对象/04-内部类枚举基础)。
 
 ```java
 class Parser {
@@ -180,12 +182,11 @@ class Parser {
 System.out.println(new Parser.Result(true).ok);
 // 输出：true
 ```
-
-静态嵌套类只借用外部类的命名空间，不持有外部实例；与成员内部类的生命周期差异见[内部类与枚举基础](/courses/java/03-面向对象/04-内部类枚举基础)。
-
 ## 不常用但需要知道
 
 ### 静态初始化块：初始化类级资源
+
+静态字段表达式和静态块按源码顺序执行，通常在类首次主动使用时发生；不要在静态初始化里做难以恢复的网络或文件副作用。
 
 ```java
 class Registry {
@@ -201,9 +202,9 @@ System.out.println(Registry.name);
 // 输出：ready
 ```
 
-静态字段表达式和静态块按源码顺序执行，通常在类首次主动使用时发生；不要在静态初始化里做难以恢复的网络或文件副作用。
-
 ### `import static`：简化稳定工具调用
+
+静态导入适合少量、语义明确的常量或工具；同名方法过多会降低可读性，复杂代码优先保留类名。
 
 ```java
 import static java.lang.Math.max;
@@ -212,9 +213,9 @@ System.out.println(max(3, 5));
 // 输出：5
 ```
 
-静态导入适合少量、语义明确的常量或工具；同名方法过多会降低可读性，复杂代码优先保留类名。
-
 ### `final` 参数：防止方法内部重新绑定
+
+参数 `final` 只限制方法体内重新赋值，不改变调用者传入对象的可变性；团队可按代码风格选择是否广泛使用。
 
 ```java
 static int doubleValue(final int value) {
@@ -225,9 +226,9 @@ System.out.println(doubleValue(21));
 // 输出：42
 ```
 
-参数 `final` 只限制方法体内重新赋值，不改变调用者传入对象的可变性；团队可按代码风格选择是否广泛使用。
-
 ### `static final` 集合：防止重新绑定仍不够
+
+常量引用指向可变集合时仍能修改内容；公开共享集合应使用 `List.of`、`Set.of` 或不可变视图，并在文档中说明线程安全。
 
 ```java
 import java.util.ArrayList;
@@ -240,9 +241,9 @@ System.out.println(ROLES);
 // 输出：[reader, writer]
 ```
 
-常量引用指向可变集合时仍能修改内容；公开共享集合应使用 `List.of`、`Set.of` 或不可变视图，并在文档中说明线程安全。
-
 ### `final` 与继承边界：固定引用但允许对象多态
+
+`final` 不阻止引用指向的具体实现执行可变操作；若要限制替换实现、扩展和状态变化，需要分别使用 `final` 类、接口契约和不可变数据结构。
 
 ```java
 import java.util.ArrayList;
@@ -253,9 +254,6 @@ values.add("ok");
 System.out.println(values.get(0));
 // 输出：ok
 ```
-
-`final` 不阻止引用指向的具体实现执行可变操作；若要限制替换实现、扩展和状态变化，需要分别使用 `final` 类、接口契约和不可变数据结构。
-
 ## 继续阅读
 
 - [类与对象](/courses/java/03-面向对象/01-类与对象)：实例成员和类级成员的基本区别。

@@ -35,6 +35,8 @@ description: 直接用 Java 案例速查 Path 与 Files 的路径、读写、复
 
 ### `Path.of` 与 `Paths.get`：创建路径
 
+JDK 11 以后优先写 `Path.of`；`Paths.get` 在旧代码和重载阅读中仍常见。相对路径的基准是当前工作目录，不是源码文件所在目录。
+
 ```java
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,9 +51,9 @@ public class PathCreateDemo {
 }
 ```
 
-JDK 11 以后优先写 `Path.of`；`Paths.get` 在旧代码和重载阅读中仍常见。相对路径的基准是当前工作目录，不是源码文件所在目录。
-
 ### `resolve`：拼接子路径
+
+`resolve` 适合把受控的子路径接到根目录；如果参数是绝对路径，结果可能直接采用该绝对路径，因此用户输入仍需做根目录校验。
 
 ```java
 import java.nio.file.Path;
@@ -66,9 +68,9 @@ public class PathResolveDemo {
 }
 ```
 
-`resolve` 适合把受控的子路径接到根目录；如果参数是绝对路径，结果可能直接采用该绝对路径，因此用户输入仍需做根目录校验。
-
 ### `normalize` 与 `toAbsolutePath`：规范化路径
+
+`normalize` 只处理 `.` 和 `..`，不会检查文件是否存在，也不会解析符号链接；需要真实路径时使用 `toRealPath`，并准备处理 `IOException`。
 
 ```java
 import java.nio.file.Path;
@@ -82,9 +84,9 @@ public class PathNormalizeDemo {
 }
 ```
 
-`normalize` 只处理 `.` 和 `..`，不会检查文件是否存在，也不会解析符号链接；需要真实路径时使用 `toRealPath`，并准备处理 `IOException`。
-
 ### `relativize`：计算相对路径
+
+两个路径必须都为绝对或都为相对，并且通常来自同一文件系统；跨盘符或不同根时可能抛 `IllegalArgumentException`。
 
 ```java
 import java.nio.file.Path;
@@ -99,9 +101,9 @@ public class PathRelativizeDemo {
 }
 ```
 
-两个路径必须都为绝对或都为相对，并且通常来自同一文件系统；跨盘符或不同根时可能抛 `IllegalArgumentException`。
-
 ### `getFileName`、`getParent` 与 `getName`
+
+这些方法只拆路径字符串结构，不访问磁盘；根路径可能没有父路径，调用结果要允许为 `null`。
 
 ```java
 import java.nio.file.Path;
@@ -115,9 +117,9 @@ public class PathPartsDemo {
 }
 ```
 
-这些方法只拆路径字符串结构，不访问磁盘；根路径可能没有父路径，调用结果要允许为 `null`。
-
 ### `Files.exists` 与类型、权限检查
+
+检查结果可能在返回后立即失效，不能替代真正操作时的异常处理；`exists` 默认跟随符号链接，需要不跟随时传 `LinkOption.NOFOLLOW_LINKS`。
 
 ```java
 import java.nio.file.Files;
@@ -133,9 +135,9 @@ public class FilesCheckDemo {
 }
 ```
 
-检查结果可能在返回后立即失效，不能替代真正操作时的异常处理；`exists` 默认跟随符号链接，需要不跟随时传 `LinkOption.NOFOLLOW_LINKS`。
-
 ### `createDirectories` 与 `createFile`
+
+`createDirectories` 会按需创建中间目录；`createFile` 要求目标不存在，避免无意覆盖。并发场景仍需处理“检查后被其他进程创建”的异常。
 
 ```java
 import java.nio.file.Files;
@@ -157,9 +159,9 @@ public class FilesCreateDemo {
 }
 ```
 
-`createDirectories` 会按需创建中间目录；`createFile` 要求目标不存在，避免无意覆盖。并发场景仍需处理“检查后被其他进程创建”的异常。
-
 ### `readString` 与 `writeString`
+
+这两个方法适合小文本；显式传 `Charset`，避免依赖平台默认编码。大文件使用它们会增加内存峰值。
 
 ```java
 import java.nio.charset.StandardCharsets;
@@ -177,9 +179,9 @@ public class FilesTextDemo {
 }
 ```
 
-这两个方法适合小文本；显式传 `Charset`，避免依赖平台默认编码。大文件使用它们会增加内存峰值。
-
 ### `readAllBytes` 与 `write`
+
+二进制小文件可以一次处理；文件大小不受控时改用 `InputStream` 或 `FileChannel` 分块读取。
 
 ```java
 import java.nio.file.Files;
@@ -197,9 +199,9 @@ public class FilesBytesDemo {
 }
 ```
 
-二进制小文件可以一次处理；文件大小不受控时改用 `InputStream` 或 `FileChannel` 分块读取。
-
 ### `newBufferedReader` 与 `newBufferedWriter`
+
+缓冲字符流适合逐行或逐段处理；关闭 writer 才能保证缓冲数据真正写出。
 
 ```java
 import java.io.BufferedReader;
@@ -224,9 +226,9 @@ public class FilesBufferedTextDemo {
 }
 ```
 
-缓冲字符流适合逐行或逐段处理；关闭 writer 才能保证缓冲数据真正写出。
-
 ### `copy`：复制文件或目录项
+
+默认不覆盖已存在目标；复制目录只复制目录项本身，不会自动递归复制内容，需要配合 `walk`。
 
 ```java
 import java.nio.file.Files;
@@ -246,9 +248,9 @@ public class FilesCopyDemo {
 }
 ```
 
-默认不覆盖已存在目标；复制目录只复制目录项本身，不会自动递归复制内容，需要配合 `walk`。
-
 ### `move`：移动或重命名
+
+同一文件系统内移动通常比复制再删除更合适；`ATOMIC_MOVE` 是请求，不保证所有文件系统都支持，失败时应决定是否降级。
 
 ```java
 import java.nio.file.Files;
@@ -267,9 +269,9 @@ public class FilesMoveDemo {
 }
 ```
 
-同一文件系统内移动通常比复制再删除更合适；`ATOMIC_MOVE` 是请求，不保证所有文件系统都支持，失败时应决定是否降级。
-
 ### `delete` 与 `deleteIfExists`
+
+`delete` 目标不存在会抛异常，`deleteIfExists` 返回是否实际删除；非空目录不能直接删除，要先删除其中内容。
 
 ```java
 import java.nio.file.Files;
@@ -285,9 +287,9 @@ public class FilesDeleteDemo {
 }
 ```
 
-`delete` 目标不存在会抛异常，`deleteIfExists` 返回是否实际删除；非空目录不能直接删除，要先删除其中内容。
-
 ### `lines`：按行流式处理
+
+`lines` 不会在创建 Stream 时一次读完文件，且 Stream 必须关闭；异常发生在终端操作或关闭阶段时也要按 I/O 处理。
 
 ```java
 import java.nio.file.Files;
@@ -306,9 +308,9 @@ public class FilesLinesDemo {
 }
 ```
 
-`lines` 不会在创建 Stream 时一次读完文件，且 Stream 必须关闭；异常发生在终端操作或关闭阶段时也要按 I/O 处理。
-
 ### `list`、`walk`：遍历目录
+
+`list` 只看一层，`walk` 递归遍历；两者都返回持有目录句柄的 Stream，必须关闭，并注意深目录和符号链接循环。
 
 ```java
 import java.nio.file.Files;
@@ -330,9 +332,9 @@ public class FilesWalkDemo {
 }
 ```
 
-`list` 只看一层，`walk` 递归遍历；两者都返回持有目录句柄的 Stream，必须关闭，并注意深目录和符号链接循环。
-
 ### `getAttribute` 与 `readAttributes`
+
+需要多个属性时批量读取通常更清楚；属性可能在读取后变化，业务一致性不能靠多次属性查询保证。
 
 ```java
 import java.nio.file.Files;
@@ -349,12 +351,11 @@ public class FilesAttributesDemo {
     }
 }
 ```
-
-需要多个属性时批量读取通常更清楚；属性可能在读取后变化，业务一致性不能靠多次属性查询保证。
-
 ## 不常用但需要知道
 
 ### `LinkOption.NOFOLLOW_LINKS`：不跟随符号链接
+
+涉及权限、归档或上传目录时，要明确是否跟随链接；不跟随链接能减少把检查目标偷偷切换到其他目录的风险，但不是完整安全方案。
 
 ```java
 import java.nio.file.Files;
@@ -370,9 +371,9 @@ public class NoFollowLinksDemo {
 }
 ```
 
-涉及权限、归档或上传目录时，要明确是否跟随链接；不跟随链接能减少把检查目标偷偷切换到其他目录的风险，但不是完整安全方案。
-
 ### `Files.isSameFile`：判断两个路径是否指向同一文件
+
+该方法可能访问文件系统并解析符号链接，和 `Path.equals` 的字符串结构比较不是一回事。
 
 ```java
 import java.nio.file.Files;
@@ -388,9 +389,9 @@ public class SameFileDemo {
 }
 ```
 
-该方法可能访问文件系统并解析符号链接，和 `Path.equals` 的字符串结构比较不是一回事。
-
 ### `Files.mismatch`：查找首个不同字节
+
+返回 `-1` 表示内容相同，否则返回首个不同位置；它仍需读取文件，不能当作恒定时间的安全比较。
 
 ```java
 import java.nio.file.Files;
@@ -410,9 +411,9 @@ public class FilesMismatchDemo {
 }
 ```
 
-返回 `-1` 表示内容相同，否则返回首个不同位置；它仍需读取文件，不能当作恒定时间的安全比较。
-
 ### `FileTime`：读写文件时间
+
+文件系统的时间精度和可写性因平台而异，时间戳不能单独作为版本或并发控制依据。
 
 ```java
 import java.nio.file.Files;
@@ -431,9 +432,9 @@ public class FileTimeDemo {
 }
 ```
 
-文件系统的时间精度和可写性因平台而异，时间戳不能单独作为版本或并发控制依据。
-
 ### Zip 文件系统：把压缩包当作 Path
+
+Zip 文件系统适合批处理压缩包内容；必须关闭 FileSystem，且不要把不可信压缩包直接展开到未校验的目录。
 
 ```java
 import java.net.URI;
@@ -456,9 +457,6 @@ public class ZipFileSystemDemo {
     }
 }
 ```
-
-Zip 文件系统适合批处理压缩包内容；必须关闭 FileSystem，且不要把不可信压缩包直接展开到未校验的目录。
-
 ## 简单案例
 
 ```java

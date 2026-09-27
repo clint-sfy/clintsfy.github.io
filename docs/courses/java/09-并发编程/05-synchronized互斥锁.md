@@ -37,6 +37,8 @@ synchronized 同时提供互斥和释放/获得锁之间的内存可见性。实
 
 ### synchronized 块：锁住指定对象
 
+使用私有 final 锁对象可以避免外部代码意外锁住或替换锁。临界区只放共享状态读写，不要把未知代码和慢 I/O 放进去。
+
 ```java
 public class SynchronizedBlockDemo {
     private final Object lock = new Object();
@@ -58,9 +60,9 @@ public class SynchronizedBlockDemo {
 }
 ```
 
-使用私有 final 锁对象可以避免外部代码意外锁住或替换锁。临界区只放共享状态读写，不要把未知代码和慢 I/O 放进去。
-
 ### synchronized 实例方法：保护对象状态
+
+实例 synchronized 方法锁住当前对象。若两个账户对象彼此独立，它们的操作可以并行；若共享转账需要同时保护两个账户，必须规定锁顺序或改用更高层的协调方式。
 
 ```java
 public class SynchronizedMethodDemo {
@@ -85,9 +87,9 @@ public class SynchronizedMethodDemo {
 }
 ```
 
-实例 synchronized 方法锁住当前对象。若两个账户对象彼此独立，它们的操作可以并行；若共享转账需要同时保护两个账户，必须规定锁顺序或改用更高层的协调方式。
-
 ### synchronized 静态方法：保护类级状态
+
+静态 synchronized 方法锁住 `SynchronizedStaticDemo.class`，所有实例共享这把类锁。它不会自动和某个实例方法互斥，因为实例方法锁的是 `this`。
 
 ```java
 public class SynchronizedStaticDemo {
@@ -106,9 +108,9 @@ public class SynchronizedStaticDemo {
 }
 ```
 
-静态 synchronized 方法锁住 `SynchronizedStaticDemo.class`，所有实例共享这把类锁。它不会自动和某个实例方法互斥，因为实例方法锁的是 `this`。
-
 ### 类锁与对象锁：明确锁的身份
+
+对象锁保护实例状态，类锁保护静态状态；不要只看 synchronized 关键字，要确认实际锁住的是谁。
 
 ```java
 public class ClassAndObjectLockDemo {
@@ -135,9 +137,9 @@ public class ClassAndObjectLockDemo {
 }
 ```
 
-对象锁保护实例状态，类锁保护静态状态；不要只看 synchronized 关键字，要确认实际锁住的是谁。
-
 ### 可重入：同一线程可以再次获得同一把锁
+
+如果 synchronized 不可重入，outer 调用 inner 会把自己永久阻塞。可重入不代表锁可以随意嵌套；跨对象嵌套仍可能形成死锁。
 
 ```java
 public class ReentrantMonitorDemo {
@@ -156,9 +158,9 @@ public class ReentrantMonitorDemo {
 }
 ```
 
-如果 synchronized 不可重入，outer 调用 inner 会把自己永久阻塞。可重入不代表锁可以随意嵌套；跨对象嵌套仍可能形成死锁。
-
 ### wait 与 notifyAll：在监视器内等待条件
+
+`wait()` 释放当前监视器，醒来后重新竞争锁；`notifyAll()` 只唤醒等待者，并不把锁交给它们。条件状态必须在同一把锁内读写。
 
 ```java
 public class WaitNotifyDemo {
@@ -190,9 +192,9 @@ public class WaitNotifyDemo {
 }
 ```
 
-`wait()` 释放当前监视器，醒来后重新竞争锁；`notifyAll()` 只唤醒等待者，并不把锁交给它们。条件状态必须在同一把锁内读写。
-
 ### notify 与 notifyAll：选择唤醒范围
+
+多个条件共用一个监视器时优先 `notifyAll()`，让每个线程重新检查自己的条件；只有能证明任意一个等待者都能继续、且误唤醒成本可接受时才用 `notify()`。
 
 ```java
 public class NotifyChoiceDemo {
@@ -206,12 +208,11 @@ public class NotifyChoiceDemo {
     }
 }
 ```
-
-多个条件共用一个监视器时优先 `notifyAll()`，让每个线程重新检查自己的条件；只有能证明任意一个等待者都能继续、且误唤醒成本可接受时才用 `notify()`。
-
 ## 不常用但需要知道
 
 ### wait(long)：带超时的条件等待
+
+超时返回只说明等待结束，不说明条件已经满足；醒来后仍要在 while 中检查状态。纳秒级重载适合精细超时，但通常要把剩余时间重新计算。
 
 ```java
 public class TimedWaitDemo {
@@ -227,9 +228,9 @@ public class TimedWaitDemo {
 }
 ```
 
-超时返回只说明等待结束，不说明条件已经满足；醒来后仍要在 while 中检查状态。纳秒级重载适合精细超时，但通常要把剩余时间重新计算。
-
 ### notify：只唤醒一个等待者
+
+`notify()` 不保证唤醒哪个线程，也不保证它能立即获得锁。生产者/消费者通常选择 notifyAll，并让每个醒来的线程重新检查自己的条件。
 
 ```java
 public class NotifyOneDemo {
@@ -244,9 +245,9 @@ public class NotifyOneDemo {
 }
 ```
 
-`notify()` 不保证唤醒哪个线程，也不保证它能立即获得锁。生产者/消费者通常选择 notifyAll，并让每个醒来的线程重新检查自己的条件。
-
 ### Object.wait 的非法调用
+
+调用 wait、notify 或 notifyAll 前必须持有对应监视器，否则会抛 IllegalMonitorStateException。这个规则经常在把锁对象和条件对象拆开时被忽略。
 
 ```java
 public class WaitMonitorRuleDemo {
@@ -264,9 +265,9 @@ public class WaitMonitorRuleDemo {
 }
 ```
 
-调用 wait、notify 或 notifyAll 前必须持有对应监视器，否则会抛 IllegalMonitorStateException。这个规则经常在把锁对象和条件对象拆开时被忽略。
-
 ### synchronized 与虚拟线程 pinning 边界
+
+在 JDK 20 虚拟线程预览实现中，监视器内的长时间阻塞可能 pin 住载体线程；这不是要求把所有 synchronized 换成 Lock，而是要通过 JFR 定位并缩短临界区。
 
 ```java
 public class MonitorBlockingBoundaryDemo {
@@ -280,9 +281,6 @@ public class MonitorBlockingBoundaryDemo {
     }
 }
 ```
-
-在 JDK 20 虚拟线程预览实现中，监视器内的长时间阻塞可能 pin 住载体线程；这不是要求把所有 synchronized 换成 Lock，而是要通过 JFR 定位并缩短临界区。
-
 ## 简单案例
 
 ```java

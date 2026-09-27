@@ -38,6 +38,8 @@ CompletableFuture 是一张异步依赖图，不是自动创建无限线程的�
 
 ### supplyAsync：启动异步供应任务
 
+给 supplyAsync 传入执行器，能明确异步任务在哪个线程池运行；不传执行器会使用 commonPool，任务类型和阻塞比例不受当前方法控制。
+
 ```java
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -54,9 +56,9 @@ public class SupplyAsyncDemo {
 }
 ```
 
-给 supplyAsync 传入执行器，能明确异步任务在哪个线程池运行；不传执行器会使用 commonPool，任务类型和阻塞比例不受当前方法控制。
-
 ### thenApply：转换上一步结果
+
+thenApply 的函数输入是前一阶段的结果，返回普通值；没有 `Async` 后缀时，阶段可能在完成前一阶段的线程上执行，函数应短小且不要阻塞。
 
 ```java
 import java.util.concurrent.CompletableFuture;
@@ -72,9 +74,9 @@ public class ThenApplyDemo {
 }
 ```
 
-thenApply 的函数输入是前一阶段的结果，返回普通值；没有 `Async` 后缀时，阶段可能在完成前一阶段的线程上执行，函数应短小且不要阻塞。
-
 ### thenCompose：串联两个异步阶段
+
+如果用 thenApply 返回 CompletableFuture，会得到嵌套的 `CompletableFuture&lt;CompletableFuture&lt;T&gt;&gt;`；thenCompose 会把它展平成一个阶段。
 
 ```java
 import java.util.concurrent.CompletableFuture;
@@ -94,9 +96,9 @@ public class ThenComposeDemo {
 }
 ```
 
-如果用 thenApply 返回 CompletableFuture，会得到嵌套的 `CompletableFuture&lt;CompletableFuture&lt;T&gt;&gt;`；thenCompose 会把它展平成一个阶段。
-
 ### thenCombine：汇合两个独立结果
+
+两个分支互不依赖时可以并行启动再 combine；任一分支失败时，合并阶段通常也会失败，需要统一的异常策略。
 
 ```java
 import java.util.concurrent.CompletableFuture;
@@ -112,9 +114,9 @@ public class ThenCombineDemo {
 }
 ```
 
-两个分支互不依赖时可以并行启动再 combine；任一分支失败时，合并阶段通常也会失败，需要统一的异常策略。
-
 ### allOf：等待多个异步任务
+
+allOf 等待所有阶段完成但不直接返回结果列表；先等待再按原列表 join，可以保持输入顺序。任何一个阶段异常都要在 join 处观察并按业务处理。
 
 ```java
 import java.util.List;
@@ -133,9 +135,9 @@ public class AllOfDemo {
 }
 ```
 
-allOf 等待所有阶段完成但不直接返回结果列表；先等待再按原列表 join，可以保持输入顺序。任何一个阶段异常都要在 join 处观察并按业务处理。
-
 ### exceptionally：失败时降级
+
+exceptionally 只在上游异常时执行，返回一个替代结果；不要把所有异常都吞成默认值，至少记录原异常并区分可恢复错误和编程错误。
 
 ```java
 import java.util.concurrent.CompletableFuture;
@@ -152,9 +154,9 @@ public class ExceptionallyDemo {
 }
 ```
 
-exceptionally 只在上游异常时执行，返回一个替代结果；不要把所有异常都吞成默认值，至少记录原异常并区分可恢复错误和编程错误。
-
 ### handle：同时处理成功和失败
+
+handle 无论成功失败都会执行，适合统一转换结果或记录状态；若只想在失败时提供默认值，exceptionally 更直接。
 
 ```java
 import java.util.concurrent.CompletableFuture;
@@ -171,9 +173,9 @@ public class HandleDemo {
 }
 ```
 
-handle 无论成功失败都会执行，适合统一转换结果或记录状态；若只想在失败时提供默认值，exceptionally 更直接。
-
 ### orTimeout：超时并让阶段失败
+
+orTimeout 在期限内未完成时以 TimeoutException 异常完成阶段；它是结果协议的一部分，底层 I/O 是否真的取消要看连接客户端和任务实现。
 
 ```java
 import java.util.concurrent.CompletableFuture;
@@ -190,9 +192,9 @@ public class OrTimeoutDemo {
 }
 ```
 
-orTimeout 在期限内未完成时以 TimeoutException 异常完成阶段；它是结果协议的一部分，底层 I/O 是否真的取消要看连接客户端和任务实现。
-
 ### completeOnTimeout：超时返回默认值
+
+completeOnTimeout 以默认值完成阶段，适合允许降级的查询；它同样不保证取消底层任务，不能用默认值掩盖下游持续超载。
 
 ```java
 import java.util.concurrent.CompletableFuture;
@@ -209,9 +211,9 @@ public class CompleteOnTimeoutDemo {
 }
 ```
 
-completeOnTimeout 以默认值完成阶段，适合允许降级的查询；它同样不保证取消底层任务，不能用默认值掩盖下游持续超载。
-
 ### thenAccept：异步流程末端消费结果
+
+thenAccept 返回 `CompletableFuture<Void>`，适合通知、写日志等末端动作；需要返回新业务结果时使用 thenApply。
 
 ```java
 import java.util.concurrent.CompletableFuture;
@@ -225,12 +227,11 @@ public class ThenAcceptDemo {
     }
 }
 ```
-
-thenAccept 返回 `CompletableFuture<Void>`，适合通知、写日志等末端动作；需要返回新业务结果时使用 thenApply。
-
 ## 不常用但需要知道
 
 ### thenApplyAsync：把变换交给指定执行器
+
+Async 变体把阶段提交到执行器，适合隔离阻塞或 CPU 工作；线程池仍需有界，不能为了“异步”把所有任务都投向公共池。
 
 ```java
 import java.util.concurrent.CompletableFuture;
@@ -249,9 +250,9 @@ public class ThenApplyAsyncDemo {
 }
 ```
 
-Async 变体把阶段提交到执行器，适合隔离阻塞或 CPU 工作；线程池仍需有界，不能为了“异步”把所有任务都投向公共池。
-
 ### exceptionallyCompose：异步降级分支
+
+需要异步调用备用服务时用 exceptionallyCompose，避免在 exceptionally 中阻塞等待另一个 Future。
 
 ```java
 import java.util.concurrent.CompletableFuture;
@@ -271,9 +272,9 @@ public class ExceptionallyComposeDemo {
 }
 ```
 
-需要异步调用备用服务时用 exceptionallyCompose，避免在 exceptionally 中阻塞等待另一个 Future。
-
 ### applyToEither：两个结果谁先完成用谁
+
+完成顺序由实际调度决定，结果是“可能”为 primary 或 backup；要把它用于竞速请求，必须取消慢分支并处理重复副作用。
 
 ```java
 import java.util.concurrent.CompletableFuture;
@@ -289,9 +290,9 @@ public class ApplyToEitherDemo {
 }
 ```
 
-完成顺序由实际调度决定，结果是“可能”为 primary 或 backup；要把它用于竞速请求，必须取消慢分支并处理重复副作用。
-
 ### minimalCompletionStage：只暴露完成阶段接口
+
+minimalCompletionStage 可把内部可手动 complete 的 Future 以更窄的 CompletionStage 视图暴露给调用者，降低外部篡改完成状态的机会。
 
 ```java
 import java.util.concurrent.CompletableFuture;
@@ -305,9 +306,6 @@ public class MinimalStageDemo {
     }
 }
 ```
-
-minimalCompletionStage 可把内部可手动 complete 的 Future 以更窄的 CompletionStage 视图暴露给调用者，降低外部篡改完成状态的机会。
-
 ## 简单案例
 
 ```java

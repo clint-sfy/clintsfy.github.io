@@ -36,6 +36,8 @@ description: 用 Optional 表达可能缺失的返回值，掌握转换、兜底
 
 ### `ofNullable`：从可能为空的值创建
 
+接收外部输入或旧 API 返回值时优先使用 `ofNullable`；它只包装非空值，不能替代业务校验。
+
 ```java
 import java.util.Optional;
 
@@ -45,9 +47,9 @@ System.out.println(value.isEmpty());
 // 输出：true
 ```
 
-接收外部输入或旧 API 返回值时优先使用 `ofNullable`；它只包装非空值，不能替代业务校验。
-
 ### `of`：断言值一定非空
+
+只有已经确认非空时才用 `of`；不确定时使用 `ofNullable`，否则 `null` 会在创建处抛异常。
 
 ```java
 import java.util.Optional;
@@ -57,9 +59,9 @@ System.out.println(value.get());
 // 输出：Java
 ```
 
-只有已经确认非空时才用 `of`；不确定时使用 `ofNullable`，否则 `null` 会在创建处抛异常。
-
 ### `map`：转换内部值
+
+`map` 会在有值时执行函数，函数返回 `null` 时结果变为空 Optional；多个转换可以串联。
 
 ```java
 import java.util.Optional;
@@ -70,9 +72,9 @@ System.out.println(length.orElse(0));
 // 输出：4
 ```
 
-`map` 会在有值时执行函数，函数返回 `null` 时结果变为空 Optional；多个转换可以串联。
-
 ### `flatMap`：串联返回 Optional 的方法
+
+`flatMap` 避免出现 `Optional<Optional<T>>`；如果转换函数返回普通值，使用 `map`。
 
 ```java
 import java.util.Optional;
@@ -91,9 +93,9 @@ static Optional<Integer> parseInt(String value) {
 }
 ```
 
-`flatMap` 避免出现 `Optional<Optional<T>>`；如果转换函数返回普通值，使用 `map`。
-
 ### `filter`：值存在且满足条件才保留
+
+条件不满足时得到空 Optional，适合把校验接到查询或转换链中；复杂校验应提取成有名字的方法。
 
 ```java
 import java.util.Optional;
@@ -104,9 +106,9 @@ System.out.println(code.orElse("invalid"));
 // 输出：JAVA-20
 ```
 
-条件不满足时得到空 Optional，适合把校验接到查询或转换链中；复杂校验应提取成有名字的方法。
-
 ### `orElse`：缺失时使用默认值
+
+默认值表达式会立即求值；默认值很简单或已经准备好时使用它。
 
 ```java
 import java.util.Optional;
@@ -116,9 +118,9 @@ System.out.println(label);
 // 输出：unknown
 ```
 
-默认值表达式会立即求值；默认值很简单或已经准备好时使用它。
-
 ### `orElseGet`：惰性生成默认值
+
+默认值需要计算、查询或创建对象时使用 `orElseGet`，避免值已经存在时做无用工作。
 
 ```java
 import java.util.Optional;
@@ -128,9 +130,9 @@ System.out.println(label);
 // 输出：generated-20
 ```
 
-默认值需要计算、查询或创建对象时使用 `orElseGet`，避免值已经存在时做无用工作。
-
 ### `orElseThrow`：缺失时抛出异常
+
+把“找不到就是错误”的边界明确转换为异常；异常类型和消息应符合调用方契约。
 
 ```java
 import java.util.Optional;
@@ -141,9 +143,9 @@ System.out.println(user);
 // 输出：缺失时抛出 IllegalArgumentException
 ```
 
-把“找不到就是错误”的边界明确转换为异常；异常类型和消息应符合调用方契约。
-
 ### `ifPresent`：有值时执行动作
+
+适合末端通知或记录日志，不要用多个嵌套 `ifPresent` 代替有清晰返回值的业务流程。
 
 ```java
 import java.util.Optional;
@@ -152,9 +154,9 @@ Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));
 // 输出：status=saved
 ```
 
-适合末端通知或记录日志，不要用多个嵌套 `ifPresent` 代替有清晰返回值的业务流程。
-
 ### `ifPresentOrElse`：分别处理有值和缺失（Java 9+）
+
+当有值和无值都需要末端动作时使用；如果两个分支还要继续返回结果，应优先考虑 `map` 与兜底。
 
 ```java
 import java.util.Optional;
@@ -166,12 +168,11 @@ Optional.<String>empty().ifPresentOrElse(
 System.out.println(output);
 // 输出：missing
 ```
-
-当有值和无值都需要末端动作时使用；如果两个分支还要继续返回结果，应优先考虑 `map` 与兜底。
-
 ## 不常用但需要知道
 
 ### `empty`：明确创建空结果
+
+方法找不到结果时返回 `Optional.empty()` 比返回 `null` 更容易让调用方发现缺失路径。
 
 ```java
 import java.util.Optional;
@@ -181,9 +182,9 @@ System.out.println(missing.isPresent());
 // 输出：false
 ```
 
-方法找不到结果时返回 `Optional.empty()` 比返回 `null` 更容易让调用方发现缺失路径。
-
 ### `or`：缺失时切换到另一个 Optional（Java 9+）
+
+`or` 的备用函数也是惰性的，适合多个查询源按优先级回退；不要把异常吞掉后无条件回退。
 
 ```java
 import java.util.Optional;
@@ -194,9 +195,9 @@ System.out.println(result.get());
 // 输出：fallback
 ```
 
-`or` 的备用函数也是惰性的，适合多个查询源按优先级回退；不要把异常吞掉后无条件回退。
-
 ### `stream`：把 Optional 接入 Stream（Java 9+）
+
+`Optional.stream()` 在有值时产生一个元素、无值时产生空流，适合拼接批量转换管道。
 
 ```java
 import java.util.List;
@@ -209,9 +210,9 @@ System.out.println(values);
 // 输出：[java, sql]
 ```
 
-`Optional.stream()` 在有值时产生一个元素、无值时产生空流，适合拼接批量转换管道。
-
 ### `get`：直接取值（谨慎使用）
+
+`get()` 在空 Optional 上抛 `NoSuchElementException`；只有前面已经可靠判断存在时才使用，通常优先 `orElse` 或 `orElseThrow`。
 
 ```java
 import java.util.Optional;
@@ -221,9 +222,9 @@ System.out.println(value.get());
 // 输出：Java
 ```
 
-`get()` 在空 Optional 上抛 `NoSuchElementException`；只有前面已经可靠判断存在时才使用，通常优先 `orElse` 或 `orElseThrow`。
-
 ### `OptionalInt`：避免基本类型装箱
+
+大量数值流可以使用 `OptionalInt`、`OptionalLong` 或 `OptionalDouble`，普通对象结果仍使用 `Optional<T>`。
 
 ```java
 import java.util.OptionalInt;
@@ -232,9 +233,6 @@ OptionalInt result = OptionalInt.of(20);
 System.out.println(result.orElse(0));
 // 输出：20
 ```
-
-大量数值流可以使用 `OptionalInt`、`OptionalLong` 或 `OptionalDouble`，普通对象结果仍使用 `Optional<T>`。
-
 ## 简单案例
 
 ```java

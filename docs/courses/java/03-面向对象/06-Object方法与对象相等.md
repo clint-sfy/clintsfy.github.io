@@ -40,6 +40,8 @@ description: 速查 Object、Objects、equals、hashCode、toString 和对象身
 
 ### `==`：比较引用身份
 
+`==` 对引用比较对象身份，对基本类型比较数值；字符串、包装类型和值对象的内容比较不要依赖它。
+
 ```java
 String first = new String("Java");
 String second = new String("Java");
@@ -47,9 +49,9 @@ System.out.println(first == second);
 // 输出：false
 ```
 
-`==` 对引用比较对象身份，对基本类型比较数值；字符串、包装类型和值对象的内容比较不要依赖它。
-
 ### `equals`：比较逻辑内容
+
+重写时先判断类型，再比较参与身份的字段；允许 `null` 的字段用 `Objects.equals`，不要为了方便把所有字段都纳入相等规则。
 
 ```java
 import java.util.Objects;
@@ -71,9 +73,9 @@ System.out.println(new UserId("U-1").equals(new UserId("U-1")));
 // 输出：true
 ```
 
-重写时先判断类型，再比较参与身份的字段；允许 `null` 的字段用 `Objects.equals`，不要为了方便把所有字段都纳入相等规则。
-
 ### `hashCode`：配合 equals 进入哈希集合
+
+相等对象必须有相同哈希；不要求不相等对象的哈希一定不同。放进集合后不要修改参与哈希的字段。
 
 ```java
 import java.util.HashSet;
@@ -102,9 +104,9 @@ System.out.println(ids.contains(new UserId("U-1")));
 // 输出：true
 ```
 
-相等对象必须有相同哈希；不要求不相等对象的哈希一定不同。放进集合后不要修改参与哈希的字段。
-
 ### `toString`：提供安全可读表示
+
+`toString` 适合日志、调试和错误信息；不要拼出密码、令牌、身份证号等敏感字段，也不要让日志格式承担协议稳定性。
 
 ```java
 class User {
@@ -122,9 +124,9 @@ System.out.println(new User("Ann"));
 // 输出：User[name=Ann]
 ```
 
-`toString` 适合日志、调试和错误信息；不要拼出密码、令牌、身份证号等敏感字段，也不要让日志格式承担协议稳定性。
-
 ### `Objects.equals`：空值安全比较
+
+一方或双方为 `null` 时不会抛异常；业务仍要明确大小写、空白和规范化规则。
 
 ```java
 String left = null;
@@ -133,9 +135,9 @@ System.out.println(Objects.equals(left, right));
 // 输出：false
 ```
 
-一方或双方为 `null` 时不会抛异常；业务仍要明确大小写、空白和规范化规则。
-
 ### `Objects.hash`：按字段组合哈希
+
+适合实现值对象 `hashCode`；字段顺序和字段集合要与 `equals` 保持一致。
 
 ```java
 int hash = Objects.hash("U-1", "Ann");
@@ -143,9 +145,9 @@ System.out.println(hash != 0);
 // 输出：true
 ```
 
-适合实现值对象 `hashCode`；字段顺序和字段集合要与 `equals` 保持一致。
-
 ### `Objects.toString`：为 null 提供文本默认值
+
+适合日志或展示的轻量默认值；不要用它把必填字段的缺失静默变成合法业务值。
 
 ```java
 String value = null;
@@ -153,9 +155,9 @@ System.out.println(Objects.toString(value, "(missing)"));
 // 输出：(missing)
 ```
 
-适合日志或展示的轻量默认值；不要用它把必填字段的缺失静默变成合法业务值。
-
 ### `Objects.requireNonNull`：构造入口校验
+
+传入 `null` 会立即抛 `NullPointerException`，适合构造器和方法入口；延迟到深层调用才失败会丢失上下文。
 
 ```java
 String name = Objects.requireNonNull("Ann", "name");
@@ -163,21 +165,20 @@ System.out.println(name);
 // 输出：Ann
 ```
 
-传入 `null` 会立即抛 `NullPointerException`，适合构造器和方法入口；延迟到深层调用才失败会丢失上下文。
-
 ### `getClass`：读取精确运行时类型
+
+`getClass()` 返回精确运行时类，不能替代多态；比较类型前要考虑代理、继承和接口边界。
 
 ```java
 Object value = "Java";
 System.out.println(value.getClass().getSimpleName());
 // 输出：String
 ```
-
-`getClass()` 返回精确运行时类，不能替代多态；比较类型前要考虑代理、继承和接口边界。
-
 ## 不常用但需要知道
 
 ### `Objects.deepEquals`：比较嵌套数组或对象
+
+它会对数组使用深层内容比较；普通对象仍依赖各自的 `equals`，不会自动递归所有字段。
 
 ```java
 int[][] left = {{1, 2}};
@@ -186,9 +187,9 @@ System.out.println(Objects.deepEquals(left, right));
 // 输出：true
 ```
 
-它会对数组使用深层内容比较；普通对象仍依赖各自的 `equals`，不会自动递归所有字段。
-
 ### `Objects.compare`：带比较器的空值边界
+
+比较器由调用者决定 `null` 是否可接受；`Objects.compare` 不会自动把 `null` 当作最大或最小值。
 
 ```java
 Comparator<String> byLength = Comparator.comparingInt(String::length);
@@ -197,9 +198,9 @@ System.out.println(order > 0);
 // 输出：true
 ```
 
-比较器由调用者决定 `null` 是否可接受；`Objects.compare` 不会自动把 `null` 当作最大或最小值。
-
 ### `clone`：受保护的浅复制入口
+
+`Object.clone` 默认是浅复制，嵌套可变字段仍可能共享；新设计通常优先使用复制构造器、静态工厂或明确的拷贝方法。
 
 ```java
 class Box implements Cloneable {
@@ -220,9 +221,9 @@ System.out.println(copy.value);
 // 输出：7
 ```
 
-`Object.clone` 默认是浅复制，嵌套可变字段仍可能共享；新设计通常优先使用复制构造器、静态工厂或明确的拷贝方法。
-
 ### `wait`/`notifyAll`：对象监视器协作
+
+调用这些方法必须持有对象监视器，且要配合条件循环；并发代码通常优先使用 `java.util.concurrent` 工具，不要把任意对象当成全局锁。
 
 ```java
 Object lock = new Object();
@@ -233,18 +234,15 @@ synchronized (lock) {
 }
 ```
 
-调用这些方法必须持有对象监视器，且要配合条件循环；并发代码通常优先使用 `java.util.concurrent` 工具，不要把任意对象当成全局锁。
-
 ### `finalize`：不要依赖对象终结
+
+`finalize` 已被弃用，不应在新代码中重写或用来释放资源；使用 `try-with-resources`、`AutoCloseable` 和显式生命周期管理。
 
 ```java
 Object value = new Object();
 System.out.println(value.getClass().getSimpleName());
 // 输出：Object
 ```
-
-`finalize` 已被弃用，不应在新代码中重写或用来释放资源；使用 `try-with-resources`、`AutoCloseable` 和显式生命周期管理。
-
 ## 继续阅读
 
 - [常用类与包装类型](/courses/java/02-数组与文本/03-常用类与包装类型)：`Objects`、包装类型和 `Optional`。

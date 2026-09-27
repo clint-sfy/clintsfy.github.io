@@ -35,6 +35,8 @@ description: 直接用 Java 案例速查 Class、构造器、方法、字段、�
 
 ### `String.class`、`getClass` 与 `Class.forName`
 
+类字面量适合已知类型，`getClass` 反映对象的实际运行时类型，`Class.forName` 按名称加载并可能初始化类；不要把外部输入的类名直接交给它。
+
 ```java
 public class ClassGetDemo {
     public static void main(String[] args) throws Exception {
@@ -47,9 +49,9 @@ public class ClassGetDemo {
 }
 ```
 
-类字面量适合已知类型，`getClass` 反映对象的实际运行时类型，`Class.forName` 按名称加载并可能初始化类；不要把外部输入的类名直接交给它。
-
 ### `getName`、`getSimpleName` 与 `getPackageName`
+
+日志和配置映射要明确使用哪种名称；内部类、数组和匿名类的 `getName` 可能包含特殊格式，不能简单当作展示文本。
 
 ```java
 public class ClassNameDemo {
@@ -61,9 +63,9 @@ public class ClassNameDemo {
 }
 ```
 
-日志和配置映射要明确使用哪种名称；内部类、数组和匿名类的 `getName` 可能包含特殊格式，不能简单当作展示文本。
-
 ### `getSuperclass` 与 `getInterfaces`
+
+`getSuperclass` 只返回直接父类，接口没有父类对象；`getInterfaces` 只列出当前类直接声明的接口，完整层次要递归遍历。
 
 ```java
 import java.util.ArrayList;
@@ -79,9 +81,9 @@ public class ClassHierarchyDemo {
 }
 ```
 
-`getSuperclass` 只返回直接父类，接口没有父类对象；`getInterfaces` 只列出当前类直接声明的接口，完整层次要递归遍历。
-
 ### `getDeclaredConstructor` 与 `newInstance`
+
+参数类型必须精确匹配构造器签名，基本类型和包装类型也不是同一个 Class；没有无参构造器时不能假设 `getDeclaredConstructor()` 存在。
 
 ```java
 import java.lang.reflect.Constructor;
@@ -104,9 +106,9 @@ public class ConstructorReflectDemo {
 }
 ```
 
-参数类型必须精确匹配构造器签名，基本类型和包装类型也不是同一个 Class；没有无参构造器时不能假设 `getDeclaredConstructor()` 存在。
-
 ### `getMethod` 与 `invoke`
+
+`getMethod` 只找 public 方法（含继承），`invoke` 的返回值是 Object；目标方法抛出的异常通常被包装在 `InvocationTargetException` 中。
 
 ```java
 import java.lang.reflect.Method;
@@ -121,9 +123,9 @@ public class MethodInvokeDemo {
 }
 ```
 
-`getMethod` 只找 public 方法（含继承），`invoke` 的返回值是 Object；目标方法抛出的异常通常被包装在 `InvocationTargetException` 中。
-
 ### `getDeclaredMethod` 与 `getDeclaredMethods`
+
+`getDeclared*` 只看当前类声明，包括 private，但不自动包含父类成员；框架扫描时要明确是否需要递归父类。
 
 ```java
 import java.lang.reflect.Method;
@@ -143,9 +145,9 @@ public class DeclaredMethodDemo {
 }
 ```
 
-`getDeclared*` 只看当前类声明，包括 private，但不自动包含父类成员；框架扫描时要明确是否需要递归父类。
-
 ### `getDeclaredField`、`get` 与 `set`
+
+修改 private 字段会破坏封装，也可能在强模块边界失败；已知对象应优先提供方法或构造器，反射字段只留给受控框架。
 
 ```java
 import java.lang.reflect.Field;
@@ -168,9 +170,9 @@ public class FieldReflectDemo {
 }
 ```
 
-修改 private 字段会破坏封装，也可能在强模块边界失败；已知对象应优先提供方法或构造器，反射字段只留给受控框架。
-
 ### `getFields` 与 `getDeclaredFields`
+
+`getFields` 返回 public 字段（含继承），`getDeclaredFields` 只返回当前类声明（含非 public）；字段顺序不应当作业务顺序依赖。
 
 ```java
 class Parent { public int parent; }
@@ -186,9 +188,9 @@ public class FieldScopeDemo {
 }
 ```
 
-`getFields` 返回 public 字段（含继承），`getDeclaredFields` 只返回当前类声明（含非 public）；字段顺序不应当作业务顺序依赖。
-
 ### `isAssignableFrom`：判断类型兼容
+
+调用方向是“左侧能否接收右侧对象”；它比比较类名更可靠，适合插件注册和参数校验。
 
 ```java
 import java.util.ArrayList;
@@ -204,9 +206,9 @@ public class AssignableDemo {
 }
 ```
 
-调用方向是“左侧能否接收右侧对象”；它比比较类名更可靠，适合插件注册和参数校验。
-
 ### `isInstance`：判断对象运行时类型
+
+`isInstance` 处理对象与 Class 的关系，空引用会返回 false；它不提供泛型参数的运行时判断。
 
 ```java
 import java.util.ArrayList;
@@ -221,9 +223,9 @@ public class InstanceReflectDemo {
 }
 ```
 
-`isInstance` 处理对象与 Class 的关系，空引用会返回 false；它不提供泛型参数的运行时判断。
-
 ### `isArray`、`getComponentType` 与 `Array`
+
+`Array` 可创建运行时才知道组件类型的数组；基本类型数组和引用类型数组的反射读写规则不同，越界和类型不匹配会抛异常。
 
 ```java
 import java.lang.reflect.Array;
@@ -238,12 +240,11 @@ public class ArrayReflectDemo {
     }
 }
 ```
-
-`Array` 可创建运行时才知道组件类型的数组；基本类型数组和引用类型数组的反射读写规则不同，越界和类型不匹配会抛异常。
-
 ## 不常用但需要知道
 
 ### `trySetAccessible`：探测访问是否可打开
+
+相比直接 `setAccessible(true)`，`trySetAccessible` 可以把当前访问是否成功作为结果处理；强模块边界下仍可能返回 false。
 
 ```java
 import java.lang.reflect.Field;
@@ -259,9 +260,9 @@ public class TryAccessibleDemo {
 }
 ```
 
-相比直接 `setAccessible(true)`，`trySetAccessible` 可以把当前访问是否成功作为结果处理；强模块边界下仍可能返回 false。
-
 ### `getGenericSuperclass`：读取部分泛型签名
+
+只有声明位置的泛型签名可能保留在 class 文件中；普通 `new ArrayList<String>()` 的对象实例本身通常不知道 String。
 
 ```java
 import java.lang.reflect.ParameterizedType;
@@ -278,9 +279,9 @@ public class GenericSuperclassDemo {
 }
 ```
 
-只有声明位置的泛型签名可能保留在 class 文件中；普通 `new ArrayList<String>()` 的对象实例本身通常不知道 String。
-
 ### `getRecordComponents`：读取 record 组件
+
+record 组件提供名称、类型和访问器信息，但反射读取不改变 record 的浅不可变语义。
 
 ```java
 record Point(int x, int y) { }
@@ -294,9 +295,9 @@ public class RecordComponentReflectDemo {
 }
 ```
 
-record 组件提供名称、类型和访问器信息，但反射读取不改变 record 的浅不可变语义。
-
 ### `getNestHost` 与 `getNestMembers`
+
+Nestmate 信息用于编译器和运行时表达嵌套类的访问关系；业务框架很少需要直接依赖它。
 
 ```java
 public class NestReflectDemo {
@@ -309,9 +310,9 @@ public class NestReflectDemo {
 }
 ```
 
-Nestmate 信息用于编译器和运行时表达嵌套类的访问关系；业务框架很少需要直接依赖它。
-
 ### `InvocationTargetException`：还原目标异常
+
+框架日志和异常转换应优先记录 `getCause()`；只打印 InvocationTargetException 会丢失真正业务根因。
 
 ```java
 import java.lang.reflect.InvocationTargetException;
@@ -332,9 +333,9 @@ public class InvocationTargetDemo {
 }
 ```
 
-框架日志和异常转换应优先记录 `getCause()`；只打印 InvocationTargetException 会丢失真正业务根因。
-
 ### `getAnnotatedType`：读取类型使用位置注解
+
+`AnnotatedType` 关注类型使用位置，而不是方法/字段声明本身；它通常服务于校验框架或静态/运行时类型工具。
 
 ```java
 import java.lang.annotation.ElementType;
@@ -356,9 +357,6 @@ public class AnnotatedTypeDemo {
     }
 }
 ```
-
-`AnnotatedType` 关注类型使用位置，而不是方法/字段声明本身；它通常服务于校验框架或静态/运行时类型工具。
-
 ## 简单案例
 
 ```java

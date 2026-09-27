@@ -40,6 +40,8 @@ enum 表达“只能从这几个值中选一个”，record 表达“这些字�
 
 ### 用 enum 表达固定状态
 
+enum 实例数量和身份由类型定义控制，适合订单状态、权限级别、月份等稳定集合。ordinal 只适合展示，不要把它持久化为业务编号。
+
 ```java
 enum OrderStatus {
     CREATED, PAID, CANCELLED
@@ -54,9 +56,9 @@ public class EnumOverviewDemo {
 }
 ```
 
-enum 实例数量和身份由类型定义控制，适合订单状态、权限级别、月份等稳定集合。ordinal 只适合展示，不要把它持久化为业务编号。
-
 ### 用 record 表达小型值对象
+
+需要校验、规范化或保护可变组件时，跳转到 record 数据载体页面查看完整写法。
 
 ```java
 record Money(String currency, long cents) {}
@@ -69,9 +71,9 @@ public class RecordOverviewDemo {
 }
 ```
 
-需要校验、规范化或保护可变组件时，跳转到 record 数据载体页面查看完整写法。
-
 ### 用 sealed 描述有限结果集合
+
+sealed 让新增结果分支变成显式的类型变更，适合编译器帮助检查有限状态模型。
 
 ```java
 sealed interface LoginResult permits LoginSuccess, LoginFailure {}
@@ -87,9 +89,9 @@ public class SealedOverviewDemo {
 }
 ```
 
-sealed 让新增结果分支变成显式的类型变更，适合编译器帮助检查有限状态模型。
-
 ### 使用 record pattern 拆出 record 组件（JDK 20 预览）
+
+这是 JDK 20 预览语法，保存为 PatternOverviewDemo.java 后成对运行：
 
 ```java
 record User(String name, int age) {}
@@ -109,8 +111,6 @@ public class PatternOverviewDemo {
 }
 ```
 
-这是 JDK 20 预览语法，保存为 PatternOverviewDemo.java 后成对运行：
-
 ```powershell
 javac --release 20 --enable-preview PatternOverviewDemo.java
 java --enable-preview PatternOverviewDemo
@@ -119,6 +119,8 @@ java --enable-preview PatternOverviewDemo
 ## 不常用但需要知道
 
 ### 用 enum 实现字段和方法
+
+枚举可以有字段、构造器和方法，但实例构造器不能由调用方直接调用；需要外部配置或动态扩展时不要硬编码为 enum。
 
 ```java
 enum Level {
@@ -143,9 +145,9 @@ public class EnumFieldDemo {
 }
 ```
 
-枚举可以有字段、构造器和方法，但实例构造器不能由调用方直接调用；需要外部配置或动态扩展时不要硬编码为 enum。
-
 ### 用 sealed 的 non-sealed 分支保留扩展点
+
+non-sealed 会从该分支恢复开放继承；具体层次边界和模块规则见 sealed 受限继承页面。
 
 ```java
 sealed interface Event permits BuiltInEvent, ExtensionEvent {}
@@ -160,9 +162,6 @@ public class SealedExtensionOverviewDemo {
     }
 }
 ```
-
-non-sealed 会从该分支恢复开放继承；具体层次边界和模块规则见 sealed 受限继承页面。
-
 ## 简单案例
 
 ```java

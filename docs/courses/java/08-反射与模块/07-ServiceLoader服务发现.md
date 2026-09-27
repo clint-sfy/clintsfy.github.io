@@ -35,15 +35,17 @@ ServiceLoader 是“按约定发现实现”，不是依赖注入容器，也不
 
 ### 定义服务接口
 
+接口模块只发布稳定能力，不依赖任何具体实现；实现模块或 JAR 反向依赖服务接口。
+
 ```java
 public interface Formatter {
     String format(String value);
 }
 ```
 
-接口模块只发布稳定能力，不依赖任何具体实现；实现模块或 JAR 反向依赖服务接口。
-
 ### `ServiceLoader.load`：查找服务
+
+`load` 只创建发现器，不保证已经实例化提供方；要看到实现必须在 classpath 配置 `META-INF/services/Formatter`，或在模块中声明 `uses/provides`。
 
 ```java
 import java.util.ServiceLoader;
@@ -59,9 +61,9 @@ public class ServiceLoadDemo {
 }
 ```
 
-`load` 只创建发现器，不保证已经实例化提供方；要看到实现必须在 classpath 配置 `META-INF/services/Formatter`，或在模块中声明 `uses/provides`。
-
 ### `META-INF/services`：classpath 提供方配置
+
+配置文件每行写一个实现类全名，空行和 `#` 注释会被忽略；文件必须放进提供方 JAR 的正确资源路径，类名拼写和可见构造器都要能被运行时加载。
 
 ```java
 // 文件：META-INF/services/com.example.spi.Formatter
@@ -75,9 +77,9 @@ public class JsonFormatter implements com.example.spi.Formatter {
 }
 ```
 
-配置文件每行写一个实现类全名，空行和 `#` 注释会被忽略；文件必须放进提供方 JAR 的正确资源路径，类名拼写和可见构造器都要能被运行时加载。
-
 ### `for`：遍历并实例化提供方
+
+增强 for 会按发现顺序惰性创建实例；不要假设遍历顺序就是优先级，多个实现要在业务层按能力、版本或配置选择。
 
 ```java
 import java.util.ServiceLoader;
@@ -99,9 +101,9 @@ public class ServiceIteratorDemo {
 }
 ```
 
-增强 for 会按发现顺序惰性创建实例；不要假设遍历顺序就是优先级，多个实现要在业务层按能力、版本或配置选择。
-
 ### `findFirst`：选择第一个可用实现
+
+`findFirst` 只适合“任意一个实现都能工作”的协议；若有多个实现，要明确选择规则并把缺失服务当成配置错误还是可选能力。
 
 ```java
 import java.util.ServiceLoader;
@@ -117,9 +119,9 @@ public class ServiceFirstDemo {
 }
 ```
 
-`findFirst` 只适合“任意一个实现都能工作”的协议；若有多个实现，要明确选择规则并把缺失服务当成配置错误还是可选能力。
-
 ### `stream` 与 `Provider`：先看元数据再实例化
+
+`Provider.type()` 可在实例化前读取提供方类型；只有调用 `Provider.get()` 才创建对象，适合先按注解、类名或能力筛选。
 
 ```java
 import java.util.ServiceLoader;
@@ -137,9 +139,9 @@ public class ServiceProviderDemo {
 }
 ```
 
-`Provider.type()` 可在实例化前读取提供方类型；只有调用 `Provider.get()` 才创建对象，适合先按注解、类名或能力筛选。
-
 ### 模块 `uses` 与 `provides`
+
+模块路径下优先用声明式服务关系；服务接口所在模块不必 `requires` 每个实现模块，运行时由模块层解析提供方。
 
 ```java
 // 使用方 module-info.java
@@ -155,9 +157,9 @@ module app.json {
 }
 ```
 
-模块路径下优先用声明式服务关系；服务接口所在模块不必 `requires` 每个实现模块，运行时由模块层解析提供方。
-
 ### `ServiceLoader.load` 指定类加载器
+
+插件式应用常使用上下文类加载器；类加载器层级错误会出现“配置存在但发现不到”的问题，框架应明确谁负责设置和恢复上下文加载器。
 
 ```java
 import java.util.ServiceLoader;
@@ -173,12 +175,11 @@ public class ServiceClassLoaderDemo {
     }
 }
 ```
-
-插件式应用常使用上下文类加载器；类加载器层级错误会出现“配置存在但发现不到”的问题，框架应明确谁负责设置和恢复上下文加载器。
-
 ## 不常用但需要知道
 
 ### `reload`：刷新发现结果
+
+`reload` 清除已缓存的提供方信息，下一次遍历会重新查找；它不是热更新机制，已创建的实例和类加载器生命周期仍由应用管理。
 
 ```java
 import java.util.ServiceLoader;
@@ -195,9 +196,9 @@ public class ServiceReloadDemo {
 }
 ```
 
-`reload` 清除已缓存的提供方信息，下一次遍历会重新查找；它不是热更新机制，已创建的实例和类加载器生命周期仍由应用管理。
-
 ### `Provider.get`：按需创建单个实现
+
+Provider 过滤后再 get 可以减少无关实例化；如果构造器失败，异常会在 get/遍历阶段暴露，调用方应记录提供方类型和配置来源。
 
 ```java
 import java.util.ServiceLoader;
@@ -218,9 +219,9 @@ public class ServiceProviderGetDemo {
 }
 ```
 
-Provider 过滤后再 get 可以减少无关实例化；如果构造器失败，异常会在 get/遍历阶段暴露，调用方应记录提供方类型和配置来源。
-
 ### `ServiceConfigurationError`：处理服务配置错误
+
+配置文件不存在通常只是没有实现，类名错误、构造器失败或类型不匹配则可能抛 `ServiceConfigurationError`；可选插件可隔离失败，核心服务不应静默吞掉。
 
 ```java
 import java.util.ServiceConfigurationError;
@@ -242,9 +243,9 @@ public class ServiceErrorDemo {
 }
 ```
 
-配置文件不存在通常只是没有实现，类名错误、构造器失败或类型不匹配则可能抛 `ServiceConfigurationError`；可选插件可隔离失败，核心服务不应静默吞掉。
-
 ### 提供者工厂方法
+
+服务机制可识别符合约定的 provider 工厂；工厂适合隐藏构造细节，但仍需让模块声明和接口类型正确，不能把任意静态方法当成服务提供者。
 
 ```java
 // 提供方可以声明静态 provider() 工厂，而不必暴露公开构造器
@@ -259,9 +260,9 @@ public final class FactoryFormatter implements com.example.spi.Formatter {
 }
 ```
 
-服务机制可识别符合约定的 provider 工厂；工厂适合隐藏构造细节，但仍需让模块声明和接口类型正确，不能把任意静态方法当成服务提供者。
-
 ### 服务发现与线程安全
+
+ServiceLoader 的迭代和缓存使用要遵循其线程安全约定；需要并发消费时，先在单线程完成发现，再把已创建、不可变的服务实例交给并发代码。
 
 ```java
 import java.util.ServiceLoader;
@@ -278,9 +279,9 @@ public class ServiceThreadBoundaryDemo {
 }
 ```
 
-ServiceLoader 的迭代和缓存使用要遵循其线程安全约定；需要并发消费时，先在单线程完成发现，再把已创建、不可变的服务实例交给并发代码。
-
 ### `ModuleLayer`：从模块层加载服务
+
+自定义 ModuleLayer 适合插件隔离和版本并存，但涉及模块解析、类加载器和生命周期；普通应用优先使用 boot layer 或 classpath ServiceLoader。
 
 ```java
 import java.util.ServiceLoader;
@@ -293,9 +294,6 @@ public class ModuleLayerServiceDemo {
     }
 }
 ```
-
-自定义 ModuleLayer 适合插件隔离和版本并存，但涉及模块解析、类加载器和生命周期；普通应用优先使用 boot layer 或 classpath ServiceLoader。
-
 ## 简单案例
 
 ```java

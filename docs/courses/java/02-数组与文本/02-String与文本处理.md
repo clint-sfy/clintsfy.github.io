@@ -67,6 +67,8 @@ JSON 的完整依赖、Bean、数组和泛型边界见[JSON 与 Java 对象转�
 
 ### 字面量/`new String`：创建字符串
 
+优先使用字面量或已有值；只有在字节解码、明确复制等边界才使用构造器。`new String("Java")` 不会带来内容上的收益。
+
 ```java
 import java.nio.charset.StandardCharsets;
 
@@ -77,9 +79,9 @@ System.out.println(literal + " / " + decoded);
 // 输出：Java / Java
 ```
 
-优先使用字面量或已有值；只有在字节解码、明确复制等边界才使用构造器。`new String("Java")` 不会带来内容上的收益。
-
 ### `isEmpty`/`isBlank`：判断空字符串或空白
+
+`isEmpty()` 只判断长度为零，`isBlank()` 还把空格、换行等 Unicode 空白视为空；两者都不接受 `null`，外部输入要先决定 `null` 的业务含义。
 
 ```java
 String empty = "";
@@ -90,9 +92,9 @@ System.out.println(spaces.isBlank());
 // 输出：true
 ```
 
-`isEmpty()` 只判断长度为零，`isBlank()` 还把空格、换行等 Unicode 空白视为空；两者都不接受 `null`，外部输入要先决定 `null` 的业务含义。
-
 ### `length()`：获取 UTF-16 码元长度
+
+返回 `char` 码元数量，不是 Unicode 码点或用户看到的字符数；表情等补充平面字符通常占两个码元。
 
 ```java
 String text = "Java🙂";
@@ -102,9 +104,9 @@ System.out.println(text.codePointCount(0, text.length()));
 // 输出：5
 ```
 
-返回 `char` 码元数量，不是 Unicode 码点或用户看到的字符数；表情等补充平面字符通常占两个码元。
-
 ### `charAt`/`codePointAt`/`codePoints`：访问码元与码点
+
+`charAt` 取一个 UTF-16 码元，完整 Unicode 字符应使用 `codePointAt` 或 `codePoints`；索引仍按码元位置计算。
 
 ```java
 String text = "A🙂B";
@@ -115,9 +117,9 @@ System.out.println((int) unit + ", " + point + ", " + points);
 // 输出：55357, 128578, 3
 ```
 
-`charAt` 取一个 UTF-16 码元，完整 Unicode 字符应使用 `codePointAt` 或 `codePoints`；索引仍按码元位置计算。
-
 ### `equals`/`equalsIgnoreCase`：比较字符串内容
+
+用 `equals` 比较内容，不用 `==`；可能为 `null` 时让常量调用方法，忽略大小写前先确认业务是否允许。
 
 ```java
 String input = "JAVA";
@@ -127,9 +129,9 @@ System.out.println(same + ", " + sameIgnoreCase);
 // 输出：false, true
 ```
 
-用 `equals` 比较内容，不用 `==`；可能为 `null` 时让常量调用方法，忽略大小写前先确认业务是否允许。
-
 ### `compareTo`/`compareToIgnoreCase`：按字典序比较
+
+返回负数、零或正数，适合排序和范围判断，不应把返回值当成固定的 `-1` 或 `1`。
 
 ```java
 String left = "Java";
@@ -142,9 +144,9 @@ System.out.println(ignoreCaseOrder == 0);
 // 输出：true
 ```
 
-返回负数、零或正数，适合排序和范围判断，不应把返回值当成固定的 `-1` 或 `1`。
-
 ### `indexOf`/`lastIndexOf`/`contains`：查找文本
+
+`indexOf` 找首次位置，`lastIndexOf` 找最后位置，找不到返回 `-1`；`contains` 只返回布尔值，三者都按字面文本查找而不是正则。
 
 ```java
 String path = "/api/users/api";
@@ -156,9 +158,9 @@ System.out.println(path.contains("users"));
 // 输出：true
 ```
 
-`indexOf` 找首次位置，`lastIndexOf` 找最后位置，找不到返回 `-1`；`contains` 只返回布尔值，三者都按字面文本查找而不是正则。
-
 ### `startsWith`/`endsWith`：判断前后缀
+
+适合协议、文件名或路由前后缀判断，可传起始偏移；它们不做路径规范化或大小写自动转换。
 
 ```java
 String fileName = "backup/data.json";
@@ -168,9 +170,9 @@ System.out.println(json + ", " + backup);
 // 输出：true, true
 ```
 
-适合协议、文件名或路由前后缀判断，可传起始偏移；它们不做路径规范化或大小写自动转换。
-
 ### `substring`：截取字符串区间
+
+区间是左闭右开 `[begin, end)`，越界会抛 `StringIndexOutOfBoundsException`；索引按 UTF-16 码元计算，不能把一个补充平面字符拆开。
 
 ```java
 String text = "Java速查";
@@ -180,9 +182,9 @@ System.out.println(prefix + " / " + suffix);
 // 输出：Java / 速查
 ```
 
-区间是左闭右开 `[begin, end)`，越界会抛 `StringIndexOutOfBoundsException`；索引按 UTF-16 码元计算，不能把一个补充平面字符拆开。
-
 ### `replace`：按字面替换
+
+`replace(char, char)` 和 `replace(CharSequence, CharSequence)` 都按字面匹配，不把参数当正则；原字符串不变。
 
 ```java
 String text = "JAVA，Java";
@@ -191,9 +193,9 @@ System.out.println(normalized);
 // 输出：Java,Java
 ```
 
-`replace(char, char)` 和 `replace(CharSequence, CharSequence)` 都按字面匹配，不把参数当正则；原字符串不变。
-
 ### `split`：按正则分割简单文本
+
+参数是正则表达式，默认丢弃末尾空字段；需要保留时传负 `limit`，元字符要转义。复杂引用、转义和嵌套格式应使用专门解析器。
 
 ```java
 String csv = "Java,,SQL,";
@@ -202,9 +204,9 @@ System.out.println(java.util.Arrays.toString(fields));
 // 输出：[Java, , SQL, ]
 ```
 
-参数是正则表达式，默认丢弃末尾空字段；需要保留时传负 `limit`，元字符要转义。复杂引用、转义和嵌套格式应使用专门解析器。
-
 ### `String.join`/`concat`：带分隔符拼接
+
+`String.join` 适合分隔符和多个元素，`concat` 只拼接一个非 `null` 字符串；循环拼接不要反复使用 `+`。
 
 ```java
 String id = "42";
@@ -214,9 +216,9 @@ System.out.println(path + " / " + label);
 // 输出：api/users/42 / Java速查
 ```
 
-`String.join` 适合分隔符和多个元素，`concat` 只拼接一个非 `null` 字符串；循环拼接不要反复使用 `+`。
-
 ### `formatted`/`String.format`：格式化字符串
+
+格式说明符和参数类型必须匹配；日志拼接还要考虑性能和敏感信息，不能把密码、令牌直接格式化进日志。
 
 ```java
 int id = 7;
@@ -229,9 +231,9 @@ System.out.println(same);
 // 输出：id=7, name=Ann
 ```
 
-格式说明符和参数类型必须匹配；日志拼接还要考虑性能和敏感信息，不能把密码、令牌直接格式化进日志。
-
 ### `toUpperCase`/`toLowerCase`：转换大小写
+
+协议字段、键名等稳定文本应指定 `Locale.ROOT`；转换会返回新字符串，不能当作原地修改。
 
 ```java
 import java.util.Locale;
@@ -243,9 +245,9 @@ System.out.println(upper + " / " + lower);
 // 输出：JAVA API / java api
 ```
 
-协议字段、键名等稳定文本应指定 `Locale.ROOT`；转换会返回新字符串，不能当作原地修改。
-
 ### `trim`/`strip`：去除两端空白
+
+`trim` 主要按较旧的 `U+0020` 范围处理，`strip` 按 Unicode 空白处理；两者都不修改原字符串。
 
 ```java
 String input = "  Java速查  ";
@@ -255,9 +257,9 @@ System.out.println(trimResult + " / " + stripResult);
 // 输出：Java速查 / Java速查
 ```
 
-`trim` 主要按较旧的 `U+0020` 范围处理，`strip` 按 Unicode 空白处理；两者都不修改原字符串。
-
 ### `repeat`：重复字符串
+
+重复次数不能为负，零次返回空字符串；大次数可能造成内存压力。
 
 ```java
 int level = 3;
@@ -266,9 +268,9 @@ System.out.println(indent.length());
 // 输出：6
 ```
 
-重复次数不能为负，零次返回空字符串；大次数可能造成内存压力。
-
 ### `toCharArray`/`getBytes`：转换为字符数组与字节
+
+`toCharArray` 得到 UTF-16 码元数组；`getBytes` 跨边界时必须显式指定字符集，避免平台默认编码。
 
 ```java
 import java.nio.charset.StandardCharsets;
@@ -280,9 +282,9 @@ System.out.println(chars.length + ", " + utf8.length);
 // 输出：4, 4
 ```
 
-`toCharArray` 得到 UTF-16 码元数组；`getBytes` 跨边界时必须显式指定字符集，避免平台默认编码。
-
 ### `String.valueOf`：把值转换为字符串
+
+传入 `null` 对象会得到字符串 `"null"`；不要把它与 `null.toString()` 混用。
 
 ```java
 Object maybeNull = null;
@@ -292,9 +294,9 @@ System.out.println(label + " / " + number);
 // 输出：null / 42
 ```
 
-传入 `null` 对象会得到字符串 `"null"`；不要把它与 `null.toString()` 混用。
-
 ### `StringBuilder.append/insert/delete`：高效拼接
+
+单线程循环拼接优先使用可变的 `StringBuilder`，最后调用 `toString()`；它不是线程安全容器，初始容量可按估算设置。
 
 ```java
 StringBuilder builder = new StringBuilder("Java");
@@ -307,12 +309,11 @@ String result = builder.toString();
 System.out.println(result);
 // 输出：《Java速查》
 ```
-
-单线程循环拼接优先使用可变的 `StringBuilder`，最后调用 `toString()`；它不是线程安全容器，初始容量可按估算设置。
-
 ## 不常用但需要知道
 
 ### `subSequence`：以 `CharSequence` 截取
+
+区间仍是左闭右开，返回接口类型 `CharSequence`；只需要 `String` 时优先使用 `substring`。
 
 ```java
 String text = "Java速查";
@@ -321,9 +322,9 @@ System.out.println(suffix);
 // 输出：速查
 ```
 
-区间仍是左闭右开，返回接口类型 `CharSequence`；只需要 `String` 时优先使用 `substring`。
-
 ### `contentEquals`：与其他字符序列比较
+
+它可直接比较 `StringBuilder` 等 `CharSequence`，与 `equals` 的参数类型和对称性语义不同。
 
 ```java
 String text = "Java";
@@ -332,9 +333,9 @@ System.out.println(text.contentEquals(builder));
 // 输出：true
 ```
 
-它可直接比较 `StringBuilder` 等 `CharSequence`，与 `equals` 的参数类型和对称性语义不同。
-
 ### `regionMatches`：比较局部区域
+
+适合避免创建临时子串的局部比较；参数多且容易写错，普通场景优先 `startsWith` 或 `substring`。
 
 ```java
 String text = "Java速查";
@@ -343,9 +344,9 @@ System.out.println(matched);
 // 输出：true
 ```
 
-适合避免创建临时子串的局部比较；参数多且容易写错，普通场景优先 `startsWith` 或 `substring`。
-
 ### `getChars`：复制指定码元区间
+
+按 UTF-16 码元复制到已有数组，目标空间和区间必须足够；新代码通常用 `toCharArray` 更直观。
 
 ```java
 String text = "Java速查";
@@ -355,9 +356,9 @@ System.out.println(new String(target));
 // 输出：Java
 ```
 
-按 UTF-16 码元复制到已有数组，目标空间和区间必须足够；新代码通常用 `toCharArray` 更直观。
-
 ### `intern`：访问字符串池
+
+返回字符串池中的规范引用，但会影响池和内存行为；业务代码不要用它替代 `equals`。
 
 ```java
 String dynamic = new String("Java");
@@ -366,9 +367,9 @@ System.out.println(pooled == "Java");
 // 输出：true
 ```
 
-返回字符串池中的规范引用，但会影响池和内存行为；业务代码不要用它替代 `equals`。
-
 ### `lines`：按行流式处理
+
+返回按换行符拆分的 `Stream<String>`，流只能消费一次；大量文本仍要考虑内存占用。
 
 ```java
 String text = "Java\n\nString\n集合";
@@ -377,9 +378,9 @@ System.out.println(nonEmpty);
 // 输出：3
 ```
 
-返回按换行符拆分的 `Stream<String>`，流只能消费一次；大量文本仍要考虑内存占用。
-
 ### `indent`/`stripIndent`：整理多行缩进
+
+用于文本块整理，正数缩进增加、负数尝试删除；它不是 Java 代码格式化器。
 
 ```java
 String text = "    one\n      two\n";
@@ -388,9 +389,9 @@ System.out.println(normalized.replace("\n", "|").stripTrailing());
 // 输出：  one|    two
 ```
 
-用于文本块整理，正数缩进增加、负数尝试删除；它不是 Java 代码格式化器。
-
 ### `translateEscapes`：解析 Java 转义文本
+
+将字符串中的 `\\n`、`\\t` 等转义变成对应字符，不等同于 JSON 解析；非法转义会抛异常。
 
 ```java
 String escaped = "Java\\nString\\t速查";
@@ -399,9 +400,9 @@ System.out.println(actual.replace("\n", "|").replace("\t", "→"));
 // 输出：Java|String→速查
 ```
 
-将字符串中的 `\\n`、`\\t` 等转义变成对应字符，不等同于 JSON 解析；非法转义会抛异常。
-
 ### `StringBuffer`：同步的可变字符序列
+
+提供与 `StringBuilder` 类似的同步方法，只有确实需要共享可变字符缓冲区时才考虑；普通局部拼接优先 `StringBuilder`。
 
 ```java
 StringBuffer shared = new StringBuffer("Java");
@@ -409,9 +410,6 @@ shared.append("速查");
 System.out.println(shared);
 // 输出：Java速查
 ```
-
-提供与 `StringBuilder` 类似的同步方法，只有确实需要共享可变字符缓冲区时才考虑；普通局部拼接优先 `StringBuilder`。
-
 ## 继续阅读
 
 - [正则表达式与文本匹配](/courses/java/02-数组与文本/04-正则表达式与文本匹配)：`Pattern`、`Matcher`、捕获组和正则替换。

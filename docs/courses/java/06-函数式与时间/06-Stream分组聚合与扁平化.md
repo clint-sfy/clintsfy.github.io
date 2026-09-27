@@ -36,6 +36,8 @@ Stream 管道应尽量保持无副作用。收集器会管理结果容器和合�
 
 ### `flatMap`：把多层列表展开一层
 
+空子列表自然产生空子流；如果子列表可能为 `null`，应先转换为 `List.of()` 或 `Stream.empty()`。
+
 ```java
 import java.util.List;
 
@@ -45,9 +47,9 @@ System.out.println(flat);
 // 输出：[Java, SQL, HTTP, JVM]
 ```
 
-空子列表自然产生空子流；如果子列表可能为 `null`，应先转换为 `List.of()` 或 `Stream.empty()`。
-
 ### 多层 `flatMap`：展开订单和商品
+
+展开后会丢失订单边界；需要保留订单信息时先映射成包含订单 ID 的记录，而不是只收集字符串。
 
 ```java
 import java.util.List;
@@ -60,9 +62,9 @@ System.out.println(items);
 // 输出：[book, pen, cup]
 ```
 
-展开后会丢失订单边界；需要保留订单信息时先映射成包含订单 ID 的记录，而不是只收集字符串。
-
 ### `flatMap` + `distinct`：展开后去重
+
+`distinct` 依赖元素的 `equals`/`hashCode`；自定义对象应先正确实现值相等语义。
 
 ```java
 import java.util.List;
@@ -73,9 +75,9 @@ System.out.println(unique);
 // 输出：[java, sql, http]
 ```
 
-`distinct` 依赖元素的 `equals`/`hashCode`；自定义对象应先正确实现值相等语义。
-
 ### `groupingBy`：分组保留元素列表
+
+默认结果是 `Map<User, List<Order>>`；只需要汇总值时可以直接指定下游收集器，避免保留整组对象。
 
 ```java
 import java.util.List;
@@ -89,9 +91,9 @@ System.out.println(groups.get("ann").size());
 // 输出：2
 ```
 
-默认结果是 `Map<User, List<Order>>`；只需要汇总值时可以直接指定下游收集器，避免保留整组对象。
-
 ### `groupingBy` + `mapping`：分组后提取字段
+
+`mapping` 让结果只保留需要的字段；需要去重时替换下游为 `Collectors.toSet()`。
 
 ```java
 import java.util.List;
@@ -106,9 +108,9 @@ System.out.println(items);
 // 输出：{ann=[book, cup]}
 ```
 
-`mapping` 让结果只保留需要的字段；需要去重时替换下游为 `Collectors.toSet()`。
-
 ### `groupingBy` + `summingInt`：分组求和
+
+用数值下游收集器比先分组 List 再循环求和更直接，也减少中间对象。
 
 ```java
 import java.util.List;
@@ -123,9 +125,9 @@ System.out.println(totals);
 // 输出：{ann=55, bob=8}
 ```
 
-用数值下游收集器比先分组 List 再循环求和更直接，也减少中间对象。
-
 ### `groupingBy` + `summarizingInt`：分组统计摘要
+
+摘要同时提供数量、总和、最小、最大和平均值，适合报表或诊断数据。
 
 ```java
 import java.util.List;
@@ -140,9 +142,9 @@ System.out.println(stats.get("ann").getAverage());
 // 输出：27.5
 ```
 
-摘要同时提供数量、总和、最小、最大和平均值，适合报表或诊断数据。
-
 ### `groupingBy` + `reducing`：每组按规则归约
+
+归约函数要明确初始值和结合规则；如果只是求和、最大值等常见统计，优先使用对应的专用收集器。
 
 ```java
 import java.util.List;
@@ -157,9 +159,9 @@ System.out.println(max);
 // 输出：{ann=35, bob=8}
 ```
 
-归约函数要明确初始值和结合规则；如果只是求和、最大值等常见统计，优先使用对应的专用收集器。
-
 ### `partitioningBy`：把数据切成两部分
+
+二分条件用 `partitioningBy` 更清晰；多个分类值不要把复杂条件硬塞成真假。
 
 ```java
 import java.util.List;
@@ -171,9 +173,9 @@ System.out.println(parts);
 // 输出：{false=[10, 5], true=[25, 80]}
 ```
 
-二分条件用 `partitioningBy` 更清晰；多个分类值不要把复杂条件硬塞成真假。
-
 ### `toMap` + 合并函数：一键一值并处理冲突
+
+没有合并策略的重复键会抛异常；覆盖、相加、取最大或收集列表都应在代码中明确表达。
 
 ```java
 import java.util.List;
@@ -188,9 +190,9 @@ System.out.println(best);
 // 输出：{java=95}
 ```
 
-没有合并策略的重复键会抛异常；覆盖、相加、取最大或收集列表都应在代码中明确表达。
-
 ### `collect`：把管道结果交给收集器
+
+`collect` 适合可变结果容器或复杂聚合；只需要不可变 List 时直接使用 `toList()` 更简洁。
 
 ```java
 import java.util.List;
@@ -203,9 +205,9 @@ System.out.println(result);
 // 输出：java/stream
 ```
 
-`collect` 适合可变结果容器或复杂聚合；只需要不可变 List 时直接使用 `toList()` 更简洁。
-
 ### `reduce`：不依赖收集器的单值归约
+
+`reduce` 的累加器应满足结合律，才能安全地考虑并行；需要同时保留多个字段时使用 `collect` 或记录类型。
 
 ```java
 import java.util.List;
@@ -214,12 +216,11 @@ int total = List.of(20, 35, 8).stream().reduce(0, Integer::sum);
 System.out.println(total);
 // 输出：63
 ```
-
-`reduce` 的累加器应满足结合律，才能安全地考虑并行；需要同时保留多个字段时使用 `collect` 或记录类型。
-
 ## 不常用但需要知道
 
 ### `mapMulti`：用回调直接发出多个元素（Java 16+）
+
+`mapMulti` 可避免为每个元素创建短生命周期子流，但回调逻辑比 `flatMap` 更难读；只有性能或多值回调确实需要时使用。
 
 ```java
 import java.util.List;
@@ -234,9 +235,9 @@ System.out.println(result);
 // 输出：[java, JAVA, sql, SQL]
 ```
 
-`mapMulti` 可避免为每个元素创建短生命周期子流，但回调逻辑比 `flatMap` 更难读；只有性能或多值回调确实需要时使用。
-
 ### `collectingAndThen`：分组后固定结果形态
+
+它常用于把可变收集结果变成只读快照；不要为了少写一行而隐藏重要的业务转换。
 
 ```java
 import java.util.List;
@@ -248,9 +249,9 @@ System.out.println(result);
 // 输出：[java, sql]
 ```
 
-它常用于把可变收集结果变成只读快照；不要为了少写一行而隐藏重要的业务转换。
-
 ### `unordered`：放弃顺序约束换取并行空间
+
+只有业务不需要遇到顺序时才可使用；分页、首个元素和有序输出不应取消顺序语义。
 
 ```java
 import java.util.List;
@@ -261,9 +262,9 @@ System.out.println(count);
 // 输出：2
 ```
 
-只有业务不需要遇到顺序时才可使用；分页、首个元素和有序输出不应取消顺序语义。
-
 ### 并行收集与共享副作用：边界示例
+
+并行流应使用线程安全的收集器或无副作用的归约；小数据、阻塞 I/O 和顺序敏感逻辑通常不适合并行。
 
 ```java
 import java.util.ArrayList;
@@ -274,9 +275,6 @@ List.of(1, 2, 3, 4).parallelStream().forEach(result::add);
 System.out.println(result.size());
 // 输出：不应依赖具体结果（共享 ArrayList 非线程安全）
 ```
-
-并行流应使用线程安全的收集器或无副作用的归约；小数据、阻塞 I/O 和顺序敏感逻辑通常不适合并行。
-
 ## 简单案例
 
 ```java

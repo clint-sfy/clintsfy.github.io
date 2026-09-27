@@ -38,6 +38,8 @@ sealed 检查的是直接继承关系，子类仍需满足访问级别、同一�
 
 ### 用 sealed interface 限定实现集合
 
+实现类型必须出现在 permits 列表中；record 默认是 final，正好适合表示不会继续扩展的数据结果。
+
 ```java
 sealed interface PaymentResult permits Paid, Declined {}
 
@@ -62,9 +64,9 @@ public class SealedInterfaceDemo {
 }
 ```
 
-实现类型必须出现在 permits 列表中；record 默认是 final，正好适合表示不会继续扩展的数据结果。
-
 ### 用 sealed class 限定抽象基类
+
+sealed class 适合共享少量受保护行为或状态的有限层次；如果实现只承载数据，sealed interface 加 record 往往更轻量。
 
 ```java
 sealed abstract class Command permits CreateUser, DeleteUser {
@@ -93,9 +95,9 @@ public class SealedClassDemo {
 }
 ```
 
-sealed class 适合共享少量受保护行为或状态的有限层次；如果实现只承载数据，sealed interface 加 record 往往更轻量。
-
 ### 用 final 结束继承分支
+
+final 表示该直接子类型不能再被继承，编译器可以把这一支视为稳定叶子节点。
 
 ```java
 sealed interface Result permits Success {}
@@ -114,9 +116,9 @@ public class SealedFinalDemo {
 }
 ```
 
-final 表示该直接子类型不能再被继承，编译器可以把这一支视为稳定叶子节点。
-
 ### 用 sealed 子类继续分层约束
+
+中间层声明 sealed 后，必须继续列出自己的直接子类；这适合“文件节点—文件—具体文件类型”这类有层次的领域模型。
 
 ```java
 sealed interface FileNode permits File, Directory {}
@@ -135,9 +137,9 @@ public class NestedSealedDemo {
 }
 ```
 
-中间层声明 sealed 后，必须继续列出自己的直接子类；这适合“文件节点—文件—具体文件类型”这类有层次的领域模型。
-
 ### 用 non-sealed 在边界处重新开放扩展
+
+non-sealed 只放开这一支，不影响同一 sealed 层次的其他分支；常用于核心事件集合中预留外部扩展点。
 
 ```java
 sealed interface Event permits OpenEvent, ExternalEvent {}
@@ -155,9 +157,9 @@ public class NonSealedDemo {
 }
 ```
 
-non-sealed 只放开这一支，不影响同一 sealed 层次的其他分支；常用于核心事件集合中预留外部扩展点。
-
 ### 使用模式变量处理已知类型
+
+编译器知道 sealed 的已知分支，但普通 if 仍需要显式覆盖或转换；JDK 20 预览的模式 switch 可以把穷尽性表达得更直接。
 
 ```java
 sealed interface Shape permits Circle, Rectangle {}
@@ -179,12 +181,11 @@ public class SealedPatternDemo {
     }
 }
 ```
-
-编译器知道 sealed 的已知分支，但普通 if 仍需要显式覆盖或转换；JDK 20 预览的模式 switch 可以把穷尽性表达得更直接。
-
 ## 不常用但需要知道
 
 ### 省略 permits：同一文件中的直接子类可以自动推断
+
+当所有直接子类型和 sealed 类型写在同一编译单元时，可以省略 permits；跨文件或需要显式文档化时建议保留 permits。
 
 ```java
 sealed interface LocalState {}
@@ -200,9 +201,9 @@ public class InferredPermitsDemo {
 }
 ```
 
-当所有直接子类型和 sealed 类型写在同一编译单元时，可以省略 permits；跨文件或需要显式文档化时建议保留 permits。
-
 ### 了解 sealed 类型的文件与模块边界
+
+直接子类必须与 sealed 类型处在允许的同一包或同一命名模块中；模块化项目中还要遵守 exports 与 requires 的普通可见性规则。
 
 ```java
 sealed interface LocalCommand permits LocalCreate {}
@@ -216,9 +217,9 @@ public class SealedBoundaryDemo {
 }
 ```
 
-直接子类必须与 sealed 类型处在允许的同一包或同一命名模块中；模块化项目中还要遵守 exports 与 requires 的普通可见性规则。
-
 ### 组合 sealed、record 与枚举状态
+
+sealed 负责限制结果种类，record 负责承载字段，enum 负责固定状态值；三者解决不同问题，组合时不要把职责混在一个大类中。
 
 ```java
 sealed interface ImportResult permits Imported, Skipped {}
@@ -233,9 +234,6 @@ public class SealedDomainDemo {
     }
 }
 ```
-
-sealed 负责限制结果种类，record 负责承载字段，enum 负责固定状态值；三者解决不同问题，组合时不要把职责混在一个大类中。
-
 ## 简单案例
 
 ```java

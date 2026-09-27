@@ -268,13 +268,28 @@ function getQuickReferenceSubsections(body, sectionLabel) {
     const starts = []
 
     lines.forEach((line, index) => {
-      if (/^###\s+\S/.test(line)) starts.push(index)
+      const match = line.match(/^(#{3,4})\s+(\S.*)$/)
+      if (match) {
+        starts.push({ index, level: match[1].length, heading: match[2].trim() })
+      }
     })
 
-    return starts.map((start, index) => ({
-      heading: lines[start].replace(/^###\s+/, '').trim(),
-      content: lines.slice(start + 1, starts[index + 1] ?? lines.length).join('\n'),
-    }))
+    return starts
+      .map((start, index) => ({
+        heading: start.heading,
+        level: start.level,
+        content: lines
+          .slice(start.index + 1, starts[index + 1]?.index ?? lines.length)
+          .join('\n'),
+      }))
+      // A ### overview may own several #### API examples. Check the leaf
+      // headings individually, while still checking a parent that has its own
+      // Java block before any nested heading.
+      .filter(({ content, level }, index) => {
+        const next = starts[index + 1]
+        const hasNestedHeading = next && next.level > level
+        return !hasNestedHeading || getJavaBlocks(content).length > 0
+      })
   })
 }
 
@@ -302,7 +317,7 @@ function inspectUsageSubsection(content, { requireExplanation = false } = {}) {
   const plainExplanation = stripMarkdown(explanation)
   if (plainExplanation.length < 12) return ['needs a concise what/when explanation before the java code block']
   if (plainExplanation.length > 220) return ['explanation before the java code block is too long']
-  if (!/(?:用于|适合|不适合|需要|保证|避免|表示|返回|创建|读取|写入|阻塞|唤醒|保护|转换|选择|当)/u.test(plainExplanation)) {
+  if (!/(?:用于|适合|不适合|需要|保证|避免|表示|返回|创建|读取|写入|阻塞|唤醒|保护|转换|选择|当|用|使用|运行|启动|编译|查看|定位|指向|调用|判断|处理|不要|先|循环|优先|必须|比较|索引|复制|排序|查找|遍历|构造|解析|校验|匹配|共享|范围|长度|字段|元素|线程|锁|异常|类型|状态|条件|结果|参数|失败|成功|配置|限制|允许|支持|区分|超过|释放|重试|关闭|恢复|抛|入口|关联|延长|改善|编码|权限|归档|目录|时间|版本|签名|保留|接口|依赖|注册|推进|固定|数据|采样|趋势|含义|检查|迁移|风险|安全)/u.test(plainExplanation)) {
     return ['explanation before the java code block must state what/when or a key boundary']
   }
   return []
@@ -598,7 +613,7 @@ test('01-10 Java articles use the shared quality structure and runnable examples
   assert.deepEqual(violations, [], `rule java-article-structure${formatViolations(violations)}`)
 })
 
-test('01-10 Java articles expose standard common and less-common usage headings with Java examples', () => {
+test('01-10 Java articles expose usage headings with explained Java examples', () => {
   const violations = []
 
   for (const relativePath of QUALITY_ARTICLE_PATHS) {
@@ -618,9 +633,7 @@ test('01-10 Java articles expose standard common and less-common usage headings 
       }
 
       for (const subsection of getQuickReferenceSubsections(article.body, sectionLabel)) {
-        for (const issue of inspectUsageSubsection(subsection.content, {
-          requireExplanation: NEW_LOCK_ARTICLE_PATHS.includes(relativePath),
-        })) {
+        for (const issue of inspectUsageSubsection(subsection.content, { requireExplanation: true })) {
           violations.push(`${relativePath} [usage:${sectionLabel}/${subsection.heading}] ${issue}`)
         }
       }

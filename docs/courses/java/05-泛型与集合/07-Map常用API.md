@@ -37,6 +37,8 @@ Map 的键放入后必须保持 equals/hashCode 或比较关系稳定；修改�
 
 ### put 和 get：写入与读取
 
+put 会新增或替换并返回旧值；get 找不到键时返回 null，允许 null 值的 Map 不能只靠 get 判断是否存在。
+
 ```java
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -52,9 +54,9 @@ public class MapPutGetDemo {
 }
 ```
 
-put 会新增或替换并返回旧值；get 找不到键时返回 null，允许 null 值的 Map 不能只靠 get 判断是否存在。
-
 ### getOrDefault：读取默认值
+
+getOrDefault 只提供读取时的兜底，不会把默认值写回 Map。
 
 ```java
 import java.util.Map;
@@ -68,9 +70,9 @@ public class MapDefaultDemo {
 }
 ```
 
-getOrDefault 只提供读取时的兜底，不会把默认值写回 Map。
-
 ### containsKey 和 containsValue：判断存在性
+
+判断键优先 containsKey；containsValue 通常需要扫描值，不能用 get 替代。
 
 ```java
 import java.util.Map;
@@ -86,9 +88,9 @@ public class MapContainsDemo {
 }
 ```
 
-判断键优先 containsKey；containsValue 通常需要扫描值，不能用 get 替代。
-
 ### remove：按键或键值对删除
+
+remove(key) 按键删除；remove(key, value) 只有键和值同时匹配才删除，适合避免覆盖他人更新后的值。
 
 ```java
 import java.util.LinkedHashMap;
@@ -105,9 +107,9 @@ public class MapRemoveDemo {
 }
 ```
 
-remove(key) 按键删除；remove(key, value) 只有键和值同时匹配才删除，适合避免覆盖他人更新后的值。
-
 ### entrySet：同时遍历键和值
+
+同时需要键和值时优先 entrySet；entrySet、keySet、values 都是源 Map 的视图。
 
 ```java
 import java.util.LinkedHashMap;
@@ -127,9 +129,9 @@ public class MapEntrySetDemo {
 }
 ```
 
-同时需要键和值时优先 entrySet；entrySet、keySet、values 都是源 Map 的视图。
-
 ### putIfAbsent：缺失键才写入
+
+键不存在或当前值为 null 时写入，已有非 null 值不覆盖；并发 Map 中它还是单键原子更新工具。
 
 ```java
 import java.util.LinkedHashMap;
@@ -146,9 +148,9 @@ public class MapPutIfAbsentDemo {
 }
 ```
 
-键不存在或当前值为 null 时写入，已有非 null 值不覆盖；并发 Map 中它还是单键原子更新工具。
-
 ### merge：按旧值累加或合并
+
+缺失键直接放入给定值，已有值才执行合并函数；合并结果为 null 时会删除该键。
 
 ```java
 import java.util.LinkedHashMap;
@@ -165,9 +167,9 @@ public class MapMergeDemo {
 }
 ```
 
-缺失键直接放入给定值，已有值才执行合并函数；合并结果为 null 时会删除该键。
-
 ### computeIfAbsent：缺失时懒创建
+
+已有非 null 值时不执行计算；计算结果为 null 时不写入，常用于按键创建列表或集合。
 
 ```java
 import java.util.ArrayList;
@@ -185,9 +187,9 @@ public class MapComputeIfAbsentDemo {
 }
 ```
 
-已有非 null 值时不执行计算；计算结果为 null 时不写入，常用于按键创建列表或集合。
-
 ### replace：只替换已存在或匹配旧值的键
+
+replace(key, value) 不新增键；三参数版本还要求旧值相等，适合避免覆盖别人已更新的值。
 
 ```java
 import java.util.LinkedHashMap;
@@ -204,9 +206,9 @@ public class MapReplaceDemo {
 }
 ```
 
-replace(key, value) 不新增键；三参数版本还要求旧值相等，适合避免覆盖别人已更新的值。
-
 ### keySet、values、entrySet：使用 Map 视图
+
+视图会反映源 Map 的变化；需要独立结果时复制到 List 或 Set。
 
 ```java
 import java.util.LinkedHashMap;
@@ -223,9 +225,9 @@ public class MapViewsDemo {
 }
 ```
 
-视图会反映源 Map 的变化；需要独立结果时复制到 List 或 Set。
-
 ### HashMap、LinkedHashMap、TreeMap：按需求选实现
+
+HashMap 通用但无序，LinkedHashMap 保留顺序，TreeMap 按键排序并支持范围查询；不要把 HashMap 的偶然遍历顺序当契约。
 
 ```java
 import java.util.HashMap;
@@ -243,12 +245,11 @@ public class MapImplementationDemo {
     }
 }
 ```
-
-HashMap 通用但无序，LinkedHashMap 保留顺序，TreeMap 按键排序并支持范围查询；不要把 HashMap 的偶然遍历顺序当契约。
-
 ## 不常用但需要知道
 
 ### compute 和 computeIfPresent：按存在性重算
+
+回调返回 null 可能删除键；逻辑复杂时先写清楚存在与缺失分支，避免回调里产生副作用。
 
 ```java
 import java.util.LinkedHashMap;
@@ -266,9 +267,9 @@ public class MapComputeDemo {
 }
 ```
 
-回调返回 null 可能删除键；逻辑复杂时先写清楚存在与缺失分支，避免回调里产生副作用。
-
 ### replaceAll：批量重映射值
+
+replaceAll 原地更新每个值；不要在回调里递归结构性修改同一个 Map。
 
 ```java
 import java.util.LinkedHashMap;
@@ -286,9 +287,9 @@ public class MapReplaceAllDemo {
 }
 ```
 
-replaceAll 原地更新每个值；不要在回调里递归结构性修改同一个 Map。
-
 ### Map.of 和 Map.ofEntries：小型不可变 Map
+
+Map.of 适合少量常量，Map.ofEntries 适合条目稍多的常量；两者都拒绝 null 且不能修改。
 
 ```java
 import java.util.Map;
@@ -305,9 +306,9 @@ public class MapFactoryDemo {
 }
 ```
 
-Map.of 适合少量常量，Map.ofEntries 适合条目稍多的常量；两者都拒绝 null 且不能修改。
-
 ### Map.copyOf：不可修改 Map 快照
+
+Map.copyOf 复制键值结构并拒绝 null；它不深复制可变键和值对象。
 
 ```java
 import java.util.LinkedHashMap;
@@ -325,9 +326,9 @@ public class MapCopyOfDemo {
 }
 ```
 
-Map.copyOf 复制键值结构并拒绝 null；它不深复制可变键和值对象。
-
 ### LinkedHashMap 访问顺序：简单 LRU 基础
+
+最后一个构造参数 true 开启访问顺序；这只是 LRU 的基础，不自动限制容量或提供并发保护。
 
 ```java
 import java.util.LinkedHashMap;
@@ -345,9 +346,9 @@ public class AccessOrderMapDemo {
 }
 ```
 
-最后一个构造参数 true 开启访问顺序；这只是 LRU 的基础，不自动限制容量或提供并发保护。
-
 ### TreeMap.subMap、headMap、tailMap：键范围查询
+
+范围方法返回 TreeMap 的视图，边界包含关系由重载参数决定；需要独立副本时复制结果。
 
 ```java
 import java.util.Map;
@@ -365,9 +366,9 @@ public class TreeMapRangeDemo {
 }
 ```
 
-范围方法返回 TreeMap 的视图，边界包含关系由重载参数决定；需要独立副本时复制结果。
-
 ### ConcurrentHashMap：并发单键复合更新
+
+ConcurrentHashMap 支持并发访问和单键 compute、merge、putIfAbsent；不接受 null，也不自动把多个键的业务更新组成事务。
 
 ```java
 import java.util.concurrent.ConcurrentHashMap;
@@ -384,9 +385,9 @@ public class ConcurrentMapDemo {
 }
 ```
 
-ConcurrentHashMap 支持并发访问和单键 compute、merge、putIfAbsent；不接受 null，也不自动把多个键的业务更新组成事务。
-
 ### Collections.synchronizedMap：同步包装
+
+包装只同步单次方法调用；遍历和多步组合仍要按文档对包装对象加锁。新并发代码通常优先选择 ConcurrentHashMap。
 
 ```java
 import java.util.Collections;
@@ -405,9 +406,6 @@ public class SynchronizedMapDemo {
     }
 }
 ```
-
-包装只同步单次方法调用；遍历和多步组合仍要按文档对包装对象加锁。新并发代码通常优先选择 ConcurrentHashMap。
-
 ## 简单案例
 
 ```java

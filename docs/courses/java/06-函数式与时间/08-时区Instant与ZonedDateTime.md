@@ -38,6 +38,8 @@ description: 速查 UTC 时间线、区域时区、时区转换、Duration、Per
 
 ### `Instant.parse`/`ofEpochMilli`：创建时间线时刻
 
+解析带 `Z` 或偏移的外部时间时得到唯一时刻；时间戳单位要在接口文档中明确是秒还是毫秒。
+
 ```java
 import java.time.Instant;
 
@@ -49,9 +51,9 @@ System.out.println(fromMillis);
 // 输出：1970-01-01T00:00:00Z
 ```
 
-解析带 `Z` 或偏移的外部时间时得到唯一时刻；时间戳单位要在接口文档中明确是秒还是毫秒。
-
 ### `Instant.atZone`：按区域显示 Instant
+
+转换不会改变时间线上的瞬间，只改变它的地区展示方式。
 
 ```java
 import java.time.Instant;
@@ -63,9 +65,9 @@ System.out.println(shanghai);
 // 输出：2026-09-27T09:30+08:00[Asia/Shanghai]
 ```
 
-转换不会改变时间线上的瞬间，只改变它的地区展示方式。
-
 ### `ZonedDateTime.withZoneSameInstant`：跨时区转换同一时刻
+
+`withZoneSameInstant` 保持同一时间点，只改变本地显示；这是把会议时间展示给另一地区用户的常用操作。
 
 ```java
 import java.time.ZoneId;
@@ -77,9 +79,9 @@ System.out.println(newYork.toLocalDateTime());
 // 输出：2026-09-26T21:30
 ```
 
-`withZoneSameInstant` 保持同一时间点，只改变本地显示；这是把会议时间展示给另一地区用户的常用操作。
-
 ### `ZonedDateTime.withZoneSameLocal`：保留本地读数再换区域（谨慎）
+
+它改变的是事件发生的时间点，只适合“把同一墙上时间应用到另一个地区”的业务；不要把它误当成时区转换。
 
 ```java
 import java.time.ZoneId;
@@ -91,9 +93,9 @@ System.out.println(sameClock.toLocalDateTime());
 // 输出：2026-09-27T09:30
 ```
 
-它改变的是事件发生的时间点，只适合“把同一墙上时间应用到另一个地区”的业务；不要把它误当成时区转换。
-
 ### `ZoneId.of`：选择区域时区
+
+优先使用 IANA 区域名；`UTC` 是稳定区域，`+08:00` 则是固定偏移，不包含夏令时规则。
 
 ```java
 import java.time.ZoneId;
@@ -103,9 +105,9 @@ System.out.println(zone.getId());
 // 输出：Asia/Shanghai
 ```
 
-优先使用 IANA 区域名；`UTC` 是稳定区域，`+08:00` 则是固定偏移，不包含夏令时规则。
-
 ### `Duration.between`：计算时间线时长
+
+`Duration` 适合超时、耗时和倒计时；跨时区计算时先转换到 `Instant` 更不容易误判。
 
 ```java
 import java.time.Duration;
@@ -117,9 +119,9 @@ System.out.println(Duration.between(start, end).toSeconds());
 // 输出：90
 ```
 
-`Duration` 适合超时、耗时和倒计时；跨时区计算时先转换到 `Instant` 更不容易误判。
-
 ### `Period.between`：计算日历周期
+
+`Period` 按年、月、日计算生日、账期等日历语义；不要用它替代精确耗时。
 
 ```java
 import java.time.LocalDate;
@@ -131,9 +133,9 @@ System.out.println(Period.between(birth, date).getYears());
 // 输出：26
 ```
 
-`Period` 按年、月、日计算生日、账期等日历语义；不要用它替代精确耗时。
-
 ### `Clock.fixed`/`Clock.systemUTC`：注入当前时间
+
+业务服务接收 `Clock` 后可以在测试中固定时间；不要在深层代码中无处不在地直接调用 `Instant.now()`。
 
 ```java
 import java.time.Clock;
@@ -147,9 +149,9 @@ System.out.println(production.getZone());
 // 输出：Z
 ```
 
-业务服务接收 `Clock` 后可以在测试中固定时间；不要在深层代码中无处不在地直接调用 `Instant.now()`。
-
 ### 本地时间 + `ZoneId`：把用户输入转换为 Instant
+
+转换前必须知道用户或业务所属时区；没有区域信息的本地文本不能可靠地变成 `Instant`。
 
 ```java
 import java.time.LocalDateTime;
@@ -160,12 +162,11 @@ var instant = input.atZone(ZoneId.of("Asia/Shanghai")).toInstant();
 System.out.println(instant);
 // 输出：2026-09-27T01:30:00Z
 ```
-
-转换前必须知道用户或业务所属时区；没有区域信息的本地文本不能可靠地变成 `Instant`。
-
 ## 不常用但需要知道
 
 ### `ZoneOffset`：解析固定偏移
+
+带偏移的输入已经给出该时刻相对于 UTC 的位置，但没有完整的地区历史规则；展示给用户时仍可转换为 `ZonedDateTime`。
 
 ```java
 import java.time.OffsetDateTime;
@@ -175,9 +176,9 @@ System.out.println(value.toInstant());
 // 输出：2026-09-27T01:30:00Z
 ```
 
-带偏移的输入已经给出该时刻相对于 UTC 的位置，但没有完整的地区历史规则；展示给用户时仍可转换为 `ZonedDateTime`。
-
 ### `withFixedOffsetZone`：保留当前偏移而去掉区域规则
+
+只有协议明确只需要固定偏移时才使用；区域规则丢失后不能再根据地区历史还原。
 
 ```java
 import java.time.ZoneId;
@@ -188,9 +189,9 @@ System.out.println(value.withFixedOffsetZone());
 // 输出：2026-09-27T09:30+08:00
 ```
 
-只有协议明确只需要固定偏移时才使用；区域规则丢失后不能再根据地区历史还原。
-
 ### `Clock.offset`/`Clock.tick`：构造特殊测试时钟
+
+这些时钟主要用于测试和模拟；生产逻辑应保持时间来源简单且可观测。
 
 ```java
 import java.time.Clock;
@@ -204,9 +205,9 @@ System.out.println(Instant.now(shifted));
 // 输出：2026-09-27T08:00:00Z
 ```
 
-这些时钟主要用于测试和模拟；生产逻辑应保持时间来源简单且可观测。
-
 ### `ZoneRules`：观察夏令时规则
+
+只有需要处理夏令时冲突、调度器或时区数据库细节时才直接使用规则对象；普通展示优先交给 `ZonedDateTime`。
 
 ```java
 import java.time.ZoneId;
@@ -217,9 +218,9 @@ System.out.println(rules.isFixedOffset());
 // 输出：false
 ```
 
-只有需要处理夏令时冲突、调度器或时区数据库细节时才直接使用规则对象；普通展示优先交给 `ZonedDateTime`。
-
 ### `ZonedDateTime` 的夏令时重叠
+
+夏令时回拨时同一墙上时间可能对应两个偏移；预约系统应明确选择早/晚偏移或直接要求用户输入偏移。
 
 ```java
 import java.time.LocalDateTime;
@@ -230,9 +231,6 @@ var value = local.atZone(ZoneId.of("Europe/Paris"));
 System.out.println(value.getOffset());
 // 输出：+02:00 或 +01:00（取决于时区规则）
 ```
-
-夏令时回拨时同一墙上时间可能对应两个偏移；预约系统应明确选择早/晚偏移或直接要求用户输入偏移。
-
 ## 简单案例
 
 ```java

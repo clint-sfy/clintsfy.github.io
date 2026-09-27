@@ -37,6 +37,8 @@ record 不能继承普通类，只能隐式继承 java.lang.Record，但可以�
 
 ### 声明最小 record：自动获得值语义成员
 
+组件声明会生成同名访问器、规范构造器、equals、hashCode 和 toString。两个组件值相同的 record 实例通常具有值对象语义。
+
 ```java
 record Point(int x, int y) {}
 
@@ -52,9 +54,9 @@ public class RecordBasicDemo {
 }
 ```
 
-组件声明会生成同名访问器、规范构造器、equals、hashCode 和 toString。两个组件值相同的 record 实例通常具有值对象语义。
-
 ### 使用紧凑构造器校验和规范化参数
+
+紧凑构造器的参数名就是组件名，可以在隐式赋值前校验和规范化；不要在其中再次给字段赋值，record 组件字段由编译器完成赋值。
 
 ```java
 record UserName(String value) {
@@ -75,9 +77,9 @@ public class RecordCompactConstructorDemo {
 }
 ```
 
-紧凑构造器的参数名就是组件名，可以在隐式赋值前校验和规范化；不要在其中再次给字段赋值，record 组件字段由编译器完成赋值。
-
 ### 写显式规范构造器：需要清晰控制赋值时使用
+
+显式规范构造器的参数必须与组件一一对应，并且要明确给每个组件赋值；大多数校验场景用紧凑构造器更简洁。
 
 ```java
 record Port(int value) {
@@ -97,9 +99,9 @@ public class RecordCanonicalConstructorDemo {
 }
 ```
 
-显式规范构造器的参数必须与组件一一对应，并且要明确给每个组件赋值；大多数校验场景用紧凑构造器更简洁。
-
 ### 用组件访问器读取数据
+
+访问器名就是组件名；如果框架要求 getName()，可以额外定义方法，但不要误以为 record 自动生成 JavaBean getter。
 
 ```java
 record User(String name, int age) {}
@@ -113,9 +115,9 @@ public class RecordAccessorDemo {
 }
 ```
 
-访问器名就是组件名；如果框架要求 getName()，可以额外定义方法，但不要误以为 record 自动生成 JavaBean getter。
-
 ### 用 List.copyOf 隔离可变集合组件
+
+List.copyOf 会复制列表结构并返回不可修改列表，但不会复制可变元素本身。它也拒绝 null 列表元素；是否允许 null 要在构造器边界明确决定。
 
 ```java
 import java.util.ArrayList;
@@ -138,9 +140,9 @@ public class RecordShallowImmutableDemo {
 }
 ```
 
-List.copyOf 会复制列表结构并返回不可修改列表，但不会复制可变元素本身。它也拒绝 null 列表元素；是否允许 null 要在构造器边界明确决定。
-
 ### 让 record 实现接口：统一值对象能力
+
+record 可以实现一个或多个接口，适合让不同数据载体遵守同一读取契约；它不能通过 extends SomeClass 继承普通类。
 
 ```java
 interface Identified {
@@ -161,9 +163,9 @@ public class RecordInterfaceDemo {
 }
 ```
 
-record 可以实现一个或多个接口，适合让不同数据载体遵守同一读取契约；它不能通过 extends SomeClass 继承普通类。
-
 ### 使用 record pattern 直接拆出组件（JDK 20 预览）
+
+record pattern 把类型判断、转换和组件读取合在一起。JDK 20 中它是预览特性，编译与运行必须配套：
 
 ```java
 record Point(int x, int y) {}
@@ -183,14 +185,14 @@ public class RecordPatternDemo {
 }
 ```
 
-record pattern 把类型判断、转换和组件读取合在一起。JDK 20 中它是预览特性，编译与运行必须配套：
-
 ```powershell
 javac --release 20 --enable-preview RecordPatternDemo.java
 java --enable-preview RecordPatternDemo
 ```
 
 ### 使用嵌套 record pattern 读取嵌套数据
+
+嵌套模式适合小型、结构稳定的数据树；当校验逻辑复杂或需要多处复用时，先显式转换为局部变量通常更容易调试。
 
 ```java
 record Address(String city) {}
@@ -210,12 +212,11 @@ public class NestedRecordPatternDemo {
     }
 }
 ```
-
-嵌套模式适合小型、结构稳定的数据树；当校验逻辑复杂或需要多处复用时，先显式转换为局部变量通常更容易调试。
-
 ## 不常用但需要知道
 
 ### 声明泛型 record：组件也可以使用类型参数
+
+泛型 record 遵守普通泛型不变性；它适合作为通用返回值，但类型参数的约束仍需要写在声明或方法边界上。
 
 ```java
 record Pair<L, R>(L left, R right) {}
@@ -229,9 +230,9 @@ public class GenericRecordDemo {
 }
 ```
 
-泛型 record 遵守普通泛型不变性；它适合作为通用返回值，但类型参数的约束仍需要写在声明或方法边界上。
-
 ### 在 record 中声明静态成员和业务方法
+
+record 不是只能放字段的哑数据结构，可以声明静态工厂和派生方法；但状态仍应由组件表达，避免把 record 当作可变实体类使用。
 
 ```java
 record Celsius(double value) {
@@ -252,9 +253,9 @@ public class RecordMethodDemo {
 }
 ```
 
-record 不是只能放字段的哑数据结构，可以声明静态工厂和派生方法；但状态仍应由组件表达，避免把 record 当作可变实体类使用。
-
 ### 自定义 equals/hashCode：改变值语义前要谨慎
+
+可以覆盖自动生成的方法，但必须同时保持 equals 与 hashCode 契约；除非领域确实需要，否则优先使用默认的组件值比较。
 
 ```java
 record CaseInsensitiveName(String value) {
@@ -280,9 +281,9 @@ public class RecordEqualityDemo {
 }
 ```
 
-可以覆盖自动生成的方法，但必须同时保持 equals 与 hashCode 契约；除非领域确实需要，否则优先使用默认的组件值比较。
-
 ### 了解 record 的序列化边界
+
+record 可以声明实现 Serializable，但序列化兼容策略、组件版本演进和敏感字段保护仍由应用负责；不要因为声明了 record 就认为它天然适合长期持久化。
 
 ```java
 import java.io.Serializable;
@@ -296,9 +297,6 @@ public class RecordSerializableDemo {
     }
 }
 ```
-
-record 可以声明实现 Serializable，但序列化兼容策略、组件版本演进和敏感字段保护仍由应用负责；不要因为声明了 record 就认为它天然适合长期持久化。
-
 ## 简单案例
 
 ```java

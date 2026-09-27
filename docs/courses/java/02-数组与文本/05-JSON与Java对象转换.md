@@ -47,6 +47,8 @@ description: 使用 Hutool JSONUtil 完成 JSON 字符串、JavaBean、Map、数
 
 ### `JSONUtil.toJsonStr`：对象转 JSON 字符串
 
+可以序列化 JavaBean、集合和 Map；字段可见性、`null`、日期和自定义配置会影响结果。协议输出不要依赖未经约定的字段顺序。
+
 ```java
 import cn.hutool.json.JSONUtil;
 import java.util.LinkedHashMap;
@@ -60,9 +62,9 @@ System.out.println(json);
 // 输出：{"name":"Ann","age":18}
 ```
 
-可以序列化 JavaBean、集合和 Map；字段可见性、`null`、日期和自定义配置会影响结果。协议输出不要依赖未经约定的字段顺序。
-
 ### `JSONUtil.parseObj`：解析 JSONObject
+
+适合少量字段读取或先观察结构；字段缺失时要区分 `null`、默认值和“输入无效”，不要把动态读取当作完整校验。
 
 ```java
 import cn.hutool.json.JSONUtil;
@@ -73,9 +75,9 @@ System.out.println(name + ", " + object.getInt("age"));
 // 输出：Ann, 18
 ```
 
-适合少量字段读取或先观察结构；字段缺失时要区分 `null`、默认值和“输入无效”，不要把动态读取当作完整校验。
-
 ### `JSONUtil.parseArray`：解析 JSONArray
+
+输入根节点必须是数组；按索引读取前要考虑数组为空、元素不是对象以及字段缺失。
 
 ```java
 import cn.hutool.json.JSONUtil;
@@ -85,9 +87,9 @@ System.out.println(array.size() + ", " + array.getJSONObject(0).getStr("name"));
 // 输出：2, Ann
 ```
 
-输入根节点必须是数组；按索引读取前要考虑数组为空、元素不是对象以及字段缺失。
-
 ### `JSONUtil.toBean`：JSON 转 JavaBean
+
+把一个 JSON 对象映射为明确的 Bean，目标类应有可写属性或符合映射要求的构造方式；映射完成后仍应做必填、范围和权限校验。
 
 ```java
 import cn.hutool.json.JSONUtil;
@@ -102,9 +104,9 @@ System.out.println(user.name + ", " + user.age);
 // 输出：Ann, 18
 ```
 
-把一个 JSON 对象映射为明确的 Bean，目标类应有可写属性或符合映射要求的构造方式；映射完成后仍应做必填、范围和权限校验。
-
 ### `JSONUtil.toList`：JSON 数组转 `List<T>`
+
+显式传入元素类型，避免只得到原始 `List`；转换后要考虑空数组、元素类型和异常元素的错误处理。
 
 ```java
 import cn.hutool.json.JSONUtil;
@@ -120,9 +122,9 @@ System.out.println(users.get(0).name);
 // 输出：Ann
 ```
 
-显式传入元素类型，避免只得到原始 `List`；转换后要考虑空数组、元素类型和异常元素的错误处理。
-
 ### `JSONUtil.parse`：根据根节点解析 JSON
+
+返回更宽的 `JSON` 抽象，适合根节点形状暂时不确定的场景；确定协议后优先使用 `parseObj`、`parseArray` 或 `toBean`。
 
 ```java
 import cn.hutool.json.JSON;
@@ -133,9 +135,9 @@ System.out.println(parsed.getClass().getSimpleName());
 // 输出：JSONArray
 ```
 
-返回更宽的 `JSON` 抽象，适合根节点形状暂时不确定的场景；确定协议后优先使用 `parseObj`、`parseArray` 或 `toBean`。
-
 ### `JSONUtil.toBean` + `TypeReference`：转换嵌套泛型
+
+`Class<T>` 无法表达 `Map<String, List<User>>` 等嵌套参数，使用 `TypeReference` 捕获泛型，并明确 `ignoreError` 等错误策略。
 
 ```java
 import cn.hutool.core.lang.TypeReference;
@@ -154,9 +156,9 @@ System.out.println(grouped.get("admins").get(0).name);
 // 输出：Ann
 ```
 
-`Class<T>` 无法表达 `Map<String, List<User>>` 等嵌套参数，使用 `TypeReference` 捕获泛型，并明确 `ignoreError` 等错误策略。
-
 ### `JSONUtil.toJsonStr` + `toBean`：复制一个对象
+
+序列化再映射可以得到独立对象，但性能、字段丢失、日期和嵌套引用都要评估；它不是通用深复制保证。
 
 ```java
 import cn.hutool.json.JSONUtil;
@@ -173,9 +175,9 @@ System.out.println(copy.name + ", same=" + (source == copy));
 // 输出：Ann, same=false
 ```
 
-序列化再映射可以得到独立对象，但性能、字段丢失、日期和嵌套引用都要评估；它不是通用深复制保证。
-
 ### `JSONConfig.setDateFormat`：固定日期文本格式
+
+日期格式、时区和类型转换必须由项目协议明确约定；跨服务优先考虑带时区的 ISO-8601，而不是依赖机器默认时区。
 
 ```java
 import cn.hutool.json.JSONConfig;
@@ -187,12 +189,11 @@ String json = JSONUtil.toJsonStr(java.util.Map.of("date", new Date(0)), config);
 System.out.println(config.getDateFormat());
 // 输出：yyyy-MM-dd HH:mm:ss
 ```
-
-日期格式、时区和类型转换必须由项目协议明确约定；跨服务优先考虑带时区的 ISO-8601，而不是依赖机器默认时区。
-
 ## 不常用但需要知道
 
 ### `JSONUtil.toJsonPrettyStr`：输出缩进 JSON
+
+适合日志和人工阅读，不建议把带缩进的文本直接当作高频网络协议格式。
 
 ```java
 import cn.hutool.json.JSONUtil;
@@ -203,9 +204,9 @@ System.out.println(pretty.contains("\n"));
 // 输出：true
 ```
 
-适合日志和人工阅读，不建议把带缩进的文本直接当作高频网络协议格式。
-
 ### `JSONUtil.readJSON`：从文件读取 JSON
+
+快捷读取仍需自行处理文件不存在、文件大小、权限、字符集和异常；不应把本地文件内容直接当作可信输入。
 
 ```java
 import cn.hutool.json.JSON;
@@ -218,9 +219,9 @@ System.out.println(json != null);
 // 输出：true
 ```
 
-快捷读取仍需自行处理文件不存在、文件大小、权限、字符集和异常；不应把本地文件内容直接当作可信输入。
-
 ### `JSONUtil.parseObj`：从动态对象读取嵌套结构
+
+动态容器适合渐进式读取，但嵌套字段较多时容易出现空指针或类型假设；稳定协议优先映射成 Bean。
 
 ```java
 import cn.hutool.json.JSONUtil;
@@ -231,9 +232,9 @@ System.out.println(name);
 // 输出：Ann
 ```
 
-动态容器适合渐进式读取，但嵌套字段较多时容易出现空指针或类型假设；稳定协议优先映射成 Bean。
-
 ### `JSONUtil.toList`：读取标量列表
+
+元素不是对象时同样要显式声明类型；类型转换失败不要用空列表掩盖输入错误。
 
 ```java
 import cn.hutool.json.JSONUtil;
@@ -243,9 +244,6 @@ List<Integer> values = JSONUtil.toList(JSONUtil.parseArray("[1, 2, 3]"), Integer
 System.out.println(values);
 // 输出：[1, 2, 3]
 ```
-
-元素不是对象时同样要显式声明类型；类型转换失败不要用空列表掩盖输入错误。
-
 ## 常见边界
 
 - **字段缺失**：引用字段通常保持 `null`，基本类型可能是默认值；这不等于输入完整，接口边界仍应做必填校验。

@@ -38,6 +38,8 @@ description: 建立 JVM 运行时内存区、对象生命周期和类加载初�
 
 ### 堆与栈：对象引用和栈帧
 
+局部变量 `value` 和 `sum` 属于当前线程的栈帧视角，String 对象通常在堆上；具体分配会受 JVM 优化影响，不能用这张图反推每个对象的物理位置。
+
 ```java
 public class HeapStackDemo {
     static int add(int left, int right) {
@@ -53,9 +55,9 @@ public class HeapStackDemo {
 }
 ```
 
-局部变量 `value` 和 `sum` 属于当前线程的栈帧视角，String 对象通常在堆上；具体分配会受 JVM 优化影响，不能用这张图反推每个对象的物理位置。
-
 ### Runtime：观察当前进程的内存上限
+
+Runtime 的数值受启动参数和容器限制影响，适合做运行时观测，不能直接当成“应用实际可用内存”或据此盲目调大堆。
 
 ```java
 public class RuntimeMemoryDemo {
@@ -69,9 +71,9 @@ public class RuntimeMemoryDemo {
 }
 ```
 
-Runtime 的数值受启动参数和容器限制影响，适合做运行时观测，不能直接当成“应用实际可用内存”或据此盲目调大堆。
-
 ### 类字面量：获取 Class 而不初始化
+
+使用 `Service.class` 取得 Class 通常不会触发 Service 的初始化；主动使用静态字段、静态方法或反射初始化时机要另行判断。
 
 ```java
 public class ClassLiteralDemo {
@@ -90,9 +92,9 @@ public class ClassLiteralDemo {
 }
 ```
 
-使用 `Service.class` 取得 Class 通常不会触发 Service 的初始化；主动使用静态字段、静态方法或反射初始化时机要另行判断。
-
 ### Class.forName：选择是否初始化
+
+`Class.forName(name, false, loader)` 只加载并链接，不主动初始化；传 true 或直接使用需要初始化的静态成员时才可能执行 `<clinit>`。动态类名错误会抛 ClassNotFoundException。
 
 ```java
 public class ClassForNameDemo {
@@ -111,9 +113,9 @@ public class ClassForNameDemo {
 }
 ```
 
-`Class.forName(name, false, loader)` 只加载并链接，不主动初始化；传 true 或直接使用需要初始化的静态成员时才可能执行 `<clinit>`。动态类名错误会抛 ClassNotFoundException。
-
 ### ClassLoader：查看类的定义加载器
+
+核心类通常由 bootstrap loader 定义，因此 `getClassLoader()` 返回 null；应用类通常由应用类加载器定义。类加载器层次与模块、容器和插件隔离有关。
 
 ```java
 public class ClassLoaderDemo {
@@ -125,9 +127,9 @@ public class ClassLoaderDemo {
 }
 ```
 
-核心类通常由 bootstrap loader 定义，因此 `getClassLoader()` 返回 null；应用类通常由应用类加载器定义。类加载器层次与模块、容器和插件隔离有关。
-
 ### 静态初始化：类首次主动使用时执行
+
+初始化由 JVM 保证在类初始化期间串行执行一次；如果 `<clinit>` 抛错，后续主动使用可能得到 ExceptionInInitializerError 或 NoClassDefFoundError。
 
 ```java
 public class ClassInitializationDemo {
@@ -147,9 +149,9 @@ public class ClassInitializationDemo {
 }
 ```
 
-初始化由 JVM 保证在类初始化期间串行执行一次；如果 `<clinit>` 抛错，后续主动使用可能得到 ExceptionInInitializerError 或 NoClassDefFoundError。
-
 ### DirectByteBuffer：堆外缓冲的边界
+
+直接缓冲区的内容不在普通 Java 堆中，适合与本地 I/O 交互；它仍受本地内存和 `MaxDirectMemorySize` 等边界影响，忘记释放引用也会造成压力。
 
 ```java
 import java.nio.ByteBuffer;
@@ -163,12 +165,11 @@ public class DirectMemoryDemo {
     }
 }
 ```
-
-直接缓冲区的内容不在普通 Java 堆中，适合与本地 I/O 交互；它仍受本地内存和 `MaxDirectMemorySize` 等边界影响，忘记释放引用也会造成压力。
-
 ## 不常用但需要知道
 
 ### Class.forName 初始化 true/false 对比
+
+反射加载的初始化开关适合框架启动和插件探测；不要在静态初始化块中执行不可控 I/O，否则类初始化失败可能阻断整个调用链。
 
 ```java
 public class ClassInitializationFlagDemo {
@@ -187,9 +188,9 @@ public class ClassInitializationFlagDemo {
 }
 ```
 
-反射加载的初始化开关适合框架启动和插件探测；不要在静态初始化块中执行不可控 I/O，否则类初始化失败可能阻断整个调用链。
-
 ### 弱引用与类卸载线索
+
+弱引用只能说明对象是否仍被强引用；GC 时机不确定，不能用一次 `get()` 断言对象一定会被回收。类卸载还要求对应 ClassLoader、Class 元数据和实例都不可达。
 
 ```java
 import java.lang.ref.WeakReference;
@@ -205,9 +206,9 @@ public class ClassUnloadHintDemo {
 }
 ```
 
-弱引用只能说明对象是否仍被强引用；GC 时机不确定，不能用一次 `get()` 断言对象一定会被回收。类卸载还要求对应 ClassLoader、Class 元数据和实例都不可达。
-
 ### 线程栈溢出：递归没有终止
+
+实际无限递归会导致 StackOverflowError，栈大小由 `-Xss` 影响；它不是堆溢出，应从递归深度、调用链和每帧局部变量着手诊断。
 
 ```java
 public class StackOverflowHintDemo {
@@ -225,9 +226,9 @@ public class StackOverflowHintDemo {
 }
 ```
 
-实际无限递归会导致 StackOverflowError，栈大小由 `-Xss` 影响；它不是堆溢出，应从递归深度、调用链和每帧局部变量着手诊断。
-
 ### 元空间边界：类元数据不是普通堆对象
+
+动态生成大量类、重复创建 ClassLoader 或框架代理可能耗尽元空间；只调大堆不能解决。需要结合 `jcmd <pid> VM.native_memory summary`（若开启 NMT）和类加载统计确认来源。
 
 ```java
 public class MetaspaceHintDemo {
@@ -237,9 +238,6 @@ public class MetaspaceHintDemo {
     }
 }
 ```
-
-动态生成大量类、重复创建 ClassLoader 或框架代理可能耗尽元空间；只调大堆不能解决。需要结合 `jcmd <pid> VM.native_memory summary`（若开启 NMT）和类加载统计确认来源。
-
 ## 简单案例
 
 ```java

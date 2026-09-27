@@ -37,6 +37,8 @@ Stream 像一条尚未开机的流水线：中间操作只描述步骤，遇到�
 
 ### `Collection.stream`/`Stream.of`：创建顺序流
 
+流是数据源的处理视图，不会复制或持久化集合；同一条流消费后不能再次使用。
+
 ```java
 import java.util.List;
 import java.util.stream.Stream;
@@ -48,9 +50,9 @@ System.out.println(fromCollection + ", " + fromValues);
 // 输出：2, 2
 ```
 
-流是数据源的处理视图，不会复制或持久化集合；同一条流消费后不能再次使用。
-
 ### `filter`：保留满足条件的元素
+
+`filter` 不改变源集合，多个条件可以串联；谓词应尽量无副作用。
 
 ```java
 import java.util.List;
@@ -62,9 +64,9 @@ System.out.println(result);
 // 输出：[2, 4]
 ```
 
-`filter` 不改变源集合，多个条件可以串联；谓词应尽量无副作用。
-
 ### `map`：一进一出的转换
+
+每个输入对应一个输出，适合字段提取和类型转换；一对多转换不要硬塞进 `map`。
 
 ```java
 import java.util.List;
@@ -76,9 +78,9 @@ System.out.println(labels);
 // 输出：[JAVA, SQL]
 ```
 
-每个输入对应一个输出，适合字段提取和类型转换；一对多转换不要硬塞进 `map`。
-
 ### `flatMap`：展开嵌套流
+
+`flatMap` 把每个元素产生的子流合并成一层；子流为 `null` 时应改成 `Stream.empty()`，不要让管道抛异常。
 
 ```java
 import java.util.List;
@@ -89,9 +91,9 @@ System.out.println(all);
 // 输出：[java, sql, http]
 ```
 
-`flatMap` 把每个元素产生的子流合并成一层；子流为 `null` 时应改成 `Stream.empty()`，不要让管道抛异常。
-
 ### `distinct`：按 `equals` 去重
+
+去重依赖元素的 `equals`/`hashCode` 契约，并保持顺序流中首次出现的顺序。
 
 ```java
 import java.util.List;
@@ -101,9 +103,9 @@ System.out.println(unique);
 // 输出：[java, sql]
 ```
 
-去重依赖元素的 `equals`/`hashCode` 契约，并保持顺序流中首次出现的顺序。
-
 ### `sorted`：排序流元素
+
+排序是有状态操作，可能需要缓存全部元素；比较器必须与业务排序规则一致。
 
 ```java
 import java.util.Comparator;
@@ -116,9 +118,9 @@ System.out.println(sorted);
 // 输出：[C, Go, Java]
 ```
 
-排序是有状态操作，可能需要缓存全部元素；比较器必须与业务排序规则一致。
-
 ### `limit`/`skip`：截取流的一段
+
+`skip` 先跳过前 N 个，`limit` 再取最多 N 个；分页前要明确排序，否则数据源顺序变化会导致结果漂移。
 
 ```java
 import java.util.stream.IntStream;
@@ -128,9 +130,9 @@ System.out.println(page);
 // 输出：[4, 5, 6, 7]
 ```
 
-`skip` 先跳过前 N 个，`limit` 再取最多 N 个；分页前要明确排序，否则数据源顺序变化会导致结果漂移。
-
 ### `peek`：调试流水线中的元素
+
+`peek` 仍然是惰性的，只有终止操作触发才会执行；生产逻辑不要依赖它完成关键副作用。
 
 ```java
 import java.util.ArrayList;
@@ -147,9 +149,9 @@ System.out.println(result);
 // 输出：[2, 4, 6]
 ```
 
-`peek` 仍然是惰性的，只有终止操作触发才会执行；生产逻辑不要依赖它完成关键副作用。
-
 ### `reduce`：把元素归约成一个值
+
+并行归约要求累加器满足结合律、尽量无副作用；复杂可变聚合优先考虑 `collect`。
 
 ```java
 import java.util.List;
@@ -159,9 +161,9 @@ System.out.println(total);
 // 输出：10
 ```
 
-并行归约要求累加器满足结合律、尽量无副作用；复杂可变聚合优先考虑 `collect`。
-
 ### `anyMatch`/`allMatch`/`noneMatch`：匹配并短路
+
+匹配操作可能提前结束，适合存在性和约束检查；空流对 `allMatch`/`noneMatch` 的结果分别是 `true`。
 
 ```java
 import java.util.List;
@@ -175,9 +177,9 @@ System.out.println(numbers.stream().noneMatch(number -> number < 0));
 // 输出：true
 ```
 
-匹配操作可能提前结束，适合存在性和约束检查；空流对 `allMatch`/`noneMatch` 的结果分别是 `true`。
-
 ### `findFirst`/`findAny`：查找元素
+
+`findFirst` 保留顺序语义，`findAny` 更适合并行流且不保证具体元素；结果为空时通过 `Optional` 表达。
 
 ```java
 import java.util.List;
@@ -188,9 +190,9 @@ System.out.println(first + ", " + any);
 // 输出：a, a 或 b
 ```
 
-`findFirst` 保留顺序语义，`findAny` 更适合并行流且不保证具体元素；结果为空时通过 `Optional` 表达。
-
 ### `forEach`/`forEachOrdered`：遍历并执行动作
+
+`forEach` 适合末端通知或打印；需要并行流中的遇到顺序时才用 `forEachOrdered`，不要用它代替收集。
 
 ```java
 import java.util.List;
@@ -200,9 +202,9 @@ List.of("a", "b").stream().forEach(System.out::println);
 // 输出：b
 ```
 
-`forEach` 适合末端通知或打印；需要并行流中的遇到顺序时才用 `forEachOrdered`，不要用它代替收集。
-
 ### `toList`：得到不可变结果列表
+
+JDK 16 的 `Stream.toList()` 返回不可修改列表；需要可变列表时使用 `collect(Collectors.toCollection(ArrayList::new))`。
 
 ```java
 import java.util.List;
@@ -212,9 +214,9 @@ System.out.println(result);
 // 输出：[A, B]
 ```
 
-JDK 16 的 `Stream.toList()` 返回不可修改列表；需要可变列表时使用 `collect(Collectors.toCollection(ArrayList::new))`。
-
 ### `collect`：使用收集器汇总结果
+
+`collect` 适合把流变成列表、Map、分组或统计结果，具体收集器可查 [Collectors 收集器速查](./05-Collectors收集器速查)。
 
 ```java
 import java.util.List;
@@ -224,12 +226,11 @@ var result = List.of("java", "sql").stream().collect(Collectors.joining(", "));
 System.out.println(result);
 // 输出：java, sql
 ```
-
-`collect` 适合把流变成列表、Map、分组或统计结果，具体收集器可查 [Collectors 收集器速查](./05-Collectors收集器速查)。
-
 ## 不常用但需要知道
 
 ### 流不可复用：终止操作后必须重新创建
+
+需要多个结果时保留源集合，或者为每次计算重新调用 `stream()`。
 
 ```java
 import java.util.List;
@@ -246,9 +247,9 @@ try {
 }
 ```
 
-需要多个结果时保留源集合，或者为每次计算重新调用 `stream()`。
-
 ### 有副作用的 `forEach`：不要并发写普通集合
+
+顺序流中这个例子可运行，但切换成并行流后普通 `ArrayList` 不提供安全性；优先使用 `toList` 或 `collect`。
 
 ```java
 import java.util.ArrayList;
@@ -260,9 +261,9 @@ System.out.println(target.size());
 // 输出：3
 ```
 
-顺序流中这个例子可运行，但切换成并行流后普通 `ArrayList` 不提供安全性；优先使用 `toList` 或 `collect`。
-
 ### `parallel()`/`parallelStream()`：显式并行边界
+
+并行不等于更快；小数据、阻塞 I/O、顺序敏感和共享状态场景通常应保持串行，并用基准测试验证收益。
 
 ```java
 import java.util.List;
@@ -274,9 +275,9 @@ System.out.println(count);
 // 输出：2
 ```
 
-并行不等于更快；小数据、阻塞 I/O、顺序敏感和共享状态场景通常应保持串行，并用基准测试验证收益。
-
 ### `unordered`：声明不需要遇到顺序
+
+只有业务确实不关心顺序时才使用，否则可能破坏 `findFirst`、排序或分页语义。
 
 ```java
 import java.util.List;
@@ -286,9 +287,9 @@ System.out.println(count);
 // 输出：3
 ```
 
-只有业务确实不关心顺序时才使用，否则可能破坏 `findFirst`、排序或分页语义。
-
 ### `onClose`/`close`：管理特殊流资源
+
+普通集合流不需要手动关闭；读取文件等拥有资源的流才应使用 try-with-resources。
 
 ```java
 import java.util.ArrayList;
@@ -303,9 +304,6 @@ try (Stream<String> stream = Stream.of("a").onClose(() -> events.add("closed")))
 System.out.println(events);
 // 输出：[closed]
 ```
-
-普通集合流不需要手动关闭；读取文件等拥有资源的流才应使用 try-with-resources。
-
 ## 专题导航
 
 - 需要分组、聚合、扁平化嵌套数据，查看 [Stream 分组聚合与扁平化](./06-Stream分组聚合与扁平化)。

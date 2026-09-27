@@ -35,6 +35,8 @@ Buffer 不是“自动增长的集合”，写入前要留意容量，读写模�
 
 ### `ByteBuffer.allocate` 与 `put`
 
+`allocate` 创建堆缓冲区，`position` 会随着写入前进；写入超出容量会抛 `BufferOverflowException`，容量要按协议或分块策略规划。
+
 ```java
 import java.nio.ByteBuffer;
 
@@ -48,9 +50,9 @@ public class ByteBufferPutDemo {
 }
 ```
 
-`allocate` 创建堆缓冲区，`position` 会随着写入前进；写入超出容量会抛 `BufferOverflowException`，容量要按协议或分块策略规划。
-
 ### `flip`：从写模式切换到读模式
+
+`flip` 把当前 position 变成 limit，再把 position 归零；每次写完准备读都要正确切换，否则读到的可能是空区间。
 
 ```java
 import java.nio.ByteBuffer;
@@ -66,9 +68,9 @@ public class ByteBufferFlipDemo {
 }
 ```
 
-`flip` 把当前 position 变成 limit，再把 position 归零；每次写完准备读都要正确切换，否则读到的可能是空区间。
-
 ### `get` 与 `hasRemaining`：读取有效数据
+
+`hasRemaining` 判断 position 是否小于 limit；相对 `get()` 会推进 position，绝对 `get(index)` 不会改变游标。
 
 ```java
 import java.nio.ByteBuffer;
@@ -86,9 +88,9 @@ public class ByteBufferGetDemo {
 }
 ```
 
-`hasRemaining` 判断 position 是否小于 limit；相对 `get()` 会推进 position，绝对 `get(index)` 不会改变游标。
-
 ### `clear` 与 `compact`：准备复用缓冲区
+
+`clear` 丢弃尚未读取的内容并准备全量重写；`compact` 保留剩余内容并把它移到缓冲区开头，适合处理半包协议。
 
 ```java
 import java.nio.ByteBuffer;
@@ -108,9 +110,9 @@ public class ByteBufferReuseDemo {
 }
 ```
 
-`clear` 丢弃尚未读取的内容并准备全量重写；`compact` 保留剩余内容并把它移到缓冲区开头，适合处理半包协议。
-
 ### `rewind`、`mark` 与 `reset`
+
+`rewind` 只把 position 归零并保留 limit，`mark/reset` 用于短暂回看；调用 `clear`、`flip` 等状态操作后 mark 可能失效。
 
 ```java
 import java.nio.ByteBuffer;
@@ -128,9 +130,9 @@ public class ByteBufferMarkDemo {
 }
 ```
 
-`rewind` 只把 position 归零并保留 limit，`mark/reset` 用于短暂回看；调用 `clear`、`flip` 等状态操作后 mark 可能失效。
-
 ### `FileChannel.read`：分块读取文件
+
+`read` 返回实际读到的字节数，`-1` 表示 EOF；不能假设一次 read 会填满 Buffer 或读完文件。
 
 ```java
 import java.nio.ByteBuffer;
@@ -154,9 +156,9 @@ public class FileChannelReadDemo {
 }
 ```
 
-`read` 返回实际读到的字节数，`-1` 表示 EOF；不能假设一次 read 会填满 Buffer 或读完文件。
-
 ### `FileChannel.write`：循环写出 Buffer
+
+`write` 也可能只消费部分 Buffer；循环 `hasRemaining` 是可靠写出模式。需要强制落盘时再考虑 `force` 的成本。
 
 ```java
 import java.nio.ByteBuffer;
@@ -181,9 +183,9 @@ public class FileChannelWriteDemo {
 }
 ```
 
-`write` 也可能只消费部分 Buffer；循环 `hasRemaining` 是可靠写出模式。需要强制落盘时再考虑 `force` 的成本。
-
 ### `FileChannel.position` 与随机访问
+
+随机访问适合固定格式文件和分块任务；多个线程共享同一 Channel 时要明确 position 是否共享，必要时使用带 position 参数的读写方法。
 
 ```java
 import java.nio.ByteBuffer;
@@ -209,9 +211,9 @@ public class FileChannelPositionDemo {
 }
 ```
 
-随机访问适合固定格式文件和分块任务；多个线程共享同一 Channel 时要明确 position 是否共享，必要时使用带 position 参数的读写方法。
-
 ### `transferTo` 与 `transferFrom`：通道间传输
+
+通道传输可减少用户态复制，但返回值仍可能小于请求长度，跨平台和大文件场景要循环传输。
 
 ```java
 import java.nio.channels.FileChannel;
@@ -236,9 +238,9 @@ public class FileChannelTransferDemo {
 }
 ```
 
-通道传输可减少用户态复制，但返回值仍可能小于请求长度，跨平台和大文件场景要循环传输。
-
 ### `FileChannel.map`：内存映射文件
+
+映射适合随机访问大文件，但会占用虚拟地址空间，生命周期和刷盘语义也更复杂；不要把它当成所有文件读取的默认方案。
 
 ```java
 import java.nio.channels.FileChannel;
@@ -260,9 +262,9 @@ public class MappedByteBufferDemo {
 }
 ```
 
-映射适合随机访问大文件，但会占用虚拟地址空间，生命周期和刷盘语义也更复杂；不要把它当成所有文件读取的默认方案。
-
 ### `Selector`：注册非阻塞 Channel
+
+Selector 只对支持非阻塞模式的网络 Channel 有意义；事件循环必须处理 key 失效、异常、读写部分完成和唤醒。
 
 ```java
 import java.nio.channels.Selector;
@@ -280,12 +282,11 @@ public class SelectorRegisterDemo {
     }
 }
 ```
-
-Selector 只对支持非阻塞模式的网络 Channel 有意义；事件循环必须处理 key 失效、异常、读写部分完成和唤醒。
-
 ## 不常用但需要知道
 
 ### `ByteBuffer.allocateDirect`：堆外缓冲
+
+Direct Buffer 可能减少 native I/O 的复制，但分配和回收成本更高；只有在长期、批量的底层 I/O 场景中经验证后才使用。
 
 ```java
 import java.nio.ByteBuffer;
@@ -300,9 +301,9 @@ public class DirectBufferDemo {
 }
 ```
 
-Direct Buffer 可能减少 native I/O 的复制，但分配和回收成本更高；只有在长期、批量的底层 I/O 场景中经验证后才使用。
-
 ### `slice` 与 `duplicate`：共享或复制游标视图
+
+`slice` 和 `duplicate` 共享底层数据但有独立游标；视图变化会影响源 Buffer 的内容，线程共享时尤其要明确所有权。
 
 ```java
 import java.nio.ByteBuffer;
@@ -319,9 +320,9 @@ public class BufferViewDemo {
 }
 ```
 
-`slice` 和 `duplicate` 共享底层数据但有独立游标；视图变化会影响源 Buffer 的内容，线程共享时尤其要明确所有权。
-
 ### `asReadOnlyBuffer`：只读视图
+
+只读视图防止通过该引用修改内容，但不能阻止源 Buffer 修改底层数组；需要真正隔离时复制数据。
 
 ```java
 import java.nio.ByteBuffer;
@@ -335,9 +336,9 @@ public class ReadOnlyBufferDemo {
 }
 ```
 
-只读视图防止通过该引用修改内容，但不能阻止源 Buffer 修改底层数组；需要真正隔离时复制数据。
-
 ### `ScatteringByteChannel` 与 `GatheringByteChannel`
+
+Scatter/gather 适合固定头部加主体等协议格式；Buffer 数组的顺序、剩余量和部分写入都要由调用方管理。
 
 ```java
 import java.nio.ByteBuffer;
@@ -359,9 +360,9 @@ public class ScatterGatherDemo {
 }
 ```
 
-Scatter/gather 适合固定头部加主体等协议格式；Buffer 数组的顺序、剩余量和部分写入都要由调用方管理。
-
 ### `AsynchronousFileChannel`：异步文件操作
+
+异步 Channel 的 completion handler/future 让等待方式不同，但不代表磁盘本身一定并行；需要结合线程池、队列和取消策略测量。
 
 ```java
 import java.nio.ByteBuffer;
@@ -383,9 +384,6 @@ public class AsyncFileChannelDemo {
     }
 }
 ```
-
-异步 Channel 的 completion handler/future 让等待方式不同，但不代表磁盘本身一定并行；需要结合线程池、队列和取消策略测量。
-
 ## 简单案例
 
 ```java

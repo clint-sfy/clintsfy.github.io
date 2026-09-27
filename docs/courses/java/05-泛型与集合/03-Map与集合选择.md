@@ -107,6 +107,8 @@ public class MapChoiceOverviewDemo {
 
 ### 按 key 的稳定性选择不可变键
 
+优先使用 String、数字或 record 作为 key；可变 key 放入后不要修改参与 equals/hashCode 的字段。
+
 ```java
 import java.util.HashMap;
 import java.util.Map;
@@ -123,9 +125,9 @@ public class MapStableKeyDemo {
 }
 ```
 
-优先使用 String、数字或 record 作为 key；可变 key 放入后不要修改参与 equals/hashCode 的字段。
-
 ### 用 entrySet 遍历键值
+
+entrySet 同时提供 key 和 value；只需要键或值时才使用 keySet 或 values。
 
 ```java
 import java.util.LinkedHashMap;
@@ -141,12 +143,11 @@ public class MapEntryOverviewDemo {
     }
 }
 ```
-
-entrySet 同时提供 key 和 value；只需要键或值时才使用 keySet 或 values。
-
 ## 不常用但需要知道
 
 ### Map.of 和 Map.copyOf：不可变 Map
+
+不可变工厂拒绝 null；Map.copyOf 复制容器结构但不会深复制键和值对象。
 
 ```java
 import java.util.Map;
@@ -161,9 +162,9 @@ public class MapImmutableOverviewDemo {
 }
 ```
 
-不可变工厂拒绝 null；Map.copyOf 复制容器结构但不会深复制键和值对象。
-
 ### LinkedHashMap 访问顺序：LRU 基础
+
+访问顺序只维护最近访问排列，不自动实现容量淘汰；完整边界见 Map 常用 API。
 
 ```java
 import java.util.LinkedHashMap;
@@ -181,9 +182,9 @@ public class MapAccessOrderOverviewDemo {
 }
 ```
 
-访问顺序只维护最近访问排列，不自动实现容量淘汰；完整边界见 Map 常用 API。
-
 ### ConcurrentHashMap：并发单键操作
+
+ConcurrentHashMap 不接受 null；merge、computeIfAbsent 的原子性以单键操作为边界，跨键流程仍需要锁或事务协调。
 
 ```java
 import java.util.concurrent.ConcurrentHashMap;
@@ -197,9 +198,6 @@ public class ConcurrentMapOverviewDemo {
     }
 }
 ```
-
-ConcurrentHashMap 不接受 null；merge、computeIfAbsent 的原子性以单键操作为边界，跨键流程仍需要锁或事务协调。
-
 ## 简单案例
 
 ```java

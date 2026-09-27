@@ -37,6 +37,8 @@ JMM 不是“每个线程都有一份永久独立内存”的实现承诺，而�
 
 ### volatile：发布状态标志
 
+volatile 读写具有可见性和有序性，适合停止标志、配置快照引用等单变量发布。它不提供互斥，也不能保护 `count++`、检查再写入等复合操作。
+
 ```java
 public class VolatileFlagDemo {
     private static volatile boolean stopped;
@@ -52,9 +54,9 @@ public class VolatileFlagDemo {
 }
 ```
 
-volatile 读写具有可见性和有序性，适合停止标志、配置快照引用等单变量发布。它不提供互斥，也不能保护 `count++`、检查再写入等复合操作。
-
 ### synchronized：用锁建立可见性与互斥
+
+同一个监视器的 unlock→lock 建立 happens-before，并且临界区互斥。读写必须使用同一个锁对象；只给写方法加锁、读方法不加锁并不能形成完整的保护。
 
 ```java
 public class SynchronizedVisibilityDemo {
@@ -77,9 +79,9 @@ public class SynchronizedVisibilityDemo {
 }
 ```
 
-同一个监视器的 unlock→lock 建立 happens-before，并且临界区互斥。读写必须使用同一个锁对象；只给写方法加锁、读方法不加锁并不能形成完整的保护。
-
 ### Thread.start 与 join：线程之间的 happens-before
+
+启动前的写入对新线程可见，线程完成前的写入对成功 join 的线程可见。`join(timeout)` 超时返回时不代表后续写入已经可见或任务已经完成。
 
 ```java
 public class ThreadHappensBeforeDemo {
@@ -96,9 +98,9 @@ public class ThreadHappensBeforeDemo {
 }
 ```
 
-启动前的写入对新线程可见，线程完成前的写入对成功 join 的线程可见。`join(timeout)` 超时返回时不代表后续写入已经可见或任务已经完成。
-
 ### AtomicInteger：CAS 保证单变量更新
+
+CAS 会比较当前值，只有仍等于期望值才写入新值；失败时通常重试或走冲突路径。CAS 适合无锁更新独立状态，不代表任意多字段操作都能无锁完成。
 
 ```java
 import java.util.concurrent.atomic.AtomicInteger;
@@ -113,9 +115,9 @@ public class AtomicCasDemo {
 }
 ```
 
-CAS 会比较当前值，只有仍等于期望值才写入新值；失败时通常重试或走冲突路径。CAS 适合无锁更新独立状态，不代表任意多字段操作都能无锁完成。
-
 ### 安全发布：用不可变对象传递快照
+
+把不可变对象引用通过 volatile、锁、静态初始化或并发容器发布，可以让读取线程看到完整构造结果。只把普通可变对象引用放出去，仍可能被调用方绕过保护修改内部字段。
 
 ```java
 public class SafePublicationDemo {
@@ -130,9 +132,9 @@ public class SafePublicationDemo {
 }
 ```
 
-把不可变对象引用通过 volatile、锁、静态初始化或并发容器发布，可以让读取线程看到完整构造结果。只把普通可变对象引用放出去，仍可能被调用方绕过保护修改内部字段。
-
 ### Future.get：等待完成并取得可见结果
+
+Future 完成后调用 `get()` 能读取任务结果；如果只查询 `isDone()` 而不取结果，业务仍需要决定异常和取消如何传播。
 
 ```java
 import java.util.concurrent.Executors;
@@ -147,12 +149,11 @@ public class FutureHappensBeforeDemo {
     }
 }
 ```
-
-Future 完成后调用 `get()` 能读取任务结果；如果只查询 `isDone()` 而不取结果，业务仍需要决定异常和取消如何传播。
-
 ## 不常用但需要知道
 
 ### final 字段：构造完成后的特殊可见性
+
+final 字段在构造器正常完成后有额外的初始化安全保证，但不等于整个对象天然线程安全；可变字段和 `this` 逃逸仍需同步。
 
 ```java
 public class FinalFieldDemo {
@@ -175,9 +176,9 @@ public class FinalFieldDemo {
 }
 ```
 
-final 字段在构造器正常完成后有额外的初始化安全保证，但不等于整个对象天然线程安全；可变字段和 `this` 逃逸仍需同步。
-
 ### VarHandle：低层次内存访问工具
+
+VarHandle 可以精细选择普通、opaque、acquire/release 或 volatile 访问语义，常用于并发库和高性能底层组件。业务代码优先用 Atomic、Lock 和并发集合，避免自己组合错误的内存语义。
 
 ```java
 import java.lang.invoke.MethodHandles;
@@ -197,9 +198,9 @@ public class VarHandleDemo {
 }
 ```
 
-VarHandle 可以精细选择普通、opaque、acquire/release 或 volatile 访问语义，常用于并发库和高性能底层组件。业务代码优先用 Atomic、Lock 和并发集合，避免自己组合错误的内存语义。
-
 ### lazySet：较弱的最终发布
+
+`lazySet` 允许延迟传播，适合不需要立即同步观察的状态清理；若后续代码依赖写入马上对其他线程可见，使用普通 `set` 更直白。
 
 ```java
 import java.util.concurrent.atomic.AtomicInteger;
@@ -214,9 +215,9 @@ public class LazySetDemo {
 }
 ```
 
-`lazySet` 允许延迟传播，适合不需要立即同步观察的状态清理；若后续代码依赖写入马上对其他线程可见，使用普通 `set` 更直白。
-
 ### 数据竞争：没有同步就没有可靠推理
+
+单线程输出确定不代表多线程安全；并发地执行 `count++` 会拆成读、加一、写回，更新可能丢失。遇到数据竞争应先建立同步边界，再谈性能优化。
 
 ```java
 public class DataRaceDemo {
@@ -229,9 +230,6 @@ public class DataRaceDemo {
     }
 }
 ```
-
-单线程输出确定不代表多线程安全；并发地执行 `count++` 会拆成读、加一、写回，更新可能丢失。遇到数据竞争应先建立同步边界，再谈性能优化。
-
 ## 简单案例
 
 ```java

@@ -37,6 +37,8 @@ description: 使用 ReentrantLock 的超时、可中断、公平锁和 Condition
 
 ### lock/unlock：finally 释放锁
 
+`lock()` 返回后代表当前线程已经持有锁；即使临界区抛异常也必须释放。不要把 unlock 放在可能未成功加锁的路径上。
+
 ```java
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -54,9 +56,9 @@ public class LockFinallyDemo {
 }
 ```
 
-`lock()` 返回后代表当前线程已经持有锁；即使临界区抛异常也必须释放。不要把 unlock 放在可能未成功加锁的路径上。
-
 ### tryLock：有界地尝试获得锁
+
+tryLock 能避免无限等待，适合降级、重试或按锁顺序获取；超时分支必须有业务策略，不能静默丢请求。
 
 ```java
 import java.util.concurrent.TimeUnit;
@@ -80,9 +82,9 @@ public class TryLockDemo {
 }
 ```
 
-tryLock 能避免无限等待，适合降级、重试或按锁顺序获取；超时分支必须有业务策略，不能静默丢请求。
-
 ### lockInterruptibly：可响应中断地等待锁
+
+与不可中断的 `lock()` 相比，它允许上层取消等待；捕获 InterruptedException 后应决定退出、恢复中断或转成业务异常。
 
 ```java
 import java.util.concurrent.locks.ReentrantLock;
@@ -101,9 +103,9 @@ public class InterruptibleLockDemo {
 }
 ```
 
-与不可中断的 `lock()` 相比，它允许上层取消等待；捕获 InterruptedException 后应决定退出、恢复中断或转成业务异常。
-
 ### Condition.await/signalAll：条件队列
+
+await 必须在持有绑定 Lock 时调用；醒来后要 while 检查条件。多个 Condition 可以分别表示 notEmpty、notFull 等状态，减少无关线程唤醒。
 
 ```java
 import java.util.concurrent.locks.Condition;
@@ -145,9 +147,9 @@ public class ConditionDemo {
 }
 ```
 
-await 必须在持有绑定 Lock 时调用；醒来后要 while 检查条件。多个 Condition 可以分别表示 notEmpty、notFull 等状态，减少无关线程唤醒。
-
 ### ReentrantLock(boolean fair)：创建公平锁
+
+公平锁减少插队机会，但会增加排队和调度成本；默认非公平锁往往吞吐更好，先用指标证明需要公平性。
 
 ```java
 import java.util.concurrent.locks.ReentrantLock;
@@ -166,9 +168,9 @@ public class FairLockDemo {
 }
 ```
 
-公平锁减少插队机会，但会增加排队和调度成本；默认非公平锁往往吞吐更好，先用指标证明需要公平性。
-
 ### getHoldCount：查看当前线程的重入次数
+
+重入次数只用于诊断或断言，不能作为业务状态。每次成功 lock 都必须对应一次 unlock。
 
 ```java
 import java.util.concurrent.locks.ReentrantLock;
@@ -191,12 +193,11 @@ public class HoldCountDemo {
     }
 }
 ```
-
-重入次数只用于诊断或断言，不能作为业务状态。每次成功 lock 都必须对应一次 unlock。
-
 ## 不常用但需要知道
 
 ### Condition.awaitNanos：带剩余时间的等待
+
+超时等待可能被提前 signal 或中断，返回值只是剩余时间提示。业务条件仍需要在循环中检查，不应只依据返回值判定成功。
 
 ```java
 import java.util.concurrent.TimeUnit;
@@ -218,9 +219,9 @@ public class ConditionTimeoutDemo {
 }
 ```
 
-超时等待可能被提前 signal 或中断，返回值只是剩余时间提示。业务条件仍需要在循环中检查，不应只依据返回值判定成功。
-
 ### ReentrantReadWriteLock：读写锁
+
+读锁并行不等于一定更快；写频繁、读临界区很短或升级路径复杂时，普通锁可能更清晰。不要在持有读锁时直接申请写锁形成升级死锁。
 
 ```java
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -239,9 +240,9 @@ public class ReadWriteLockLowFrequencyDemo {
 }
 ```
 
-读锁并行不等于一定更快；写频繁、读临界区很短或升级路径复杂时，普通锁可能更清晰。不要在持有读锁时直接申请写锁形成升级死锁。
-
 ### StampedLock：乐观读并校验
+
+StampedLock 不可重入，乐观读必须 validate，失败后回退到读锁。只有读多写少且基准显示收益时才使用。
 
 ```java
 import java.util.concurrent.locks.StampedLock;
@@ -264,9 +265,6 @@ public class StampedLockLowFrequencyDemo {
     }
 }
 ```
-
-StampedLock 不可重入，乐观读必须 validate，失败后回退到读锁。只有读多写少且基准显示收益时才使用。
-
 ## 简单案例
 
 ```java

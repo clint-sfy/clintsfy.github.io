@@ -35,6 +35,8 @@ description: 从 I/O 类型选择开始，串起 Path、Files、字节流、字�
 
 ### `Path`、`Files` 与流 API 如何选择
 
+短文本用 `readString`/`writeString` 简洁；需要按行处理或文件可能很大时，使用 `Files.lines` 并关闭返回的流。完整 API 见 [Path 与 Files 常用 API](/courses/java/07-IO与网络/03-Path与Files常用API)。
+
 ```java
 import java.io.IOException;
 import java.nio.file.Files;
@@ -53,9 +55,9 @@ public class IoChoiceDemo {
 }
 ```
 
-短文本用 `readString`/`writeString` 简洁；需要按行处理或文件可能很大时，使用 `Files.lines` 并关闭返回的流。完整 API 见 [Path 与 Files 常用 API](/courses/java/07-IO与网络/03-Path与Files常用API)。
-
 ### 字节、字符与缓冲层的组合
+
+二进制协议从 `InputStream`/`OutputStream` 开始，文本再叠加 `Charset` 和 `Reader`/`Writer`；缓冲层只改善访问方式，不会替你修正错误编码。详见 [字节流、字符流与缓冲](/courses/java/07-IO与网络/04-字节流字符流与缓冲)。
 
 ```java
 import java.io.BufferedReader;
@@ -77,9 +79,9 @@ public class IoLayerChoiceDemo {
 }
 ```
 
-二进制协议从 `InputStream`/`OutputStream` 开始，文本再叠加 `Charset` 和 `Reader`/`Writer`；缓冲层只改善访问方式，不会替你修正错误编码。详见 [字节流、字符流与缓冲](/courses/java/07-IO与网络/04-字节流字符流与缓冲)。
-
 ### Buffer 与 Channel 的配合
+
+`Channel` 负责和文件或网络交换数据，`Buffer` 负责承载这批数据；写入 Buffer 后要 `flip()` 再读取。需要控制 position、limit 和零拷贝传输时阅读 [NIO Buffer 与 Channel](/courses/java/07-IO与网络/05-NIO-Buffer与Channel)。
 
 ```java
 import java.nio.ByteBuffer;
@@ -94,12 +96,11 @@ public class BufferChannelChoiceDemo {
     }
 }
 ```
-
-`Channel` 负责和文件或网络交换数据，`Buffer` 负责承载这批数据；写入 Buffer 后要 `flip()` 再读取。需要控制 position、limit 和零拷贝传输时阅读 [NIO Buffer 与 Channel](/courses/java/07-IO与网络/05-NIO-Buffer与Channel)。
-
 ## 不常用但需要知道
 
 ### `File` 与 `Path` 的兼容边界
+
+`File` 仍存在于旧库和旧签名中，但它的异常、属性和符号链接表达能力较弱；新代码从 `Path` 开始，需要兼容旧 API 时用 `toPath()` 或 `toFile()` 做边界转换。
 
 ```java
 import java.io.File;
@@ -115,9 +116,9 @@ public class FilePathBridgeDemo {
 }
 ```
 
-`File` 仍存在于旧库和旧签名中，但它的异常、属性和符号链接表达能力较弱；新代码从 `Path` 开始，需要兼容旧 API 时用 `toPath()` 或 `toFile()` 做边界转换。
-
 ### 序列化流的兼容与安全边界
+
+Java 原生序列化带有版本、类加载和反序列化执行风险；不应对不可信输入直接使用 `ObjectInputStream`，跨服务数据优先选择有明确格式和校验规则的协议。
 
 ```java
 import java.io.ByteArrayInputStream;
@@ -140,9 +141,9 @@ public class SerializationBoundaryDemo {
 }
 ```
 
-Java 原生序列化带有版本、类加载和反序列化执行风险；不应对不可信输入直接使用 `ObjectInputStream`，跨服务数据优先选择有明确格式和校验规则的协议。
-
 ### 路径规范化与安全检查
+
+`normalize()` 只消除 `.` 和 `..`，不会访问文件系统，也不会自动解决符号链接目录穿越；处理用户输入时还要结合绝对路径、真实路径和权限检查。网络输入的 HTTP 边界见 [HTTP Client 常用 API](/courses/java/07-IO与网络/06-HTTP-Client常用API)。
 
 ```java
 import java.nio.file.Path;
@@ -156,9 +157,6 @@ public class PathBoundaryDemo {
     }
 }
 ```
-
-`normalize()` 只消除 `.` 和 `..`，不会访问文件系统，也不会自动解决符号链接目录穿越；处理用户输入时还要结合绝对路径、真实路径和权限检查。网络输入的 HTTP 边界见 [HTTP Client 常用 API](/courses/java/07-IO与网络/06-HTTP-Client常用API)。
-
 ## 简单案例
 
 ```java
