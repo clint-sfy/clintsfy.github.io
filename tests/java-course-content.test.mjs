@@ -1020,6 +1020,56 @@ test('Spring backend batch exposes four article paths and content contracts', ()
   )
 })
 
+test('Spring backend references document runtime boundaries and compatibility baselines', () => {
+  const batchSpecs = BACKEND_ARTICLE_SPECS.filter((spec) =>
+    /\/13-后端工程\/0[1-4]-/u.test(spec.path),
+  )
+  const violations = []
+  const articles = new Map()
+
+  for (const spec of batchSpecs) {
+    try {
+      const article = readMarkdown(spec.path)
+      articles.set(spec.path, article.body)
+      for (const requiredText of [
+        'JDK 20',
+        'Java 17',
+        'Spring Boot 4.1.0',
+        'Spring Framework 7',
+        'jakarta.*',
+        'javax.*',
+        '框架片段需容器运行',
+      ]) {
+        if (!article.body.includes(requiredText)) {
+          violations.push(`${spec.path} [compatibility:${requiredText}] is missing`)
+        }
+      }
+    } catch (error) {
+      violations.push(`${spec.path} [article-read] ${error.message}`)
+    }
+  }
+
+  const iocBody = articles.get('docs/courses/java/13-后端工程/02-Spring-IoC与Bean生命周期.md') ?? ''
+  for (const requiredText of ['ProxyFactory', 'AopUtils.isAopProxy', 'AnnotationConfigApplicationContext', 'getBean(']) {
+    if (!iocBody.includes(requiredText)) {
+      violations.push(`docs/courses/java/13-后端工程/02-Spring-IoC与Bean生命周期.md [runtime:${requiredText}] is missing`)
+    }
+  }
+
+  const mvcBody = articles.get('docs/courses/java/13-后端工程/04-Spring-MVC与Servlet边界.md') ?? ''
+  for (const requiredText of ['flushBuffer()', 'isCommitted()', '输出：req-7/true']) {
+    if (!mvcBody.includes(requiredText)) {
+      violations.push(`docs/courses/java/13-后端工程/04-Spring-MVC与Servlet边界.md [servlet:${requiredText}] is missing`)
+    }
+  }
+
+  assert.deepEqual(
+    violations,
+    [],
+    `rule backend-runtime-boundaries${formatViolations(violations)}`,
+  )
+})
+
 test('Java course keeps the expected Markdown files, article counts, chapters, and baseline paths', () => {
   const markdownPaths = fg
     .sync(JAVA_GLOB, { cwd: REPO_ROOT, onlyFiles: true })

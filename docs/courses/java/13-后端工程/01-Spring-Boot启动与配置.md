@@ -34,6 +34,10 @@ Spring Boot 启动像组装一座工厂：先准备环境和属性，再扫描�
 
 配置文件只是输入，不是安全边界。密钥、密码等敏感值应由受控的环境变量或密钥服务注入，并限制日志输出。配置绑定成功也不代表业务值合理，端口、超时和列表长度仍应在应用层校验。自动配置节省样板代码，但显式 Bean 和条件顺序发生冲突时，要查看报告而不是盲目增加注解。
 
+### 版本与兼容基线
+
+本文按 JDK 20 的写法组织示例，使用的 `var`、record 等语法在 Java 17 已可用，不依赖 JDK 20 之后才出现的 API。项目兼容基线是 Java 17、Spring Boot 4.1.0 与 Spring Framework 7。Spring Boot 4 使用 Jakarta EE 命名空间，示例使用 `jakarta.*`，它替代旧版 `javax.*`；迁移旧项目时要以实际依赖版本为准。
+
 ## 常用用法
 
 ### @SpringBootApplication：启动入口
@@ -207,7 +211,7 @@ class FeatureConfiguration {
 }
 ```
 
-`application.yml` 可以提供 `feature.enabled: true` 和 `feature.retry-limit: 3`，绑定器负责把短横线键映射到 record 组件。生产部署应把 profile、环境变量和默认值写成可审计的配置清单；启动校验失败时让服务保持不可用，避免用错误默认值继续运行。
+框架片段需容器运行：`application.yml` 可以提供 `feature.enabled: true` 和 `feature.retry-limit: 3`，绑定器负责把短横线键映射到 record 组件。生产部署应把 profile、环境变量和默认值写成可审计的配置清单；启动校验失败时让服务保持不可用，避免用错误默认值继续运行。
 
 ## 易混点
 
@@ -244,4 +248,3 @@ class FeatureConfiguration {
 - 能说明配置文件、环境变量与 `Environment` 的读取边界。
 - 能用 `@ConfigurationProperties` 绑定带前缀的类型并设置默认值或约束。
 - 能区分启动失败根因、条件未满足和启动后初始化失败。
-

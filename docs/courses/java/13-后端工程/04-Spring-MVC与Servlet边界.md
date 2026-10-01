@@ -34,6 +34,10 @@ description: 速查 Spring MVC 路由、请求体、响应体、异常处理以�
 
 参数绑定只负责把输入放到方法参数，`@Valid`/`@Validated` 负责校验，安全授权由 Security 或方法安全负责，JSON 转换由消息转换器负责。把这些职责混在 Controller 中会让错误响应和边界行为不一致。读取或写入 response 后要尊重提交状态，不能在响应已经提交后再次改写头部。
 
+### 版本与兼容基线
+
+本文按 JDK 20 的写法组织示例，使用的 `var`、record 等语法在 Java 17 已可用，不依赖 JDK 20 之后才出现的 API。项目兼容基线是 Java 17、Spring Boot 4.1.0 与 Spring Framework 7。Spring Boot 4 使用 Jakarta EE 命名空间，示例使用 `jakarta.*`，它替代旧版 `javax.*`；迁移旧项目时要以实际依赖版本为准。
+
 ## 常用用法
 
 ### @RestController：声明 JSON 控制器
@@ -247,8 +251,9 @@ void inspect(HttpServletRequest request, HttpServletResponse response) throws Ex
     request.setAttribute("trace", "req-7");
     response.setContentType("text/plain;charset=UTF-8");
     response.getWriter().write("ok");
+    response.flushBuffer();
     System.out.println(request.getAttribute("trace") + "/" + response.isCommitted());
-    // 输出：req-7/false
+    // 输出：req-7/true
 }
 ```
 
@@ -286,7 +291,7 @@ class NoteController {
 }
 ```
 
-请求先经过 Filter，再由 `DispatcherServlet` 找到映射，消息转换器创建 `CreateNote`，校验通过后才调用 Controller。校验失败应由全局异常处理器转换成字段错误响应；授权、事务和持久化分别由对应层负责，不要把所有逻辑堆进方法体。
+框架片段需容器运行：请求先经过 Filter，再由 `DispatcherServlet` 找到映射，消息转换器创建 `CreateNote`，校验通过后才调用 Controller。校验失败应由全局异常处理器转换成字段错误响应；授权、事务和持久化分别由对应层负责，不要把所有逻辑堆进方法体。
 
 ## 易混点
 
@@ -323,4 +328,3 @@ class NoteController {
 - 能说明 Filter、Interceptor、DispatcherServlet 与 Controller 的先后关系。
 - 能用 `ResponseEntity` 设置状态码和头部，并识别响应提交后的限制。
 - 能把转换、校验、授权和持久化拆成独立责任。
-

@@ -34,6 +34,10 @@ IoC 容器像一张对象装配图：先读取 Bean 定义，再按依赖关系�
 
 默认 singleton 是“每个容器一个实例”，不是“整个 JVM 永远一个实例”。prototype Bean 由容器创建但通常不负责后续销毁；把短生命周期对象直接注入长生命周期对象时，要通过 provider 或代理解决生命周期错配。代理只拦截经过代理的调用，自调用通常绕过事务和切面。
 
+### 版本与兼容基线
+
+本文按 JDK 20 的写法组织示例，使用的 `var`、record 等语法在 Java 17 已可用，不依赖 JDK 20 之后才出现的 API。项目兼容基线是 Java 17、Spring Boot 4.1.0 与 Spring Framework 7。Spring Boot 4 使用 Jakarta EE 命名空间，示例使用 `jakarta.*`，它替代旧版 `javax.*`；迁移旧项目时要以实际依赖版本为准。
+
 ## 常用用法
 
 ### @Component/@Service：注册组件
@@ -174,16 +178,23 @@ prototype 的每次获取语义需要通过容器或 provider 才能体现；直
 用途：用于理解事务、缓存和安全切面为什么依赖代理，以及为什么自调用可能绕过拦截器。
 
 ```java
+import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.support.AopUtils;
+import org.aopalliance.intercept.MethodInterceptor;
 
 interface Greeting {
     String text();
 }
 
-Greeting target = () -> "hello";
-Greeting proxy = (Greeting) java.lang.reflect.Proxy.newProxyInstance(
-    Greeting.class.getClassLoader(), new Class<?>[] {Greeting.class},
-    (object, method, args) -> method.invoke(target, args));
+class GreetingTarget implements Greeting {
+    public String text() {
+        return "hello";
+    }
+}
+
+var factory = new ProxyFactory(new GreetingTarget());
+factory.addAdvice((MethodInterceptor) invocation -> invocation.proceed());
+Greeting proxy = (Greeting) factory.getProxy();
 System.out.println(AopUtils.isAopProxy(proxy) + "/" + proxy.text());
 // 输出：true/hello
 ```
@@ -215,16 +226,38 @@ class OptionalReporter {
 用途：用于推迟昂贵 Bean 的实例化或打破经过评估的初始化时序，但不能把它当成循环依赖的通用修复。
 
 ```java
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 
-@Lazy
-@Component
 class ExpensiveCatalog {
     ExpensiveCatalog() {
-        System.out.println("created-on-first-use");
-        // 输出：created-on-first-use
+        System.out.println("constructed-on-getBean");
+        // 输出：constructed-on-getBean
     }
+
+    String name() {
+        return "catalog";
+    }
+}
+
+@Configuration
+class LazyConfiguration {
+    @Bean
+    @Lazy
+    ExpensiveCatalog catalog() {
+        return new ExpensiveCatalog();
+    }
+}
+
+try (var context = new AnnotationConfigApplicationContext()) {
+    context.register(LazyConfiguration.class);
+    context.refresh();
+    System.out.println("refreshed");
+    // 输出：refreshed
+    System.out.println("lazy=" + context.getBean(ExpensiveCatalog.class).name());
+    // 输出：lazy=catalog
 }
 ```
 
@@ -295,7 +328,7 @@ System.out.println(new ProfileService(new Profile("dev")).name());
 // 输出：dev
 ```
 
-这里把必需依赖放进构造器，把不变量检查放在初始化回调；真正的 Spring 应用还要通过 `@Bean` 或配置属性提供 `Profile`。如果依赖是按请求变化的状态，应使用正确作用域或 provider，不能把它塞进 singleton 服务的可变字段。
+框架片段需容器运行：这里把必需依赖放进构造器，把不变量检查放在初始化回调。真正的 Spring 应用还要通过 `@Bean` 或配置属性提供 `Profile`。如果依赖是按请求变化的状态，应使用正确作用域或 provider，不能把它塞进 singleton 服务的可变字段。
 
 ## 易混点
 
@@ -332,4 +365,3 @@ System.out.println(new ProfileService(new Profile("dev")).name());
 - 能按实例化、注入、初始化和销毁顺序解释 Bean 生命周期。
 - 能说明 singleton、prototype、request 作用域的共享边界。
 - 能识别代理对象、自调用和循环依赖造成的常见误判。
-
