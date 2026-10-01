@@ -39,7 +39,7 @@ Jackson 3 使用 `tools.jackson` 命名空间，而 Jackson 2 使用 `com.faster
 
 ### 依赖与版本选择
 
-Jackson 2 的核心依赖通常包含 `com.fasterxml.jackson.core:jackson-databind`；Jackson 3 的 databind API 位于 `tools.jackson.databind`，具体 artifact 与 Spring Boot 版本绑定。不要在同一示例中混用两代 `ObjectMapper` 类型。Fastjson2 的常见依赖是 `com.alibaba.fastjson2:fastjson2`，Redis 端则以 Spring Data Redis 实际兼容的 serializer 为准。
+Jackson 2 的核心依赖通常包含 `com.fasterxml.jackson.core:jackson-databind`；Jackson 3 的类型迁移要按包族理解：`tools.jackson.core.*` 承载 core 类型，例如 `tools.jackson.core.JsonParser`；`tools.jackson.databind.*` 承载 `ObjectMapper`、`JsonSerializer` 和 `JsonDeserializer`，例如 `tools.jackson.databind.ObjectMapper`、`tools.jackson.databind.JsonSerializer`；databind 注解迁移到 `tools.jackson.databind.annotation.*`，例如 `tools.jackson.databind.annotation.JsonSerialize` 与 `tools.jackson.databind.annotation.JsonDeserialize`；但 `@JsonFormat` 与 `@JsonInclude` 仍从 `com.fasterxml.jackson.annotation.*` 导入，不能把所有 Jackson 注解都机械替换成 `tools.jackson.*`。具体 artifact 与 Spring Boot 版本绑定，不要在同一示例中混用两代 `ObjectMapper` 类型。Fastjson2 的常见依赖是 `com.alibaba.fastjson2:fastjson2`，Redis 端则以 Spring Data Redis 实际兼容的 serializer 为准。
 
 ## 常用用法
 
@@ -120,7 +120,11 @@ final class MaskedEmailSerializer extends JsonSerializer<String> {
     @Override
     public void serialize(String value, JsonGenerator gen, SerializerProvider provider)
         throws IOException {
-        gen.writeString(value.replaceAll("(?<=.).(?=[^@]*@)", "*"));
+        int at = value.indexOf('@');
+        String masked = at > 1
+            ? value.charAt(0) + "***" + value.substring(at)
+            : "***" + value.substring(at);
+        gen.writeString(masked);
     }
 }
 
@@ -137,31 +141,50 @@ record PublicUser(
     @JsonDeserialize(using = EmailDeserializer.class)
     String email) {}
 
-System.out.println("a***@example.test");
-// 输出：a***@example.test
+var module = new com.fasterxml.jackson.databind.module.SimpleModule()
+    .addSerializer(String.class, new MaskedEmailSerializer());
+com.fasterxml.jackson.databind.ObjectMapper mapper =
+    com.fasterxml.jackson.databind.json.JsonMapper.builder()
+        .addModule(module).build();
+String json = mapper.writeValueAsString(new PublicUser("ann@example.test"));
+System.out.println(json);
+// 输出：{"email":"a***@example.test"}
 ```
 
-`@JsonSerialize` 和 `@JsonDeserialize` 把具体实现绑定到字段或类型，示例中的 `EmailDeserializer` 代表项目自己的反序列化器。Jackson 3 的 serializer、generator、provider 和注解也要从对应 `tools.jackson.*` 包导入；不要只替换 `ObjectMapper` 而保留混代类型。敏感字段还应在日志、错误响应和缓存 key 中分别检查，单一注解覆盖不了所有输出路径。
+`@JsonSerialize` 和 `@JsonDeserialize` 把具体实现绑定到字段或类型，示例中的 `EmailDeserializer` 代表项目自己的反序列化器；`ObjectMapper` 通过 `SimpleModule` 注册并实际调用 serializer，而不是只打印预期文本。这个代码块使用 Jackson 2 API，因此 serializer 的 core/databind 类型来自 `com.fasterxml.jackson.*`；迁移 Jackson 3 时分别改为 `tools.jackson.core.*`、`tools.jackson.databind.*` 与 `tools.jackson.databind.annotation.*`，而 `@JsonFormat`/`@JsonInclude` 仍保留 `com.fasterxml.jackson.annotation.*`。敏感字段还应在日志、错误响应和缓存 key 中分别检查，单一注解覆盖不了所有输出路径。
 
 ### Redis 序列化：限定缓存值的类型边界
 
 用途：用于为 Redis key、value、hash key 和 hash value 分别指定序列化器，避免 Java 原生序列化、类型漂移或跨版本反序列化风险；缓存不是可信数据库。
 
 ```java
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-RedisTemplate<String, String> redis = new RedisTemplate<>();
-var strings = new StringRedisSerializer();
-redis.setKeySerializer(strings);
-redis.setValueSerializer(strings);
-redis.setHashKeySerializer(strings);
-redis.setHashValueSerializer(strings);
+@Configuration
+class RedisSerializationConfig {
+    @Bean
+    RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, String> redis = new RedisTemplate<>();
+        redis.setConnectionFactory(connectionFactory);
+        var strings = new StringRedisSerializer();
+        redis.setKeySerializer(strings);
+        redis.setValueSerializer(strings);
+        redis.setHashKeySerializer(strings);
+        redis.setHashValueSerializer(strings);
+        redis.afterPropertiesSet();
+        return redis;
+    }
+}
+
 System.out.println("redis=StringSerializer");
 // 输出：redis=StringSerializer
 ```
 
-JSON 值 serializer 要锁定 DTO 类型、版本和未知字段策略，避免对不可信数据开启任意类型反序列化。Redis key 要有命名空间和长度边界，缓存 miss、旧版本值和 serializer 不兼容都应按 miss 或可观测失败处理；不要把访问授权完全交给缓存里的 claims。
+这是一个由 Spring 容器提供 `RedisConnectionFactory` 的配置片段，需在容器中创建 Bean，不是可独立运行的单文件程序；`afterPropertiesSet()` 确保 serializer 设置完成后再使用。JSON 值 serializer 要锁定 DTO 类型、版本和未知字段策略，避免对不可信数据开启任意类型反序列化。Redis key 要有命名空间和长度边界，缓存 miss、旧版本值和 serializer 不兼容都应按 miss 或可观测失败处理；不要把访问授权完全交给缓存里的 claims。
 
 ## 继续阅读
 

@@ -38,9 +38,43 @@ JWT 签名验证可以不查询会话表，因此适合横向扩展的无状态 
 
 ### 版本与依赖基线
 
-本文按 JDK 20 的 Java 写法组织，Spring Boot 4.1.0 / Spring Security 7 的配置使用 `jakarta.*` 命名空间；旧项目仍应以实际依赖为准。JJWT 0.11.x 和 0.12.x 的解析器 API 不兼容，不能把两代调用混抄：0.11.x 常见 `Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token)`，0.12.x 改为 `Jwts.parser().verifyWith(key).build().parseSignedClaims(token)`。
+本文按 JDK 20 的 Java 写法组织，Spring Boot 4.1.0 / Spring Security 7 的配置使用 `jakarta.*` 命名空间；旧项目仍应以实际依赖为准。JJWT 0.9.1、0.11.x 和 0.12.x 的解析器 API 不兼容，不能把三代调用混抄：0.11.x 常见 `Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token)`，0.12.x 改为 `Jwts.parser().verifyWith(key).build().parseSignedClaims(token)`。
 
-JJWT 通常拆成 `jjwt-api`、运行时 `jjwt-impl` 和 JSON 实现 `jjwt-jackson`。示例只从 `System.getenv("JWT_SECRET")` 或密钥管理系统读取 Base64URL 密钥；`<base64url-secret>` 只是占位符，仓库和日志中都不应出现真实密钥。JJWT 0.12.x 的解析器写法不能与 JJWT 0.11.x 混用。
+JJWT 0.9.1 是旧版单体依赖，坐标为 `io.jsonwebtoken:jjwt:0.9.1`；0.11.x/0.12.x 通常拆成 `jjwt-api`、运行时 `jjwt-impl` 和 JSON 实现 `jjwt-jackson`。示例只从 `System.getenv("JWT_SECRET")` 或密钥管理系统读取 Base64URL 密钥；`<base64url-secret>` 只是占位符，仓库和日志中都不应出现生产密钥。JJWT 0.12.x 的解析器写法不能与 JJWT 0.11.x 混用。
+
+```xml
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt</artifactId>
+    <version>0.9.1</version>
+</dependency>
+```
+
+JJWT 0.9.1 的旧代码需要在迁移前单独锁定依赖和测试：
+
+```java
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import java.util.Base64;
+
+String encodedSecret = System.getenv("JWT_SECRET");
+String compactToken = System.getenv("JWT_COMPACT_TOKEN");
+byte[] signingKey = Base64.getDecoder().decode(encodedSecret);
+Claims claims = Jwts.parser().setSigningKey(signingKey)
+    .parseClaimsJws(compactToken).getBody();
+System.out.println(claims.getSubject());
+// 输出：user-7
+```
+
+### JJWT 0.9.1→0.11/0.12 迁移矩阵
+
+| 版本 | 依赖形态 | 验签解析入口 | 迁移边界 |
+| --- | --- | --- | --- |
+| 0.9.1 | `io.jsonwebtoken:jjwt` 单体依赖 | `Jwts.parser().setSigningKey(key).parseClaimsJws(token)` | 旧 `String`/`byte[]` 密钥写法；先补过期、算法和异常测试 |
+| 0.11.x | `jjwt-api` + `jjwt-impl` + `jjwt-jackson` | `Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token)` | 拆分依赖，优先使用 `SecretKey`，按版本锁定实现包 |
+| 0.12.x | `jjwt-api` + `jjwt-impl` + `jjwt-jackson` | `Jwts.parser().verifyWith(key).build().parseSignedClaims(token)` | 使用新版 parser、`verifyWith` 和 `Jws<Claims>`，不要与旧 builder API 混用 |
+
+矩阵只描述迁移入口，不建议跨版本复制密钥类型、签名算法或异常处理；升级后至少回归合法 token、过期 token、错误签名、错误 audience 和撤销 `jti`。
 
 ## 常用用法
 
@@ -93,23 +127,52 @@ void configure(HttpSecurity http) throws Exception {
 
 ### @PreAuthorize：在方法边界做授权
 
-用途：用于把依赖方法参数或细粒度权限的授权放在服务方法入口；它需要启用方法安全，不能代替 URL 层的粗粒度防护。
+用途：用于把依赖方法参数或细粒度权限的授权放在服务方法入口；它需要 `@EnableMethodSecurity` 和 Spring 容器创建的 Bean 代理，不能代替 URL 层的粗粒度防护。
 
 ```java
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+@Configuration
+@EnableMethodSecurity
+class MethodSecurityConfig {
+    @Bean ReportService reportService() {
+        return new ReportService();
+    }
+}
 
 class ReportService {
     @PreAuthorize("hasAuthority('report:read') and #ownerId == authentication.name")
-    String read(String ownerId) {
+    public String read(String ownerId) {
         return "report-for-" + ownerId;
     }
 }
 
-System.out.println(new ReportService().read("user-7"));
-// 输出：report-for-user-7
+try (var context = new AnnotationConfigApplicationContext(MethodSecurityConfig.class)) {
+    ReportService service = context.getBean(ReportService.class);
+    SecurityContextHolder.getContext().setAuthentication(
+        new TestingAuthenticationToken("user-7", "n/a", "report:read"));
+    System.out.println("授权成功=" + service.read("user-7"));
+    SecurityContextHolder.getContext().setAuthentication(
+        new TestingAuthenticationToken("user-8", "n/a"));
+    try {
+        service.read("user-7");
+    } catch (AccessDeniedException error) {
+        System.out.println("denied=403");
+    }
+    SecurityContextHolder.clearContext();
+}
+// 输出：授权成功=report-for-user-7
+// 输出：denied=403
 ```
 
-方法授权要与数据查询的租户边界一起设计；只在 Controller 上检查角色，不能保证内部异步调用或其他入口也经过同样的限制。表达式中不应拼接用户输入来生成规则。
+`context.getBean(ReportService.class)` 取得的是由 Spring 创建的代理，调用它才会进入方法授权拦截器；直接 `new ReportService()` 会绕过代理。方法授权要与数据查询的租户边界一起设计；只在 Controller 上检查角色，不能保证内部异步调用或其他入口也经过同样的限制。表达式中不应拼接用户输入来生成规则。
 
 ### BCrypt：保存和验证密码哈希
 
@@ -266,7 +329,7 @@ System.out.println(decision.subject() + "/allowed=" + decision.active());
 - Security 过滤链负责把认证上下文带入请求，URL 和方法安全负责授权决策。
 - BCrypt 只保存密码哈希；Bearer JWT 的 claims 必须在验签、过期和受众检查后才可信。
 - 无状态策略、401/403 错误处理和撤销机制要分别设计，不能把一个概念当成另一个概念。
-- JJWT 0.11.x 与 0.12.x 的 API 必须按实际依赖版本选择，真实密钥只能从安全配置来源读取。
+- JJWT 0.9.1、0.11.x 与 0.12.x 的 API 必须按实际依赖版本选择，生产密钥只能从安全配置来源读取。
 
 ## 快速回顾
 

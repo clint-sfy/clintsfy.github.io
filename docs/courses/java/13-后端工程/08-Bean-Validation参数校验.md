@@ -128,9 +128,23 @@ System.out.println("groups=" + OnCreate.class.getSimpleName() + "/" + Default.cl
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import jakarta.validation.Payload;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
+@Documented
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER,
+    ElementType.ANNOTATION_TYPE, ElementType.TYPE_USE})
+@Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = StrongCodeValidator.class)
-@interface StrongCode { String message() default "invalid code"; }
+@interface StrongCode {
+    String message() default "{strongCode.invalid}";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
 
 class StrongCodeValidator implements ConstraintValidator<StrongCode, String> {
     @Override public boolean isValid(String value, ConstraintValidatorContext context) {
@@ -150,21 +164,22 @@ System.out.println(new StrongCodeValidator().isValid("AB-1234", null));
 
 ```java
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import java.util.List;
 
-String fieldErrors(BindingResult result) {
-    List<String> errors = result.getFieldErrors().stream()
-        .map(FieldError::getField)
+record FieldViolation(String field, String message) {}
+
+List<FieldViolation> fieldErrors(BindingResult result) {
+    List<FieldViolation> errors = result.getFieldErrors().stream()
+        .map(error -> new FieldViolation(error.getField(), error.getDefaultMessage()))
         .toList();
-    return String.join(",", errors);
+    return errors;
 }
 
-System.out.println("title,body");
-// 输出：title,body
+System.out.println(List.of(new FieldViolation("title", "must not be blank")));
+// 输出：[FieldViolation[field=title, message=must not be blank]]
 ```
 
-实际异常处理器还应固定错误码、HTTP 状态和 trace id，并对嵌套路径、类型转换错误和方法参数错误分别归类。不要把 `FieldError.getRejectedValue()` 原样写入日志或响应，尤其是密码、token 和大对象。
+实际异常处理器还应固定错误码、HTTP 状态和 trace id，并对嵌套路径、类型转换错误和方法参数错误分别归类。`FieldViolation` 只输出稳定字段名和 `defaultMessage`，不要把 `FieldError.getRejectedValue()` 原样写入日志或响应，尤其是密码、token 和大对象。
 
 ### 转换/校验/授权职责：分离请求边界
 

@@ -1308,6 +1308,68 @@ test('security JSON and validation backend batch exposes boundary contracts', ()
   )
 })
 
+test('Task4 review regressions lock version, proxy, package, and response details', () => {
+  const securityPath = 'docs/courses/java/13-后端工程/05-Spring-Security与JWT.md'
+  const jsonPath = 'docs/courses/java/13-后端工程/07-Jackson与Fastjson2-JSON.md'
+  const validationPath = 'docs/courses/java/13-后端工程/08-Bean-Validation参数校验.md'
+  const securityBody = readMarkdown(securityPath).body
+  const jsonBody = readMarkdown(jsonPath).body
+  const validationBody = readMarkdown(validationPath).body
+
+  assert.match(
+    securityBody,
+    /io\.jsonwebtoken[\s\S]*?<artifactId>jjwt<\/artifactId>[\s\S]*?<version>0\.9\.1<\/version>/u,
+    'JJWT 0.9.1 must document its legacy monolithic dependency',
+  )
+  assert.match(
+    securityBody,
+    /Jwts\.parser\(\)\s*\.setSigningKey\([\s\S]*?\.parseClaimsJws\(/u,
+    'JJWT 0.9.1 must show the legacy parser chain',
+  )
+  for (const migrationMarker of ['迁移矩阵', '0.9.1', '0.11.x', '0.12.x']) {
+    assert.match(securityBody, new RegExp(migrationMarker, 'u'), `JJWT migration matrix needs ${migrationMarker}`)
+  }
+  for (const proxyMarker of [
+    '@EnableMethodSecurity', 'AnnotationConfigApplicationContext',
+    'context.getBean(ReportService.class)', 'TestingAuthenticationToken',
+    'AccessDeniedException', 'denied=403',
+  ]) {
+    assert.match(securityBody, new RegExp(proxyMarker.replace(/[().]/g, '\\$&'), 'u'), `method security proxy example needs ${proxyMarker}`)
+  }
+  assert.doesNotMatch(securityBody, /真实密钥/u, 'security warning must avoid the plan-forbidden phrase')
+  assert.match(securityBody, /(?:生产密钥|实际机密值|机密值)/u, 'security warning must retain a secret-safety warning')
+
+  for (const packageMarker of [
+    'com.fasterxml.jackson.annotation.JsonFormat',
+    'com.fasterxml.jackson.annotation.JsonInclude',
+    'tools.jackson.core.JsonParser',
+    'tools.jackson.databind.ObjectMapper',
+    'tools.jackson.databind.JsonSerializer',
+    'tools.jackson.databind.annotation.JsonSerialize',
+    'tools.jackson.databind.annotation.JsonDeserialize',
+  ]) {
+    assert.match(jsonBody, new RegExp(packageMarker.replaceAll('.', '\\.'), 'u'), `Jackson 3 package boundary needs ${packageMarker}`)
+  }
+  assert.match(
+    jsonBody,
+    /ObjectMapper mapper[\s\S]*?addModule\([\s\S]*?writeValueAsString\(/u,
+    'custom serializer must be registered and called through ObjectMapper',
+  )
+  for (const redisMarker of ['setConnectionFactory', 'afterPropertiesSet']) {
+    assert.match(jsonBody, new RegExp(redisMarker, 'u'), `Redis serializer config needs ${redisMarker}`)
+  }
+  assert.match(jsonBody, /(?:配置片段|非独立运行)/u, 'Redis serializer snippet must state its container/config boundary')
+
+  for (const annotationMarker of [
+    '@Documented', '@Target', '@Retention(RetentionPolicy.RUNTIME)',
+    'message() default', 'groups() default', 'payload() default',
+  ]) {
+    assert.match(validationBody, new RegExp(annotationMarker.replace(/[().]/g, '\\$&'), 'u'), `custom constraint needs ${annotationMarker}`)
+  }
+  assert.match(validationBody, /getDefaultMessage\(\)/u, 'field error mapping must expose the stable default message')
+  assert.match(validationBody, /new\s+FieldViolation\(/u, 'field error mapping must return a stable response object')
+})
+
 test('Java course keeps the expected Markdown files, article counts, chapters, and baseline paths', () => {
   const markdownPaths = fg
     .sync(JAVA_GLOB, { cwd: REPO_ROOT, onlyFiles: true })
