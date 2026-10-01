@@ -157,6 +157,136 @@ const REQUIRED_SECTIONS = [
   '快速回顾',
 ]
 const REQUIRED_CORE_SUBSECTIONS = ['专业术语', '白话解释与边界']
+
+const BACKEND_SHARED_SECTIONS = [
+  ...REQUIRED_SECTIONS,
+  '常用用法',
+  '不常用但需要知道',
+]
+
+const BACKEND_CROSS_LINKS = [
+  '/courses/java/05-泛型与集合/04-List常用API',
+  '/courses/java/05-泛型与集合/07-Map常用API',
+  '/courses/java/02-数组与文本/02-String与文本处理',
+]
+
+const BACKEND_FORBIDDEN_TERMS = ['若依', 'RuoYi', '实践任务', '练习题', '面试常问']
+
+function createBackendArticleSpec({ path, title, keywords, commonUsage, uncommonUsage }) {
+  return {
+    path,
+    title,
+    keywords,
+    commonUsage,
+    uncommonUsage,
+    usageHeadings: [...commonUsage, ...uncommonUsage],
+    sharedSections: [...BACKEND_SHARED_SECTIONS],
+    coreSubsections: [...REQUIRED_CORE_SUBSECTIONS],
+    crossLinks: [...BACKEND_CROSS_LINKS],
+    forbiddenTerms: [...BACKEND_FORBIDDEN_TERMS],
+  }
+}
+
+const BACKEND_ARTICLE_SPECS = [
+  createBackendArticleSpec({
+    path: 'docs/courses/java/13-后端工程/01-Spring-Boot启动与配置.md',
+    title: 'Spring Boot 启动与配置',
+    keywords: ['@SpringBootApplication', 'application.yml', '@ConfigurationProperties', 'ApplicationRunner', 'Environment'],
+    commonUsage: ['@SpringBootApplication', 'application.yml', '@ConfigurationProperties'],
+    uncommonUsage: ['条件装配', '启动失败定位', 'ApplicationRunner', 'Environment'],
+  }),
+  createBackendArticleSpec({
+    path: 'docs/courses/java/13-后端工程/02-Spring-IoC与Bean生命周期.md',
+    title: 'Spring IoC 与 Bean 生命周期',
+    keywords: ['@Component', '@Service', '@Bean', '构造器注入', '@PostConstruct', '作用域', '代理对象'],
+    commonUsage: ['@Component/@Service', '@Bean', '构造器注入', '@PostConstruct', '作用域', '代理对象'],
+    uncommonUsage: ['ObjectProvider', '@Lazy', '@Primary'],
+  }),
+  createBackendArticleSpec({
+    path: 'docs/courses/java/13-后端工程/03-Spring-AOP与声明式事务.md',
+    title: 'Spring AOP 与声明式事务',
+    keywords: ['@Aspect', '@Pointcut', '@Around', 'proceed', '@Transactional', '传播', '隔离', '回滚', '只读', '自调用'],
+    commonUsage: ['@Aspect/@Pointcut', '@Around', 'proceed', '@Transactional', '传播/隔离/回滚/只读', '自调用'],
+    uncommonUsage: ['@Order', 'TransactionTemplate', '回滚规则'],
+  }),
+  createBackendArticleSpec({
+    path: 'docs/courses/java/13-后端工程/04-Spring-MVC与Servlet边界.md',
+    title: 'Spring MVC 与 Servlet 边界',
+    keywords: ['@RestController', '@RequestMapping', '@GetMapping', '@RequestBody', '响应体', '异常处理', 'Filter', 'Interceptor'],
+    commonUsage: ['@RestController', '@RequestMapping/@GetMapping', '@RequestBody', '响应体', '异常处理', 'Filter/Interceptor'],
+    uncommonUsage: ['ResponseEntity', 'OncePerRequestFilter', '拦截器顺序', 'Servlet request/response 生命周期'],
+  }),
+  createBackendArticleSpec({
+    path: 'docs/courses/java/13-后端工程/05-Spring-Security与JWT.md',
+    title: 'Spring Security 与 JWT',
+    keywords: ['SecurityFilterChain', 'authorizeHttpRequests', '@PreAuthorize', 'BCrypt', 'Bearer', 'claims', '过期', '401', '403'],
+    commonUsage: ['SecurityFilterChain', 'authorizeHttpRequests', '@PreAuthorize', 'BCrypt', 'Bearer token', 'claims/过期'],
+    uncommonUsage: ['AuthenticationEntryPoint', 'AccessDeniedHandler', '测试替身'],
+  }),
+  createBackendArticleSpec({
+    path: 'docs/courses/java/13-后端工程/06-MyBatis核心与MyBatis-Plus重点.md',
+    title: 'MyBatis 核心与 MyBatis-Plus 重点',
+    keywords: ['<select>', '<insert>', '#{}', '<if>', '<foreach>', '结果映射', 'BaseMapper', 'IService', 'QueryWrapper', '分页'],
+    commonUsage: ['XML <select>/<insert>', '#{}', '动态 <if>/<foreach>', '结果映射'],
+    uncommonUsage: ['BaseMapper', 'IService', 'QueryWrapper/LambdaQueryWrapper', '分页', '原生 XML 对照'],
+  }),
+  createBackendArticleSpec({
+    path: 'docs/courses/java/13-后端工程/07-Jackson与Fastjson2-JSON.md',
+    title: 'Jackson 与 Fastjson2 JSON',
+    keywords: ['ObjectMapper', 'Jackson Databind', '@JsonFormat', '@JsonInclude', 'toJSONString', 'parseObject', '自定义序列化', 'Redis 序列化'],
+    commonUsage: ['ObjectMapper/Jackson Databind', '@JsonFormat/@JsonInclude', 'Fastjson2 toJSONString/parseObject'],
+    uncommonUsage: ['自定义序列化', 'Redis 序列化'],
+  }),
+  createBackendArticleSpec({
+    path: 'docs/courses/java/13-后端工程/08-Bean-Validation参数校验.md',
+    title: 'Bean Validation 参数校验',
+    keywords: ['@NotBlank', '@Size', '@Valid', '@Validated', '级联', '分组', 'ConstraintValidator', '字段错误响应'],
+    commonUsage: ['@NotBlank/@Size', '@Valid/@Validated', '级联', '分组'],
+    uncommonUsage: ['ConstraintValidator', '字段错误响应', '转换/校验/授权职责'],
+  }),
+  createBackendArticleSpec({
+    path: 'docs/courses/java/13-后端工程/09-SLF4J与Logback日志.md',
+    title: 'SLF4J 与 Logback 日志',
+    keywords: ['LoggerFactory', 'info', 'error', 'Logback', 'appender', '滚动', 'MDC', '脱敏', 'AOP 操作日志'],
+    commonUsage: ['LoggerFactory', '参数化 info/error', 'Logback appender/滚动', 'MDC'],
+    uncommonUsage: ['脱敏', 'AOP 操作日志', '采样/异常堆栈'],
+  }),
+  createBackendArticleSpec({
+    path: 'docs/courses/java/13-后端工程/10-文件上传下载与资源安全.md',
+    title: '文件上传下载与资源安全',
+    keywords: ['MultipartFile', 'transferTo', '扩展名', '大小白名单', '路径规范化', '路径穿越', 'Content-Disposition', '流式下载'],
+    commonUsage: ['MultipartFile', 'transferTo', '扩展名/大小白名单', '路径规范化', 'Content-Disposition', '流式下载'],
+    uncommonUsage: ['路径穿越', '临时文件', '拒绝路径'],
+  }),
+  createBackendArticleSpec({
+    path: 'docs/courses/java/13-后端工程/11-Apache-POI-Excel导入导出.md',
+    title: 'Apache POI Excel 导入导出',
+    keywords: ['WorkbookFactory', 'SXSSFWorkbook', '注解列映射', 'importExcel', 'exportExcel', '大文件', '日期', '公式', '资源释放'],
+    commonUsage: ['WorkbookFactory', 'SXSSFWorkbook', '注解列映射', 'importExcel/exportExcel'],
+    uncommonUsage: ['大文件', '日期/公式', '资源释放'],
+  }),
+  createBackendArticleSpec({
+    path: 'docs/courses/java/13-后端工程/12-Quartz定时任务.md',
+    title: 'Quartz 定时任务',
+    keywords: ['Job', 'JobDetail', 'CronTrigger', 'Cron 表达式', 'misfire', '暂停/恢复', '@DisallowConcurrentExecution', '持久化表', '失败重试'],
+    commonUsage: ['Job', 'JobDetail', 'CronTrigger', 'Cron 表达式', 'misfire', '暂停/恢复'],
+    uncommonUsage: ['@DisallowConcurrentExecution', '持久化表', '失败重试', 'ScheduledExecutorService'],
+  }),
+  createBackendArticleSpec({
+    path: 'docs/courses/java/13-后端工程/13-MySQL-8.0.md',
+    title: 'MySQL 8.0',
+    keywords: ['MySQL 8.0', 'DDL', '常用类型', '字符集', '索引', 'EXPLAIN', '事务', '行锁', 'CTE', '窗口函数'],
+    commonUsage: ['MySQL 8.0', 'DDL/常用类型/字符集', '索引与 EXPLAIN'],
+    uncommonUsage: ['事务/行锁', 'CTE/窗口函数', '时间类型与 JDBC 驱动', 'offset/keyset 分页', '批量写入'],
+  }),
+  createBackendArticleSpec({
+    path: 'docs/courses/java/13-后端工程/14-Redis.md',
+    title: 'Redis',
+    keywords: ['RedisTemplate', 'opsForValue', 'Hash', 'List', 'Set', 'TTL', '序列化', 'Lua', '缓存一致性', '限流'],
+    commonUsage: ['RedisTemplate.opsForValue', 'Hash/List/Set', 'TTL', '序列化'],
+    uncommonUsage: ['Lua', '缓存一致性', '穿透/击穿/雪崩', '限流', '并发失败边界'],
+  }),
+]
 const EXPECTED_JDK20_PREVIEW_ARTICLES = [
   'docs/courses/java/04-现代Java类型/01-枚举record与sealed.md',
 ]
@@ -375,8 +505,118 @@ function getJavaBlocks(text) {
   return [...text.matchAll(/```java[^\r\n]*\r?\n([\s\S]*?)```/gi)].map((match) => match[1])
 }
 
+function getBackendCodeBlocks(text) {
+  return [...text.matchAll(/```(java|sql)[^\r\n]*\r?\n([\s\S]*?)```/gi)].map((match) => ({
+    language: match[1].toLowerCase(),
+    code: match[2],
+  }))
+}
+
 function hasStandaloneOutputComment(code) {
   return /^\s*\/\/\s*输出\s*[:：]\s*\S.*$/mu.test(code)
+}
+
+function hasStandaloneBackendOutputComment(code) {
+  return /^\s*(?:\/\/|--)\s*输出\s*[:：]\s*\S.*$/mu.test(code)
+}
+
+function inspectBackendUsage(content, { requireOutput = true } = {}) {
+  if (typeof content !== 'string' || content.trim() === '') return ['usage subsection is empty']
+
+  const lines = content.split(/\r?\n/)
+  const firstCodeIndex = lines.findIndex((line) => /^\s*```(?:java|sql)(?:\s|$)/iu.test(line))
+  const purposeIndex = lines.findIndex((line) => /^\s*用途\s*[:：]\s*\S/u.test(line))
+  const blocks = getBackendCodeBlocks(content)
+  const issues = []
+
+  if (purposeIndex < 0) {
+    issues.push('needs a 用途： purpose/boundary sentence')
+  } else if (firstCodeIndex >= 0 && purposeIndex > firstCodeIndex) {
+    issues.push('用途： purpose/boundary sentence must precede the code block')
+  }
+
+  if (firstCodeIndex < 0 || blocks.length === 0) {
+    issues.push('needs a java or sql code block')
+  } else if (blocks.every(({ code }) => code.trim() === '')) {
+    issues.push('java/sql code block contains no executable content')
+  }
+
+  if (requireOutput && !blocks.some(({ code }) => hasStandaloneBackendOutputComment(code))) {
+    issues.push('needs a standalone // 输出： or -- 输出： comment')
+  }
+
+  return issues
+}
+
+function inspectBackendArticle(article, spec) {
+  const violations = []
+  if (!article || !spec) return ['article and specification are required']
+
+  for (const field of REQUIRED_FRONTMATTER_FIELDS) {
+    if (!isMeaningfulField(article.data?.[field])) {
+      violations.push(`${spec.path} [frontmatter.${field}] is missing or empty`)
+    }
+  }
+  if (article.data?.title !== spec.title) {
+    violations.push(`${spec.path} [title] expected ${spec.title}`)
+  }
+
+  for (const section of spec.sharedSections ?? BACKEND_SHARED_SECTIONS) {
+    const content = getSection(article.body, section)
+    if (content === null) {
+      violations.push(`${spec.path} [section:${section}] heading is missing`)
+    } else if (content === '') {
+      violations.push(`${spec.path} [section:${section}] body is empty`)
+    }
+  }
+
+  const coreKnowledge = getSection(article.body, '核心知识点')
+  for (const subsection of spec.coreSubsections ?? REQUIRED_CORE_SUBSECTIONS) {
+    if (getSubsection(coreKnowledge, subsection) === null) {
+      violations.push(`${spec.path} [core:${subsection}] subsection is missing`)
+    }
+  }
+
+  for (const keyword of spec.keywords ?? []) {
+    if (!article.body.includes(keyword)) {
+      violations.push(`${spec.path} [keyword:${keyword}] is missing`)
+    }
+  }
+
+  for (const sectionLabel of ['常用用法', '不常用但需要知道']) {
+    const sections = getSectionsByLabel(article.body, sectionLabel)
+    if (sections.length === 0) {
+      violations.push(`${spec.path} [usage:${sectionLabel}] heading is missing`)
+      continue
+    }
+    for (const subsection of getQuickReferenceSubsections(article.body, sectionLabel)) {
+      for (const issue of inspectBackendUsage(subsection.content)) {
+        violations.push(`${spec.path} [usage:${sectionLabel}/${subsection.heading}] ${issue}`)
+      }
+    }
+  }
+
+  for (const heading of [...(spec.commonUsage ?? []), ...(spec.uncommonUsage ?? [])]) {
+    const sectionLabel = spec.commonUsage?.includes(heading) ? '常用用法' : '不常用但需要知道'
+    const section = getSection(article.body, sectionLabel)
+    if (getSubsection(section, heading) === null) {
+      violations.push(`${spec.path} [usage-heading:${sectionLabel}/${heading}] heading is missing`)
+    }
+  }
+
+  for (const link of spec.crossLinks ?? []) {
+    if (!article.body.includes(`](${link})`)) {
+      violations.push(`${spec.path} [cross-link:${link}] link is missing`)
+    }
+  }
+
+  for (const forbiddenTerm of spec.forbiddenTerms ?? []) {
+    if (article.body.includes(forbiddenTerm)) {
+      violations.push(`${spec.path} [forbidden:${forbiddenTerm}] forbidden term found`)
+    }
+  }
+
+  return violations
 }
 
 function stripJavaComments(code) {
@@ -498,7 +738,37 @@ function formatViolations(violations) {
   return violations.length === 0 ? '' : `\n${violations.join('\n')}`
 }
 
-test('Java course keeps 80 Markdown files, 79 articles, 12 chapters, exact counts, and baseline paths', () => {
+test('backend article specification manifest covers 14 planned pages', () => {
+  assert.equal(BACKEND_ARTICLE_SPECS.length, 14, 'rule backend-manifest-count: expected 14 planned pages')
+
+  const paths = BACKEND_ARTICLE_SPECS.map((spec) => spec.path)
+  assert.equal(new Set(paths).size, paths.length, 'rule backend-manifest-paths: planned paths must be unique')
+  assert.equal(new Set(BACKEND_CROSS_LINKS).size, 3, 'rule backend-cross-links: expected three unique basic targets')
+
+  for (const spec of BACKEND_ARTICLE_SPECS) {
+    assert.match(
+      spec.path,
+      /^docs\/courses\/java\/13-后端工程\/[^/]+\.md$/u,
+      `rule backend-manifest-path: ${spec.path} must be a chapter 13 Markdown path`,
+    )
+    assert.ok(spec.title, `rule backend-manifest-title: ${spec.path} needs a title`)
+    assert.ok(spec.keywords?.length > 0, `rule backend-manifest-keywords: ${spec.path} needs API keywords`)
+    assert.ok(spec.commonUsage?.length > 0, `rule backend-manifest-common-usage: ${spec.path} needs common usage keywords`)
+    assert.ok(spec.uncommonUsage?.length > 0, `rule backend-manifest-uncommon-usage: ${spec.path} needs uncommon usage keywords`)
+    assert.equal(
+      new Set(spec.crossLinks).size,
+      spec.crossLinks.length,
+      `rule backend-manifest-cross-links: ${spec.path} has duplicate basic links`,
+    )
+    assert.deepEqual(
+      [...spec.crossLinks].sort(),
+      [...BACKEND_CROSS_LINKS].sort(),
+      `rule backend-manifest-cross-links: ${spec.path} must declare all basic link targets`,
+    )
+  }
+})
+
+test('Java course keeps the expected Markdown files, article counts, chapters, and baseline paths', () => {
   const markdownPaths = fg
     .sync(JAVA_GLOB, { cwd: REPO_ROOT, onlyFiles: true })
     .map(normalizePath)
@@ -508,13 +778,21 @@ test('Java course keeps 80 Markdown files, 79 articles, 12 chapters, exact count
     .map((entry) => entry.name)
     .sort()
 
-  assert.equal(markdownPaths.length, 80, 'rule java-markdown-count: expected 80 Markdown files')
+  assert.equal(
+    markdownPaths.length,
+    EXPECTED_JAVA_PATHS.length,
+    `rule java-markdown-count: expected ${EXPECTED_JAVA_PATHS.length} Markdown files`,
+  )
   assert.equal(
     markdownPaths.filter((file) => file !== JAVA_INDEX_PATH).length,
-    79,
-    'rule java-article-count: expected 79 course articles',
+    ARTICLE_PATHS.length,
+    `rule java-article-count: expected ${ARTICLE_PATHS.length} course articles`,
   )
-  assert.equal(chapterDirectories.length, 12, 'rule java-chapter-count: expected 12 chapter directories')
+  assert.equal(
+    chapterDirectories.length,
+    CHAPTER_NAMES.length,
+    `rule java-chapter-count: expected ${CHAPTER_NAMES.length} chapter directories`,
+  )
   assert.deepEqual(
     chapterDirectories,
     [...CHAPTER_NAMES].sort(),
@@ -522,7 +800,7 @@ test('Java course keeps 80 Markdown files, 79 articles, 12 chapters, exact count
   )
   assert.deepEqual(
     chapterDirectories.map((chapter) => EXPECTED_ARTICLES_BY_CHAPTER[chapter].length),
-    [7, 6, 7, 6, 8, 8, 7, 7, 15, 5, 2, 1],
+    CHAPTER_NAMES.map((chapter) => EXPECTED_ARTICLES_BY_CHAPTER[chapter].length),
     'rule java-chapter-article-counts: chapter article counts changed',
   )
   assert.deepEqual(
@@ -688,7 +966,7 @@ test('01-10 Java articles provide two answered review questions and no deprecate
   assert.deepEqual(violations, [], `rule java-review-and-forbidden-content${formatViolations(violations)}`)
 })
 
-test('All 80 Java pages keep Java cross-links free of dead routes', () => {
+test('All expected Java pages keep Java cross-links free of dead routes', () => {
   const articleRoutes = new Set(ARTICLE_PATHS.map(relativeRoute))
   const brokenLinks = []
   let linkCount = 0
