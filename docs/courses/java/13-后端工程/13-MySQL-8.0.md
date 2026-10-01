@@ -79,9 +79,17 @@ WHERE status = 'ACTIVE'
 ORDER BY created_at DESC, id DESC
 LIMIT 20;
 -- 输出：EXPLAIN 展示 key、type、rows 与 Extra，实际值需按数据分布验证
+
+-- MySQL 8.0.18+：只对这个读查询观察实际执行
+EXPLAIN ANALYZE SELECT id, username
+FROM account
+WHERE status = 'ACTIVE'
+ORDER BY created_at DESC, id DESC
+LIMIT 20;
+-- 输出：EXPLAIN ANALYZE 返回实际 loops、rows 与执行耗时
 ```
 
-联合索引要从高选择性过滤和稳定排序需求出发；函数包裹列、隐式类型转换或前导通配符可能让索引失效。`EXPLAIN ANALYZE` 在可用的小版本上可进一步观察实际执行，但不能替代线上低风险压测。
+联合索引遵循左前缀：优化器通常先利用最左连续列，等值条件可以固定前缀，范围条件可能限制后续列的利用；排序列还要和过滤顺序、方向及唯一 tie-breaker 一起评估。函数包裹列、隐式类型转换或前导通配符可能让索引失效。MySQL 8.0.18+ 的 `EXPLAIN ANALYZE` 会真实执行语句并报告实际 rows、loops 和耗时，因此示例只使用读查询；不要对有写入或外部副作用的语句盲目执行，也要在生产环境控制锁、延迟和数据暴露风险。
 
 ## 不常用但需要知道
 
@@ -163,11 +171,12 @@ INSERT INTO account (username, balance) VALUES
     ('ann', 10.00),
     ('bob', 20.00),
     ('cat', 30.00)
-ON DUPLICATE KEY UPDATE balance = VALUES(balance);
+    AS new
+ON DUPLICATE KEY UPDATE balance = new.balance;
 -- 输出：一次写入或更新 3 个用户名，冲突行为由唯一键决定
 ```
 
-批量大小应按行宽、索引数量和日志吞吐压测；失败重试必须考虑唯一键、幂等键和事务回滚。不要把 `ON DUPLICATE KEY UPDATE` 当成所有业务冲突的自动解决方案。
+MySQL 8.0.19 引入 row alias，8.0.20+ 推荐使用 `AS new`；旧的 `VALUES(balance)` 形式从 8.0.20 起已弃用，早于 8.0.19 的版本只能在确认兼容性后使用旧写法。批量大小应按行宽、索引数量和日志吞吐压测；失败重试必须考虑唯一键、幂等键和事务回滚。不要把 `ON DUPLICATE KEY UPDATE` 当成所有业务冲突的自动解决方案。
 
 ## 继续阅读
 

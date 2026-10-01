@@ -1119,6 +1119,8 @@ test('persistence backend batch keeps MyBatis source boundary and database keywo
   for (const requiredText of [
     '<select>', '<insert>', '#{}', '<if>', '<foreach>', '结果映射',
     'BaseMapper', 'QueryWrapper', '分页', '原生 XML',
+    '@TableId', 'IdType.AUTO', 'getId', 'setId', 'getStatus', 'setStatus',
+    'getCreatedAt', 'setCreatedAt', 'useGeneratedKeys', 'keyProperty',
   ]) {
     if (!myBatisBody.includes(requiredText)) {
       violations.push(`docs/courses/java/13-后端工程/06-MyBatis核心与MyBatis-Plus重点.md [keyword:${requiredText}] is missing`)
@@ -1144,10 +1146,67 @@ test('persistence backend batch keeps MyBatis source boundary and database keywo
     /(?:源码|当前).{0,20}MyBatis-Plus/u,
     'MyBatis-Plus must remain an independent example and not be claimed as current source usage',
   )
+  assert.doesNotMatch(
+    myBatisBody,
+    /User::(?:status|createdAt)/u,
+    'LambdaQueryWrapper must use JavaBean getter references rather than record accessors',
+  )
+  assert.doesNotMatch(
+    myBatisBody,
+    /record User\(/u,
+    'MyBatis-Plus save example must use a writable JavaBean entity',
+  )
+  assert.doesNotMatch(
+    myBatisBody,
+    /service\.save\(new User\(/u,
+    'MyBatis-Plus save example must allow generated id backfill before reading it',
+  )
+  assert.doesNotMatch(
+    myBatisBody,
+    /\\\$\{\}/u,
+    'MyBatis parameter explanation must not contain an escaped dollar typo',
+  )
+
+  for (const requiredText of [
+    '8.0.18+', 'EXPLAIN ANALYZE', '真实执行', '8.0.20+', 'AS new',
+    '左前缀', '等值', '排序',
+  ]) {
+    if (!mysqlBody.includes(requiredText)) {
+      violations.push(`docs/courses/java/13-后端工程/13-MySQL-8.0.md [review:${requiredText}] is missing`)
+    }
+  }
+
+  for (const requiredText of [
+    'StringRedisTemplate', 'KEYS', 'ARGV', 'Long', 'setKeySerializer',
+    'setValueSerializer', 'setHashKeySerializer', 'setHashValueSerializer',
+    '@TransactionalEventListener', 'AFTER_COMMIT',
+    'TransactionPhase',
+  ]) {
+    if (!redisBody.includes(requiredText)) {
+      violations.push(`docs/courses/java/13-后端工程/14-Redis.md [review:${requiredText}] is missing`)
+    }
+  }
+
   assert.deepEqual(
     violations,
     [],
     `rule backend-persistence-keywords${formatViolations(violations)}`,
+  )
+
+  assert.doesNotMatch(
+    mysqlBody,
+    /ON DUPLICATE KEY UPDATE\s+balance\s*=\s*VALUES\(balance\)/u,
+    'MySQL upsert example must use the row alias syntax in executable SQL',
+  )
+  assert.match(
+    redisBody,
+    /StringRedisTemplate redis = stringRedisTemplate;\s+String lua =[\s\S]*?java\.util\.List<String> keys[\s\S]*?Long allowed = redis\.execute\(script, keys, amount\)/u,
+    'Redis Lua example must bind string KEYS/ARGV and a Long result through StringRedisTemplate',
+  )
+  assert.match(
+    redisBody,
+    /events\.publishEvent\(new UserStatusChanged\(id\)\)[\s\S]*?@TransactionalEventListener\(phase = TransactionPhase\.AFTER_COMMIT\)/u,
+    'Redis invalidation example must publish an event and evict only after commit',
   )
 })
 

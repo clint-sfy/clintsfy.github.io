@@ -48,7 +48,7 @@ MyBatis-Plus 减少简单 CRUD 的样板，但它仍然需要正确的表映射�
   <select id="findById" resultType="example.User">
     SELECT id, username FROM app_user WHERE id = #{id}
   </select>
-  <insert id="insert">
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
     INSERT INTO app_user(username) VALUES (#{username})
   </insert>
 </mapper>
@@ -121,8 +121,28 @@ MyBatis-Plus 减少简单 CRUD 的样板，但它仍然需要正确的表映射�
 
 ```java
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 
-record User(Long id, String username) {}
+@TableName("app_user")
+class User {
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    private String username;
+    private String status;
+    private java.time.Instant createdAt;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public java.time.Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(java.time.Instant createdAt) { this.createdAt = createdAt; }
+}
+
 interface UserMapper extends BaseMapper<User> {}
 
 class UserReader {
@@ -134,13 +154,13 @@ class UserReader {
 
     void showName() {
         User user = mapper.selectById(7L);
-        System.out.println(user.username());
+        System.out.println(user.getUsername());
         // 输出：ann
     }
 }
 ```
 
-`UserMapper` 的实现由 MP 代理生成，`UserReader` 由容器注入 Mapper 后调用。复杂联表、数据库特性或强审计 SQL 仍应回到 XML/注解 SQL，不要为了少写几行而牺牲可读性。
+`UserMapper` 的实现由 MP 代理生成，`UserReader` 由容器注入 Mapper 后调用。`@TableId(type = IdType.AUTO)` 表示数据库自增主键；插入成功后 MP 通过 JDBC generated keys 调用 `setId` 回填实体，后续代码才能读取 `getId()`。复杂联表、数据库特性或强审计 SQL 仍应回到 XML/注解 SQL，不要为了少写几行而牺牲可读性。
 
 ### IService：组织服务层 CRUD
 
@@ -150,7 +170,6 @@ class UserReader {
 import com.baomidou.mybatisplus.extension.service.IService;
 
 interface UserService extends IService<User> {}
-record User(Long id, String username) {}
 
 class UserFacade {
     private final UserService service;
@@ -160,15 +179,18 @@ class UserFacade {
     }
 
     boolean create() {
-        boolean saved = service.save(new User(null, "ann"));
-        System.out.println(saved);
-        // 输出：true
+        User entity = new User();
+        entity.setUsername("ann");
+        entity.setStatus("ACTIVE");
+        boolean saved = service.save(entity);
+        System.out.println(saved + "/" + entity.getId());
+        // 输出：true/42
         return saved;
     }
 }
 ```
 
-`UserService` 的实现通常由 `ServiceImpl<UserMapper, User>` 提供；`IService` 不是事务声明本身，写入多个表时仍要在明确的 Service 方法上配置事务，并验证异常、回滚和幂等行为。
+`UserService` 的实现通常由 `ServiceImpl<UserMapper, User>` 提供；`save` 成功后 `entity.getId()` 能读到数据库生成的主键，前提是表的主键确实自增且实体标注了 `IdType.AUTO`。`IService` 不是事务声明本身，写入多个表时仍要在明确的 Service 方法上配置事务，并验证异常、回滚和幂等行为。
 
 ### QueryWrapper/LambdaQueryWrapper：表达条件查询
 
@@ -176,13 +198,10 @@ class UserFacade {
 
 ```java
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import java.time.Instant;
-
-record User(String status, Instant createdAt) {}
 
 LambdaQueryWrapper<User> query = new LambdaQueryWrapper<User>()
-    .eq(User::status, "ACTIVE")
-    .orderByDesc(User::createdAt);
+    .eq(User::getStatus, "ACTIVE")
+    .orderByDesc(User::getCreatedAt);
 System.out.println(query.getSqlSegment().contains("status"));
 // 输出：true
 ```
@@ -287,7 +306,7 @@ class TransferService {
 ## 课后小问
 
 1. 为什么查询条件应优先使用 `#{}` 而不是 `${}`？
-答案：`#{}` 把值作为预编译参数绑定，`\${}` 会把文本直接替换进 SQL。
+答案：`#{}` 把值作为预编译参数绑定，`${}` 会把文本直接替换进 SQL。
 解析：文本替换会改变 SQL 结构，外部输入可能造成注入；动态列名等少数场景也必须先经过白名单映射。
 
 2. 什么时候应该保留原生 MyBatis XML 而不是改成 Wrapper？

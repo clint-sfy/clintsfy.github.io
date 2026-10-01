@@ -88,17 +88,21 @@ System.out.println(seconds != null && seconds > 0);
 用途：用于让不同服务、版本和语言能够稳定读写 Redis，并避免 JDK 原生序列化带来的安全和兼容风险。
 
 ```java
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-StringRedisSerializer keys = new StringRedisSerializer();
-redis.setKeySerializer(keys);
-redis.setHashKeySerializer(keys);
+StringRedisTemplate redis = stringRedisTemplate;
+StringRedisSerializer text = new StringRedisSerializer();
+redis.setKeySerializer(text);
+redis.setValueSerializer(text);
+redis.setHashKeySerializer(text);
+redis.setHashValueSerializer(text);
 redis.afterPropertiesSet();
 System.out.println(redis.getKeySerializer().getClass().getSimpleName());
 // 输出：StringRedisSerializer
 ```
 
-生产环境还要为 value 选择 JSON、字符串或二进制协议，并记录字段版本；跨服务读取时不要默认相信类名和类型信息。序列化升级应通过双读、版本 key 或迁移脚本逐步切换，而不是直接让旧字节被新类强转。
+这个模板把 key、value、Hash field 和 Hash value 都按字符串契约编码；如果 value 改成 JSON 或二进制，必须同时为对应字段选择明确 serializer，并记录版本。跨服务读取时不要默认相信类名和类型信息。序列化升级应通过双读、版本 key 或迁移脚本逐步切换，而不是直接让旧字节被新类强转。
 
 ## 不常用但需要知道
 
@@ -107,33 +111,73 @@ System.out.println(redis.getKeySerializer().getClass().getSimpleName());
 用途：用于实现限额、令牌桶或“只有当前值匹配才删除”等读改写操作，避免客户端往返造成竞态。
 
 ```java
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 
+StringRedisTemplate redis = stringRedisTemplate;
 String lua = "local n = redis.call('GET', KEYS[1]); "
     + "if n and tonumber(n) >= tonumber(ARGV[1]) then "
     + "redis.call('DECRBY', KEYS[1], ARGV[1]); return 1; end; return 0;";
 var script = new DefaultRedisScript<Long>(lua, Long.class);
-Long allowed = redis.execute(script, java.util.List.of("app:quota:7"), "1");
+java.util.List<String> keys = java.util.List.of("app:quota:7");
+String amount = "1";
+Long allowed = redis.execute(script, keys, amount);
 System.out.println(allowed);
 // 输出：1
 ```
 
-脚本必须限制执行时间和输入规模，KEYS 只传同一 Redis hash slot 可处理的 key；Lua 的原子性不覆盖数据库更新、消息发送或网络调用。
+`StringRedisTemplate` 使用字符串 serializer 编解码 `KEYS` 和 `ARGV`，`DefaultRedisScript<Long>` 把 Redis 的整数回复还原为 `Long`；自定义 `RedisTemplate` 时必须显式配置等价的 key/argument/result serializer。脚本必须限制执行时间和输入规模，KEYS 只传同一 Redis hash slot 可处理的 key；Lua 的原子性不覆盖数据库更新、消息发送或网络调用。
 
 ### 缓存一致性：数据库提交后再失效
 
 用途：用于在 Cache-Aside 中先写数据库、提交成功后删除缓存，降低旧值在缓存中长期存在的概率。
 
 ```java
-boolean committed = repository.updateStatus(7L, "ACTIVE");
-if (committed) {
-    redis.delete("app:user:7");
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.data.redis.core.StringRedisTemplate;
+
+record UserStatusChanged(long id) {}
+
+@Service
+class UserService {
+    private final UserRepository repository;
+    private final ApplicationEventPublisher events;
+
+    UserService(UserRepository repository, ApplicationEventPublisher events) {
+        this.repository = repository;
+        this.events = events;
+    }
+
+    @Transactional
+    void updateStatus(long id, String status) {
+        repository.updateStatus(id, status);
+        events.publishEvent(new UserStatusChanged(id));
+    }
 }
-System.out.println(committed);
-// 输出：true
+
+@Component
+class UserCacheInvalidator {
+    private final StringRedisTemplate redis;
+
+    UserCacheInvalidator(StringRedisTemplate redis) {
+        this.redis = redis;
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    void evict(UserStatusChanged event) {
+        Boolean deleted = redis.delete("app:user:" + event.id());
+        System.out.println(deleted);
+        // 输出：true
+    }
+}
 ```
 
-删除失败时要记录并重试，必要时用消息或订阅机制补偿；并发读可能在删除前回填旧值，需要通过延迟双删、版本号或短 TTL 等策略按业务风险取舍。
+只有数据库事务提交成功后，`AFTER_COMMIT` 监听器才会删除缓存；事务回滚时不会触发该监听器。监听器中的删除失败要记录并通过消息或重试补偿；并发读可能在删除前回填旧值，需要通过延迟双删、版本号或短 TTL 等策略按业务风险取舍。该事件依赖事务上下文，不能把发布事件当成跨资源事务提交。
 
 ### 穿透/击穿/雪崩：分别处理三种缓存故障
 
