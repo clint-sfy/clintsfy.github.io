@@ -40,7 +40,7 @@ JWT 签名验证可以不查询会话表，因此适合横向扩展的无状态 
 
 本文按 JDK 20 的 Java 写法组织，Spring Boot 4.1.0 / Spring Security 7 的配置使用 `jakarta.*` 命名空间；旧项目仍应以实际依赖为准。JJWT 0.9.1、0.11.x 和 0.12.x 的解析器 API 不兼容，不能把三代调用混抄：0.11.x 常见 `Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token)`，0.12.x 改为 `Jwts.parser().verifyWith(key).build().parseSignedClaims(token)`。
 
-JJWT 0.9.1 是旧版单体依赖，坐标为 `io.jsonwebtoken:jjwt:0.9.1`；0.11.x/0.12.x 通常拆成 `jjwt-api`、运行时 `jjwt-impl` 和 JSON 实现 `jjwt-jackson`。示例只从 `System.getenv("JWT_SECRET")` 或密钥管理系统读取 Base64URL 密钥；`<base64url-secret>` 只是占位符，仓库和日志中都不应出现生产密钥。JJWT 0.12.x 的解析器写法不能与 JJWT 0.11.x 混用。
+JJWT 0.9.1 是旧版单体依赖，坐标为 `io.jsonwebtoken:jjwt:0.9.1`；0.11.x/0.12.x 通常拆成 `jjwt-api`、运行时 `jjwt-impl` 和 JSON 实现 `jjwt-jackson`。示例只从 `System.getenv("JWT_SECRET")` 或密钥管理系统读取 Base64URL 密钥；既然环境变量约定为 Base64URL，代码统一使用 `Base64.getUrlDecoder()`，不与标准 Base64 解码器混用。`<base64url-secret>` 只是占位符，仓库和日志中都不应出现生产密钥。JJWT 0.12.x 的解析器写法不能与 JJWT 0.11.x 混用。
 
 ```xml
 <dependency>
@@ -59,7 +59,7 @@ import java.util.Base64;
 
 String encodedSecret = System.getenv("JWT_SECRET");
 String compactToken = System.getenv("JWT_COMPACT_TOKEN");
-byte[] signingKey = Base64.getDecoder().decode(encodedSecret);
+byte[] signingKey = Base64.getUrlDecoder().decode(encodedSecret);
 Claims claims = Jwts.parser().setSigningKey(signingKey)
     .parseClaimsJws(compactToken).getBody();
 System.out.println(claims.getSubject());
@@ -137,6 +137,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @Configuration
@@ -149,7 +150,7 @@ class MethodSecurityConfig {
 
 class ReportService {
     @PreAuthorize("hasAuthority('report:read') and #ownerId == authentication.name")
-    public String read(String ownerId) {
+    public String read(@P("ownerId") String ownerId) {
         return "report-for-" + ownerId;
     }
 }
@@ -172,7 +173,7 @@ try (var context = new AnnotationConfigApplicationContext(MethodSecurityConfig.c
 // 输出：denied=403
 ```
 
-`context.getBean(ReportService.class)` 取得的是由 Spring 创建的代理，调用它才会进入方法授权拦截器；直接 `new ReportService()` 会绕过代理。方法授权要与数据查询的租户边界一起设计；只在 Controller 上检查角色，不能保证内部异步调用或其他入口也经过同样的限制。表达式中不应拼接用户输入来生成规则。
+`context.getBean(ReportService.class)` 取得的是由 Spring 创建的代理，调用它才会进入方法授权拦截器；直接 `new ReportService()` 会绕过代理。示例中的 `denied=403` 是方法授权拒绝的概念映射：这里捕获 `AccessDeniedException` 便于展示失败路径，真正 HTTP 请求的 403 响应由 `AccessDeniedHandler` 生成。`#ownerId` 通过 `@P("ownerId")` 显式绑定；如果不使用 `@P`，就要在编译时开启 `-parameters` 保留方法参数名。方法授权要与数据查询的租户边界一起设计；只在 Controller 上检查角色，不能保证内部异步调用或其他入口也经过同样的限制。表达式中不应拼接用户输入来生成规则。
 
 ### BCrypt：保存和验证密码哈希
 

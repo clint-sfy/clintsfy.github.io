@@ -1326,15 +1326,28 @@ test('Task4 review regressions lock version, proxy, package, and response detail
     /Jwts\.parser\(\)\s*\.setSigningKey\([\s\S]*?\.parseClaimsJws\(/u,
     'JJWT 0.9.1 must show the legacy parser chain',
   )
+  assert.match(
+    securityBody,
+    /Base64\.getUrlDecoder\(\)/u,
+    'JWT_SECRET Base64URL examples must use the URL decoder',
+  )
+  assert.doesNotMatch(
+    securityBody,
+    /Base64\.getDecoder\(\)/u,
+    'JWT_SECRET Base64URL examples must not use the standard decoder',
+  )
   for (const migrationMarker of ['迁移矩阵', '0.9.1', '0.11.x', '0.12.x']) {
     assert.match(securityBody, new RegExp(migrationMarker, 'u'), `JJWT migration matrix needs ${migrationMarker}`)
   }
   for (const proxyMarker of [
     '@EnableMethodSecurity', 'AnnotationConfigApplicationContext',
     'context.getBean(ReportService.class)', 'TestingAuthenticationToken',
-    'AccessDeniedException', 'denied=403',
+    'AccessDeniedException', 'denied=403', '@P("ownerId")',
   ]) {
     assert.match(securityBody, new RegExp(proxyMarker.replace(/[().]/g, '\\$&'), 'u'), `method security proxy example needs ${proxyMarker}`)
+  }
+  for (const httpBoundaryMarker of ['方法授权拒绝', 'HTTP 403', 'AccessDeniedHandler']) {
+    assert.match(securityBody, new RegExp(httpBoundaryMarker, 'u'), `method security boundary needs ${httpBoundaryMarker}`)
   }
   assert.doesNotMatch(securityBody, /真实密钥/u, 'security warning must avoid the plan-forbidden phrase')
   assert.match(securityBody, /(?:生产密钥|实际机密值|机密值)/u, 'security warning must retain a secret-safety warning')
@@ -1350,11 +1363,11 @@ test('Task4 review regressions lock version, proxy, package, and response detail
   ]) {
     assert.match(jsonBody, new RegExp(packageMarker.replaceAll('.', '\\.'), 'u'), `Jackson 3 package boundary needs ${packageMarker}`)
   }
-  assert.match(
-    jsonBody,
-    /ObjectMapper mapper[\s\S]*?addModule\([\s\S]*?writeValueAsString\(/u,
-    'custom serializer must be registered and called through ObjectMapper',
-  )
+  assert.match(jsonBody, /@JsonSerialize\(using\s*=\s*MaskedEmailSerializer\.class\)/u, 'email masking must be field-scoped')
+  assert.doesNotMatch(jsonBody, /addSerializer\(\s*String\.class\s*,\s*new\s+MaskedEmailSerializer/u, 'email masking must not globally replace String serialization')
+  assert.match(jsonBody, /ObjectMapper mapper[\s\S]*?writeValueAsString\(/u, 'custom serializer must be called through ObjectMapper')
+  assert.match(jsonBody, /:\s*value;/u, 'non-email values must safely pass through the serializer')
+  assert.match(jsonBody, /(?:displayName|label)[\s\S]*?Ann/u, 'ObjectMapper example must show a non-email value passing through')
   for (const redisMarker of ['setConnectionFactory', 'afterPropertiesSet']) {
     assert.match(jsonBody, new RegExp(redisMarker, 'u'), `Redis serializer config needs ${redisMarker}`)
   }

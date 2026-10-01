@@ -120,10 +120,14 @@ final class MaskedEmailSerializer extends JsonSerializer<String> {
     @Override
     public void serialize(String value, JsonGenerator gen, SerializerProvider provider)
         throws IOException {
+        if (value == null) {
+            gen.writeNull();
+            return;
+        }
         int at = value.indexOf('@');
-        String masked = at > 1
+        String masked = at > 1 && at < value.length() - 1
             ? value.charAt(0) + "***" + value.substring(at)
-            : "***" + value.substring(at);
+            : value;
         gen.writeString(masked);
     }
 }
@@ -139,19 +143,17 @@ final class EmailDeserializer extends JsonDeserializer<String> {
 record PublicUser(
     @JsonSerialize(using = MaskedEmailSerializer.class)
     @JsonDeserialize(using = EmailDeserializer.class)
-    String email) {}
+    String email,
+    String displayName) {}
 
-var module = new com.fasterxml.jackson.databind.module.SimpleModule()
-    .addSerializer(String.class, new MaskedEmailSerializer());
 com.fasterxml.jackson.databind.ObjectMapper mapper =
-    com.fasterxml.jackson.databind.json.JsonMapper.builder()
-        .addModule(module).build();
-String json = mapper.writeValueAsString(new PublicUser("ann@example.test"));
+    new com.fasterxml.jackson.databind.ObjectMapper();
+String json = mapper.writeValueAsString(new PublicUser("ann@example.test", "Ann"));
 System.out.println(json);
-// 输出：{"email":"a***@example.test"}
+// 输出：{"email":"a***@example.test","displayName":"Ann"}
 ```
 
-`@JsonSerialize` 和 `@JsonDeserialize` 把具体实现绑定到字段或类型，示例中的 `EmailDeserializer` 代表项目自己的反序列化器；`ObjectMapper` 通过 `SimpleModule` 注册并实际调用 serializer，而不是只打印预期文本。这个代码块使用 Jackson 2 API，因此 serializer 的 core/databind 类型来自 `com.fasterxml.jackson.*`；迁移 Jackson 3 时分别改为 `tools.jackson.core.*`、`tools.jackson.databind.*` 与 `tools.jackson.databind.annotation.*`，而 `@JsonFormat`/`@JsonInclude` 仍保留 `com.fasterxml.jackson.annotation.*`。敏感字段还应在日志、错误响应和缓存 key 中分别检查，单一注解覆盖不了所有输出路径。
+`@JsonSerialize` 和 `@JsonDeserialize` 把具体实现绑定到字段或类型，示例中的 `EmailDeserializer` 代表项目自己的反序列化器；这里使用字段级 serializer 并由 `ObjectMapper.writeValueAsString` 实际调用，不会全局替换所有 `String` 的序列化。serializer 对不含 `@` 的值安全透传，且未绑定 serializer 的 `displayName` 也保持 `Ann`。这个代码块使用 Jackson 2 API，因此 serializer 的 core/databind 类型来自 `com.fasterxml.jackson.*`；迁移 Jackson 3 时分别改为 `tools.jackson.core.*`、`tools.jackson.databind.*` 与 `tools.jackson.databind.annotation.*`，而 `@JsonFormat`/`@JsonInclude` 仍保留 `com.fasterxml.jackson.annotation.*`。敏感字段还应在日志、错误响应和缓存 key 中分别检查，单一注解覆盖不了所有输出路径。
 
 ### Redis 序列化：限定缓存值的类型边界
 
