@@ -137,6 +137,10 @@ const EXPECTED_ARTICLES_BY_CHAPTER = {
     '06-MyBatis核心与MyBatis-Plus重点.md',
     '07-Jackson与Fastjson2-JSON.md',
     '08-Bean-Validation参数校验.md',
+    '09-SLF4J与Logback日志.md',
+    '10-文件上传下载与资源安全.md',
+    '11-Apache-POI-Excel导入导出.md',
+    '12-Quartz定时任务.md',
     '13-MySQL-8.0.md',
     '14-Redis.md',
   ],
@@ -1386,6 +1390,116 @@ test('Task4 review regressions lock version, proxy, package, and response detail
   assert.match(validationBody, /new\s+FieldViolation\(/u, 'field error mapping must return a stable response object')
 })
 
+test('Task5 backend references cover logging, resource safety, Excel, and Quartz boundaries', () => {
+  const task5Specs = BACKEND_ARTICLE_SPECS.filter((spec) =>
+    /\/13-后端工程\/(?:09-|10-|11-|12-)/u.test(spec.path),
+  )
+  assert.equal(task5Specs.length, 4, 'rule backend-batch4-manifest: expected four engineering pages')
+
+  const articles = new Map()
+  const violations = []
+  for (const spec of task5Specs) {
+    try {
+      const article = readMarkdown(spec.path)
+      articles.set(spec.path, article.body)
+      for (const issue of inspectBackendArticle(article, spec)) {
+        violations.push(issue)
+      }
+    } catch (error) {
+      violations.push(`${spec.path} [article-read] ${error.message}`)
+    }
+  }
+
+  const loggingPath = 'docs/courses/java/13-后端工程/09-SLF4J与Logback日志.md'
+  const loggingBody = articles.get(loggingPath) ?? ''
+  for (const requiredText of [
+    'LoggerFactory', '参数化', 'Throwable', 'MDC', 'traceId',
+    'RollingFileAppender', 'SizeAndTimeBasedRollingPolicy', '脱敏',
+    'AOP', 'Pointcut', '异常堆栈',
+  ]) {
+    if (!loggingBody.includes(requiredText)) {
+      violations.push(`${loggingPath} [logging:${requiredText}] is missing`)
+    }
+  }
+  if (!/log\.error\([^\n]*,\s*(?:ex|exception|throwable)/iu.test(loggingBody)) {
+    violations.push(`${loggingPath} [logging:throwable-last] parameterized exception logging example is missing`)
+  }
+  if (!/%X\{traceId\}/u.test(loggingBody)) {
+    violations.push(`${loggingPath} [logging:mdc-pattern] Logback MDC traceId pattern is missing`)
+  }
+
+  const filePath = 'docs/courses/java/13-后端工程/10-文件上传下载与资源安全.md'
+  const fileBody = articles.get(filePath) ?? ''
+  for (const requiredText of [
+    'MultipartFile', 'transferTo', '扩展名', '大小白名单', 'normalize',
+    '路径穿越', 'Files.createTempFile', 'Content-Disposition',
+    'StreamingResponseBody', '流式',
+  ]) {
+    if (!fileBody.includes(requiredText)) {
+      violations.push(`${filePath} [file:${requiredText}] is missing`)
+    }
+  }
+  if (!/(?:大小|size)[\s\S]{0,100}(?:拒绝|超过|异常)/iu.test(fileBody)) {
+    violations.push(`${filePath} [file:failure-boundary] upload size failure boundary is missing`)
+  }
+  if (!/startsWith\(root\)|startsWith\(storageRoot\)/u.test(fileBody)) {
+    violations.push(`${filePath} [file:root-boundary] normalized path root check is missing`)
+  }
+
+  const poiPath = 'docs/courses/java/13-后端工程/11-Apache-POI-Excel导入导出.md'
+  const poiBody = articles.get(poiPath) ?? ''
+  for (const requiredText of [
+    'WorkbookFactory', 'SXSSFWorkbook', '注解列映射', 'importExcel', 'exportExcel',
+    '大文件', 'DateUtil.isCellDateFormatted', 'FormulaEvaluator', '资源释放',
+  ]) {
+    if (!poiBody.includes(requiredText)) {
+      violations.push(`${poiPath} [poi:${requiredText}] is missing`)
+    }
+  }
+  if (!/try\s*\([^)]*Workbook|try\s*\([\s\S]*?Workbook/iu.test(poiBody)) {
+    violations.push(`${poiPath} [poi:resource-release] workbook try-with-resources is missing`)
+  }
+  if (!/(?:校验|validation)[\s\S]{0,160}(?:失败|拒绝|错误)/iu.test(poiBody)) {
+    violations.push(`${poiPath} [poi:import-validation] import validation failure boundary is missing`)
+  }
+
+  const quartzPath = 'docs/courses/java/13-后端工程/12-Quartz定时任务.md'
+  const quartzBody = articles.get(quartzPath) ?? ''
+  for (const requiredText of [
+    'Job', 'JobDetail', 'CronTrigger', 'Cron 表达式', 'misfire', '暂停', '恢复',
+    '@DisallowConcurrentExecution', 'JDBCJobStore', '失败重试', 'ScheduledExecutorService',
+  ]) {
+    if (!quartzBody.includes(requiredText)) {
+      violations.push(`${quartzPath} [quartz:${requiredText}] is missing`)
+    }
+  }
+  if (!/(?:reschedule|重试)[\s\S]{0,160}(?:次数|attempt|失败)/iu.test(quartzBody)) {
+    violations.push(`${quartzPath} [quartz:retry-boundary] retry policy is missing`)
+  }
+  if (!/(?:ScheduledExecutorService)[\s\S]{0,220}(?:不适合|区别|不同|无需持久化)/iu.test(quartzBody)) {
+    violations.push(`${quartzPath} [quartz:scheduler-boundary] ScheduledExecutorService distinction is missing`)
+  }
+
+  assert.deepEqual(
+    violations,
+    [],
+    `rule backend-batch4-contract${formatViolations(violations)}`,
+  )
+})
+
+test('Java backend index exposes all fourteen article routes', () => {
+  const index = readMarkdown(JAVA_INDEX_PATH).body
+  const violations = []
+  for (const spec of BACKEND_ARTICLE_SPECS) {
+    const route = relativeRoute(spec.path)
+    const escapedRoute = route.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    if (!new RegExp(`\\]\\(${escapedRoute}(?:#[^) ]*)?\\)`, 'u').test(index)) {
+      violations.push(`${JAVA_INDEX_PATH} [backend-route:${route}] linked route is missing`)
+    }
+  }
+  assert.deepEqual(violations, [], `rule backend-index-routes${formatViolations(violations)}`)
+})
+
 test('Java course keeps the expected Markdown files, article counts, chapters, and baseline paths', () => {
   const markdownPaths = fg
     .sync(JAVA_GLOB, { cwd: REPO_ROOT, onlyFiles: true })
@@ -1398,18 +1512,18 @@ test('Java course keeps the expected Markdown files, article counts, chapters, a
 
   assert.equal(
     markdownPaths.length,
-    EXPECTED_JAVA_PATHS.length,
-    `rule java-markdown-count: expected ${EXPECTED_JAVA_PATHS.length} Markdown files`,
+    94,
+    'rule java-markdown-count: expected 94 Markdown files',
   )
   assert.equal(
     markdownPaths.filter((file) => file !== JAVA_INDEX_PATH).length,
-    ARTICLE_PATHS.length,
-    `rule java-article-count: expected ${ARTICLE_PATHS.length} course articles`,
+    93,
+    'rule java-article-count: expected 93 course articles',
   )
   assert.equal(
     chapterDirectories.length,
-    CHAPTER_NAMES.length,
-    `rule java-chapter-count: expected ${CHAPTER_NAMES.length} chapter directories`,
+    13,
+    'rule java-chapter-count: expected 13 chapter directories',
   )
   assert.deepEqual(
     chapterDirectories,

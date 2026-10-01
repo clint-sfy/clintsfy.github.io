@@ -6,7 +6,7 @@ tags:
   - Java
   - 学习路线
   - 后端开发
-description: 以 JDK 20 为基准，完成第 01–10 章的 Java 语言、标准库、并发与 JVM 学习路线；第 11–12 章作为后续工程化与设计项目路线。
+description: 以 JDK 20 为基准，完成第 01–10 章的 Java 语言、标准库、并发与 JVM 学习路线；第 11–12 章作为后续工程化与设计项目路线，并补充第 13 章后端工程速查。
 showArticleMetadata: false
 editLink: false
 lastUpdated: false
@@ -16,6 +16,7 @@ showComment: false
 # Java基础快速入门
 
 这是一套参考“先语言、再库、再运行时、最后工程化”的 Java 学习路线。目前已完成第 01–10 章共 76 篇文章：第 01 章 7 篇、第 02 章 6 篇、第 03 章 7 篇、第 04 章 6 篇、第 05 章 8 篇、第 06 章 8 篇、第 07 章 7 篇、第 08 章 7 篇、第 09 章 15 篇、第 10 章 5 篇，覆盖语言基础、对象、集合、函数式与时间 API、I/O、网络、反射、模块、并发和 JVM。建议按章节逐篇阅读；遇到具体方法时，再用各页的 API 速查小标题定位。常用用法提供更完整的场景说明和 Java 案例，不常用但需要知道的入口单独列标题并给出最小 Java 案例，方便复习和检索。第 01–10 章文章统一采用“专业术语、白话解释、简单案例、易混点、课后小问（含答案/解析）、本节小结、快速回顾”的结构。第 11–12 章暂作为后续路线，保留现有目录和正文，后续再按同一标准补齐与审阅。
+本路线另增加第 13 章后端工程 14 篇文章，覆盖启动配置、IoC、AOP、MVC、安全、数据访问、JSON、校验、日志、文件、Excel、Quartz、MySQL 与 Redis；这些页面沿用常用/不常用 API 小节和可观察案例，适合作为工程化阶段的独立速查入口。
 
 ## 阶段路线
 
@@ -27,6 +28,24 @@ showComment: false
 | 4. 标准库 | [函数式与时间](/courses/java/06-函数式与时间/01-Lambda与函数式接口)、[IO与网络](/courses/java/07-IO与网络/01-IO与NIO) | 已完成：函数式、时间、I/O、NIO、HTTP Client 和 Socket |
 | 5. 运行时 | [反射与模块](/courses/java/08-反射与模块/01-反射与注解)、[并发编程](/courses/java/09-并发编程/01-线程基础与执行器)、[JVM](/courses/java/10-JVM/01-JVM内存与类加载) | 已完成：反射、模块、并发工具、线程池、异步编排和 JVM 诊断 |
 | 6. 工程化 | [工程实践](/courses/java/11-工程实践/01-Maven与测试工程)、[设计与项目](/courses/java/12-设计与项目/01-设计原则模式与综合复习) | 后续路线：工程实践、设计原则、设计模式与综合项目 |
+| 7. 后端工程 | [后端工程](/courses/java/13-后端工程/01-Spring-Boot启动与配置) | 已完成：框架边界、日志、文件、Excel、定时任务、MySQL 与 Redis 速查 |
+
+## 后端工程路由
+
+- [Spring Boot 启动与配置](/courses/java/13-后端工程/01-Spring-Boot启动与配置)
+- [Spring IoC 与 Bean 生命周期](/courses/java/13-后端工程/02-Spring-IoC与Bean生命周期)
+- [Spring AOP 与声明式事务](/courses/java/13-后端工程/03-Spring-AOP与声明式事务)
+- [Spring MVC 与 Servlet 边界](/courses/java/13-后端工程/04-Spring-MVC与Servlet边界)
+- [Spring Security 与 JWT](/courses/java/13-后端工程/05-Spring-Security与JWT)
+- [MyBatis 核心与 MyBatis-Plus 重点](/courses/java/13-后端工程/06-MyBatis核心与MyBatis-Plus重点)
+- [Jackson 与 Fastjson2 JSON](/courses/java/13-后端工程/07-Jackson与Fastjson2-JSON)
+- [Bean Validation 参数校验](/courses/java/13-后端工程/08-Bean-Validation参数校验)
+- [SLF4J 与 Logback 日志](/courses/java/13-后端工程/09-SLF4J与Logback日志)
+- [文件上传下载与资源安全](/courses/java/13-后端工程/10-文件上传下载与资源安全)
+- [Apache POI Excel 导入导出](/courses/java/13-后端工程/11-Apache-POI-Excel导入导出)
+- [Quartz 定时任务](/courses/java/13-后端工程/12-Quartz定时任务)
+- [MySQL 8.0](/courses/java/13-后端工程/13-MySQL-8.0)
+- [Redis](/courses/java/13-后端工程/14-Redis)
 
 ## 学习建议
 

@@ -1,0 +1,263 @@
+---
+title: SLF4J 与 Logback 日志
+date: 2026-10-01
+category: Java后端工程
+tags:
+  - Java
+  - SLF4J
+  - Logback
+  - 可观测性
+description: 速查 SLF4J 参数化日志、MDC、Logback 滚动、脱敏和 AOP 操作日志的边界。
+---
+
+# SLF4J 与 Logback 日志
+
+## 学习目标
+
+- 能用 SLF4J 门面完成参数化日志，并在异常分支保留完整 `Throwable` 堆栈。
+- 能用 MDC 放入请求标识，配置 Logback 输出和滚动策略，并在异步边界处理上下文传播。
+- 能区分业务日志、诊断日志与操作审计，知道脱敏、采样和 AOP 记录的安全边界。
+
+## 核心知识点
+
+### 专业术语
+
+- **SLF4J（Simple Logging Facade for Java）**：日志门面 API；业务代码依赖 `Logger`，运行时再绑定 Logback 等实现。
+- **参数化日志（parameterized logging）**：用 `{}` 参数标记和参数传值，让门面在对应级别开启时再格式化字符串。
+- **Throwable**：异常对象；把它作为日志调用的最后一个参数，SLF4J/Logback 才能输出堆栈而不是只有 `getMessage()`。
+- **MDC（Mapped Diagnostic Context）**：与当前线程关联的键值上下文，常放 `traceId`、租户或任务标识。
+- **Appender 与滚动策略（rolling policy）**：Appender 决定日志写到控制台、文件或其他目的地，滚动策略决定按时间/大小归档和清理。
+- **AOP（Aspect-Oriented Programming）**：在方法边界织入横切行为；操作日志要明确切点、字段白名单和失败语义。
+
+### 白话解释与边界
+
+SLF4J 只规定调用方式，Logback 负责真正的输出；应用代码应依赖 `org.slf4j.Logger` 和 `LoggerFactory`，不要把业务逻辑绑死在 Logback 的实现类上。`info`、`warn` 和 `error` 表示事件严重程度，不等于“所有异常都必须 error”；可恢复的业务拒绝通常应带稳定事件名和参数。
+
+参数化日志应写成 `log.info("order={} state={}", orderId, state)`，不要先用 `+` 拼接完整字符串。异常日志保留 `Throwable`，例如 `log.error("job={} failed", jobId, ex)`；只输出 `ex.getMessage()` 会丢失调用栈和异常类型。日志内容还要避开密码、令牌、完整身份证号、上传内容和未经裁剪的请求体。
+
+MDC 通常是线程局部上下文；进入请求或任务时 `put`，在 `finally` 中 `remove`，否则线程池复用会把上一个请求的 `traceId` 泄露给下一个请求。异步执行、消息消费和虚拟线程切换不应假设 MDC 自动传播，要用明确的任务装饰器或参数传递。Logback 滚动既要限制单文件大小，也要限制保留天数和总磁盘量。
+
+操作日志比普通调试日志更接近审计记录：应只写谁、何时、做了什么、结果和关联 ID，不直接序列化整个参数对象。AOP 适合统一记录稳定的方法边界，但自调用、异步方法、异常被吞掉和代理未生效都会造成漏记；关键审计仍应在业务成功提交后显式记录。
+
+## 常用用法
+
+### LoggerFactory：获取门面 Logger
+
+用途：用于按类获取 SLF4J `Logger`，让业务代码只依赖门面并保留统一级别和字段约定。
+
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+final class ImportService {
+    private static final Logger log = LoggerFactory.getLogger(ImportService.class);
+
+    void run(String jobId) {
+        log.info("job={} started", jobId);
+        System.out.println("logged=" + jobId);
+    }
+}
+
+new ImportService().run("job-1");
+// 输出：logged=job-1
+```
+
+同一个类只保留一个静态 logger 即可；日志级别由配置决定，不能把 `System.out` 当作生产日志通道。输出的事件名和字段名应稳定，便于检索和统计。
+
+### 参数化 info/error：延迟格式化与异常
+
+用途：用于在日志级别开启时才格式化参数，并把失败分支的 `Throwable` 放在最后保留异常堆栈。
+
+```java
+import org.slf4j.Logger;
+
+void process(Logger log, String taskId) {
+    log.info("task={} state={}", taskId, "running");
+    try {
+        throw new IllegalStateException("temporary failure");
+    } catch (RuntimeException ex) {
+        log.error("task={} failed", taskId, ex);
+        System.out.println("handled=" + ex.getClass().getSimpleName());
+    }
+}
+
+// 输出：handled=IllegalStateException
+```
+
+`log.error("failed: " + ex.getMessage())` 只保留文本，排查时无法看到调用栈；不要把异常作为 `{}` 的普通参数放在最后之前，否则实现可能只把它格式化成字符串。低成本热点路径可以先用 `log.isDebugEnabled()`，但不要为了省一次拼接而跳过关键失败日志。
+
+### Logback appender/滚动：控制输出目标与文件边界
+
+用途：用于把应用日志写入滚动文件，并同时按时间和大小限制单文件、保留周期与磁盘占用。
+
+```java
+String appender = "RollingFileAppender";
+String policy = "SizeAndTimeBasedRollingPolicy";
+String pattern = "%d %-5level [%X{traceId}] %logger - %msg%n";
+System.out.println(appender + "/" + policy + ":" + pattern);
+// 输出：RollingFileAppender/SizeAndTimeBasedRollingPolicy:%d %-5level [%X{traceId}] %logger - %msg%n
+```
+
+Logback XML 中通常把 `RollingFileAppender` 配合 `SizeAndTimeBasedRollingPolicy`，设置 `fileNamePattern`、`maxFileSize`、`maxHistory` 和 `totalSizeCap`。开发环境可以同时使用控制台 Appender；生产环境要确认归档目录权限、时区、压缩和清理策略，不能只设置单文件上限而不设置总量上限。
+
+### MDC：为请求附加 traceId
+
+用途：用于让同一请求的日志带上 `traceId`，并在复用线程返回池前清理上下文。
+
+```java
+import org.slf4j.MDC;
+
+void handle(String traceId) {
+    MDC.put("traceId", traceId);
+    try {
+        System.out.println("trace=" + MDC.get("traceId"));
+        // 输出：trace=req-7
+    } finally {
+        MDC.remove("traceId");
+    }
+}
+```
+
+Logback pattern 中用 `%X{traceId}` 读取 MDC；没有 `finally` 清理时，线程池中的后续请求可能继承旧值。跨线程执行应显式复制允许的键并在目标线程结束后清理，不能把 MDC 当作可靠的业务参数或授权依据。
+
+## 不常用但需要知道
+
+### 脱敏：日志字段白名单与遮蔽
+
+用途：用于在写日志前遮蔽令牌、邮箱和长文本，避免调试便利变成敏感信息泄露。
+
+```java
+String maskToken(String token) {
+    if (token == null || token.length() < 8) return "***";
+    return token.substring(0, 2) + "***" + token.substring(token.length() - 2);
+}
+
+System.out.println(maskToken("token-123456"));
+// 输出：to***56
+```
+
+脱敏应按字段语义而不是按全局 `String` 类型替换；日志白名单优先于黑名单，尤其要避免把整个请求对象通过 `toString()` 写出。脱敏函数也要覆盖空值、短值和异常路径，不能因为日志级别较低就输出原始机密。
+
+### AOP 操作日志：只记录业务边界
+
+用途：用于在稳定的服务方法边界记录操作者、操作名和结果，避免把每个 getter 或内部循环都变成噪声。
+
+```java
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
+
+@Aspect
+class OperationLogAspect {
+    @Pointcut("within(app.service..*) && execution(* *(..))")
+    void serviceBoundary() {}
+
+    @Around("serviceBoundary()")
+    Object logOperation(ProceedingJoinPoint joinPoint) throws Throwable {
+        Object result = joinPoint.proceed();
+        System.out.println("audit=success:" + joinPoint.getSignature().getName());
+        return result;
+    }
+}
+
+// 输出：audit=success:update
+```
+
+切点只表示候选边界，代理必须真正创建且调用要经过代理；同类自调用、`private` 方法和某些异步切换可能绕过切面。真实审计需要区分业务提交成功、业务拒绝和异常失败，并只提取字段白名单；不要在切面中替代授权或吞掉异常。
+
+### 采样/异常堆栈：控制噪声但保留诊断
+
+用途：用于对高频成功事件采样，同时对异常保留堆栈，避免日志洪水掩盖真正的故障。
+
+```java
+import org.slf4j.Logger;
+
+void record(Logger log, boolean sampled, Throwable failure) {
+    if (sampled) log.debug("heartbeat sampled");
+    if (failure != null) log.error("worker failed", failure);
+    System.out.println("diagnostic=" + (failure != null ? "stack" : "sample"));
+}
+
+// 输出：diagnostic=stack
+```
+
+采样规则应按事件类型和关联 ID 可配置，并保留计数指标；不要采样掉支付、权限变更等必须审计的事件。异常堆栈应写入受控日志并设定保留期限，向客户端返回稳定错误码而不是把堆栈直接回显。
+
+## 继续阅读
+
+- [List 基础](/courses/java/05-泛型与集合/04-List常用API)：整理结构化日志字段和批量输出时查 List 的遍历与快照边界。
+- [Map 基础](/courses/java/05-泛型与集合/07-Map常用API)：组织 MDC、字段白名单和事件属性时查 Map 的键值语义。
+- [String 文本处理](/courses/java/02-数组与文本/02-String与文本处理)：处理日志模板、字段裁剪和脱敏文本时查字符串边界。
+
+## 简单案例
+
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
+final class JobRunner {
+    private static final Logger log = LoggerFactory.getLogger(JobRunner.class);
+
+    static String run(String traceId, String jobId) {
+        MDC.put("traceId", traceId);
+        try {
+            log.info("job={} state={}", jobId, "started");
+            if (jobId.isBlank()) throw new IllegalArgumentException("job id required");
+            log.info("job={} state={}", jobId, "done");
+            return "success";
+        } catch (RuntimeException ex) {
+            log.error("job={} state={}", jobId, "failed", ex);
+            return "failure";
+        } finally {
+            MDC.remove("traceId");
+        }
+    }
+}
+
+System.out.println(JobRunner.run("req-7", "job-1"));
+System.out.println(JobRunner.run("req-8", ""));
+// 输出：success
+// 输出：failure
+```
+
+案例中成功路径和失败路径都有稳定返回值，异常仍由日志保留完整堆栈；`MDC` 在两个调用结束后都会清理。框架片段需容器和日志绑定运行，具体输出格式由 Logback 配置决定；不要把这里的 `System.out` 当作生产日志配置。
+
+## 易混点
+
+- SLF4J 是调用门面，Logback 是实现；业务代码不应直接依赖 Logback 的内部类来记录普通事件。
+- 参数化 `{}` 与字符串拼接的区别是延迟格式化和结构稳定性；异常对象要作为最后参数保留堆栈。
+- MDC 是线程上下文，不是跨线程可靠传参；线程池、异步回调和消息消费必须显式传播并清理。
+- 日志滚动解决文件增长，脱敏解决内容泄露；设置 `maxFileSize` 不能替代敏感字段白名单。
+- AOP 切面可统一观察方法边界，但代理失效、自调用和事务未提交都可能使审计记录与真实结果不一致。
+- 采样只适合非关键高频事件；权限、资金和配置变更等审计事件不能静默丢弃。
+
+## 课后小问
+
+1. 为什么 `log.error("failed", ex)` 比只输出 `ex.getMessage()` 更适合排查？
+答案：前者保留异常类型和完整调用堆栈，后者通常只有一行文本。
+解析：堆栈能定位调用链和根因；客户端响应仍应使用稳定错误码，不能把堆栈回显给用户。
+
+2. 为什么 MDC 必须在 `finally` 中清理？
+答案：线程池会复用线程，不清理会把旧请求的 `traceId` 带到新请求。
+解析：MDC 的生命周期应覆盖一次请求或任务，而不是覆盖线程池线程的整个生命周期；跨线程还要显式传播。
+
+3. AOP 操作日志能否替代授权检查？
+答案：不能，切面记录“发生了什么”，授权策略决定“是否允许发生”。
+解析：代理可能失效且日志可能异步落盘；授权必须在可靠的业务边界执行，审计则记录授权后的结果和失败原因。
+
+## 本节小结
+
+- SLF4J 提供稳定门面，参数化日志和最后位置的 `Throwable` 保留可检索的诊断信息。
+- MDC 适合短生命周期关联 ID，必须在任务结束时清理并为异步边界设计传播策略。
+- Logback 用 Appender 和滚动策略控制输出目标、归档周期与磁盘上限。
+- 脱敏、白名单、采样和异常堆栈是不同责任，不能用降低日志级别代替安全策略。
+- AOP 只负责横切观察，关键操作审计仍要和业务成功、失败及授权边界对齐。
+
+## 快速回顾
+
+- 会用 `LoggerFactory` 获取 logger，并用 `{}` 写参数化 `info`/`error`。
+- 会在 `finally` 清理 MDC，并知道 `%X{traceId}` 如何进入 Logback pattern。
+- 能配置 `RollingFileAppender`、`SizeAndTimeBasedRollingPolicy` 的文件边界。
+- 能识别 AOP 自调用、异步传播、异常堆栈和敏感字段脱敏的边界。

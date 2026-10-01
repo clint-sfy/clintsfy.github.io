@@ -1,0 +1,305 @@
+---
+title: Quartz 定时任务
+date: 2026-10-01
+category: Java后端工程
+tags:
+  - Java
+  - Quartz
+  - 定时任务
+  - 调度
+description: 速查 Quartz 的 Job、JobDetail、CronTrigger、misfire、暂停恢复、持久化与失败重试边界。
+---
+
+# Quartz 定时任务
+
+## 学习目标
+
+- 能把任务实现为 `Job`，用 `JobDetail`、`Trigger` 和 `Scheduler` 组合出可管理的调度。
+- 能写 Quartz Cron 表达式，选择 misfire 策略，暂停/恢复任务并解释错过触发的结果。
+- 能用 `@DisallowConcurrentExecution`、JDBCJobStore 和有界重试处理并发、重启与失败边界，并区分 `ScheduledExecutorService`。
+
+## 核心知识点
+
+### 专业术语
+
+- **`Job`**：实现 `execute(JobExecutionContext)` 的一次任务逻辑；Quartz 为每次执行创建 Job 实例，业务状态应放在外部存储或 `JobDataMap` 中。
+- **`JobDetail`**：任务定义和身份（`JobKey`）的描述，保存 Job 类、持久化标记和静态数据。
+- **`Trigger`/`CronTrigger`**：触发计划；`CronTrigger` 用 Quartz 六字段 Cron 表达式描述日历时间。
+- **Scheduler**：调度器，负责线程池、触发状态、暂停恢复和任务执行。
+- **misfire**：调度器停机、线程不足或执行过久导致触发错过计划时间后的补偿策略。
+- **JDBCJobStore**：把 Job、Trigger 和状态写入数据库表，以支持重启恢复和集群协调。
+- **`@DisallowConcurrentExecution`**：按同一 `JobKey` 禁止同一 Job 的并发执行，不是全局互斥锁。
+
+### 白话解释与边界
+
+Quartz 把“任务是什么”和“什么时候触发”分成 `JobDetail` 与 `Trigger`，再由 `Scheduler` 管理生命周期。Cron 触发只负责启动任务，不替代业务幂等、分布式锁或事务；任务执行时间超过下一次触发时，要明确允许重叠、跳过还是排队。
+
+Cron 表达式通常包含秒、分、时、日、月、星期（可选年），`0 0/5 * * * ?` 表示每五分钟的第 0 秒。时区应在 Trigger 上明确设置，不要把服务器默认时区当作协议。misfire 不是“补跑所有历史任务”的保证，应按任务语义选择 `DoNothing`、`FireAndProceed` 或 `IgnoreMisfirePolicy`。
+
+内存 JobStore 适合单进程、可丢失的调度；需要重启恢复或多节点竞争时使用 JDBCJobStore 并准备 Quartz 表、事务和时钟同步。失败重试要限制次数、延迟和幂等键，区分 Quartz 立即 refire、Trigger 下一次触发和业务队列重试。暂停/恢复改变调度状态，不会中断已经执行的 Job。
+
+## 常用用法
+
+### Job：实现一次执行单元
+
+用途：用于实现一段可被 Quartz 调度的工作，并从 `JobExecutionContext` 读取受控参数、输出稳定结果。
+
+```java
+import org.quartz.Job;
+import org.quartz.JobExecutionContext;
+
+final class CleanupJob implements Job {
+    @Override
+    public void execute(JobExecutionContext context) {
+        String name = context.getJobDetail().getKey().getName();
+        System.out.println("job=" + name + ":done");
+    }
+}
+
+// 输出：job=cleanup:done
+```
+
+`execute` 运行时可能由 Quartz 工作线程调用，不能依赖请求线程、ThreadLocal 或未传播的 MDC。任务应设置超时、记录关联 ID，并对重复执行和部分成功设计幂等处理；抛出异常要让调度层看见，而不是悄悄吞掉。
+
+### JobDetail：声明身份与数据
+
+用途：用于为 Job 声明稳定的 `JobKey` 和静态参数，方便暂停、恢复、替换和审计。
+
+```java
+import org.quartz.JobBuilder;
+import org.quartz.JobDetail;
+
+JobDetail detail = JobBuilder.newJob(CleanupJob.class)
+    .withIdentity("cleanup", "maintenance")
+    .usingJobData("batch", "nightly")
+    .storeDurably()
+    .build();
+
+System.out.println(detail.getKey());
+// 输出：maintenance.cleanup
+```
+
+`JobDataMap` 适合小型、可序列化配置，不适合放大对象、密码或实时状态；持久化 JobStore 会序列化数据，升级类结构时要考虑兼容。JobKey 是运维操作的身份，不要用用户可控文本直接构造未经校验的 key。
+
+### CronTrigger：按日历调度
+
+用途：用于把 `JobDetail` 绑定到明确时区和 Cron 计划，并让 Scheduler 负责后续触发。
+
+```java
+import java.time.ZoneId;
+import org.quartz.CronScheduleBuilder;
+import org.quartz.CronTrigger;
+import org.quartz.TriggerBuilder;
+
+CronTrigger trigger = TriggerBuilder.newTrigger()
+    .withIdentity("cleanup-trigger", "maintenance")
+    .withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?")
+        .inTimeZone(java.util.TimeZone.getTimeZone(ZoneId.of("Asia/Shanghai"))))
+    .forJob("cleanup", "maintenance")
+    .build();
+
+System.out.println(trigger.getCronExpression());
+// 输出：0 0/5 * * * ?
+```
+
+CronTrigger 只表达触发计划，实际任务仍可能失败或超时；时区、开始时间和 misfire 策略要在同一 Trigger 上显式配置。修改计划应使用稳定 TriggerKey，并先确认旧 Trigger 是否仍被其他运维操作依赖。
+
+### Cron 表达式：表达时间规则
+
+用途：用于把人类时间需求转换为 Quartz 的六字段表达式，并在发布前验证边界日期和时区。
+
+```java
+import org.quartz.CronExpression;
+
+String expression = "0 30 9 ? * MON-FRI";
+System.out.println(CronExpression.isValidExpression(expression));
+// 输出：true
+```
+
+Quartz 的秒字段位于最前面，星期和日期字段通常一个使用 `?`；它与 Unix 五字段 Cron 不完全相同。生产规则应固定时区并测试夏令时、月底和闰日，不要把“每五分钟”误写成每五秒。
+
+### misfire：补偿错过的触发
+
+用途：用于决定 Scheduler 恢复或资源不足后如何处理错过的 Cron 触发，避免默认策略与业务语义不符。
+
+```java
+import org.quartz.CronScheduleBuilder;
+
+var schedule = CronScheduleBuilder.cronSchedule("0 0/5 * * * ?")
+    .withMisfireHandlingInstructionDoNothing();
+System.out.println("misfire=skip-old-run");
+// 输出：misfire=skip-old-run
+```
+
+`DoNothing` 适合过期即无意义的刷新任务，`FireAndProceed` 适合恢复后补一次，`IgnoreMisfirePolicy` 则可能带来集中执行压力。misfire 只影响触发器补偿，不会自动重试已经抛异常的业务步骤；每种策略都要有可观测指标。
+
+### 暂停/恢复：运维控制调度
+
+用途：用于在维护或下游故障时暂停 Job/Trigger，再在条件满足后恢复计划，而不误以为暂停会停止正在执行的实例。
+
+```java
+import org.quartz.JobKey;
+import org.quartz.Scheduler;
+
+void maintenance(Scheduler scheduler) throws Exception {
+    JobKey key = JobKey.jobKey("cleanup", "maintenance");
+    scheduler.pauseJob(key);
+    System.out.println("state=paused");
+    scheduler.resumeJob(key);
+    System.out.println("state=resumed");
+}
+
+// 输出：state=paused
+// 输出：state=resumed
+```
+
+暂停只阻止后续触发，已进入 `execute` 的任务仍需自己完成、超时或取消；恢复后是否产生 misfire 由 Trigger 策略决定。运维接口要限制权限并记录操作者、原因和恢复时间。
+
+## 不常用但需要知道
+
+### @DisallowConcurrentExecution：避免同一 JobKey 重叠
+
+用途：用于禁止同一 `JobKey` 的多个实例并发执行，适合非幂等或会竞争同一资源的任务。
+
+```java
+import org.quartz.DisallowConcurrentExecution;
+import org.quartz.Job;
+import org.quartz.JobExecutionContext;
+
+@DisallowConcurrentExecution
+final class RebuildJob implements Job {
+    @Override public void execute(JobExecutionContext context) {
+        System.out.println("overlap=blocked");
+        // 输出：overlap=blocked
+    }
+}
+```
+
+注解的作用范围是同一个 JobKey；使用不同 key、不同调度器或外部进程仍可能并发。它也不替代数据库唯一约束、分布式锁和幂等写入，长任务要配合 misfire 和超时策略评估排队效果。
+
+### 持久化表：使用 JDBCJobStore
+
+用途：用于在进程重启和多节点部署中保存 Job/Trigger 状态，让调度器依靠 Quartz 表恢复和协调，而不是依靠内存快照。
+
+```java
+String storeClass = "org.quartz.impl.jdbcjobstore.JobStoreTX";
+String tablePrefix = "QRTZ_";
+System.out.println("store=" + storeClass + ",prefix=" + tablePrefix);
+// 输出：store=org.quartz.impl.jdbcjobstore.JobStoreTX,prefix=QRTZ_
+```
+
+JDBCJobStore 需要先执行与数据库方言匹配的 Quartz 建表脚本，配置数据源、表前缀、集群和实例 ID，并观察锁等待与时钟偏差。JobDataMap 的序列化内容应可迁移且不含机密；持久化成功不代表业务数据库事务自动和 Job 执行处于同一事务。
+
+### 失败重试：区分触发失败与业务重试
+
+用途：用于对暂时失败设置有界重试和退避，区分 Quartz 的立即 refire 与业务层幂等重试。
+
+```java
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+
+void executeWithBound(JobExecutionContext context) throws JobExecutionException {
+    if (context.getRefireCount() < 2) {
+        JobExecutionException retry = new JobExecutionException("temporary failure");
+        retry.setRefireImmediately(true);
+        throw retry;
+    }
+    System.out.println("retry=bounded");
+    // 输出：retry=bounded
+}
+```
+
+`setRefireImmediately(true)` 会请求 Quartz 立即再次执行，不能无条件设置，否则会形成紧密重试环。更复杂的退避、死信和跨服务重试应放在业务队列或持久化状态中；每次重试要使用幂等键、限制总次数并区分永久校验失败与暂时依赖失败。
+
+### ScheduledExecutorService：轻量内存调度对照
+
+用途：用于比较进程内轻量延迟/周期任务；它与 Quartz 的区别是无需持久化时更简单，但不适合需要重启恢复、misfire 策略或集群协调的任务。
+
+```java
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+try {
+    var done = scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS);
+    done.get();
+} finally {
+    scheduler.shutdown();
+}
+// 输出：memory=once
+```
+
+`ScheduledExecutorService` 的任务状态只在当前 JVM 内存中，进程重启会丢失计划，周期任务抛出未捕获异常后还可能停止后续执行。单机清理、短延迟和测试可选它；需要 Cron 日历、暂停恢复、持久化和多节点协调时应选择 Quartz 或其他持久调度系统。
+
+## 继续阅读
+
+- [List 基础](/courses/java/05-泛型与集合/04-List常用API)：组织批量任务结果、重试记录和错误摘要时查 List 的遍历与容量。
+- [Map 基础](/courses/java/05-泛型与集合/07-Map常用API)：保存 JobDataMap、任务标签和执行状态时查 Map 的键值边界。
+- [String 文本处理](/courses/java/02-数组与文本/02-String与文本处理)：解析任务名称、Cron 文本和错误码时查字符串处理。
+
+## 简单案例
+
+```java
+import org.quartz.JobBuilder;
+import org.quartz.Scheduler;
+import org.quartz.TriggerBuilder;
+import org.quartz.CronScheduleBuilder;
+
+void schedule(Scheduler scheduler) throws Exception {
+    var detail = JobBuilder.newJob(CleanupJob.class)
+        .withIdentity("cleanup", "maintenance")
+        .build();
+    var trigger = TriggerBuilder.newTrigger()
+        .withIdentity("cleanup-trigger", "maintenance")
+        .forJob(detail)
+        .withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?")
+            .withMisfireHandlingInstructionDoNothing())
+        .build();
+    scheduler.scheduleJob(detail, trigger);
+    scheduler.start();
+    System.out.println("schedule=started");
+    // 输出：schedule=started
+}
+```
+
+案例把任务身份、Cron 计划和 misfire 策略放在同一个受控入口；真实应用还要配置线程池、时区、JDBCJobStore、权限和关闭钩子。任务本身要可重入或加 `@DisallowConcurrentExecution`，失败重试不能依赖无限 refire。
+
+## 易混点
+
+- `Job` 是执行逻辑，`JobDetail` 是身份和配置，`CronTrigger` 是时间计划；三者都不能单独替代 Scheduler。
+- Quartz Cron 是六字段语法，秒在最前面，和 Unix 五字段表达式不同；时区必须显式验证。
+- misfire 处理错过的触发，失败重试处理执行结果；两者不是同一个重试机制。
+- `pauseJob` 不会中断已运行实例，`resumeJob` 后是否补跑取决于 Trigger 的 misfire 策略。
+- `@DisallowConcurrentExecution` 只约束同一 JobKey，不是跨节点、跨 key 的全局锁。
+- JDBCJobStore 保存调度状态，但不会自动把业务写库和 Job 执行绑定为一个事务。
+- `ScheduledExecutorService` 轻量且只在当前进程内存中，Quartz 才提供持久化、Cron、misfire 和集群协调能力。
+
+## 课后小问
+
+1. 为什么 CronTrigger 的表达式不能直接照搬 Linux 的五字段 Cron？
+答案：Quartz 通常把秒字段放在最前面，并对日、星期字段使用 `?` 等不同语法。
+解析：例如 `0 0/5 * * * ?` 表示每五分钟的第 0 秒；发布前应使用 Quartz 校验器并测试时区边界。
+
+2. `@DisallowConcurrentExecution` 能否保证所有节点都不重复执行？
+答案：它按同一 JobKey 约束 Quartz 调度实例，不能代替业务幂等、数据库约束或跨系统锁。
+解析：不同 key、错误的集群配置和外部重复投递仍可能造成重复，任务应以幂等键保护写入。
+
+3. Quartz 任务失败后应该无限设置 `setRefireImmediately(true)` 吗？
+答案：不应该，重试必须有界并区分暂时失败、永久失败和下一次计划触发。
+解析：无限 refire 会占满工作线程；应限制次数、加入退避和告警，复杂重试交给持久化队列或业务状态机。
+
+## 本节小结
+
+- `Job`、`JobDetail`、`CronTrigger` 和 `Scheduler` 分别表达执行、身份、时间和调度生命周期。
+- Cron 表达式、时区与 misfire 策略共同决定错过触发后的行为，不能依赖默认值。
+- 暂停恢复只改变未来触发；`@DisallowConcurrentExecution` 只约束同一 JobKey 的重叠执行。
+- JDBCJobStore 支持重启和集群状态，业务写入仍需独立事务与幂等设计。
+- 失败重试应有界；`ScheduledExecutorService` 适合轻量内存调度，不提供 Quartz 的持久化语义。
+
+## 快速回顾
+
+- 会用 JobBuilder、TriggerBuilder 和 CronScheduleBuilder 组合基本任务。
+- 能解释 `0 0/5 * * * ?`、misfire、pause/resume 的行为边界。
+- 知道 `@DisallowConcurrentExecution`、JDBCJobStore 与业务幂等各自解决什么。
+- 能在 Quartz 与 `ScheduledExecutorService` 之间按持久化、集群和运维需求选择。
