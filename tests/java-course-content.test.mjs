@@ -133,6 +133,9 @@ const EXPECTED_ARTICLES_BY_CHAPTER = {
     '02-Spring-IoC与Bean生命周期.md',
     '03-Spring-AOP与声明式事务.md',
     '04-Spring-MVC与Servlet边界.md',
+    '06-MyBatis核心与MyBatis-Plus重点.md',
+    '13-MySQL-8.0.md',
+    '14-Redis.md',
   ],
 }
 
@@ -403,7 +406,8 @@ function getSectionsByLabel(body, label) {
 
 function subsectionMatches(line, label) {
   const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return new RegExp(`^###\\s+${escapedLabel}(?:\\s|[:：，,（(]|$)`).test(line)
+  const normalizedLine = line.replaceAll('&lt;', '<').replaceAll('&gt;', '>')
+  return new RegExp(`^###\\s+${escapedLabel}(?:\\s|[:：，,（(]|$)`).test(normalizedLine)
 }
 
 function getSubsection(section, label) {
@@ -1067,6 +1071,83 @@ test('Spring backend references document runtime boundaries and compatibility ba
     violations,
     [],
     `rule backend-runtime-boundaries${formatViolations(violations)}`,
+  )
+})
+
+test('persistence backend batch exposes MyBatis MySQL and Redis contracts', () => {
+  const batchSpecs = BACKEND_ARTICLE_SPECS.filter((spec) =>
+    /\/13-后端工程\/(?:06-|13-|14-)/u.test(spec.path),
+  )
+  assert.equal(batchSpecs.length, 3, 'rule backend-batch2-manifest: expected three persistence pages')
+
+  const violations = []
+  for (const spec of batchSpecs) {
+    try {
+      const article = readMarkdown(spec.path)
+      for (const issue of inspectBackendArticle(article, spec)) {
+        violations.push(issue)
+      }
+    } catch (error) {
+      violations.push(`${spec.path} [article-read] ${error.message}`)
+    }
+  }
+
+  assert.deepEqual(
+    violations,
+    [],
+    `rule backend-batch2-contract${formatViolations(violations)}`,
+  )
+})
+
+test('persistence backend batch keeps MyBatis source boundary and database keywords', () => {
+  const articles = new Map()
+  const violations = []
+
+  for (const relativePath of [
+    'docs/courses/java/13-后端工程/06-MyBatis核心与MyBatis-Plus重点.md',
+    'docs/courses/java/13-后端工程/13-MySQL-8.0.md',
+    'docs/courses/java/13-后端工程/14-Redis.md',
+  ]) {
+    try {
+      articles.set(relativePath, readMarkdown(relativePath).body)
+    } catch (error) {
+      violations.push(`${relativePath} [article-read] ${error.message}`)
+    }
+  }
+
+  const myBatisBody = articles.get('docs/courses/java/13-后端工程/06-MyBatis核心与MyBatis-Plus重点.md') ?? ''
+  for (const requiredText of [
+    '<select>', '<insert>', '#{}', '<if>', '<foreach>', '结果映射',
+    'BaseMapper', 'QueryWrapper', '分页', '原生 XML',
+  ]) {
+    if (!myBatisBody.includes(requiredText)) {
+      violations.push(`docs/courses/java/13-后端工程/06-MyBatis核心与MyBatis-Plus重点.md [keyword:${requiredText}] is missing`)
+    }
+  }
+
+  const mysqlBody = articles.get('docs/courses/java/13-后端工程/13-MySQL-8.0.md') ?? ''
+  for (const requiredText of ['MySQL 8.0', 'EXPLAIN']) {
+    if (!mysqlBody.includes(requiredText)) {
+      violations.push(`docs/courses/java/13-后端工程/13-MySQL-8.0.md [keyword:${requiredText}] is missing`)
+    }
+  }
+
+  const redisBody = articles.get('docs/courses/java/13-后端工程/14-Redis.md') ?? ''
+  for (const requiredText of ['RedisTemplate', 'opsForValue', 'TTL', 'Lua']) {
+    if (!redisBody.includes(requiredText)) {
+      violations.push(`docs/courses/java/13-后端工程/14-Redis.md [keyword:${requiredText}] is missing`)
+    }
+  }
+
+  assert.doesNotMatch(
+    myBatisBody,
+    /(?:源码|当前).{0,20}MyBatis-Plus/u,
+    'MyBatis-Plus must remain an independent example and not be claimed as current source usage',
+  )
+  assert.deepEqual(
+    violations,
+    [],
+    `rule backend-persistence-keywords${formatViolations(violations)}`,
   )
 })
 
