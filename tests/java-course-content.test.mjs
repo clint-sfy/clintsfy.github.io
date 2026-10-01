@@ -24,6 +24,7 @@ const CHAPTER_NAMES = [
   '10-JVM',
   '11-工程实践',
   '12-设计与项目',
+  '13-后端工程',
 ]
 
 const QUALITY_CHAPTER_NAMES = CHAPTER_NAMES.slice(0, 10)
@@ -127,6 +128,12 @@ const EXPECTED_ARTICLES_BY_CHAPTER = {
   ],
   '11-工程实践': ['01-Maven与测试工程.md', '02-JDBC与事务.md'],
   '12-设计与项目': ['01-设计原则模式与综合复习.md'],
+  '13-后端工程': [
+    '01-Spring-Boot启动与配置.md',
+    '02-Spring-IoC与Bean生命周期.md',
+    '03-Spring-AOP与声明式事务.md',
+    '04-Spring-MVC与Servlet边界.md',
+  ],
 }
 
 const EXPECTED_JAVA_PATHS = [
@@ -985,6 +992,31 @@ class Demo {
   assert.ok(
     inspectBackendArticle(missingLinkArticle, spec).some((issue) => issue.includes(`[cross-link:${link}]`)),
     'code-block and plain-text pseudo links must not satisfy a missing Markdown link',
+  )
+})
+
+test('Spring backend batch exposes four article paths and content contracts', () => {
+  const batchSpecs = BACKEND_ARTICLE_SPECS.filter((spec) =>
+    /\/13-后端工程\/0[1-4]-/u.test(spec.path),
+  )
+  assert.equal(batchSpecs.length, 4, 'rule backend-batch1-manifest: expected four Spring pages')
+
+  const violations = []
+  for (const spec of batchSpecs) {
+    try {
+      const article = readMarkdown(spec.path)
+      for (const issue of inspectBackendArticle(article, spec)) {
+        violations.push(issue)
+      }
+    } catch (error) {
+      violations.push(`${spec.path} [article-read] ${error.message}`)
+    }
+  }
+
+  assert.deepEqual(
+    violations,
+    [],
+    `rule backend-batch1-contract${formatViolations(violations)}`,
   )
 })
 
