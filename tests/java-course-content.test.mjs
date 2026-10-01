@@ -133,7 +133,10 @@ const EXPECTED_ARTICLES_BY_CHAPTER = {
     '02-Spring-IoC与Bean生命周期.md',
     '03-Spring-AOP与声明式事务.md',
     '04-Spring-MVC与Servlet边界.md',
+    '05-Spring-Security与JWT.md',
     '06-MyBatis核心与MyBatis-Plus重点.md',
+    '07-Jackson与Fastjson2-JSON.md',
+    '08-Bean-Validation参数校验.md',
     '13-MySQL-8.0.md',
     '14-Redis.md',
   ],
@@ -1207,6 +1210,101 @@ test('persistence backend batch keeps MyBatis source boundary and database keywo
     redisBody,
     /events\.publishEvent\(new UserStatusChanged\(id\)\)[\s\S]*?@TransactionalEventListener\(phase = TransactionPhase\.AFTER_COMMIT\)/u,
     'Redis invalidation example must publish an event and evict only after commit',
+  )
+})
+
+test('security JSON and validation backend batch exposes boundary contracts', () => {
+  const batchSpecs = BACKEND_ARTICLE_SPECS.filter((spec) =>
+    /\/13-后端工程\/(?:05-|07-|08-)/u.test(spec.path),
+  )
+  assert.equal(batchSpecs.length, 3, 'rule backend-batch3-manifest: expected three security/JSON/validation pages')
+
+  const articles = new Map()
+  const violations = []
+  for (const spec of batchSpecs) {
+    try {
+      const article = readMarkdown(spec.path)
+      articles.set(spec.path, article.body)
+      for (const issue of inspectBackendArticle(article, spec)) {
+        violations.push(issue)
+      }
+    } catch (error) {
+      violations.push(`${spec.path} [article-read] ${error.message}`)
+    }
+  }
+
+  const securityPath = 'docs/courses/java/13-后端工程/05-Spring-Security与JWT.md'
+  const securityBody = articles.get(securityPath) ?? ''
+  for (const requiredText of [
+    '认证', '授权', 'SecurityFilterChain', 'authorizeHttpRequests', '@PreAuthorize',
+    'BCrypt', 'Bearer', 'claims', 'exp', 'iat', 'jti', '过期', '401', '403',
+    '无状态', 'SessionCreationPolicy.STATELESS', '撤销', 'AuthenticationEntryPoint',
+    'AccessDeniedHandler', 'JJWT 0.11', 'JJWT 0.12', 'jjwt-api', 'jjwt-impl',
+    'jjwt-jackson', 'JWT_SECRET',
+  ]) {
+    if (!securityBody.includes(requiredText)) {
+      violations.push(`${securityPath} [security:${requiredText}] is missing`)
+    }
+  }
+  if (!/parserBuilder\(\)[\s\S]*?parseClaimsJws\(/u.test(securityBody)) {
+    violations.push(`${securityPath} [security:jjwt-0.11-api] parserBuilder/parseClaimsJws example is missing`)
+  }
+  if (!/Jwts\.parser\(\)[\s\S]*?verifyWith\([\s\S]*?parseSignedClaims\(/u.test(securityBody)) {
+    violations.push(`${securityPath} [security:jjwt-0.12-api] parser/verifyWith/parseSignedClaims example is missing`)
+  }
+  if (!/System\.getenv\("JWT_SECRET"\)|<[^>]*(?:secret|key)[^>]*>/iu.test(securityBody)) {
+    violations.push(`${securityPath} [security:key-placeholder] secret must be supplied as a placeholder or environment value`)
+  }
+  assert.doesNotMatch(
+    securityBody,
+    /(?:secret|密钥)\s*[:=]\s*["'][^"']{8,}["']/iu,
+    'JWT examples must not hard-code a realistic secret',
+  )
+
+  const jsonPath = 'docs/courses/java/13-后端工程/07-Jackson与Fastjson2-JSON.md'
+  const jsonBody = articles.get(jsonPath) ?? ''
+  for (const requiredText of [
+    'Jackson 3', 'tools.jackson', 'com.fasterxml.jackson.databind', 'ObjectMapper',
+    '@JsonFormat', '@JsonInclude', '@JsonSerialize', '@JsonDeserialize',
+    'Fastjson2', 'JSONWriter', 'JSONReader', 'toJSONString', 'parseObject',
+    '自定义序列化', '日期', '时区', 'Redis', '序列化', '敏感',
+  ]) {
+    if (!jsonBody.includes(requiredText)) {
+      violations.push(`${jsonPath} [json:${requiredText}] is missing`)
+    }
+  }
+  if (!/tools\.jackson\.databind\.ObjectMapper[\s\S]*?com\.fasterxml\.jackson\.databind\.ObjectMapper/u.test(jsonBody)) {
+    violations.push(`${jsonPath} [json:jackson-package-difference] Jackson 3 and Jackson 2 package examples are missing`)
+  }
+  if (!/Redis[\s\S]*?(?:白名单|边界|serializer|Serializer)/iu.test(jsonBody)) {
+    violations.push(`${jsonPath} [json:redis-boundary] Redis serialization boundary is missing`)
+  }
+
+  const validationPath = 'docs/courses/java/13-后端工程/08-Bean-Validation参数校验.md'
+  const validationBody = articles.get(validationPath) ?? ''
+  for (const requiredText of [
+    '@NotBlank', '@NotNull', '@Size', '@Email', '@Pattern', '@Valid', '@Validated',
+    '级联', '分组', 'Default', 'ConstraintValidator', '字段', 'FieldError',
+    'BindingResult', '@RequestParam', '@PathVariable', '方法参数', '转换', '校验', '授权',
+  ]) {
+    if (!validationBody.includes(requiredText)) {
+      violations.push(`${validationPath} [validation:${requiredText}] is missing`)
+    }
+  }
+  if (!/@Constraint\(validatedBy\s*=\s*\w+\.class\)/u.test(validationBody)) {
+    violations.push(`${validationPath} [validation:custom-constraint] @Constraint(validatedBy = ...) example is missing`)
+  }
+  if (!/implements\s+ConstraintValidator</u.test(validationBody)) {
+    violations.push(`${validationPath} [validation:constraint-validator] ConstraintValidator implementation is missing`)
+  }
+  if (!/(?:转换)[\s\S]{0,160}(?:校验)[\s\S]{0,160}(?:授权)/u.test(validationBody)) {
+    violations.push(`${validationPath} [validation:responsibility-separation] conversion/validation/authorization must be separated`)
+  }
+
+  assert.deepEqual(
+    violations,
+    [],
+    `rule backend-batch3-contract${formatViolations(violations)}`,
   )
 })
 
