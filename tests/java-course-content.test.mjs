@@ -287,6 +287,23 @@ const BACKEND_ARTICLE_SPECS = [
     uncommonUsage: ['Lua', '缓存一致性', '穿透/击穿/雪崩', '限流', '并发失败边界'],
   }),
 ]
+
+const EXPECTED_BACKEND_TITLES_BY_FILENAME = new Map([
+  ['01-Spring-Boot启动与配置.md', 'Spring Boot 启动与配置'],
+  ['02-Spring-IoC与Bean生命周期.md', 'Spring IoC 与 Bean 生命周期'],
+  ['03-Spring-AOP与声明式事务.md', 'Spring AOP 与声明式事务'],
+  ['04-Spring-MVC与Servlet边界.md', 'Spring MVC 与 Servlet 边界'],
+  ['05-Spring-Security与JWT.md', 'Spring Security 与 JWT'],
+  ['06-MyBatis核心与MyBatis-Plus重点.md', 'MyBatis 核心与 MyBatis-Plus 重点'],
+  ['07-Jackson与Fastjson2-JSON.md', 'Jackson 与 Fastjson2 JSON'],
+  ['08-Bean-Validation参数校验.md', 'Bean Validation 参数校验'],
+  ['09-SLF4J与Logback日志.md', 'SLF4J 与 Logback 日志'],
+  ['10-文件上传下载与资源安全.md', '文件上传下载与资源安全'],
+  ['11-Apache-POI-Excel导入导出.md', 'Apache POI Excel 导入导出'],
+  ['12-Quartz定时任务.md', 'Quartz 定时任务'],
+  ['13-MySQL-8.0.md', 'MySQL 8.0'],
+  ['14-Redis.md', 'Redis'],
+])
 const EXPECTED_JDK20_PREVIEW_ARTICLES = [
   'docs/courses/java/04-现代Java类型/01-枚举record与sealed.md',
 ]
@@ -468,6 +485,13 @@ function removeFencedCode(text) {
   return visibleLines.join('\n')
 }
 
+function getMarkdownLinkDestinations(text) {
+  const visibleText = removeFencedCode(text)
+  return [...visibleText.matchAll(/\[[^\]\r\n]+\]\(\s*(\/courses\/java\/[^)#\s]+)(?:#[^)#\s]*)?\s*\)/g)].map(
+    (match) => match[1],
+  )
+}
+
 function stripMarkdown(text) {
   return removeFencedCode(text)
     .replace(/`([^`]+)`/g, '$1')
@@ -512,6 +536,14 @@ function getBackendCodeBlocks(text) {
   }))
 }
 
+function stripBackendComments(code) {
+  return code
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*(?:\/\/|--|#).*$/gmu, '')
+    .replace(/^\s*\*.*$/gmu, '')
+    .trim()
+}
+
 function hasStandaloneOutputComment(code) {
   return /^\s*\/\/\s*输出\s*[:：]\s*\S.*$/mu.test(code)
 }
@@ -533,12 +565,23 @@ function inspectBackendUsage(content, { requireOutput = true } = {}) {
     issues.push('needs a 用途： purpose/boundary sentence')
   } else if (firstCodeIndex >= 0 && purposeIndex > firstCodeIndex) {
     issues.push('用途： purpose/boundary sentence must precede the code block')
+  } else {
+    const purposeText = stripMarkdown(
+      lines[purposeIndex].replace(/^\s*用途\s*[:：]\s*/u, ''),
+    )
+    if (purposeText.length < 12) {
+      issues.push('用途： purpose/boundary sentence must contain at least 12 meaningful characters')
+    }
   }
 
   if (firstCodeIndex < 0 || blocks.length === 0) {
     issues.push('needs a java or sql code block')
-  } else if (blocks.every(({ code }) => code.trim() === '')) {
-    issues.push('java/sql code block contains no executable content')
+  } else {
+    for (const { code } of blocks) {
+      if (stripBackendComments(code) === '') {
+        issues.push('java/sql code block must contain at least one real code line')
+      }
+    }
   }
 
   if (requireOutput && !blocks.some(({ code }) => hasStandaloneBackendOutputComment(code))) {
@@ -604,8 +647,9 @@ function inspectBackendArticle(article, spec) {
     }
   }
 
+  const articleLinks = new Set(getMarkdownLinkDestinations(article.body))
   for (const link of spec.crossLinks ?? []) {
-    if (!article.body.includes(`](${link})`)) {
+    if (!articleLinks.has(link)) {
       violations.push(`${spec.path} [cross-link:${link}] link is missing`)
     }
   }
@@ -617,6 +661,97 @@ function inspectBackendArticle(article, spec) {
   }
 
   return violations
+}
+
+function createBackendInspectorFixture() {
+  const spec = {
+    path: 'docs/courses/java/13-后端工程/00-runtime-fixture.md',
+    title: 'Backend Runtime Fixture',
+    keywords: ['DemoApi'],
+    commonUsage: ['DemoApi'],
+    uncommonUsage: ['RareApi'],
+    sharedSections: [...BACKEND_SHARED_SECTIONS],
+    coreSubsections: [...REQUIRED_CORE_SUBSECTIONS],
+    crossLinks: [...BACKEND_CROSS_LINKS],
+    forbiddenTerms: [...BACKEND_FORBIDDEN_TERMS],
+  }
+  const body = `## 学习目标
+
+- 能够辨认后端用法契约。
+
+## 核心知识点
+
+### 专业术语
+
+\`DemoApi\` 是一个测试用 API。
+
+### 白话解释与边界
+
+用途：用于说明检查器如何区分结构、代码和边界。
+
+## 常用用法
+
+### DemoApi：运行 Java 示例
+
+用途：用于展示一个可运行的 Java 用法与边界。
+
+\`\`\`java
+class Demo {
+}
+// 输出：运行成功
+\`\`\`
+
+## 不常用但需要知道
+
+### RareApi：运行 SQL 示例
+
+用途：用于展示一个较少使用但仍需验证的 SQL 边界。
+
+\`\`\`sql
+SELECT 1;
+-- 输出：1
+\`\`\`
+
+## 简单案例
+
+把结构、用途和输出放在同一篇文章中。
+
+## 易混点
+
+用途说明不是代码输出，二者必须分开。
+
+## 课后小问
+
+1. 哪一行是用途说明？
+
+答案：用途行。
+
+解析：它位于代码块之前。
+
+## 本节小结
+
+- 结构清晰且可检查。
+
+## 快速回顾
+
+- 用途、代码和输出缺一不可。
+
+[List 基础](/courses/java/05-泛型与集合/04-List常用API)
+[Map 基础](/courses/java/05-泛型与集合/07-Map常用API)
+[String 基础](/courses/java/02-数组与文本/02-String与文本处理)
+`
+  return {
+    spec,
+    article: {
+      data: {
+        title: spec.title,
+        description: '用于直接运行检查器单元测试。',
+        category: 'Java 后端',
+        tags: ['Java'],
+      },
+      body,
+    },
+  }
 }
 
 function stripJavaComments(code) {
@@ -744,6 +879,14 @@ test('backend article specification manifest covers 14 planned pages', () => {
   const paths = BACKEND_ARTICLE_SPECS.map((spec) => spec.path)
   assert.equal(new Set(paths).size, paths.length, 'rule backend-manifest-paths: planned paths must be unique')
   assert.equal(new Set(BACKEND_CROSS_LINKS).size, 3, 'rule backend-cross-links: expected three unique basic targets')
+  const actualTitlesByFilename = new Map(
+    BACKEND_ARTICLE_SPECS.map((spec) => [spec.path.split('/').pop(), spec.title]),
+  )
+  assert.deepEqual(
+    actualTitlesByFilename,
+    EXPECTED_BACKEND_TITLES_BY_FILENAME,
+    'rule backend-manifest-title-map: planned filenames must keep their exact titles',
+  )
 
   for (const spec of BACKEND_ARTICLE_SPECS) {
     assert.match(
@@ -766,6 +909,83 @@ test('backend article specification manifest covers 14 planned pages', () => {
       `rule backend-manifest-cross-links: ${spec.path} must declare all basic link targets`,
     )
   }
+})
+
+test('backend inspectors execute direct pass and failure fixtures', () => {
+  const { article, spec } = createBackendInspectorFixture()
+
+  assert.deepEqual(inspectBackendUsage(getSection(article.body, '常用用法')), [], 'backend usage fixture should pass')
+  assert.deepEqual(inspectBackendArticle(article, spec), [], 'backend article fixture should pass')
+
+  const missingPurpose = inspectBackendUsage(`### DemoApi
+
+\`\`\`java
+class Demo {
+}
+// 输出：运行成功
+\`\`\``)
+  assert.ok(missingPurpose.some((issue) => issue.includes('用途')), 'missing purpose must be reported')
+
+  const commentsOnly = inspectBackendUsage(`用途：用于展示一个足够长的边界说明。
+
+\`\`\`java
+// 这里只有注释
+/* 仍然没有真实代码 */
+// 输出：没有执行
+\`\`\``)
+  assert.ok(
+    commentsOnly.some((issue) => issue.includes('real code line')),
+    'comment-only code blocks must be rejected',
+  )
+
+  const sqlCommentsOnly = inspectBackendUsage(`用途：用于展示一个足够长的边界说明。
+
+\`\`\`sql
+-- 这里只有注释
+# 仍然没有真实代码
+/* 输出也只是注释 */
+\`\`\``)
+  assert.ok(
+    sqlCommentsOnly.some((issue) => issue.includes('real code line')),
+    'SQL comment-only code blocks must be rejected',
+  )
+
+  const missingOutput = inspectBackendUsage(`用途：用于展示一个足够长的边界说明。
+
+\`\`\`sql
+SELECT 1;
+\`\`\``)
+  assert.ok(missingOutput.some((issue) => issue.includes('standalone')), 'missing standalone output must be reported')
+
+  const shortPurpose = inspectBackendUsage(`用途：太短
+
+\`\`\`java
+class Demo {
+}
+// 输出：运行成功
+\`\`\``)
+  assert.ok(shortPurpose.some((issue) => issue.includes('at least 12')), 'short purpose must be rejected')
+
+  const forbiddenArticle = {
+    ...article,
+    body: `${article.body}\n若依`,
+  }
+  assert.ok(
+    inspectBackendArticle(forbiddenArticle, spec).some((issue) => issue.includes('[forbidden:若依]')),
+    'forbidden terms must be reported',
+  )
+
+  const link = BACKEND_CROSS_LINKS[0]
+  const missingLinkArticle = {
+    ...article,
+    body: article.body
+      .replace(`[List 基础](${link})`, '')
+      .concat(`\n\`\`\`java\nString fake = "[伪链接](${link})";\n// 输出：伪链接\n\`\`\`\n伪文本](${link})`),
+  }
+  assert.ok(
+    inspectBackendArticle(missingLinkArticle, spec).some((issue) => issue.includes(`[cross-link:${link}]`)),
+    'code-block and plain-text pseudo links must not satisfy a missing Markdown link',
+  )
 })
 
 test('Java course keeps the expected Markdown files, article counts, chapters, and baseline paths', () => {
