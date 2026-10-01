@@ -1368,6 +1368,9 @@ test('Task4 review regressions lock version, proxy, package, and response detail
   assert.match(jsonBody, /ObjectMapper mapper[\s\S]*?writeValueAsString\(/u, 'custom serializer must be called through ObjectMapper')
   assert.match(jsonBody, /:\s*value;/u, 'non-email values must safely pass through the serializer')
   assert.match(jsonBody, /(?:displayName|label)[\s\S]*?Ann/u, 'ObjectMapper example must show a non-email value passing through')
+  assert.match(jsonBody, /at\s*>\s*0[\s\S]*?at\s*==\s*1/u, 'single-character email local parts need a dedicated masking branch')
+  assert.match(jsonBody, /new PublicUser\("a@example\.test",\s*"Ann"\)/u, 'ObjectMapper example must exercise a single-character email local part')
+  assert.match(jsonBody, /\*@example\.test/u, 'single-character email local parts must serialize as *@domain')
   for (const redisMarker of ['setConnectionFactory', 'afterPropertiesSet']) {
     assert.match(jsonBody, new RegExp(redisMarker, 'u'), `Redis serializer config needs ${redisMarker}`)
   }

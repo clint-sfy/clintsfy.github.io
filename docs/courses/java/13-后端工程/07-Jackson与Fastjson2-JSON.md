@@ -125,8 +125,8 @@ final class MaskedEmailSerializer extends JsonSerializer<String> {
             return;
         }
         int at = value.indexOf('@');
-        String masked = at > 1 && at < value.length() - 1
-            ? value.charAt(0) + "***" + value.substring(at)
+        String masked = at > 0 && at < value.length() - 1
+            ? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)
             : value;
         gen.writeString(masked);
     }
@@ -151,9 +151,12 @@ com.fasterxml.jackson.databind.ObjectMapper mapper =
 String json = mapper.writeValueAsString(new PublicUser("ann@example.test", "Ann"));
 System.out.println(json);
 // 输出：{"email":"a***@example.test","displayName":"Ann"}
+String singleCharLocal = mapper.writeValueAsString(new PublicUser("a@example.test", "Ann"));
+System.out.println(singleCharLocal);
+// 输出：{"email":"*@example.test","displayName":"Ann"}
 ```
 
-`@JsonSerialize` 和 `@JsonDeserialize` 把具体实现绑定到字段或类型，示例中的 `EmailDeserializer` 代表项目自己的反序列化器；这里使用字段级 serializer 并由 `ObjectMapper.writeValueAsString` 实际调用，不会全局替换所有 `String` 的序列化。serializer 对不含 `@` 的值安全透传，且未绑定 serializer 的 `displayName` 也保持 `Ann`。这个代码块使用 Jackson 2 API，因此 serializer 的 core/databind 类型来自 `com.fasterxml.jackson.*`；迁移 Jackson 3 时分别改为 `tools.jackson.core.*`、`tools.jackson.databind.*` 与 `tools.jackson.databind.annotation.*`，而 `@JsonFormat`/`@JsonInclude` 仍保留 `com.fasterxml.jackson.annotation.*`。敏感字段还应在日志、错误响应和缓存 key 中分别检查，单一注解覆盖不了所有输出路径。
+`@JsonSerialize` 和 `@JsonDeserialize` 把具体实现绑定到字段或类型，示例中的 `EmailDeserializer` 代表项目自己的反序列化器；这里使用字段级 serializer 并由 `ObjectMapper.writeValueAsString` 实际调用，不会全局替换所有 `String` 的序列化。脱敏条件从 `at > 0` 开始：单字符本地部（如 `a@example.test`）输出 `*@example.test`，更长本地部保留首字符；不含 `@` 或缺少域部分的值安全透传，未绑定 serializer 的 `displayName` 也保持 `Ann`。这个代码块使用 Jackson 2 API，因此 serializer 的 core/databind 类型来自 `com.fasterxml.jackson.*`；迁移 Jackson 3 时分别改为 `tools.jackson.core.*`、`tools.jackson.databind.*` 与 `tools.jackson.databind.annotation.*`，而 `@JsonFormat`/`@JsonInclude` 仍保留 `com.fasterxml.jackson.annotation.*`。敏感字段还应在日志、错误响应和缓存 key 中分别检查，单一注解覆盖不了所有输出路径。
 
 ### Redis 序列化：限定缓存值的类型边界
 
