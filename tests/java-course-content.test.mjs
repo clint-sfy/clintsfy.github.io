@@ -1507,6 +1507,8 @@ test('Task5 review regressions lock versions, input safety, cleanup, bytes, and 
   assert.match(loggingBody, /MDC\.put\("traceId",\s*(?:safeContextId|safeTraceId)\(/u)
   assert.match(loggingBody, /jobId[\s\S]{0,240}(?:safeContextId|safeJobId)/u)
   assert.match(loggingBody, /(?:password|secret|token)[\s\S]{0,80}(?:不记录|不得|不能|禁止)/iu)
+  const mdcSection = getSubsection(getSection(loggingBody, '常用用法'), 'MDC：为请求附加 traceId') ?? ''
+  assert.match(mdcSection, /MDC\.put\("traceId",\s*(?:safeContextId|safeTraceId)\([\s\S]{0,240}finally\s*\{[\s\S]{0,120}MDC\.remove\("traceId"\)/u)
 
   assert.match(fileBody, /Spring Boot 4\.1\.0[\s\S]*Spring Framework 7/u)
   assert.match(fileBody, /org\.springframework\.boot:spring-boot-starter-web:4\.1\.0/u)
@@ -1517,6 +1519,19 @@ test('Task5 review regressions lock versions, input safety, cleanup, bytes, and 
   assert.match(fileBody, /addSuppressed/u)
   assert.match(fileBody, /toLowerCase\(Locale\.ROOT\)/u)
   assert.doesNotMatch(fileBody, /\.toLowerCase\(\)/u)
+  const transferSection = getSubsection(getSection(fileBody, '常用用法'), 'transferTo：在白名单目录落盘') ?? ''
+  const downloadSection = getSubsection(getSection(fileBody, '常用用法'), '流式下载：避免一次性读入内存') ?? ''
+  assert.match(transferSection, /class SecureFileService/u)
+  assert.match(transferSection, /store\(MultipartFile file, String principal, String generatedId\)/u)
+  assert.match(transferSection, /authorization\.canUpload\(principal\)/u)
+  assert.match(transferSection, /resolveWriteTarget\(generatedId, extension\)/u)
+  assert.match(transferSection, /Files\.isSymbolicLink\(candidate\)/u)
+  assert.match(transferSection, /Files\.exists\(candidate,\s*LinkOption\.NOFOLLOW_LINKS\)/u)
+  assert.match(transferSection, /parent\.toRealPath\(\)[\s\S]{0,180}startsWith\(trustedRoot\)/u)
+  assert.match(transferSection, /download\(String fileId, String principal\)/u)
+  assert.match(transferSection, /resolveAuthorized\(record, principal\)/u)
+  assert.match(downloadSection, /resourceService\.download\("file-7", principal\)/u)
+  assert.doesNotMatch(fileBody, /StreamingResponseBody download\(Path file\)/u)
 
   assert.match(poiBody, /org\.apache\.poi:poi-ooxml:5\.5\.1/u)
   assert.match(poiBody, /POI 5\.5\.1[\s\S]*(?:CellType\.FORMULA|Workbook\.close|dispose)/u)
@@ -1549,9 +1564,17 @@ test('Task5 review regressions lock versions, input safety, cleanup, bytes, and 
     assert.match(quartzBody, new RegExp(property.replaceAll('.', '\\.'), 'u'), `Quartz property ${property} is missing`)
   }
   const retrySection = getSubsection(getSection(quartzBody, '不常用但需要知道'), '失败重试') ?? ''
+  assert.match(quartzBody, /### 失败重试：区分立即 refire 与有界指数退避 Trigger/u)
   assert.match(retrySection, /setRefireImmediately\(true\)/u)
   assert.match(retrySection, /(?:立即|immediate)/iu)
   assert.match(retrySection, /(?:新|new)\s*Trigger|SimpleTrigger|startAt|scheduleJob/u)
+  assert.match(retrySection, /maxRefires|MAX_REFIRES/u)
+  assert.match(retrySection, /retry=exhausted|retry limit exceeded|失败告警/u)
+  assert.match(retrySection, /throw new JobExecutionException\(["']retry limit exceeded["']\)/u)
+  assert.match(retrySection, /baseSeconds[\s\S]{0,220}maxSeconds/u)
+  assert.match(retrySection, /Math\.min\([\s\S]{0,220}attempt/u)
+  assert.match(retrySection, /attempt\s*<\s*0[\s\S]{0,180}attempt\s*>=\s*maxAttempts/u)
+  assert.match(retrySection, /DateBuilder\.futureDate\(Math\.toIntExact\(delaySeconds\)/u)
   assert.match(quartzBody, /Scheduler[\s\S]*scheduler\.shutdown\(/u)
 })
 

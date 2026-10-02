@@ -209,26 +209,27 @@ System.out.println("store=" + quartz.getProperty("org.quartz.jobStore.class")
 
 JDBCJobStore 需要先执行与数据库方言匹配的 Quartz 建表脚本，并配置真实的 `jobStore.class`、`driverDelegateClass`、`dataSource`、`tablePrefix`、`isClustered`、`instanceId` 与数据源 URL/账号属性。密码只能来自受控密钥或环境变量，不能写进 `JobDataMap` 或日志；上例也不打印数据源凭据。还要观察锁等待与时钟偏差。JobDataMap 的序列化内容应可迁移且不含机密；持久化成功不代表业务数据库事务自动和 Job 执行处于同一事务。
 
-### 失败重试：区分立即 refire 与延迟 Trigger
+### 失败重试：区分立即 refire 与有界指数退避 Trigger
 
-用途：用于限制 Quartz 立即 refire 的次数，并把需要延迟的重试显式建成新的 Trigger，避免把两种语义混成一个开关。
+用途：用于限制 Quartz 立即 refire 的次数，并把需要延迟的重试用有界指数退避显式建成新的 Trigger，避免把两种语义混成一个开关。
 
 ```java
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 void executeWithBound(JobExecutionContext context) throws JobExecutionException {
-    if (context.getRefireCount() < 2) {
+    int maxRefires = 2;
+    if (context.getRefireCount() < maxRefires) {
         JobExecutionException retry = new JobExecutionException("temporary failure");
         retry.setRefireImmediately(true);
         throw retry;
     }
-    System.out.println("retry=bounded");
-    // 输出：retry=bounded
+    System.err.println("retry=exhausted, job=" + context.getJobDetail().getKey());
+    throw new JobExecutionException("retry limit exceeded");
 }
 ```
 
-`setRefireImmediately(true)` 只是请求 Quartz 立即再次执行，不是退避；不能无条件设置，否则会形成紧密重试环。需要延迟时使用新的 `SimpleTrigger`（或业务队列）表达时间间隔：
+`setRefireImmediately(true)` 只是请求 Quartz 立即再次执行，不是退避；不能无条件设置，否则会形成紧密重试环。达到 `maxRefires` 后必须记录失败告警并抛出异常，让 Job 以失败结束，不能打印成功。需要延迟时使用新的 `SimpleTrigger`，按 attempt 计算有上限的指数退避：
 
 ```java
 import org.quartz.DateBuilder;
@@ -238,21 +239,29 @@ import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 
 Trigger delayedRetry(JobExecutionContext context, int attempt) throws Exception {
+    int maxAttempts = 5;
+    if (attempt < 0 || attempt >= maxAttempts) {
+        throw new IllegalArgumentException("retry attempts exhausted");
+    }
+    long baseSeconds = 30L;
+    long maxSeconds = 15L * 60L;
+    long multiplier = 1L << Math.min(attempt, 5);
+    long delaySeconds = Math.min(baseSeconds * multiplier, maxSeconds);
     Trigger retry = TriggerBuilder.newTrigger()
         .withIdentity("cleanup-retry-" + attempt, "maintenance")
         .forJob(context.getJobDetail())
-        .startAt(DateBuilder.futureDate(30, IntervalUnit.SECOND))
+        .startAt(DateBuilder.futureDate(Math.toIntExact(delaySeconds), IntervalUnit.SECOND))
         .withSchedule(SimpleScheduleBuilder.simpleSchedule().withRepeatCount(0))
         .build();
     context.getScheduler().scheduleJob(retry);
-    System.out.println("retry=delayed-trigger");
+    System.out.println("retry=delayed-trigger,delay=" + delaySeconds + "s");
     return retry;
 }
 
-// 输出：retry=delayed-trigger
+// 输出：retry=delayed-trigger,delay=30s
 ```
 
-更复杂的退避、死信和跨服务重试应放在业务队列或持久化状态中；每次重试要使用幂等键、限制总次数并区分永久校验失败与暂时依赖失败。
+这里的 `attempt` 从 0 开始，延迟是 `min(baseSeconds * 2^attempt, maxSeconds)`，超过 `maxAttempts` 直接拒绝调度；每次延迟重试都由新的 Trigger 表达。更复杂的死信和跨服务重试应放在业务队列或持久化状态中；每次重试要使用幂等键并区分永久校验失败与暂时依赖失败。
 
 ### ScheduledExecutorService：轻量内存调度对照
 
