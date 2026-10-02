@@ -216,6 +216,7 @@ JDBCJobStore 需要先执行与数据库方言匹配的 Quartz 建表脚本，�
 ```java
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import java.util.UUID;
 
 void executeWithBound(JobExecutionContext context) throws JobExecutionException {
     int maxRefires = 2;
@@ -247,8 +248,13 @@ Trigger delayedRetry(JobExecutionContext context, int attempt) throws Exception 
     long maxSeconds = 15L * 60L;
     long multiplier = 1L << Math.min(attempt, 5);
     long delaySeconds = Math.min(baseSeconds * multiplier, maxSeconds);
+    String jobKey = context.getJobDetail().getKey().toString();
+    String fireInstanceId = context.getFireInstanceId();
+    String runId = fireInstanceId == null || fireInstanceId.isBlank()
+        ? UUID.randomUUID().toString()
+        : fireInstanceId;
     Trigger retry = TriggerBuilder.newTrigger()
-        .withIdentity("cleanup-retry-" + attempt, "maintenance")
+        .withIdentity("cleanup-retry-" + jobKey + "-" + runId + "-" + attempt, "maintenance")
         .forJob(context.getJobDetail())
         .startAt(DateBuilder.futureDate(Math.toIntExact(delaySeconds), IntervalUnit.SECOND))
         .withSchedule(SimpleScheduleBuilder.simpleSchedule().withRepeatCount(0))
@@ -261,7 +267,7 @@ Trigger delayedRetry(JobExecutionContext context, int attempt) throws Exception 
 // 输出：retry=delayed-trigger,delay=30s
 ```
 
-这里的 `attempt` 从 0 开始，延迟是 `min(baseSeconds * 2^attempt, maxSeconds)`，超过 `maxAttempts` 直接拒绝调度；每次延迟重试都由新的 Trigger 表达。更复杂的死信和跨服务重试应放在业务队列或持久化状态中；每次重试要使用幂等键并区分永久校验失败与暂时依赖失败。
+这里的 `attempt` 从 0 开始，延迟是 `min(baseSeconds * 2^attempt, maxSeconds)`，超过 `maxAttempts` 直接拒绝调度；每次延迟重试都由新的 Trigger 表达，身份包含 JobKey、当前 `fireInstanceId`（缺失时用 UUID）和 attempt，避免并发运行只用 attempt 造成 TriggerKey 冲突。更复杂的死信和跨服务重试应放在业务队列或持久化状态中；每次重试要使用幂等键并区分永久校验失败与暂时依赖失败。
 
 ### ScheduledExecutorService：轻量内存调度对照
 
