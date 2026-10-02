@@ -33,11 +33,29 @@ description: 速查 SLF4J 参数化日志、MDC、Logback 滚动、脱敏和 AOP
 
 SLF4J 只规定调用方式，Logback 负责真正的输出；应用代码应依赖 `org.slf4j.Logger` 和 `LoggerFactory`，不要把业务逻辑绑死在 Logback 的实现类上。`info`、`warn` 和 `error` 表示事件严重程度，不等于“所有异常都必须 error”；可恢复的业务拒绝通常应带稳定事件名和参数。
 
-参数化日志应写成 `log.info("order={} state={}", orderId, state)`，不要先用 `+` 拼接完整字符串。异常日志保留 `Throwable`，例如 `log.error("job={} failed", jobId, ex)`；只输出 `ex.getMessage()` 会丢失调用栈和异常类型。日志内容还要避开密码、令牌、完整身份证号、上传内容和未经裁剪的请求体。
+参数化日志应写成 `log.info("order={} state={}", safeOrderId, state)`，不要先用 `+` 拼接完整字符串。异常日志保留 `Throwable`，例如 `log.error("job={} failed", safeJobId, ex)`；只输出 `ex.getMessage()` 会丢失调用栈和异常类型。日志内容还要避开密码、令牌、完整身份证号、上传内容和未经裁剪的请求体。
 
 MDC 通常是线程局部上下文；进入请求或任务时 `put`，在 `finally` 中 `remove`，否则线程池复用会把上一个请求的 `traceId` 泄露给下一个请求。异步执行、消息消费和虚拟线程切换不应假设 MDC 自动传播，要用明确的任务装饰器或参数传递。Logback 滚动既要限制单文件大小，也要限制保留天数和总磁盘量。
 
 操作日志比普通调试日志更接近审计记录：应只写谁、何时、做了什么、结果和关联 ID，不直接序列化整个参数对象。AOP 适合统一记录稳定的方法边界，但自调用、异步方法、异常被吞掉和代理未生效都会造成漏记；关键审计仍应在业务成功提交后显式记录。
+
+### 依赖与版本基线
+
+本文按 Java 17、Spring Boot 4.1.0 与 Spring Framework 7 的项目基线组织示例；日志依赖由 Boot BOM 统一管理，示例版本范围是 `org.slf4j:slf4j-api:2.0.x` 与 `ch.qos.logback:logback-classic:1.5.x`。Logback 1.5.x 应和 SLF4J 2.0.x provider 配套，不要把 1.7.x provider 混进来。SLF4J 1.7 时代主要依赖静态 binder，SLF4J 2.0 改用 `ServiceLoader` 找 provider，但 `Logger`、参数化 `{}` 和 `MDC` 的常用调用保持兼容；升级时要一起检查绑定、桥接包和启动告警。
+
+日志关联 ID 是可观测元数据而不是用户输入回显：`traceId`、`jobId` 只允许短的 `[A-Za-z0-9._:-]` 字符串并拒绝 CR/LF，长度上限统一为 64 个字符。日志白名单中 `password`、`secret`、`token` 均不记录，完整请求体或上传内容也禁止进入日志；必要时只记录脱敏后的摘要。
+
+```java
+import java.util.regex.Pattern;
+
+private static final Pattern CONTEXT_ID = Pattern.compile("[A-Za-z0-9._:-]{1,64}");
+
+static String safeContextId(String raw) {
+    if (raw == null || raw.length() > 64 || raw.indexOf('\r') >= 0 || raw.indexOf('\n') >= 0
+            || !CONTEXT_ID.matcher(raw).matches()) return "invalid";
+    return raw;
+}
+```
 
 ## 常用用法
 
@@ -53,8 +71,9 @@ final class ImportService {
     private static final Logger log = LoggerFactory.getLogger(ImportService.class);
 
     void run(String jobId) {
-        log.info("job={} started", jobId);
-        System.out.println("logged=" + jobId);
+        String safeJobId = safeContextId(jobId);
+        log.info("job={} started", safeJobId);
+        System.out.println("logged=" + safeJobId);
     }
 }
 
@@ -108,7 +127,7 @@ Logback XML 中通常把 `RollingFileAppender` 配合 `SizeAndTimeBasedRollingPo
 import org.slf4j.MDC;
 
 void handle(String traceId) {
-    MDC.put("traceId", traceId);
+    MDC.put("traceId", safeContextId(traceId));
     try {
         System.out.println("trace=" + MDC.get("traceId"));
         // 输出：trace=req-7
@@ -118,7 +137,7 @@ void handle(String traceId) {
 }
 ```
 
-Logback pattern 中用 `%X{traceId}` 读取 MDC；没有 `finally` 清理时，线程池中的后续请求可能继承旧值。跨线程执行应显式复制允许的键并在目标线程结束后清理，不能把 MDC 当作可靠的业务参数或授权依据。
+Logback pattern 中用 `%X{traceId}` 读取 MDC；没有 `finally` 清理时，线程池中的后续请求可能继承旧值。跨线程执行应显式复制允许的键并在目标线程结束后清理，不能把 MDC 当作可靠的业务参数或授权依据。`safeContextId` 的返回值才允许进入 MDC 或日志模板，不能先记录原始 `traceId`/`jobId` 再“事后脱敏”。
 
 ## 不常用但需要知道
 
@@ -201,14 +220,15 @@ final class JobRunner {
     private static final Logger log = LoggerFactory.getLogger(JobRunner.class);
 
     static String run(String traceId, String jobId) {
-        MDC.put("traceId", traceId);
+        String safeJobId = safeContextId(jobId);
+        MDC.put("traceId", safeContextId(traceId));
         try {
-            log.info("job={} state={}", jobId, "started");
-            if (jobId.isBlank()) throw new IllegalArgumentException("job id required");
-            log.info("job={} state={}", jobId, "done");
+            log.info("job={} state={}", safeJobId, "started");
+            if (safeJobId.equals("invalid")) throw new IllegalArgumentException("job id required");
+            log.info("job={} state={}", safeJobId, "done");
             return "success";
         } catch (RuntimeException ex) {
-            log.error("job={} state={}", jobId, "failed", ex);
+            log.error("job={} state={}", safeJobId, "failed", ex);
             return "failure";
         } finally {
             MDC.remove("traceId");

@@ -38,6 +38,10 @@ Cron 表达式通常包含秒、分、时、日、月、星期（可选年），
 
 内存 JobStore 适合单进程、可丢失的调度；需要重启恢复或多节点竞争时使用 JDBCJobStore 并准备 Quartz 表、事务和时钟同步。失败重试要限制次数、延迟和幂等键，区分 Quartz 立即 refire、Trigger 下一次触发和业务队列重试。暂停/恢复改变调度状态，不会中断已经执行的 Job。
 
+### 依赖与版本基线
+
+本文按 Java 17、Spring Boot 4.1.0 与 Spring Framework 7 的项目基线组织示例；直接使用 Quartz 时依赖 `org.quartz-scheduler:quartz:2.x`，由 Spring Boot 集成时通常使用 `org.springframework.boot:spring-boot-starter-quartz:4.1.0` 并让 BOM 管理 Quartz patch 版本。Quartz 2.x 使用 `JobBuilder`、`TriggerBuilder` 和 `CronScheduleBuilder`，旧 Quartz 1.x 常见的构造器/`StatefulJob` 写法不能直接照抄；Boot 4 周边 Servlet 配置使用 `jakarta.*`，也不要和旧 `javax.*` 依赖混用。下文的属性键名来自 Quartz 2.x 配置 API，实际数据库方言和 Spring Boot 绑定方式仍要以锁定的依赖版本为准。
+
 ## 常用用法
 
 ### Job：实现一次执行单元
@@ -182,17 +186,32 @@ final class RebuildJob implements Job {
 用途：用于在进程重启和多节点部署中保存 Job/Trigger 状态，让调度器依靠 Quartz 表恢复和协调，而不是依靠内存快照。
 
 ```java
-String storeClass = "org.quartz.impl.jdbcjobstore.JobStoreTX";
-String tablePrefix = "QRTZ_";
-System.out.println("store=" + storeClass + ",prefix=" + tablePrefix);
+import java.util.Objects;
+import java.util.Properties;
+
+Properties quartz = new Properties();
+quartz.setProperty("org.quartz.scheduler.instanceName", "app-scheduler");
+quartz.setProperty("org.quartz.scheduler.instanceId", "AUTO");
+quartz.setProperty("org.quartz.threadPool.threadCount", "10");
+quartz.setProperty("org.quartz.jobStore.class", "org.quartz.impl.jdbcjobstore.JobStoreTX");
+quartz.setProperty("org.quartz.jobStore.driverDelegateClass", "org.quartz.impl.jdbcjobstore.StdJDBCDelegate");
+quartz.setProperty("org.quartz.jobStore.dataSource", "main");
+quartz.setProperty("org.quartz.jobStore.tablePrefix", "QRTZ_");
+quartz.setProperty("org.quartz.jobStore.isClustered", "true");
+quartz.setProperty("org.quartz.dataSource.main.driver", "com.mysql.cj.jdbc.Driver");
+quartz.setProperty("org.quartz.dataSource.main.URL", Objects.requireNonNull(System.getenv("QUARTZ_DB_URL")));
+quartz.setProperty("org.quartz.dataSource.main.user", Objects.requireNonNull(System.getenv("QUARTZ_DB_USER")));
+quartz.setProperty("org.quartz.dataSource.main.password", Objects.requireNonNull(System.getenv("QUARTZ_DB_PASSWORD")));
+System.out.println("store=" + quartz.getProperty("org.quartz.jobStore.class")
+    + ",prefix=" + quartz.getProperty("org.quartz.jobStore.tablePrefix"));
 // 输出：store=org.quartz.impl.jdbcjobstore.JobStoreTX,prefix=QRTZ_
 ```
 
-JDBCJobStore 需要先执行与数据库方言匹配的 Quartz 建表脚本，配置数据源、表前缀、集群和实例 ID，并观察锁等待与时钟偏差。JobDataMap 的序列化内容应可迁移且不含机密；持久化成功不代表业务数据库事务自动和 Job 执行处于同一事务。
+JDBCJobStore 需要先执行与数据库方言匹配的 Quartz 建表脚本，并配置真实的 `jobStore.class`、`driverDelegateClass`、`dataSource`、`tablePrefix`、`isClustered`、`instanceId` 与数据源 URL/账号属性。密码只能来自受控密钥或环境变量，不能写进 `JobDataMap` 或日志；上例也不打印数据源凭据。还要观察锁等待与时钟偏差。JobDataMap 的序列化内容应可迁移且不含机密；持久化成功不代表业务数据库事务自动和 Job 执行处于同一事务。
 
-### 失败重试：区分触发失败与业务重试
+### 失败重试：区分立即 refire 与延迟 Trigger
 
-用途：用于对暂时失败设置有界重试和退避，区分 Quartz 的立即 refire 与业务层幂等重试。
+用途：用于限制 Quartz 立即 refire 的次数，并把需要延迟的重试显式建成新的 Trigger，避免把两种语义混成一个开关。
 
 ```java
 import org.quartz.JobExecutionContext;
@@ -209,7 +228,31 @@ void executeWithBound(JobExecutionContext context) throws JobExecutionException 
 }
 ```
 
-`setRefireImmediately(true)` 会请求 Quartz 立即再次执行，不能无条件设置，否则会形成紧密重试环。更复杂的退避、死信和跨服务重试应放在业务队列或持久化状态中；每次重试要使用幂等键、限制总次数并区分永久校验失败与暂时依赖失败。
+`setRefireImmediately(true)` 只是请求 Quartz 立即再次执行，不是退避；不能无条件设置，否则会形成紧密重试环。需要延迟时使用新的 `SimpleTrigger`（或业务队列）表达时间间隔：
+
+```java
+import org.quartz.DateBuilder;
+import org.quartz.IntervalUnit;
+import org.quartz.SimpleScheduleBuilder;
+import org.quartz.Trigger;
+import org.quartz.TriggerBuilder;
+
+Trigger delayedRetry(JobExecutionContext context, int attempt) throws Exception {
+    Trigger retry = TriggerBuilder.newTrigger()
+        .withIdentity("cleanup-retry-" + attempt, "maintenance")
+        .forJob(context.getJobDetail())
+        .startAt(DateBuilder.futureDate(30, IntervalUnit.SECOND))
+        .withSchedule(SimpleScheduleBuilder.simpleSchedule().withRepeatCount(0))
+        .build();
+    context.getScheduler().scheduleJob(retry);
+    System.out.println("retry=delayed-trigger");
+    return retry;
+}
+
+// 输出：retry=delayed-trigger
+```
+
+更复杂的退避、死信和跨服务重试应放在业务队列或持久化状态中；每次重试要使用幂等键、限制总次数并区分永久校验失败与暂时依赖失败。
 
 ### ScheduledExecutorService：轻量内存调度对照
 
@@ -247,23 +290,27 @@ import org.quartz.TriggerBuilder;
 import org.quartz.CronScheduleBuilder;
 
 void schedule(Scheduler scheduler) throws Exception {
-    var detail = JobBuilder.newJob(CleanupJob.class)
-        .withIdentity("cleanup", "maintenance")
-        .build();
-    var trigger = TriggerBuilder.newTrigger()
-        .withIdentity("cleanup-trigger", "maintenance")
-        .forJob(detail)
-        .withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?")
-            .withMisfireHandlingInstructionDoNothing())
-        .build();
-    scheduler.scheduleJob(detail, trigger);
-    scheduler.start();
-    System.out.println("schedule=started");
-    // 输出：schedule=started
+    try {
+        var detail = JobBuilder.newJob(CleanupJob.class)
+            .withIdentity("cleanup", "maintenance")
+            .build();
+        var trigger = TriggerBuilder.newTrigger()
+            .withIdentity("cleanup-trigger", "maintenance")
+            .forJob(detail)
+            .withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?")
+                .withMisfireHandlingInstructionDoNothing())
+            .build();
+        scheduler.scheduleJob(detail, trigger);
+        scheduler.start();
+        System.out.println("schedule=started");
+        // 输出：schedule=started
+    } finally {
+        if (!scheduler.isShutdown()) scheduler.shutdown(true);
+    }
 }
 ```
 
-案例把任务身份、Cron 计划和 misfire 策略放在同一个受控入口；真实应用还要配置线程池、时区、JDBCJobStore、权限和关闭钩子。任务本身要可重入或加 `@DisallowConcurrentExecution`，失败重试不能依赖无限 refire。
+案例把任务身份、Cron 计划和 misfire 策略放在同一个受控入口，并在示例所有权结束时调用 `Scheduler.shutdown(true)`；真实应用通常把相同关闭动作放到应用停止钩子，而不是每次注册任务都关闭共享 Scheduler。还要配置线程池、时区、JDBCJobStore、权限和关闭钩子。任务本身要可重入或加 `@DisallowConcurrentExecution`，失败重试不能依赖无限 refire。
 
 ## 易混点
 

@@ -1487,6 +1487,74 @@ test('Task5 backend references cover logging, resource safety, Excel, and Quartz
   )
 })
 
+test('Task5 review regressions lock versions, input safety, cleanup, bytes, and scheduler lifecycle', () => {
+  const loggingPath = 'docs/courses/java/13-后端工程/09-SLF4J与Logback日志.md'
+  const filePath = 'docs/courses/java/13-后端工程/10-文件上传下载与资源安全.md'
+  const poiPath = 'docs/courses/java/13-后端工程/11-Apache-POI-Excel导入导出.md'
+  const quartzPath = 'docs/courses/java/13-后端工程/12-Quartz定时任务.md'
+  const loggingBody = readMarkdown(loggingPath).body
+  const fileBody = readMarkdown(filePath).body
+  const poiBody = readMarkdown(poiPath).body
+  const quartzBody = readMarkdown(quartzPath).body
+
+  assert.match(loggingBody, /Spring Boot 4\.1\.0[\s\S]*Spring Framework 7/u)
+  assert.match(loggingBody, /org\.slf4j:slf4j-api:2\.0\.x[\s\S]*ch\.qos\.logback:logback-classic:1\.5\.x/u)
+  assert.match(loggingBody, /SLF4J 1\.7[\s\S]*(?:静态 binder|static binder)/u)
+  assert.match(loggingBody, /SLF4J 2\.0[\s\S]*(?:ServiceLoader|provider)/u)
+  assert.match(loggingBody, /safeContextId|safeTraceId/u)
+  assert.match(loggingBody, /A-Za-z0-9\._:-\]{1,64}/u)
+  assert.match(loggingBody, /CRLF|\\r|\\n/u)
+  assert.match(loggingBody, /MDC\.put\("traceId",\s*(?:safeContextId|safeTraceId)\(/u)
+  assert.match(loggingBody, /jobId[\s\S]{0,240}(?:safeContextId|safeJobId)/u)
+  assert.match(loggingBody, /(?:password|secret|token)[\s\S]{0,80}(?:不记录|不得|不能|禁止)/iu)
+
+  assert.match(fileBody, /Spring Boot 4\.1\.0[\s\S]*Spring Framework 7/u)
+  assert.match(fileBody, /org\.springframework\.boot:spring-boot-starter-web:4\.1\.0/u)
+  assert.match(fileBody, /transferTo\(Path\)[\s\S]*(?:transferTo\(File\)|File 重载|File overload)/iu)
+  assert.match(fileBody, /trusted|受信|授权|authorization|canRead|isAuthorized/iu)
+  assert.match(fileBody, /toRealPath|isSymbolicLink|NOFOLLOW_LINKS/u)
+  assert.match(fileBody, /getOriginalFilename\(\)[\s\S]{0,240}(?:不能|禁止|not)[\s\S]{0,240}(?:路径|path)/iu)
+  assert.match(fileBody, /addSuppressed/u)
+  assert.match(fileBody, /toLowerCase\(Locale\.ROOT\)/u)
+  assert.doesNotMatch(fileBody, /\.toLowerCase\(\)/u)
+
+  assert.match(poiBody, /org\.apache\.poi:poi-ooxml:5\.5\.1/u)
+  assert.match(poiBody, /POI 5\.5\.1[\s\S]*(?:CellType\.FORMULA|Workbook\.close|dispose)/u)
+  assert.match(poiBody, /new BufferedInputStream\(input\)/u)
+  assert.match(poiBody, /MissingCellPolicy|DataFormatter/u)
+  assert.match(poiBody, /workbook\.write\((?:out|output)\)/u)
+  assert.match(poiBody, /return bytes/u)
+  assert.doesNotMatch(poiBody, /return new byte\[0\]/u)
+  const formulaSection = getSubsection(getSection(poiBody, '不常用但需要知道'), '日期/公式') ?? ''
+  assert.ok(
+    formulaSection.indexOf('CellType.FORMULA') >= 0 &&
+      formulaSection.indexOf('CellType.FORMULA') < formulaSection.indexOf('DateUtil.isCellDateFormatted'),
+    'formula cells must be classified before date formatting',
+  )
+  assert.match(poiBody, /dispose\(\)[\s\S]{0,100}(?:boolean|true|false|删除成功)/u)
+  assert.doesNotMatch(poiBody, /必须同时[^\n]*(?:close|关闭)[^\n]*(?:dispose|临时)/u)
+  assert.match(poiBody, /addSuppressed/u)
+
+  assert.match(quartzBody, /org\.quartz-scheduler:quartz:2\.x/u)
+  assert.match(quartzBody, /Quartz 1\.x[\s\S]*Quartz 2\.x[\s\S]*(?:JobBuilder|TriggerBuilder)/u)
+  for (const property of [
+    'org.quartz.jobStore.class',
+    'org.quartz.jobStore.driverDelegateClass',
+    'org.quartz.jobStore.dataSource',
+    'org.quartz.jobStore.tablePrefix',
+    'org.quartz.jobStore.isClustered',
+    'org.quartz.scheduler.instanceId',
+    'org.quartz.dataSource.',
+  ]) {
+    assert.match(quartzBody, new RegExp(property.replaceAll('.', '\\.'), 'u'), `Quartz property ${property} is missing`)
+  }
+  const retrySection = getSubsection(getSection(quartzBody, '不常用但需要知道'), '失败重试') ?? ''
+  assert.match(retrySection, /setRefireImmediately\(true\)/u)
+  assert.match(retrySection, /(?:立即|immediate)/iu)
+  assert.match(retrySection, /(?:新|new)\s*Trigger|SimpleTrigger|startAt|scheduleJob/u)
+  assert.match(quartzBody, /Scheduler[\s\S]*scheduler\.shutdown\(/u)
+})
+
 test('Java backend index exposes all fourteen article routes', () => {
   const index = readMarkdown(JAVA_INDEX_PATH).body
   const violations = []
