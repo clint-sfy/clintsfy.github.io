@@ -1361,12 +1361,18 @@ test('Task4 review regressions lock version, proxy, package, and response detail
     'com.fasterxml.jackson.annotation.JsonInclude',
     'tools.jackson.core.JsonParser',
     'tools.jackson.databind.ObjectMapper',
-    'tools.jackson.databind.JsonSerializer',
+    'tools.jackson.databind.ValueSerializer',
+    'tools.jackson.databind.ValueDeserializer',
     'tools.jackson.databind.annotation.JsonSerialize',
     'tools.jackson.databind.annotation.JsonDeserialize',
   ]) {
     assert.match(jsonBody, new RegExp(packageMarker.replaceAll('.', '\\.'), 'u'), `Jackson 3 package boundary needs ${packageMarker}`)
   }
+  assert.doesNotMatch(
+    jsonBody,
+    /tools\.jackson\.databind\.(?:JsonSerializer|JsonDeserializer)/u,
+    'Jackson 3 custom handlers must use ValueSerializer/ValueDeserializer names',
+  )
   assert.match(jsonBody, /@JsonSerialize\(using\s*=\s*MaskedEmailSerializer\.class\)/u, 'email masking must be field-scoped')
   assert.doesNotMatch(jsonBody, /addSerializer\(\s*String\.class\s*,\s*new\s+MaskedEmailSerializer/u, 'email masking must not globally replace String serialization')
   assert.match(jsonBody, /ObjectMapper mapper[\s\S]*?writeValueAsString\(/u, 'custom serializer must be called through ObjectMapper')
@@ -1388,6 +1394,66 @@ test('Task4 review regressions lock version, proxy, package, and response detail
   }
   assert.match(validationBody, /getDefaultMessage\(\)/u, 'field error mapping must expose the stable default message')
   assert.match(validationBody, /new\s+FieldViolation\(/u, 'field error mapping must return a stable response object')
+})
+
+test('final backend review regressions close Jackson 3, upload, and transfer failure boundaries', () => {
+  const jsonPath = 'docs/courses/java/13-后端工程/07-Jackson与Fastjson2-JSON.md'
+  const filePath = 'docs/courses/java/13-后端工程/10-文件上传下载与资源安全.md'
+  const mysqlPath = 'docs/courses/java/13-后端工程/13-MySQL-8.0.md'
+  const jsonBody = readMarkdown(jsonPath).body
+  const fileBody = readMarkdown(filePath).body
+  const mysqlBody = readMarkdown(mysqlPath).body
+
+  assert.match(jsonBody, /tools\.jackson\.databind\.ValueSerializer/u)
+  assert.match(jsonBody, /tools\.jackson\.databind\.ValueDeserializer/u)
+  assert.match(jsonBody, /extends\s+ValueSerializer<String>[\s\S]*?SerializationContext/u)
+  assert.match(jsonBody, /extends\s+ValueDeserializer<String>[\s\S]*?DeserializationContext/u)
+  assert.match(jsonBody, /@JsonSerialize\(using\s*=\s*MaskedEmailValueSerializer\.class\)/u)
+  assert.match(jsonBody, /@JsonDeserialize\(using\s*=\s*EmailValueDeserializer\.class\)/u)
+  assert.match(jsonBody, /throws\s+JacksonException/u)
+  assert.match(jsonBody, /com\.fasterxml\.jackson\.databind\.JsonSerializer/u)
+  assert.match(jsonBody, /com\.fasterxml\.jackson\.databind\.JsonDeserializer/u)
+  assert.doesNotMatch(jsonBody, /tools\.jackson\.databind\.(?:JsonSerializer|JsonDeserializer)/u)
+
+  const transferSection = getSection(fileBody, '常用用法') ?? ''
+  assert.match(transferSection, /String extension\s*=\s*extensionOf\(file\.getOriginalFilename\(\)\)/u)
+  assert.match(transferSection, /isAllowedSize\(file\.getSize\(\)\)/u)
+  assert.match(transferSection, /private\s+(?:static\s+)?String extensionOf\(/u)
+  assert.match(transferSection, /ALLOWED_EXTENSIONS|allowedExtensions/u)
+  assert.match(transferSection, /MAX_UPLOAD_BYTES|maxUploadBytes/u)
+  assert.match(
+    transferSection,
+    /metadata\.save\(serverName,\s*target\)[\s\S]{0,500}Files\.deleteIfExists\(target\)[\s\S]{0,180}metadataFailure\.addSuppressed\(cleanup\)[\s\S]{0,180}throw metadataFailure/u,
+  )
+  const helperSections = getQuickReferenceSubsections(fileBody, '常用用法')
+    .filter(({ heading }) => /SecureFileService|transferTo|metadata\.save|extensionOf|download|resolveAuthorized|streamAuthorized/u.test(heading))
+  assert.ok(helperSections.length >= 4, 'file service must expose searchable helper snippets')
+  for (const { content } of helperSections) {
+    const blocks = getBackendCodeBlocks(content)
+    assert.equal(blocks.length, 1, 'each file helper heading should expose one focused code snippet')
+    const lineCount = blocks[0].code.split(/\r?\n/u).filter((line) => line.trim()).length
+    assert.ok(lineCount >= 8 && lineCount <= 25, 'file helper snippets should keep 8-25 non-empty code lines')
+  }
+
+  const transferBlocks = getBackendCodeBlocks(transferSection).map(({ code }) => code)
+  assert.ok(
+    transferBlocks.some((code) => /extensionOf\(file\.getOriginalFilename\(\)\)/u.test(code)
+      && /isAllowedSize\(file\.getSize\(\)\)/u.test(code)),
+    'store must call both extension and size policy helpers before writing',
+  )
+
+  const transactionSection = getSubsection(getSection(mysqlBody, '不常用但需要知道'), '事务/行锁：缩短一致性边界') ?? ''
+  const simpleCase = getSection(mysqlBody, '简单案例') ?? ''
+  for (const [label, content] of [['transaction', transactionSection], ['simple', simpleCase]]) {
+    assert.match(content, /UPDATE\s+account[\s\S]*?balance\s*=\s*balance\s*-\s*10(?:\.00)?[\s\S]*?balance\s*>=\s*10(?:\.00)?/u, `${label} transfer must guard the debit`)
+    assert.match(content, /ROW_COUNT\(\)|executeUpdate\(\)/u, `${label} transfer must inspect debit row count`)
+    assert.match(content, /(?:ROLLBACK|rollback)[\s\S]{0,180}(?:SIGNAL|throw|异常)/u, `${label} transfer must abort a failed debit`)
+    const debitIndex = content.search(/balance\s*=\s*balance\s*-\s*10(?:\.00)?/u)
+    const creditIndex = content.search(/balance\s*=\s*balance\s*\+\s*10(?:\.00)?/u)
+    assert.ok(debitIndex >= 0 && creditIndex > debitIndex, `${label} transfer should credit only after the debit branch`)
+    const guard = content.slice(debitIndex, creditIndex)
+    assert.match(guard, /ROW_COUNT\(\)|executeUpdate\(\)/u, `${label} transfer must check debit before credit`)
+  }
 })
 
 test('Task5 backend references cover logging, resource safety, Excel, and Quartz boundaries', () => {
@@ -1519,7 +1585,8 @@ test('Task5 review regressions lock versions, input safety, cleanup, bytes, and 
   assert.match(fileBody, /addSuppressed/u)
   assert.match(fileBody, /toLowerCase\(Locale\.ROOT\)/u)
   assert.doesNotMatch(fileBody, /\.toLowerCase\(\)/u)
-  const transferSection = getSubsection(getSection(fileBody, '常用用法'), 'transferTo：在白名单目录落盘') ?? ''
+  const fileServiceSection = getSection(fileBody, '常用用法') ?? ''
+  const transferSection = getSubsection(fileServiceSection, 'transferTo：在白名单目录落盘') ?? ''
   const downloadSection = getSubsection(getSection(fileBody, '常用用法'), '流式下载：避免一次性读入内存') ?? ''
   assert.match(transferSection, /class SecureFileService/u)
   assert.match(transferSection, /store\(MultipartFile file, String principal\)/u)
@@ -1531,16 +1598,16 @@ test('Task5 review regressions lock versions, input safety, cleanup, bytes, and 
   assert.match(transferSection, /FileAlreadyExistsException/u)
   assert.doesNotMatch(transferSection, /file\.transferTo\(target\)/u)
   assert.doesNotMatch(transferSection, /Files\.exists\(candidate,\s*LinkOption\.NOFOLLOW_LINKS\)/u)
-  assert.match(transferSection, /SecureDirectoryStream/u)
-  assert.match(transferSection, /newByteChannel\(relative,[\s\S]{0,180}LinkOption\.NOFOLLOW_LINKS/u)
-  assert.match(transferSection, /Files\.newInputStream\(file,\s*LinkOption\.NOFOLLOW_LINKS\)/u)
+  assert.match(fileServiceSection, /SecureDirectoryStream/u)
+  assert.match(fileServiceSection, /newByteChannel\(relative,[\s\S]{0,180}LinkOption\.NOFOLLOW_LINKS/u)
+  assert.match(fileServiceSection, /Files\.newInputStream\(file,\s*LinkOption\.NOFOLLOW_LINKS\)/u)
   assert.match(fileBody, /TOCTOU|竞态/u)
   assert.match(fileBody, /trustedRoot[\s\S]{0,320}(?:服务进程专属|仅服务进程可写|service process only writable)/iu)
   assert.match(fileBody, /跨平台/u)
-  assert.match(transferSection, /parent\.toRealPath\(\)[\s\S]{0,180}startsWith\(trustedRoot\)/u)
-  assert.match(transferSection, /download\(String fileId, String principal\)/u)
-  assert.match(transferSection, /resolveAuthorized\(record, principal\)/u)
-  assert.match(transferSection, /return output -> streamAuthorized\(file, relative, output\)/u)
+  assert.match(fileServiceSection, /parent\.toRealPath\(\)[\s\S]{0,180}startsWith\(trustedRoot\)/u)
+  assert.match(fileServiceSection, /download\(String fileId, String principal\)/u)
+  assert.match(fileServiceSection, /resolveAuthorized\(record, principal\)/u)
+  assert.match(fileServiceSection, /return output -> streamAuthorized\(file, relative, output\)/u)
   assert.match(downloadSection, /resourceService\.download\("file-7", principal\)/u)
   assert.doesNotMatch(fileBody, /StreamingResponseBody download\(Path file\)/u)
 

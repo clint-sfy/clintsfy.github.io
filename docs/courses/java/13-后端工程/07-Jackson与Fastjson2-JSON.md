@@ -39,7 +39,7 @@ Jackson 3 使用 `tools.jackson` 命名空间，而 Jackson 2 使用 `com.faster
 
 ### 依赖与版本选择
 
-Jackson 2 的核心依赖通常包含 `com.fasterxml.jackson.core:jackson-databind`；Jackson 3 的类型迁移要按包族理解：`tools.jackson.core.*` 承载 core 类型，例如 `tools.jackson.core.JsonParser`；`tools.jackson.databind.*` 承载 `ObjectMapper`、`JsonSerializer` 和 `JsonDeserializer`，例如 `tools.jackson.databind.ObjectMapper`、`tools.jackson.databind.JsonSerializer`；databind 注解迁移到 `tools.jackson.databind.annotation.*`，例如 `tools.jackson.databind.annotation.JsonSerialize` 与 `tools.jackson.databind.annotation.JsonDeserialize`；但 `@JsonFormat` 与 `@JsonInclude` 仍从 `com.fasterxml.jackson.annotation.*` 导入，不能把所有 Jackson 注解都机械替换成 `tools.jackson.*`。具体 artifact 与 Spring Boot 版本绑定，不要在同一示例中混用两代 `ObjectMapper` 类型。Fastjson2 的常见依赖是 `com.alibaba.fastjson2:fastjson2`，Redis 端则以 Spring Data Redis 实际兼容的 serializer 为准。
+Jackson 2 的核心依赖通常包含 `com.fasterxml.jackson.core:jackson-databind`；本节的 Jackson 3.1.4 覆盖样本以 `tools.jackson:jackson-bom:3.1.4` 管理 `tools.jackson.core:jackson-core` 与 `tools.jackson.core:jackson-databind`。Jackson 3 的类型迁移要按包族理解：`tools.jackson.core.*` 承载 core 类型，例如 `tools.jackson.core.JsonParser`；`tools.jackson.databind.*` 承载 `ObjectMapper`、`ValueSerializer` 和 `ValueDeserializer`，例如 `tools.jackson.databind.ObjectMapper`、`tools.jackson.databind.ValueSerializer`；databind 注解迁移到 `tools.jackson.databind.annotation.*`，例如 `tools.jackson.databind.annotation.JsonSerialize` 与 `tools.jackson.databind.annotation.JsonDeserialize`；但 `@JsonFormat` 与 `@JsonInclude` 仍从 `com.fasterxml.jackson.annotation.*` 导入，不能把所有 Jackson 注解都机械替换成 `tools.jackson.*`。具体 artifact 与 Spring Boot 版本绑定，不要在同一示例中混用两代 `ObjectMapper` 类型。Fastjson2 的常见依赖是 `com.alibaba.fastjson2:fastjson2`，Redis 端则以 Spring Data Redis 实际兼容的 serializer 为准。
 
 ## 常用用法
 
@@ -157,6 +157,66 @@ System.out.println(singleCharLocal);
 ```
 
 `@JsonSerialize` 和 `@JsonDeserialize` 把具体实现绑定到字段或类型，示例中的 `EmailDeserializer` 代表项目自己的反序列化器；这里使用字段级 serializer 并由 `ObjectMapper.writeValueAsString` 实际调用，不会全局替换所有 `String` 的序列化。脱敏条件从 `at > 0` 开始：单字符本地部（如 `a@example.test`）输出 `*@example.test`，更长本地部保留首字符；不含 `@` 或缺少域部分的值安全透传，未绑定 serializer 的 `displayName` 也保持 `Ann`。这个代码块使用 Jackson 2 API，因此 serializer 的 core/databind 类型来自 `com.fasterxml.jackson.*`；迁移 Jackson 3 时分别改为 `tools.jackson.core.*`、`tools.jackson.databind.*` 与 `tools.jackson.databind.annotation.*`，而 `@JsonFormat`/`@JsonInclude` 仍保留 `com.fasterxml.jackson.annotation.*`。敏感字段还应在日志、错误响应和缓存 key 中分别检查，单一注解覆盖不了所有输出路径。
+
+### Jackson 3 自定义序列化：ValueSerializer/ValueDeserializer
+
+用途：用于在 Jackson 3.1.4 中为单个协议字段实现脱敏和反向解析；Jackson 3 的自定义 handler 已将 Jackson 2 的 `JsonSerializer`/`JsonDeserializer` 更名为 `ValueSerializer`/`ValueDeserializer`。
+
+```java
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.annotation.JsonSerialize;
+
+final class MaskedEmailValueSerializer extends ValueSerializer<String> {
+    @Override
+    public void serialize(String value, JsonGenerator gen, SerializationContext ctxt)
+            throws JacksonException {
+        int at = value.indexOf('@');
+        String masked = at > 0 && at < value.length() - 1
+                ? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)
+                : value;
+        gen.writeString(masked);
+    }
+}
+
+record PublicUserOutputV3(
+    @JsonSerialize(using = MaskedEmailValueSerializer.class)
+    String email) {}
+
+// 输出：ann@example.test 序列化为 a***@example.test
+```
+
+Jackson 3.1.4 的 `ValueSerializer.serialize` 使用 `SerializationContext`，异常统一从 `tools.jackson.core.JacksonException` 传播。`@JsonSerialize` 将它限定在 `email` 字段，不会全局改写所有 `String`。
+
+### Jackson 3 自定义反序列化：ValueDeserializer
+
+用途：用于在 Jackson 3.1.4 中将单个 JSON 字段转换成领域值；字段规范化后仍要继续执行业务校验。
+
+```java
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
+
+final class EmailValueDeserializer extends ValueDeserializer<String> {
+    @Override
+    public String deserialize(JsonParser parser, DeserializationContext ctxt)
+            throws JacksonException {
+        return parser.getString().trim();
+    }
+}
+
+record PublicUserV3(
+    @JsonDeserialize(using = EmailValueDeserializer.class)
+    String email) {}
+
+// 输出：" ann@example.test " 反序列化为 ann@example.test
+```
+
+`ValueDeserializer.deserialize` 使用 `DeserializationContext`，`JsonParser.getString()` 是 3.x 的文本访问 API。Jackson 2 的对照仍使用上一个片段中的 `JsonSerializer`/`JsonDeserializer` 和 `com.fasterxml.jackson.*` 包，不能混用两代类型。实际项目通过 3.x `ObjectMapper`/`JsonMapper` 注册 DTO，并用 BOM 锁定整组版本。
 
 ### Redis 序列化：限定缓存值的类型边界
 

@@ -98,14 +98,24 @@ LIMIT 20;
 用途：用于把相互依赖的更新放进同一 InnoDB 事务，并用行锁保护读取后即将修改的记录。
 
 ```sql
+-- 以下 IF/SIGNAL 位于存储过程或等价的事务脚本控制流中
 START TRANSACTION;
-SELECT id, balance FROM account WHERE id = 1 FOR UPDATE;
+SELECT id, balance FROM account WHERE id IN (1, 2) ORDER BY id FOR UPDATE;
 UPDATE account SET balance = balance - 10 WHERE id = 1 AND balance >= 10;
+IF ROW_COUNT() = 0 THEN
+    ROLLBACK;
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'insufficient funds or debit account missing';
+END IF;
+UPDATE account SET balance = balance + 10 WHERE id = 2;
+IF ROW_COUNT() = 0 THEN
+    ROLLBACK;
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'credit account missing';
+END IF;
 COMMIT;
--- 输出：满足余额条件时提交一笔受行锁保护的扣款；失败路径必须 ROLLBACK
+-- 输出：扣款成功且两次 ROW_COUNT() 均为 1 时才提交转账
 ```
 
-`FOR UPDATE` 需要在事务中使用，锁住的范围受索引和隔离级别影响；事务中不要调用慢速网络服务。更新影响行数为零时要回滚并返回业务错误，不要无条件提交。
+`FOR UPDATE` 需要在事务中使用，锁住的范围受索引和隔离级别影响；事务中不要调用慢速网络服务。扣款 `UPDATE` 后必须立即检查 `ROW_COUNT()`（JDBC 中对应 `executeUpdate()` 的返回值），为 0 就 `ROLLBACK` 并 `SIGNAL`/返回业务错误，控制流不得继续执行目标账户的加款；加款也要检查影响行数，任一步失败都回滚。
 
 ### CTE/窗口函数：表达分阶段分析
 
@@ -192,14 +202,22 @@ START TRANSACTION;
 UPDATE account
 SET balance = balance - 10.00, version = version + 1
 WHERE id = 1 AND balance >= 10.00;
+IF ROW_COUNT() = 0 THEN
+    ROLLBACK;
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'insufficient funds or debit account missing';
+END IF;
 UPDATE account
 SET balance = balance + 10.00, version = version + 1
 WHERE id = 2;
+IF ROW_COUNT() = 0 THEN
+    ROLLBACK;
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'credit account missing';
+END IF;
 COMMIT;
--- 输出：两次更新都成功时转账提交；任一步失败时回滚整个事务
+-- 输出：扣款影响 1 行且加款影响 1 行时提交；否则先回滚并停止
 ```
 
-一次转账需要在同一连接和事务中完成，并检查每条 `UPDATE` 的影响行数；生产代码还要固定账户加锁顺序、限制事务超时、处理死锁重试和幂等请求。连接池负责复用连接，不会替业务自动判断何时提交。
+一次转账需要在同一连接和事务中完成，并在扣款 `UPDATE` 后立即检查 `ROW_COUNT()` 或应用层 `executeUpdate()` 的返回值；扣款为 0 时不能执行目标账户加款，必须回滚并报告业务错误。生产代码还要固定账户加锁顺序、限制事务超时、处理死锁重试和幂等请求。连接池负责复用连接，不会替业务自动判断何时提交。
 
 ## 易混点
 
