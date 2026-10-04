@@ -64,6 +64,7 @@ public class ByteBufferFlipDemo {
         ByteBuffer buffer = ByteBuffer.allocate(4);
         buffer.put((byte) 10).put((byte) 20);
         buffer.flip();
+        // 作用：flip 把当前 position 变成 limit，再把 position 归零；每次写完准备读都要正确切换，否则读到的可能是空区间。
         System.out.println(buffer.get() + "," + buffer.get());
         // 输出：10,20
     }
@@ -150,10 +151,12 @@ import java.nio.file.StandardOpenOption;
 public class FileChannelReadDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("channel-read-", ".txt");
+        // 初始状态：file 当前为 Files.createTempFile("channel-read-", ".txt")。
         Files.writeString(file, "java");
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
             ByteBuffer buffer = ByteBuffer.allocate(8);
             int count = channel.read(buffer);
+            // 作用：read 返回实际读到的字节数，-1 表示 EOF；不能假设一次 read 会填满 Buffer 或读完文件。
             System.out.println(count);
             // 输出：4
         }
@@ -177,10 +180,12 @@ import java.nio.file.StandardOpenOption;
 public class FileChannelWriteDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("channel-write-", ".txt");
+        // 初始状态：file 当前为 Files.createTempFile("channel-write-", ".txt")。
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {
             ByteBuffer buffer = ByteBuffer.wrap("java".getBytes());
             while (buffer.hasRemaining()) {
                 channel.write(buffer);
+                // 作用：write 也可能只消费部分 Buffer；循环 hasRemaining 是可靠写出模式。
             }
         }
         System.out.println(Files.size(file));
@@ -206,6 +211,7 @@ import java.nio.file.StandardOpenOption;
 
 public class FileChannelPositionDemo {
     public static void main(String[] args) throws Exception {
+    // 作用：随机访问适合固定格式文件和分块任务；多个线程共享同一 Channel 时要明确 position 是否共享，必要时使用带 position 参数的读写方法。
         Path file = Files.createTempFile("channel-position-", ".bin");
         Files.write(file, new byte[]{10, 20, 30});
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
@@ -263,9 +269,11 @@ import java.nio.file.StandardOpenOption;
 public class MappedByteBufferDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("channel-map-", ".bin");
+        // 初始状态：file 当前为 Files.createTempFile("channel-map-", ".bin")。
         Files.write(file, new byte[]{7});
         try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {
             var mapped = channel.map(FileChannel.MapMode.READ_ONLY, 0, 1);
+            // 作用：映射适合随机访问大文件，但会占用虚拟地址空间，生命周期和刷盘语义也更复杂；不要把它当成所有文件读取的默认方案。
             System.out.println(mapped.get(0));
             // 输出：7
         }
@@ -285,6 +293,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
 public class SelectorRegisterDemo {
+// 作用：Selector 只对支持非阻塞模式的网络 Channel 有意义；事件循环必须处理 key 失效、异常、读写部分完成和唤醒。
     public static void main(String[] args) throws Exception {
         try (Selector selector = Selector.open(); SocketChannel channel = SocketChannel.open()) {
             channel.configureBlocking(false);
@@ -302,12 +311,12 @@ public class SelectorRegisterDemo {
 Direct Buffer 可能减少 native I/O 的复制，但分配和回收成本更高；只有在长期、批量的底层 I/O 场景中经验证后才使用。
 
 ```java
-// 作用：通过 ByteBuffer.allocateDirect 堆外缓冲。
 import java.nio.ByteBuffer;
 
 public class DirectBufferDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(4);
+        // 作用：通过 ByteBuffer.allocateDirect 堆外缓冲。
         buffer.put((byte) 1).flip();
         System.out.println(buffer.get());
         // 输出：1
@@ -339,12 +348,12 @@ public class BufferViewDemo {
 只读视图防止通过该引用修改内容，但不能阻止源 Buffer 修改底层数组；需要真正隔离时复制数据。
 
 ```java
-// 作用：通过 asReadOnlyBuffer 只读视图。
 import java.nio.ByteBuffer;
 
 public class ReadOnlyBufferDemo {
     public static void main(String[] args) {
         ByteBuffer readOnly = ByteBuffer.wrap(new byte[]{1}).asReadOnlyBuffer();
+        // 作用：通过 asReadOnlyBuffer 只读视图。
         System.out.println(readOnly.isReadOnly());
         // 输出：true
     }
@@ -380,7 +389,6 @@ public class ScatterGatherDemo {
 异步 Channel 的 completion handler/future 让等待方式不同，但不代表磁盘本身一定并行；需要结合线程池、队列和取消策略测量。
 
 ```java
-// 作用：通过 AsynchronousFileChannel 异步文件操作。
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.file.Files;
@@ -388,10 +396,12 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 public class AsyncFileChannelDemo {
+// 作用：异步 Channel 的 completion handler/future 让等待方式不同，但不代表磁盘本身一定并行；需要结合线程池、队列和取消策略测量。
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("async-channel-", ".txt");
         Files.writeString(file, "java");
         try (var channel = AsynchronousFileChannel.open(file, StandardOpenOption.READ)) {
+        // 作用：通过 AsynchronousFileChannel 异步文件操作。
             var result = channel.read(ByteBuffer.allocate(4), 0).get();
             System.out.println(result);
             // 输出：4

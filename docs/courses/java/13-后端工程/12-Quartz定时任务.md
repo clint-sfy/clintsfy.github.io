@@ -51,6 +51,7 @@ Cron 表达式通常包含秒、分、时、日、月、星期（可选年），
 ```java
 JobDetail detail = JobBuilder.newJob(CleanupJob.class)
     .withIdentity("cleanup", "maintenance").build();
+    // 作用：用途：用于从 Job 实现类开始构建具有稳定身份的任务定义。
 System.out.println(detail.getKey());
 // 输出：maintenance.cleanup
 // 说明：以 CleanupJob.class 构建 JobDetail，任务键固定为组 maintenance、名称 cleanup，打印 maintenance.cleanup；这里只构造定义，尚未注册 Scheduler。
@@ -63,6 +64,7 @@ System.out.println(detail.getKey());
 ```java
 Trigger trigger = TriggerBuilder.newTrigger()
     .withIdentity("cleanup-trigger", "maintenance").forJob(detail).startNow().build();
+    // 作用：用途：用于创建触发器并显式绑定任务身份与调度规则。
 System.out.println(trigger.getJobKey());
 // 输出：maintenance.cleanup
 // 说明：TriggerKey 为 maintenance.cleanup-trigger，forJob(detail) 绑定 JobKey maintenance.cleanup，startNow 表示注册后尽快首次触发。
@@ -74,6 +76,7 @@ System.out.println(trigger.getJobKey());
 
 ```java
 CronScheduleBuilder schedule = CronScheduleBuilder.cronSchedule("0 0 2 * * ?");
+// 作用：用途：用于把经过校验的 Quartz Cron 表达式转换为调度构建器。
 System.out.println(schedule != null);
 // 输出：true
 // 说明："0 0 2 * * ?" 表示每天 02:00:00；cronSchedule 解析失败会抛异常，创建 builder 本身还没有向 Scheduler 注册 Trigger。
@@ -85,6 +88,7 @@ System.out.println(schedule != null);
 
 ```java
 CronExpression expression = new CronExpression("0 0/5 * * * ?");
+// 作用：用途：用于在保存调度配置前解析并校验 Quartz Cron 表达式。
 System.out.println(expression.getNextValidTimeAfter(new Date()) != null);
 // 输出：true
 // 说明："0 0/5 * * * ?" 是 Quartz 六字段表达式，表示每 5 分钟的第 0 秒；getNextValidTimeAfter 从当前 Date 计算下一次触发时间。
@@ -96,6 +100,7 @@ System.out.println(expression.getNextValidTimeAfter(new Date()) != null);
 
 ```java
 JobDataMap data = new JobDataMap();
+// 作用：用途：用于创建只包含可序列化小型参数的任务数据容器。
 data.put("batchSize", 100);
 System.out.println(data.getInt("batchSize"));
 // 输出：100
@@ -108,7 +113,9 @@ System.out.println(data.getInt("batchSize"));
 
 ```java
 JobDataMap data = new JobDataMap();
+// 初始状态：data 当前为 new JobDataMap()。
 data.put("tenantId", "acme");
+// 作用：用途：用于按明确键写入任务执行所需的轻量参数，避免放入连接或服务对象。
 System.out.println(data.getString("tenantId"));
 // 输出：acme
 // 说明：put("tenantId", "acme") 写入任务参数 tenantId=acme，执行端用同一键 getString 读取；键名是任务数据契约的一部分。
@@ -120,6 +127,7 @@ System.out.println(data.getString("tenantId"));
 
 ```java
 JobKey key = JobKey.jobKey("cleanup", "maintenance");
+// 作用：用途：用于由任务名和组名构造稳定的调度器查找键。
 System.out.println(key);
 // 输出：maintenance.cleanup
 // 说明：JobKey.jobKey("cleanup", "maintenance") 构造组 maintenance、名称 cleanup 的身份，toString 输出 maintenance.cleanup，供暂停、恢复和删除精确定位。
@@ -131,9 +139,9 @@ System.out.println(key);
 
 ```java
 boolean exists = scheduler.checkExists(JobKey.jobKey("cleanup", "maintenance"));
+// 作用：用于在创建或更新前判断指定 JobKey 是否已注册。
 System.out.println(exists);
 // 输出：true 或 false。
-// 作用：用于在创建或更新前判断指定 JobKey 是否已注册。
 ```
 
 ### `Scheduler.deleteJob`：删除指定任务
@@ -142,6 +150,7 @@ System.out.println(exists);
 
 ```java
 boolean deleted = scheduler.deleteJob(JobKey.jobKey("cleanup", "maintenance"));
+// 作用：用途：用于显式删除任务及其关联触发器，并检查是否确实找到目标。
 System.out.println(deleted);
 // 输出：找到并删除时为 true。
 // 说明：deleteJob(maintenance.cleanup) 返回 true 表示 JobDetail 及关联 Trigger 已删除，false 表示该 key 不存在；不会撤销已经开始的执行。
@@ -153,6 +162,7 @@ System.out.println(deleted);
 
 ```java
 Date firstFireTime = scheduler.scheduleJob(detail, trigger);
+// 作用：用途：用于把 JobDetail 与匹配的 Trigger 原子地交给调度器注册。
 System.out.println(firstFireTime != null);
 // 输出：true
 // 说明：scheduleJob(detail, trigger) 注册 maintenance.cleanup 及其绑定触发器，返回首次计划触发 Date；键冲突通常抛 ObjectAlreadyExistsException。
@@ -164,6 +174,7 @@ System.out.println(firstFireTime != null);
 
 ```java
 scheduler.pauseJob(JobKey.jobKey("cleanup", "maintenance"));
+// 作用：用途：用于维护窗口暂时阻止指定任务产生新的触发。
 System.out.println("paused");
 // 输出：paused
 // 说明：pauseJob(maintenance.cleanup) 阻止该 JobKey 后续触发，但不会中断正在运行的 CleanupJob；恢复时如何处理错过时间由 Trigger 的 misfire 策略决定。
@@ -176,6 +187,7 @@ System.out.println("paused");
 
 ```java
 scheduler.resumeJob(JobKey.jobKey("cleanup", "maintenance"));
+// 作用：用途：用于结束维护窗口后恢复指定任务，并遵循既定 misfire 策略。
 System.out.println("resumed");
 // 输出：resumed
 // 说明：resumeJob(maintenance.cleanup) 重新允许后续触发；暂停期间错过的运行不会无条件全部补跑，而按绑定 Trigger 的 misfire 策略处理。
@@ -191,6 +203,7 @@ import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 
 final class CleanupJob implements Job {
+// 作用：用于实现一段可被 Quartz 调度的工作，并从 `JobExecutionContext` 读取受控参数、输出稳定结果。
     @Override
     public void execute(JobExecutionContext context) {
         String name = context.getJobDetail().getKey().getName();
@@ -199,7 +212,6 @@ final class CleanupJob implements Job {
 }
 
 // 输出：job=cleanup:done
-// 作用：用于实现一段可被 Quartz 调度的工作，并从 `JobExecutionContext` 读取受控参数、输出稳定结果。
 ```
 
 `execute` 运行时可能由 Quartz 工作线程调用，不能依赖请求线程、ThreadLocal 或未传播的 MDC。任务应设置超时、记录关联 ID，并对重复执行和部分成功设计幂等处理；抛出异常要让调度层看见，而不是悄悄吞掉。
@@ -217,6 +229,7 @@ JobDetail detail = JobBuilder.newJob(CleanupJob.class)
     .usingJobData("batch", "nightly")
     .storeDurably()
     .build();
+    // 作用：用途：用于为 Job 声明稳定的 JobKey 和静态参数，方便暂停、恢复、替换和审计。
 
 System.out.println(detail.getKey());
 // 输出：maintenance.cleanup
@@ -241,6 +254,7 @@ CronTrigger trigger = TriggerBuilder.newTrigger()
         .inTimeZone(java.util.TimeZone.getTimeZone(ZoneId.of("Asia/Shanghai"))))
     .forJob("cleanup", "maintenance")
     .build();
+    // 作用：用途：用于把 JobDetail 绑定到明确时区和 Cron 计划，并让 Scheduler 负责后续触发。
 
 System.out.println(trigger.getCronExpression());
 // 输出：0 0/5 * * * ?
@@ -257,6 +271,7 @@ CronTrigger 只表达触发计划，实际任务仍可能失败或超时；时�
 import org.quartz.CronExpression;
 
 String expression = "0 30 9 ? * MON-FRI";
+// 初始状态：expression 当前为 "0 30 9 ? * MON-FRI"。
 System.out.println(CronExpression.isValidExpression(expression));
 // 输出：true
 // 说明："0 30 9 ? * MON-FRI" 表示周一至周五 09:30:00，isValidExpression 返回 true；是否符合本地业务时间仍取决于 Trigger 时区。
@@ -274,6 +289,8 @@ import org.quartz.CronScheduleBuilder;
 
 var schedule = CronScheduleBuilder.cronSchedule("0 0/5 * * * ?")
     .withMisfireHandlingInstructionDoNothing();
+    // 初始状态：schedule 当前保存 CronScheduleBuilder.cronSchedule("0 0/5 * * * ?") .withMisfireHandlingInstructionDoNothing()的计算结果。
+    // 作用：用途：用于决定 Scheduler 恢复或资源不足后如何处理错过的 Cron 触发，避免默认策略与业务语义不符。
 System.out.println("misfire=skip-old-run");
 // 输出：misfire=skip-old-run
 // 结果：控制台输出 misfire=skip-old-run；Scheduler 恢复时不会集中补跑错过的 5 分钟触发。
@@ -317,12 +334,13 @@ import org.quartz.JobExecutionContext;
 
 @DisallowConcurrentExecution
 final class RebuildJob implements Job {
+// 作用：用途：用于禁止同一 JobKey 的多个实例并发执行，适合非幂等或会竞争同一资源的任务。
+// 作用：用于禁止同一 `JobKey` 的多个实例并发执行，适合非幂等或会竞争同一资源的任务。
     @Override public void execute(JobExecutionContext context) {
         System.out.println("overlap=blocked");
         // 输出：overlap=blocked
     }
 }
-// 作用：用于禁止同一 `JobKey` 的多个实例并发执行，适合非幂等或会竞争同一资源的任务。
 ```
 
 注解的作用范围是同一个 JobKey；使用不同 key、不同调度器或外部进程仍可能并发。它也不替代数据库唯一约束、分布式锁和幂等写入，长任务要配合 misfire 和超时策略评估排队效果。
@@ -428,6 +446,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+// 作用：用途：用于比较进程内轻量延迟/周期任务；它与 Quartz 的区别是无需持久化时更简单，但不适合需要重启恢复、misfire 策略或集群协调的任务。
 try {
     var done = scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS);
     done.get();

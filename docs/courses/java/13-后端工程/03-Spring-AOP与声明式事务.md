@@ -52,6 +52,7 @@ import org.springframework.stereotype.Component;
 @Aspect
 @Component
 class AuditAspect {
+// 作用：用途：用于标记集中承载通知与切点定义的切面类。
     String name() { return "audit"; }
 }
 
@@ -74,6 +75,7 @@ import org.aspectj.lang.annotation.Pointcut;
 class AuditPointcuts {
     @Pointcut("execution(* com.example.service..*(..))")
     void serviceOperation() {}
+    // 作用：用途：用于命名一组方法匹配规则，供多个通知复用。
 }
 
 System.out.println("pointcut=serviceOperation");
@@ -96,6 +98,8 @@ import org.aspectj.lang.annotation.Aspect;
 class TimingAspect {
     @Around("execution(* com.example.service..*(..))")
     Object time(ProceedingJoinPoint joinPoint) throws Throwable {
+    // 作用：用途：用于在目标方法前后统一计时、记录结果或转换异常；正常路径必须调用 proceed 并保留返回值。
+    // 作用：用于在目标方法前后统一计时、记录结果或转换异常；正常路径必须调用 `proceed` 并保留返回值。
         long start = System.nanoTime();
         Object result = joinPoint.proceed();
         System.out.println("elapsed=" + (System.nanoTime() - start >= 0));
@@ -103,7 +107,6 @@ class TimingAspect {
         return result;
     }
 }
-// 作用：用于在目标方法前后统一计时、记录结果或转换异常；正常路径必须调用 `proceed` 并保留返回值。
 ```
 
 不要在通知里吞掉目标异常或无条件改写返回类型；异步方法还要确认计时点是提交任务还是任务真正完成。通知中访问参数时注意敏感数据脱敏和大对象开销。
@@ -123,6 +126,7 @@ class Guard {
             return null;
         }
         return joinPoint.proceed();
+        // 作用：用途：用于在环绕通知中决定是否进入目标方法；权限拒绝或短路缓存命中时可以有意识地不调用它。
     }
 }
 // 说明：joinPoint.proceed() 才把调用交给目标方法并返回其 Object 结果；省略它会让目标方法完全不执行，调用两次则会重复业务副作用。
@@ -143,6 +147,7 @@ import org.springframework.transaction.annotation.Transactional;
 class TransferService {
     @Transactional
     public void transfer() {
+    // 作用：用途：用于让一个公开的代理方法在同一事务资源上执行多步数据库操作；方法应放在服务边界而不是每个简单 DAO 调用上。
         System.out.println("debit then credit");
         // 输出：debit then credit
     }
@@ -215,6 +220,7 @@ import org.springframework.core.annotation.Order;
 @Aspect
 @Order(1)
 class SecurityAspect {
+// 作用：用途：用于明确安全、事务、日志等多个切面的先后关系；顺序值越小通常越外层，但要以实际代理组合验证。
     @Before("execution(* com.example..service..*(..))")
     void check() {
         System.out.println("security-first");
@@ -234,6 +240,7 @@ class SecurityAspect {
 import org.springframework.transaction.support.TransactionTemplate;
 
 class ImportService {
+// 作用：用途：用于事务边界需要由运行时分支决定，或需要明确区分多个事务块时；普通固定服务边界优先 @Transactional。
     private final TransactionTemplate template;
 
     ImportService(TransactionTemplate template) {
@@ -279,12 +286,12 @@ class BillingService {
 `AopContext.currentProxy` 只在暴露代理且当前调用已进入 AOP 时可用；拆分 Bean 通常更清晰。
 
 ```java
-// 作用：通过 AopContext.currentProxy 显式穿过当前代理。
 // 结果：`refreshAll()` 经代理调用事务方法，打印 `refresh 42`。
 @Service
 class OrderService {
     void refreshAll() {
         OrderService proxy = (OrderService) AopContext.currentProxy();
+        // 作用：通过 AopContext.currentProxy 显式穿过当前代理。
         proxy.refreshOne(42L);
     }
     @Transactional
@@ -301,11 +308,12 @@ class OrderService {
 `@EnableAspectJAutoProxy` 注册 Spring AOP 的自动代理能力；`exposeProxy=true` 增加隐式上下文，只在确有需要时开启。
 
 ```java
-// 作用：通过 @EnableAspectJAutoProxy 开启基于代理的 AOP。
 // 结果：匹配切点的 Bean 被代理，`AopContext.currentProxy()` 可在代理调用内取值。
 @Configuration
 @EnableAspectJAutoProxy(exposeProxy = true)
 class AopConfiguration {
+// 作用：@EnableAspectJAutoProxy 注册 Spring AOP 的自动代理能力；exposeProxy=true 增加隐式上下文，只在确有需要时开启。
+// 作用：通过 @EnableAspectJAutoProxy 开启基于代理的 AOP。
     @Bean
     AuditAspect auditAspect() {
         return new AuditAspect();

@@ -49,6 +49,7 @@ Excel 日期没有独立的“日期对象”存储，常见实现是数字加�
 
 ```java
 try (InputStream in = Files.newInputStream(path); Workbook workbook = WorkbookFactory.create(in)) {
+// 作用：用途：用于从输入流识别 .xls 或 .xlsx 并创建对应工作簿。
     System.out.println(workbook.getNumberOfSheets());
 }
 // 输出：工作簿中的工作表数量。
@@ -61,6 +62,7 @@ try (InputStream in = Files.newInputStream(path); Workbook workbook = WorkbookFa
 
 ```java
 Sheet sheet = workbook.createSheet("Users");
+// 作用：用途：用于在工作簿中创建一个名称受控的新工作表。
 System.out.println(sheet.getSheetName());
 // 输出：Users
 // 说明：workbook.createSheet("Users") 创建名为 Users 的 sheet；同名、超长或含 Excel 禁用字符的名称会失败，应先规范化外部名称。
@@ -72,6 +74,7 @@ System.out.println(sheet.getSheetName());
 
 ```java
 Row row = sheet.createRow(0);
+// 作用：用途：用于按零基行号创建或替换工作表中的一行。
 System.out.println(row.getRowNum());
 // 输出：0
 // 说明：sheet.createRow(0) 创建索引 0 的首行（Excel 第 1 行）；如果该索引已有 Row，再创建会覆盖其单元格内容。
@@ -84,6 +87,7 @@ System.out.println(row.getRowNum());
 
 ```java
 Cell cell = row.createCell(0);
+// 作用：用途：用于在指定行的零基列号位置创建单元格。
 cell.setCellValue("name");
 System.out.println(cell.getStringCellValue());
 // 输出：name
@@ -96,6 +100,7 @@ System.out.println(cell.getStringCellValue());
 
 ```java
 CellStyle style = workbook.createCellStyle();
+// 作用：用途：用于创建可复用的工作簿级样式，避免为每个单元格重复创建样式对象。
 style.setWrapText(true);
 System.out.println(style.getWrapText());
 // 输出：true
@@ -108,6 +113,7 @@ System.out.println(style.getWrapText());
 
 ```java
 Font font = workbook.createFont();
+// 作用：用途：用于创建工作簿级字体并绑定到一个或多个单元格样式。
 font.setBold(true);
 style.setFont(font);
 System.out.println(font.getBold());
@@ -121,6 +127,7 @@ System.out.println(font.getBold());
 
 ```java
 short format = workbook.createDataFormat().getFormat("yyyy-mm-dd");
+// 作用：用途：用于把日期或金额格式字符串转换成工作簿可使用的格式编号。
 style.setDataFormat(format);
 System.out.println(format >= 0);
 // 输出：true
@@ -133,7 +140,9 @@ System.out.println(format >= 0);
 
 ```java
 CellStyle copy = workbook.createCellStyle();
+// 初始状态：copy 当前为 workbook.createCellStyle()。
 copy.cloneStyleFrom(style);
+// 作用：用途：用于复制基础样式后只调整少量属性，减少重复配置。
 System.out.println(copy.getDataFormat() == style.getDataFormat());
 // 输出：true
 // 说明：target.cloneStyleFrom(source) 复制同一 Workbook 中 source 的字体、边框、填充和格式；跨 Workbook 复制会引用不兼容的样式表。
@@ -145,6 +154,7 @@ System.out.println(copy.getDataFormat() == style.getDataFormat());
 
 ```java
 CellRangeAddress region = new CellRangeAddress(0, 0, 0, 2);
+// 作用：用途：用于用起止行列坐标描述一个矩形单元格区域。
 System.out.println(region.formatAsString());
 // 输出：A1:C1
 // 说明：new CellRangeAddress(0, 0, 0, 2) 表示第 1 行 A1:C1，四个参数均为零基且边界包含在区域内。
@@ -157,6 +167,7 @@ System.out.println(region.formatAsString());
 
 ```java
 int index = sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+// 作用：用途：用于把不重叠且坐标有效的区域登记为合并单元格。
 System.out.println(index);
 // 输出：新合并区域的索引。
 // 说明：sheet.addMergedRegion(region) 把示例 A1:D1 登记为合并区域并返回区域索引；显示值取左上角 A1，重叠区域会报错。
@@ -168,6 +179,7 @@ System.out.println(index);
 
 ```java
 CellRangeAddressList ranges = new CellRangeAddressList(1, 20, 2, 2);
+// 作用：用途：用于声明下拉或其他数据校验要覆盖的单元格范围。
 System.out.println(ranges.countRanges());
 // 输出：1
 // 说明：new CellRangeAddressList(1, 100, 2, 2) 选择 C2:C101，共 100 个数据行；行列参数都是零基且包含两端。
@@ -181,6 +193,7 @@ System.out.println(ranges.countRanges());
 DataValidationHelper helper = sheet.getDataValidationHelper();
 DataValidation validation = helper.createValidation(
     helper.createExplicitListConstraint(new String[] {"启用", "停用"}), ranges);
+    // 作用：用途：用于把约束条件与目标单元格范围组合成数据校验对象。
 System.out.println(validation != null);
 // 输出：true
 // 说明：helper.createValidation(constraint, regions) 把下拉约束与 C2:C101 范围组合；尚未 addValidationData 前不会写入工作表。
@@ -192,6 +205,7 @@ System.out.println(validation != null);
 
 ```java
 validation.createPromptBox("状态", "请选择启用或停用");
+// 作用：用途：用于给数据校验单元格设置聚焦时显示的简短提示。
 validation.setShowPromptBox(true);
 System.out.println(validation.getShowPromptBox());
 // 输出：true
@@ -204,6 +218,7 @@ System.out.println(validation.getShowPromptBox());
 
 ```java
 sheet.addValidationData(validation);
+// 作用：用途：用于把已经配置的数据校验注册到工作表。
 System.out.println("validation added");
 // 输出：validation added
 // 说明：sheet.addValidationData(validation) 才把针对 C2:C101 的规则写入 sheet；Excel 客户端提示不能替代导入端白名单校验。
@@ -215,6 +230,7 @@ System.out.println("validation added");
 
 ```java
 byte[] bytes = IOUtils.toByteArray(new ByteArrayInputStream(new byte[] {1, 2, 3}));
+// 作用：用途：用于在已限制上传大小时把输入流读取为字节数组；大文件应改用流式处理。
 System.out.println(bytes.length);
 // 输出：3
 // 说明：IOUtils.toByteArray(limitedInput) 读取到内存中的 byte[]；只有上游已把 Excel 限制在明确字节数时安全，不能对无界上传流直接调用。
@@ -226,7 +242,9 @@ System.out.println(bytes.length);
 
 ```java
 InputStream in = new ByteArrayInputStream(new byte[0]);
+// 初始状态：in 当前为 new ByteArrayInputStream(new byte[0])。
 IOUtils.closeQuietly(in);
+// 作用：用途：用于兼容无法改成 try-with-resources 的旧路径并吞掉关闭异常，新代码仍优先使用结构化关闭。
 System.out.println("closed");
 // 输出：closed
 // 说明：IOUtils.closeQuietly(workbook) 尝试关闭旧式 Workbook 并吞掉 IOException；因此它只能用于兼容清理，不能让关闭失败覆盖主要异常或变得不可观测。
@@ -238,7 +256,9 @@ System.out.println("closed");
 
 ```java
 String formula = workbook.getName("statusRange").getRefersToFormula();
+// 初始状态：formula 当前为 workbook.getName("statusRange").getRefersToFormula()。
 String tail = formula.substring(formula.indexOf('!') + 1);
+// 作用：用途：用于从 POI 名称对象提供的公式文本中截取经过边界校验的片段。
 System.out.println(tail);
 // 输出：命名区域公式中感叹号后的范围文本。
 // 说明：公式 "Users!$A$2:$A$10" 在 indexOf('!') 后 substring 得到 "$A$2:$A$10"；无感叹号时必须先拒绝，避免用 -1 计算错误起点。
@@ -250,9 +270,11 @@ System.out.println(tail);
 
 ```java
 try (SXSSFWorkbook book = new SXSSFWorkbook(100);
+// 初始状态：book 当前为 new SXSSFWorkbook(100)。
      OutputStream out = Files.newOutputStream(path)) {
     book.createSheet("data").createRow(0).createCell(0).setCellValue("ok");
     book.write(out);
+    // 作用：用途：用于把已生成的流式工作簿内容写到输出流。
 }
 // 输出：path 指向可打开的 xlsx 文件。
 // 说明：workbook.write(output) 将 SXSSFWorkbook 当前内容写入目标流；它不关闭 output，写完仍需 close 并调用 dispose 清理 SXSSF 临时文件。
@@ -273,9 +295,11 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 
 String firstCell(InputStream input) throws Exception {
+// 作用：用途：用于按输入格式创建 Workbook，统一读取 .xls 和 .xlsx，并让输入流与工作簿在同一资源边界内关闭。
     if (input == null) return "cell=missing";
     try (InputStream in = new BufferedInputStream(input);
             Workbook workbook = WorkbookFactory.create(in)) {
+            // 作用：用于按输入格式创建 `Workbook`，统一读取 `.xls` 和 `.xlsx`，并让输入流与工作簿在同一资源边界内关闭。
         Row row = workbook.getNumberOfSheets() == 0 ? null : workbook.getSheetAt(0).getRow(0);
         Cell cell = row == null ? null : row.getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
         String value = cell == null ? "" : new DataFormatter().formatCellValue(cell);
@@ -285,7 +309,6 @@ String firstCell(InputStream input) throws Exception {
 }
 
 // 输出：cell=header
-// 作用：用于按输入格式创建 `Workbook`，统一读取 `.xls` 和 `.xlsx`，并让输入流与工作簿在同一资源边界内关闭。
 ```
 
 生产入口要先检查文件大小、扩展名、读取超时和临时目录配额；`WorkbookFactory` 的成功只表示文件格式可解析，不代表表头、列数和每行数据都正确。读取完后必须关闭 Workbook，不能把它缓存到请求之外。
@@ -300,6 +323,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 void exportRows(int count, OutputStream output) throws Exception {
     SXSSFWorkbook workbook = new SXSSFWorkbook(100);
+    // 作用：用途：用于在内存只保留固定行窗口的情况下导出大表，避免把全部行和单元格对象积累在堆中。
     try (workbook) {
         var sheet = workbook.createSheet("data");
         for (int i = 0; i < count; i++) {
@@ -351,6 +375,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 List<String> importExcel(InputStream input) throws Exception {
+// 作用：用途：用于在导入入口统一检查工作表、行值和错误位置。
     List<String> rows = new ArrayList<>();
     if (input == null) throw new IllegalArgumentException("input required");
     try (InputStream in = new BufferedInputStream(input);
@@ -383,6 +408,7 @@ import java.util.List;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 byte[] exportExcel(List<String> values) throws Exception {
+// 作用：用途：用于把结果行写入受控输出流并明确处理 POI 临时文件。
     try (var output = new ByteArrayOutputStream()) {
         SXSSFWorkbook workbook = new SXSSFWorkbook(100);
         try (workbook) {

@@ -31,6 +31,8 @@ PreparedStatement 参数绑定可防止 SQL 注入，并帮助数据库复用执
 ```java
 // 说明：PreparedStatement：绑定查询参数 的具体调用为 String sql = "select name from account where id = ?";
 String sql = "select name from account where id = ?";
+// 初始状态：sql 当前为 "select name from account where id = ?"。
+// 作用：用 PreparedStatement 把数据作为参数绑定，避免把不可信输入拼进 SQL。
 try (var ps = connection.prepareStatement(sql)) {
     ps.setLong(1, 42L);
     try (var rs = ps.executeQuery()) {
@@ -47,6 +49,7 @@ try (var ps = connection.prepareStatement(sql)) {
 ```java
 // 说明：JDBC 事务：提交或回滚一组更新 的具体调用为 connection.setAutoCommit(false);
 connection.setAutoCommit(false);
+// 作用：把必须共同成功的数据库更新放在同一连接上，并在失败时回滚。
 try {
     debit(connection, 1L, 100);
     credit(connection, 2L, 100);
@@ -66,6 +69,8 @@ try {
 ```java
 // 说明：try-with-resources：关闭 JDBC 资源 的具体调用为 try (var connection = dataSource.getConnection();
 try (var connection = dataSource.getConnection();
+// 初始状态：connection 当前为 dataSource.getConnection()。
+// 作用：用 try-with-resources 按逆序关闭结果集、语句和连接，确保连接归还连接池。
      var statement = connection.prepareStatement("select 1");
      var result = statement.executeQuery()) {
     result.next();

@@ -70,12 +70,14 @@ import java.util.concurrent.Executors;
 public class FutureExceptionDemo {
     public static void main(String[] args) {
         try (var executor = Executors.newSingleThreadExecutor()) {
+        // 初始状态：executor 当前为 Executors.newSingleThreadExecutor()) {。
             Callable<Void> task = () -> {
                 throw new IllegalArgumentException("bad input");
             };
             var future = executor.submit(task);
             try {
                 future.get();
+                // 作用：submit 不会把任务异常直接抛到提交线程；只有读取对应 Future 时才会以 ExecutionException 观察到。
             } catch (ExecutionException ex) {
                 System.out.println(ex.getCause().getClass().getSimpleName());
                 // 输出：IllegalArgumentException
@@ -129,7 +131,9 @@ import java.util.concurrent.FutureTask;
 public class FutureTaskCancelDemo {
     public static void main(String[] args) {
         FutureTask<String> future = new FutureTask<>(() -> "not run");
+        // 初始状态：future 当前为 new FutureTask<>(() -> "not run")。
         boolean cancelled = future.cancel(false);
+        // 作用：尚未运行时 cancel(false) 可以取消任务；运行中使用 cancel(true) 只发送中断请求。
         System.out.println(cancelled + ", done=" + future.isDone());
         // 输出：true, done=true
     }
@@ -149,6 +153,7 @@ import java.util.concurrent.FutureTask;
 public class FutureTaskDemo {
     public static void main(String[] args) throws Exception {
         FutureTask<Integer> task = new FutureTask<>(() -> 6 * 7);
+        // 作用：FutureTask 可被 Thread 或 Executor 执行，也能被多个调用方等待同一个结果；它只执行一次，适合简单的可复用异步计算句柄。
         Thread worker = new Thread(task, "calculator");
         worker.start();
         System.out.println(task.get());
@@ -173,6 +178,7 @@ public class ThreadPoolConfigDemo {
                 1, 2, 10, TimeUnit.SECONDS,
                 new ArrayBlockingQueue<>(2),
                 new ThreadPoolExecutor.AbortPolicy());
+                // 作用：核心线程数控制常驻处理能力，最大线程数处理队列满后的短时扩展，keepAlive 回收多余线程，ArrayBlockingQueue 给堆积设置上限。
         try {
             var future = executor.submit(() -> "bounded");
             System.out.println(future.get());
@@ -196,6 +202,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
 public class AbortPolicyDemo {
+// 作用：AbortPolicy 直接抛异常，适合不能静默丢任务的边界。
     public static void main(String[] args) {
         var executor = new ThreadPoolExecutor(
                 1, 1, 0, java.util.concurrent.TimeUnit.SECONDS,
@@ -254,9 +261,11 @@ import java.util.concurrent.Executors;
 public class InvokeAllDemo {
     public static void main(String[] args) throws Exception {
         try (var executor = Executors.newFixedThreadPool(2)) {
+        // 初始状态：executor 当前为 Executors.newFixedThreadPool(2)) {。
             var futures = executor.invokeAll(List.of(
                     () -> "first",
                     () -> "second"));
+                    // 作用：invokeAll 会等待全部任务完成或被中断；带超时版本返回时可能有未完成 Future，需要逐个取消或处理失败。
             System.out.println(futures.get(0).get() + "," + futures.get(1).get());
             // 输出：first,second
         }
@@ -275,6 +284,7 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
 
 public class CompletionServiceDemo {
+// 作用：完成顺序由调度决定，上例两行的先后是可能变化的；需要输入顺序时保留 Future 列表并按索引读取。CompletionService 适合“谁先完成先处理”的批量任务。
     public static void main(String[] args) throws Exception {
         try (var executor = Executors.newFixedThreadPool(2)) {
             var completion = new ExecutorCompletionService<String>(executor);
@@ -301,9 +311,11 @@ import java.util.concurrent.Executors;
 public class InvokeAnyDemo {
     public static void main(String[] args) throws Exception {
         try (var executor = Executors.newFixedThreadPool(2)) {
+        // 初始状态：executor 当前为 Executors.newFixedThreadPool(2)) {。
             String result = executor.invokeAny(List.of(
                     () -> "replica-a",
                     () -> "replica-b"));
+                    // 作用：invokeAny 返回第一个成功结果，并取消其他未完成任务；“最快”不等于“最可靠”，超时、异常和副作用要在任务层设计。
             System.out.println(result);
             // 输出：可能是 replica-a，也可能是 replica-b
         }
@@ -326,6 +338,8 @@ public class CallerRunsPolicyDemo {
                 1, 1, 0, java.util.concurrent.TimeUnit.SECONDS,
                 new java.util.concurrent.SynchronousQueue<>(),
                 new ThreadPoolExecutor.CallerRunsPolicy());
+                // 初始状态：executor 当前保存 new ThreadPoolExecutor( 1, 1, 0, java.util.concurrent.TimeUnit.SECONDS, new java.util.concurrent.SynchronousQueue<>(), new ThreadPoolExecutor.CallerRunsPolicy())的计算结果。
+                // 作用：第一个任务占住唯一工作线程后，第二个任务会触发 CallerRunsPolicy 并在提交线程同步执行。它能形成背压但会拖慢请求线程，不能用于不允许阻塞的事件循环。
         var workerStarted = new CountDownLatch(1);
         var releaseWorker = new CountDownLatch(1);
         try {
@@ -363,8 +377,10 @@ public class PrestartThreadsDemo {
     public static void main(String[] args) {
         var executor = (java.util.concurrent.ThreadPoolExecutor)
                 Executors.newFixedThreadPool(2);
+                // 初始状态：executor 当前保存 (java.util.concurrent.ThreadPoolExecutor) Executors.newFixedThreadPool(2)的计算结果。
         try {
             int started = executor.prestartAllCoreThreads();
+            // 作用：提前创建线程可以减少第一次请求的冷启动抖动，但会增加空闲资源；仅在启动延迟目标明确时使用。
             System.out.println("started=" + started);
             // 输出：started=2
         } finally {

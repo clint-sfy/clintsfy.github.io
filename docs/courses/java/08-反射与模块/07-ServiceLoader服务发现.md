@@ -58,6 +58,7 @@ interface Formatter { String format(String value); }
 public class ServiceLoadDemo {
     public static void main(String[] args) {
         ServiceLoader<Formatter> loader = ServiceLoader.load(Formatter.class);
+        // 作用：load 只创建发现器，不保证已经实例化提供方；要看到实现必须在 classpath 配置 META-INF/services/Formatter，或在模块中声明 uses/provides。
         System.out.println(loader != null);
         // 输出：true
     }
@@ -75,6 +76,7 @@ com.example.json.JsonFormatter
 
 // 文件：com/example/json/JsonFormatter.java
 package com.example.json;
+// 作用：配置文件每行写一个实现类全名，空行和 # 注释会被忽略；文件必须放进提供方 JAR 的正确资源路径，类名拼写和可见构造器都要能被运行时加载。
 
 public class JsonFormatter implements com.example.spi.Formatter {
     public String format(String value) { return "json:" + value; }
@@ -96,7 +98,9 @@ public class ServiceIteratorDemo {
     public static void main(String[] args) {
         ServiceLoader<Encoder> loader = ServiceLoader.load(Encoder.class);
         int count = 0;
+        // 初始状态：count 当前为 0。
         for (Encoder encoder : loader) {
+        // 作用：增强 for 会按发现顺序惰性创建实例；不要假设遍历顺序就是优先级，多个实现要在业务层按能力、版本或配置选择。
             System.out.println(encoder.encode("java"));
             // 输出：由具体提供方决定
             count++;
@@ -120,6 +124,7 @@ interface ClockSource { String now(); }
 public class ServiceFirstDemo {
     public static void main(String[] args) {
         var first = ServiceLoader.load(ClockSource.class).findFirst();
+        // 作用：findFirst 只适合“任意一个实现都能工作”的协议；若有多个实现，要明确选择规则并把缺失服务当成配置错误还是可选能力。
         System.out.println(first.isPresent());
         // 输出：true 或 false
     }
@@ -176,6 +181,7 @@ module app.json {
 import java.util.ServiceLoader;
 
 interface Plugin { String name(); }
+// 作用：插件式应用常使用上下文类加载器；类加载器层级错误会出现“配置存在但发现不到”的问题，框架应明确谁负责设置和恢复上下文加载器。
 
 public class ServiceClassLoaderDemo {
     public static void main(String[] args) {
@@ -193,7 +199,6 @@ public class ServiceClassLoaderDemo {
 `reload` 清除已缓存的提供方信息，下一次遍历会重新查找；它不是热更新机制，已创建的实例和类加载器生命周期仍由应用管理。
 
 ```java
-// 作用：通过 reload 刷新发现结果。
 import java.util.ServiceLoader;
 
 interface Reloadable { }
@@ -202,6 +207,7 @@ public class ServiceReloadDemo {
     public static void main(String[] args) {
         ServiceLoader<Reloadable> loader = ServiceLoader.load(Reloadable.class);
         loader.reload();
+        // 作用：通过 reload 刷新发现结果。
         System.out.println(loader != null);
         // 输出：true
     }
@@ -213,7 +219,6 @@ public class ServiceReloadDemo {
 Provider 过滤后再 get 可以减少无关实例化；如果构造器失败，异常会在 get/遍历阶段暴露，调用方应记录提供方类型和配置来源。
 
 ```java
-// 作用：通过 Provider.get 按需创建单个实现。
 import java.util.ServiceLoader;
 
 interface Renderer { String render(); }
@@ -221,8 +226,10 @@ interface Renderer { String render(); }
 public class ServiceProviderGetDemo {
     public static void main(String[] args) {
         var provider = ServiceLoader.load(Renderer.class).stream().findFirst();
+        // 初始状态：provider 当前为 ServiceLoader.load(Renderer.class).stream().findFirst()。
         if (provider.isPresent()) {
             System.out.println(provider.get().getClass().getSimpleName());
+            // 作用：通过 Provider.get 按需创建单个实现。
             // 输出：由配置的实现类决定
         } else {
             System.out.println("none");
@@ -237,11 +244,11 @@ public class ServiceProviderGetDemo {
 配置文件不存在通常只是没有实现，类名错误、构造器失败或类型不匹配则可能抛 `ServiceConfigurationError`；可选插件可隔离失败，核心服务不应静默吞掉。
 
 ```java
-// 作用：通过 ServiceConfigurationError 处理服务配置错误。
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 
 interface BrokenService { }
+// 作用：配置文件不存在通常只是没有实现，类名错误、构造器失败或类型不匹配则可能抛 ServiceConfigurationError；可选插件可隔离失败，核心服务不应静默吞掉。
 
 public class ServiceErrorDemo {
     public static void main(String[] args) {
@@ -250,6 +257,7 @@ public class ServiceErrorDemo {
                 System.out.println(ignored);
             }
         } catch (ServiceConfigurationError e) {
+        // 作用：通过 ServiceConfigurationError 处理服务配置错误。
             System.out.println(e.getClass().getSimpleName());
             // 输出：ServiceConfigurationError
         }
@@ -299,12 +307,13 @@ public class ServiceThreadBoundaryDemo {
 自定义 ModuleLayer 适合插件隔离和版本并存，但涉及模块解析、类加载器和生命周期；普通应用优先使用 boot layer 或 classpath ServiceLoader。
 
 ```java
-// 作用：通过 ModuleLayer 从模块层加载服务。
 import java.util.ServiceLoader;
 
 public class ModuleLayerServiceDemo {
+// 作用：自定义 ModuleLayer 适合插件隔离和版本并存，但涉及模块解析、类加载器和生命周期；普通应用优先使用 boot layer 或 classpath ServiceLoader。
     public static void main(String[] args) {
         ServiceLoader<Object> loader = ServiceLoader.load(ModuleLayer.boot(), Object.class);
+        // 作用：通过 ModuleLayer 从模块层加载服务。
         System.out.println(loader != null);
         // 输出：true
     }

@@ -47,6 +47,7 @@ import org.mybatis.spring.annotation.MapperScan;
 
 @MapperScan("example.persistence")
 class PersistenceConfig {}
+// 作用：用途：用于指定 Mapper 接口包，让 Spring 批量创建 MyBatis 代理。
 // 输出：example.persistence 下的 Mapper 接口可被依赖注入。
 // 说明：@MapperScan("com.example.mapper") 为该包下的 Mapper 接口注册代理 Bean；接口无需实现类，直接 new 配置类不会创建 Mapper 代理。
 ```
@@ -60,6 +61,7 @@ import org.apache.ibatis.annotations.Param;
 
 interface UserMapper {
     User find(@Param("tenantId") long tenantId, @Param("userId") long userId);
+    // 作用：用途：用于给多个 Mapper 参数提供稳定名称，供 XML 中的 #{} 引用。
 }
 // 输出：XML 可分别使用 #{tenantId} 与 #{userId}。
 // 说明：@Param("status") 与 @Param("limit") 让 XML 用 #{status}、#{limit} 取值；二者作为 PreparedStatement 参数绑定，不是字符串拼接。
@@ -71,6 +73,7 @@ interface UserMapper {
 
 ```java
 PageHelper.startPage(2, 20);
+// 作用：用途：用于在当前线程的下一条查询前设置页码和每页条数。
 List<User> users = userMapper.selectAll();
 System.out.println(users.size() <= 20);
 // 输出：true
@@ -83,6 +86,7 @@ System.out.println(users.size() <= 20);
 
 ```java
 String orderBy = switch (sortKey) {
+// 初始状态：orderBy 当前为 switch (sortKey) {。
     case "createdAt" -> "created_at DESC";
     default -> "id ASC";
 };
@@ -101,6 +105,7 @@ try {
     userMapper.selectAll();
 } finally {
     PageHelper.clearPage();
+    // 作用：用途：用于在查询未正常消费分页状态时主动清理 ThreadLocal，防止影响同线程后续查询。
 }
 // 输出：当前线程不再保留本次分页参数。
 // 说明：finally 中 PageHelper.clearPage() 删除尚未消费的分页参数，避免线程池复用时把后续 SELECT 误限制为旧页码。
@@ -112,6 +117,7 @@ try {
 
 ```java
 PageInfo<User> page = new PageInfo<>(users);
+// 作用：用途：用于从一次分页结果构造总数、页码和列表等响应元数据。
 System.out.println(page.getPageNum() + "/" + page.getTotal());
 // 输出：当前页码/符合条件的总记录数。
 // 说明：new PageInfo<>(users) 从 PageHelper 结果读取 pageNum、pageSize、total 和当前页列表；普通 List 本身没有总行数元数据。
@@ -229,6 +235,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 
 @TableName("app_user")
 class User {
+// 作用：用途：用于让实体 Mapper 获得按主键查询、插入、更新和删除等通用方法，适合表结构与 CRUD 语义稳定的场景。
     @TableId(type = IdType.AUTO)
     private Long id;
     private String username;
@@ -273,6 +280,7 @@ class UserReader {
 import com.baomidou.mybatisplus.extension.service.IService;
 
 interface UserService extends IService<User> {}
+// 作用：用途：用于把通用 CRUD 入口放在 Service 层，集中事务、权限和领域校验，而不是让控制器直接调用 Mapper。
 
 class UserFacade {
     private final UserService service;
@@ -306,6 +314,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 LambdaQueryWrapper<User> query = new LambdaQueryWrapper<User>()
     .eq(User::getStatus, "ACTIVE")
     .orderByDesc(User::getCreatedAt);
+    // 作用：用途：用于组合等值、范围和排序条件；Lambda 版本通过方法引用减少字符串列名拼写错误。
 System.out.println(query.getSqlSegment().contains("status"));
 // 输出：true
 // 说明：wrapper.eq(User::getStatus, "ACTIVE").ge(User::getAge, 18) 生成 status = ? AND age >= ?，绑定值为 ACTIVE 与 18。

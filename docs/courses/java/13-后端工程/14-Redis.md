@@ -42,6 +42,7 @@ Redis 很快，但它首先是一个网络服务和内存数据结构服务器�
 
 ```java
 redisTemplate.opsForHash().put("user:7", "name", "Ann");
+// 作用：用途：用于在一个 Redis Hash 中按字段读写结构化对象的局部数据。
 System.out.println(redisTemplate.opsForHash().get("user:7", "name"));
 // 输出：Ann
 // 说明：opsForHash().put("user:42", "name", "Alice") 写入 key=user:42、field=name、value=Alice；get 用同一 key/field 返回 Alice。
@@ -53,6 +54,7 @@ System.out.println(redisTemplate.opsForHash().get("user:7", "name"));
 
 ```java
 redisTemplate.opsForList().rightPush("jobs", "job-1");
+// 作用：用途：用于按队列或栈语义向 Redis List 写入并读取元素。
 System.out.println(redisTemplate.opsForList().leftPop("jobs"));
 // 输出：job-1
 // 说明：rightPush("jobs", "job-1") 把 job-1 追加到列表右端，leftPop("jobs") 从左端取出，形成 FIFO；空列表返回 null。
@@ -64,6 +66,7 @@ System.out.println(redisTemplate.opsForList().leftPop("jobs"));
 
 ```java
 Boolean deleted = redisTemplate.delete("user:7");
+// 作用：用途：用于在数据变更后删除一个已知缓存键并观察是否存在目标。
 System.out.println(Boolean.TRUE.equals(deleted));
 // 输出：删除到键时为 true。
 // 说明：redisTemplate.delete("user:42") 只删除精确 key user:42，返回 true 表示原键存在并被删除，false 表示不存在。
@@ -75,6 +78,7 @@ System.out.println(Boolean.TRUE.equals(deleted));
 
 ```java
 Set<String> keys = redisTemplate.keys("demo:user:*");
+// 作用：用途：用于小型受控数据集的诊断查找；生产大键空间应改用游标式 SCAN。
 System.out.println(keys == null ? 0 : keys.size());
 // 输出：当前匹配键数量；禁止把外部输入直接作为模式。
 // 说明：keys("user:*") 返回当前数据库中匹配 user: 前缀的 key 集合，但会阻塞遍历整个 keyspace；生产环境用 SCAN 游标分批读取。
@@ -86,7 +90,9 @@ System.out.println(keys == null ? 0 : keys.size());
 
 ```java
 DefaultRedisScript<Long> script = new DefaultRedisScript<>("return redis.call('INCR', KEYS[1])", Long.class);
+// 初始状态：script 当前为 new DefaultRedisScript<>("return redis.call('INCR', KEYS[1])", Long.class)。
 Long value = redisTemplate.execute(script, List.of("counter"));
+// 作用：用途：用于在 Redis 服务端一次完成需要原子性的检查与更新。
 System.out.println(value);
 // 输出：counter 自增后的值。
 // 说明：execute(script, List.of("counter:42"), "10") 在 Redis 单次 Lua 执行中检查并更新 key counter:42，返回值按脚本声明类型转换；keys 与 argv 分开传入。
@@ -98,6 +104,7 @@ System.out.println(value);
 
 ```java
 DefaultRedisScript<Long> script = new DefaultRedisScript<>("return 1", Long.class);
+// 作用：用途：用于声明 Lua 文本及其 Java 返回类型，便于复用和结果转换。
 System.out.println(script.getResultType().getSimpleName());
 // 输出：Long
 // 说明：DefaultRedisScript<Long> 同时保存 Lua 文本和 Long 返回类型，因此 Redis 整数回复被转换为 Java Long；脚本本身应作为单例 Bean 复用 SHA 缓存。
@@ -109,6 +116,7 @@ System.out.println(script.getResultType().getSimpleName());
 
 ```java
 StringRedisSerializer serializer = new StringRedisSerializer(StandardCharsets.UTF_8);
+// 作用：用途：用于把 Redis key 或字符串值编码为稳定 UTF-8 字节。
 System.out.println(new String(serializer.serialize("user:7"), StandardCharsets.UTF_8));
 // 输出：user:7
 // 说明：StringRedisSerializer 把 "user:42" 编码为 UTF-8 字节并可无损还原；它不负责把 User 对象序列化为 JSON。
@@ -123,8 +131,10 @@ import java.time.Duration;
 import org.springframework.data.redis.core.RedisTemplate;
 
 RedisTemplate<String, String> redis = redisTemplate;
+// 初始状态：redis 当前为 redisTemplate。
 String key = "app:profile:7";
 redis.opsForValue().set(key, "active", Duration.ofMinutes(5));
+// 作用：用途：用于存放计数器、短文本或序列化后的单对象，并显式设置命名空间和过期时间。
 String value = redis.opsForValue().get(key);
 System.out.println(value);
 // 输出：active
@@ -139,6 +149,7 @@ System.out.println(value);
 
 ```java
 redis.opsForHash().put("app:user:7", "status", "ACTIVE");
+// 作用：用途：用于在同一 key 下按 field 读写对象的局部属性。
 System.out.println(redis.opsForHash().get("app:user:7", "status"));
 // 输出：ACTIVE
 // 说明：Hash key=user:42 下可分别写 field=name/value=Alice 与 field=status/value=ACTIVE，更新 status 不会重写 name。
@@ -152,6 +163,7 @@ Hash field 需要稳定命名和类型契约；多个 field 的跨 key 更新不
 
 ```java
 redis.opsForList().rightPush("app:jobs", "job-1");
+// 作用：用途：用于按插入顺序追加并消费简单队列元素。
 System.out.println(redis.opsForList().leftPop("app:jobs"));
 // 输出：job-1
 // 说明：List key=jobs 右端依次追加 job-1、job-2，左端弹出时先得到 job-1；该简单队列不提供确认或失败重投语义。
@@ -165,6 +177,7 @@ List 需要设置长度上限并处理消费失败；需要可靠消息时应评
 
 ```java
 redis.opsForSet().add("app:roles:7", "reader", "reader");
+// 作用：用途：用于保存不需要业务顺序的去重成员集合。
 System.out.println(redis.opsForSet().size("app:roles:7"));
 // 输出：1
 // 说明：Set key=user:42:roles 添加 ADMIN 两次仍只有一个成员，isMember 精确判断 ADMIN 是否存在；集合迭代顺序不属于契约。
@@ -180,10 +193,10 @@ Set 只保证成员唯一，不保证顺序；集合过大时应限制基数并�
 import java.time.Duration;
 
 redis.opsForValue().set("app:token:7", "opaque", Duration.ofSeconds(60));
+// 作用：用于给缓存、验证码和短期会话设置过期时间，并在续期、删除和未设置 TTL 时做可观测判断。
 Long seconds = redis.getExpire("app:token:7");
 System.out.println(seconds != null && seconds > 0);
 // 输出：true
-// 作用：用于给缓存、验证码和短期会话设置过期时间，并在续期、删除和未设置 TTL 时做可观测判断。
 ```
 
 没有 TTL 的 key 可能长期占用内存；`-1` 表示没有过期时间，`-2` 通常表示 key 不存在。续期要防止把永久缓存误延长，批量 key 过期还要加入抖动以降低雪崩风险。
@@ -224,10 +237,12 @@ StringRedisTemplate redis = stringRedisTemplate;
 String lua = "local n = redis.call('GET', KEYS[1]); "
     + "if n and tonumber(n) >= tonumber(ARGV[1]) then "
     + "redis.call('DECRBY', KEYS[1], ARGV[1]); return 1; end; return 0;";
+// 初始状态：lua 包含基于 KEYS[1] 和 ARGV[1] 的原子配额检查与扣减逻辑。
 var script = new DefaultRedisScript<Long>(lua, Long.class);
 java.util.List<String> keys = java.util.List.of("app:quota:7");
 String amount = "1";
 Long allowed = redis.execute(script, keys, amount);
+// 作用：用于实现限额、令牌桶或“只有当前值匹配才删除”等读改写操作，避免客户端往返造成竞态。
 System.out.println(allowed);
 // 输出：1
 // 说明：Lua 在 Redis 服务端对 KEYS[1] 指定的限流/锁 key 比较当前值与 ARGV[1]，仅匹配时更新或删除；检查与写入不会被其他命令插入。

@@ -49,6 +49,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 class ClockSource {
+// 作用：用途：用于把无须显式工厂逻辑的通用类交给组件扫描。
+// 作用：@Component 将 ClockSource 标记为组件扫描候选
     String zone() {
         return "UTC";
     }
@@ -56,7 +58,6 @@ class ClockSource {
 
 System.out.println(new ClockSource().zone());
 // 输出：UTC
-// 作用：@Component 将 ClockSource 标记为组件扫描候选
 ```
 
 组件类的包必须在扫描范围内；同类型组件有多个候选时，使用限定符或 `@Primary` 表达选择，而不是依赖类路径顺序。
@@ -70,6 +71,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 class GreetingService {
+// 作用：用途：用于在组件扫描中显式标记承载业务逻辑的服务类。
+// 作用：@Service 将 GreetingService 标记为业务服务候选
     String greet() {
         return "hello";
     }
@@ -77,7 +80,6 @@ class GreetingService {
 
 System.out.println(new GreetingService().greet());
 // 输出：hello
-// 作用：@Service 将 GreetingService 标记为业务服务候选
 ```
 
 `@Service` 本质上是 `@Component` 的语义化特殊形式；它不会自动建立事务边界，事务仍需明确配置。
@@ -96,13 +98,14 @@ import org.springframework.context.annotation.Configuration;
 class ClientConfiguration {
     @Bean
     String endpoint() {
+    // 作用：用途：用于注册第三方类型、需要组装参数或需要显式生命周期控制的对象；方法返回值就是容器中的 Bean。
+    // 作用：用于注册第三方类型、需要组装参数或需要显式生命周期控制的对象；方法返回值就是容器中的 Bean。
         return "https://api.example.test";
     }
 }
 
 System.out.println(new ClientConfiguration().endpoint());
 // 输出：https://api.example.test
-// 作用：用于注册第三方类型、需要组装参数或需要显式生命周期控制的对象；方法返回值就是容器中的 Bean。
 ```
 
 `@Bean` 方法可以声明参数，容器会按类型注入依赖；在 `@Configuration` 类中方法调用还会由配置类增强代理协调 Bean 复用。普通组件类里的直接方法调用不应被误认为容器查找。
@@ -152,12 +155,13 @@ class TokenRules {
 
     @PostConstruct
     void initialize() {
+    // 作用：用途：用于依赖注入完成后执行轻量、确定性的初始化；不要在这里启动不可控的长循环或阻塞网络调用。
+    // 作用：@PostConstruct 调用 initialize，把 prefix 初始化为 "Bearer "
         prefix = "Bearer ";
         System.out.println(prefix.strip());
         // 输出：Bearer
     }
 }
-// 作用：@PostConstruct 调用 initialize，把 prefix 初始化为 "Bearer "
 ```
 
 初始化回调发生在依赖注入之后、应用完全可服务之前；抛出异常通常会让 Bean 创建失败并阻止启动。资源释放对应 `@PreDestroy` 或显式关闭接口，不能假定所有 prototype Bean 都会收到销毁回调。
@@ -228,13 +232,14 @@ System.out.println(AopUtils.isAopProxy(proxy) + "/" + proxy.text());
 import org.springframework.beans.factory.ObjectProvider;
 
 class OptionalReporter {
+// 作用：用途：用于表达可选依赖、延迟实例化或按需获取 prototype Bean，避免在构造器中强制创建昂贵对象。
     OptionalReporter(ObjectProvider<Runnable> provider) {
+    // 作用：ObjectProvider.getIfAvailable 在 provider 缺少 Runnable 时返回 fallback
         Runnable task = provider.getIfAvailable(() -> () -> System.out.println("fallback"));
         task.run();
         // 输出：fallback
     }
 }
-// 作用：ObjectProvider.getIfAvailable 在 provider 缺少 Runnable 时返回 fallback
 ```
 
 `getIfAvailable` 适合有安全默认值的可选依赖；多个候选时仍会触发歧义异常，应配合 `@Primary` 或限定符。不要用 provider 掩盖本来应该必需的依赖缺失。
@@ -265,6 +270,8 @@ class LazyConfiguration {
     @Bean
     @Lazy
     ExpensiveCatalog catalog() {
+    // 作用：用途：用于推迟昂贵 Bean 的实例化或打破经过评估的初始化时序，但不能把它当成循环依赖的通用修复。
+    // 作用：用于推迟昂贵 Bean 的实例化或打破经过评估的初始化时序，但不能把它当成循环依赖的通用修复。
         return new ExpensiveCatalog();
     }
 }
@@ -277,7 +284,6 @@ try (var context = new AnnotationConfigApplicationContext()) {
     System.out.println("lazy=" + context.getBean(ExpensiveCatalog.class).name());
     // 输出：lazy=catalog
 }
-// 作用：用于推迟昂贵 Bean 的实例化或打破经过评估的初始化时序，但不能把它当成循环依赖的通用修复。
 ```
 
 懒加载把失败从启动期推迟到第一次访问，排障和健康检查会更复杂。对关键 Bean，应权衡启动速度、首请求延迟和失败可见性，并为第一次创建提供监控。
@@ -287,13 +293,13 @@ try (var context = new AnnotationConfigApplicationContext()) {
 用途：用于同一接口存在多个实现时指定默认注入对象；只有一个候选需要时才使用，复杂场景改用限定符更清晰。
 
 ```java
-// 初始状态：@Primary 标记 systemClockNotifier，容器中另有 backupClockNotifier
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 interface Notifier {
+// 初始状态：@Primary 标记 systemClockNotifier，容器中另有 backupClockNotifier。
     String channel();
 }
 
@@ -314,6 +320,7 @@ class PrimaryConfiguration {
     @Bean
     @Primary
     Notifier systemClockNotifier() {
+    // 作用：用途：用于同一接口存在多个实现时指定默认注入对象；只有一个候选需要时才使用，复杂场景改用限定符更清晰。
         return () -> "system-clock";
     }
 
@@ -345,13 +352,14 @@ try (var context = new AnnotationConfigApplicationContext(PrimaryConfiguration.c
 `@Autowired` 按类型解析依赖；新代码优先用单构造器注入，避免隐藏必需依赖。
 
 ```java
-// 作用：通过 @Autowired 旧代码的按类型注入。
 // 结果：`now()` 使用容器中的 `Clock` Bean 返回当前时刻。
 @Service
 class BillingService {
     private final Clock clock;
     @Autowired
     BillingService(Clock clock) {
+    // 作用：@Autowired 按类型解析依赖；新代码优先用单构造器注入，避免隐藏必需依赖。
+    // 作用：通过 @Autowired 旧代码的按类型注入。
         this.clock = clock;
     }
     Instant now() { return clock.instant(); }
@@ -365,12 +373,12 @@ class BillingService {
 `@Value` 适合少量标量配置；成组配置应改用 `@ConfigurationProperties` 以获得类型校验。
 
 ```java
-// 作用：通过 @Value 注入单个配置值。
 // 结果：未配置时，`accepts(1024)` 返回 `true`。
 @Component
 class UploadLimits {
     private final long maxBytes;
     UploadLimits(@Value("${app.upload.max-bytes:10485760}") long maxBytes) {
+    // 作用：通过 @Value 注入单个配置值。
         this.maxBytes = maxBytes;
     }
     boolean accepts(long size) {
@@ -386,13 +394,14 @@ class UploadLimits {
 `@ConditionalOnProperty` 只决定 Bean 是否注册；不要把它当成运行期功能开关。
 
 ```java
-// 作用：通过 @ConditionalOnProperty 按开关装配 Bean。
 // 结果：仅当 `app.audit.enabled=true` 时容器中存在 `AuditSink`。
 @Configuration
 class AuditConfiguration {
     @Bean
     @ConditionalOnProperty(name = "app.audit.enabled", havingValue = "true")
     AuditSink auditSink() {
+    // 作用：@ConditionalOnProperty 只决定 Bean 是否注册；不要把它当成运行期功能开关。
+    // 作用：通过 @ConditionalOnProperty 按开关装配 Bean。
         return event -> System.out.println(event);
     }
     interface AuditSink { void write(String event); }
@@ -406,13 +415,13 @@ class AuditConfiguration {
 `SpringApplication.run` 创建并刷新 Spring 容器；启动参数会进入外部配置优先级链。
 
 ```java
-// 作用：通过 SpringApplication.run 启动并取得容器。
 // 结果：打印已启动容器的 ID，例如 `application`。
 @SpringBootApplication
 public class DemoApplication {
     public static void main(String[] args) {
         ConfigurableApplicationContext context =
             SpringApplication.run(DemoApplication.class, args);
+            // 作用：通过 SpringApplication.run 启动并取得容器。
         String id = context.getId();
         System.out.println(id);
     }
@@ -426,14 +435,15 @@ public class DemoApplication {
 `FilterRegistrationBean` 用于非 Spring Security 的 Servlet Filter；安全链内的过滤器应由 `SecurityFilterChain` 排序。
 
 ```java
-// 作用：通过 FilterRegistrationBean 以 Bean 方式注册 Servlet Filter。
 // 结果：容器以顺序 `10` 注册 `RequestIdFilter`。
 @Configuration
 class FilterConfiguration {
     @Bean
     FilterRegistrationBean<RequestIdFilter> requestIdFilter() {
+    // 作用：通过 FilterRegistrationBean 以 Bean 方式注册 Servlet Filter。
         FilterRegistrationBean<RequestIdFilter> bean =
             new FilterRegistrationBean<>(new RequestIdFilter());
+            // 作用：FilterRegistrationBean 用于非 Spring Security 的 Servlet Filter；安全链内的过滤器应由 SecurityFilterChain 排序。
         bean.setOrder(10);
         return bean;
     }
@@ -447,14 +457,15 @@ class FilterConfiguration {
 `addUrlPatterns` 接收 Servlet URL pattern，不是 Spring MVC 的 Ant 路径规则。
 
 ```java
-// 作用：通过 FilterRegistrationBean.addUrlPatterns 限制 Filter 映射。
 // 结果：`RequestIdFilter` 只匹配 `/api/*` 的 Servlet 请求。
 @Bean
 FilterRegistrationBean<RequestIdFilter> apiFilter() {
     FilterRegistrationBean<RequestIdFilter> bean =
         new FilterRegistrationBean<>();
+        // 初始状态：bean 当前保存 new FilterRegistrationBean<>()的计算结果。
     bean.setFilter(new RequestIdFilter());
     bean.addUrlPatterns("/api/*");
+    // 作用：通过 FilterRegistrationBean.addUrlPatterns 限制 Filter 映射。
     bean.setName("requestIdFilter");
     return bean;
 }
@@ -467,11 +478,12 @@ FilterRegistrationBean<RequestIdFilter> apiFilter() {
 `@EnableCaching` 启用 `@Cacheable` 等注解的代理处理；同类自调用仍会绕过代理。
 
 ```java
-// 作用：通过 @EnableCaching 开启 Spring 缓存代理。
 // 结果：容器启用缓存切面，并提供名为 `users` 的缓存。
 @Configuration
 @EnableCaching
 class CacheConfiguration {
+// 作用：@EnableCaching 启用 @Cacheable 等注解的代理处理；同类自调用仍会绕过代理。
+// 作用：通过 @EnableCaching 开启 Spring 缓存代理。
     @Bean
     CacheManager cacheManager() {
         return new ConcurrentMapCacheManager("users");
@@ -487,11 +499,12 @@ class CacheConfiguration {
 `@PropertySource` 适合补充 `.properties` 文件；它不直接支持 YAML，也不应覆盖 Boot 的常规配置约定。
 
 ```java
-// 作用：通过 @PropertySource 引入额外 properties 资源。
 // 结果：未配置 `gen.author` 时，`author()` 返回 `team`。
 @Configuration
 @PropertySource("classpath:generator.properties")
 class GeneratorConfiguration {
+// 作用：@PropertySource 适合补充 .properties 文件；它不直接支持 YAML，也不应覆盖 Boot 的常规配置约定。
+// 作用：通过 @PropertySource 引入额外 properties 资源。
     private final Environment environment;
     GeneratorConfiguration(Environment environment) {
         this.environment = environment;
@@ -507,12 +520,13 @@ class GeneratorConfiguration {
 `@Resource` 默认先按名称匹配，适合需要明确 Bean 名的旧代码；必需依赖仍优先构造器注入。
 
 ```java
-// 作用：通过 @Resource 按名称优先注入。
 // 结果：容器按名称注入 `stringRedisTemplate`，`ready()` 返回 `true`。
 @Component
 class CaptchaFacade {
     @Resource(name = "stringRedisTemplate")
     private StringRedisTemplate redis;
+    // 作用：@Resource 默认先按名称匹配，适合需要明确 Bean 名的旧代码；必需依赖仍优先构造器注入。
+    // 作用：通过 @Resource 按名称优先注入。
     void save(String key, String value) {
         redis.opsForValue().set(key, value);
     }

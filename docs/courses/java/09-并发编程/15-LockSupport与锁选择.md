@@ -137,6 +137,7 @@ import java.util.concurrent.locks.LockSupport;
 
 public class ParkConditionLoopDemo {
     public static void main(String[] args) throws InterruptedException {
+    // 作用：条件可能虚假返回或被多个线程竞争时必须在 while 中重查；先更新条件，再调用 unpark 唤醒等待者。
         var ready = new AtomicBoolean(false);
         Thread worker = new Thread(() -> {
             while (!ready.get()) {
@@ -192,13 +193,13 @@ blocker 只用于线程转储和诊断，不是锁，也不会自动建立条件
 等待必须对齐一个绝对截止时间时使用 `parkUntil`；返回后仍需检查条件和中断状态，避免把提前唤醒当作完成。
 
 ```java
-// 作用：通过 parkUntil(deadline) 按绝对时间等待。
 import java.util.concurrent.locks.LockSupport;
 
 public class ParkUntilDemo {
     public static void main(String[] args) {
         LockSupport.parkUntil(System.currentTimeMillis() + 1);
         System.out.println("deadline reached or signal received");
+        // 作用：通过 parkUntil(deadline) 按绝对时间等待。
         // 输出：deadline reached or signal received
     }
 }
@@ -213,6 +214,7 @@ public class ParkUntilDemo {
 ```java
 // 说明：synchronized increment() 在 counter 监视器下完成 count++，方法正常或异常退出都由 JVM 自动释放锁。
 public class SynchronizedChoiceDemo {
+// 作用：临界区简单且只需互斥与可见性时适合优先使用 synchronized；它由语言自动管理释放，通常比手写锁更不易出错。
     private int count;
 
     synchronized void increment() {
@@ -242,6 +244,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ReentrantLockChoiceDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new ReentrantLock();
+        // 作用：需要可中断、超时获取或多个条件队列时选择 ReentrantLock；每次成功 lock 都要在 finally 中 unlock。
         if (lock.tryLock(1, TimeUnit.MILLISECONDS)) {
             try {
                 System.out.println("lock acquired");
@@ -268,6 +271,7 @@ public class ReentrantLockChoiceDemo {
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ReadWriteChoiceDemo {
+// 作用：读操作明显多于写操作且临界区值得并行时适合评估 ReadWriteLock；读写协议必须覆盖所有访问路径。
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
         lock.readLock().lock();
@@ -294,6 +298,7 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedChoiceDemo {
     public static void main(String[] args) {
         var lock = new StampedLock();
+        // 作用：低冲突的短读可能从乐观读受益时选择 StampedLock；它不可重入、没有 Condition，读取后必须校验 stamp。
         long stamp = lock.tryOptimisticRead();
         boolean valid = lock.validate(stamp);
         System.out.println("snapshot valid=" + valid);
@@ -313,6 +318,7 @@ public class StampedChoiceDemo {
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CasChoiceDemo {
+// 作用：只有一个独立变量需要比较更新时使用 CAS；它没有持有与释放生命周期，不能保护多字段复合不变式。
     public static void main(String[] args) {
         var count = new AtomicInteger(0);
         boolean updated = count.compareAndSet(0, 1);
@@ -335,6 +341,7 @@ import java.util.concurrent.Semaphore;
 public class SemaphoreChoiceDemo {
     public static void main(String[] args) throws InterruptedException {
         var permits = new Semaphore(2);
+        // 作用：需要限制并发名额或管理资源池时使用 Semaphore；许可证数量可大于一，获取成功后必须在释放路径归还。
         permits.acquire();
         try {
             System.out.println("remaining=" + permits.availablePermits());
@@ -378,6 +385,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ConcurrentContainerChoiceDemo {
     public static void main(String[] args) {
         var cache = new ConcurrentHashMap<String, Integer>();
+        // 作用：业务只需要标准容器的并发操作时选择 ConcurrentHashMap；单次方法安全不等于跨多个操作或系统的不变式安全。
         cache.merge("java", 1, Integer::sum);
         System.out.println(cache.get("java"));
         // 输出：1

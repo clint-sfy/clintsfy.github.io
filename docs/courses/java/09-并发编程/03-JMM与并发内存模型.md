@@ -42,6 +42,7 @@ volatile 读写具有可见性和有序性，适合停止标志、配置快照�
 ```java
 // 说明：main 线程对 volatile stopped 写入 true，其他线程后续读取该字段时能看到这个停止状态。
 public class VolatileFlagDemo {
+// 作用：volatile 读写具有可见性和有序性，适合停止标志、配置快照引用等单变量发布。
     private static volatile boolean stopped;
 
     public static void main(String[] args) {
@@ -64,6 +65,7 @@ public class VolatileFlagDemo {
 ```java
 // 说明：set() 退出 box 监视器先于 get() 再次获取它，所以 value=42 既互斥更新又对读线程可见。
 public class SynchronizedVisibilityDemo {
+// 作用：synchronized 用于让同一个监视器的 unlock→lock 建立 happens-before，并保证临界区互斥。
     private int value;
 
     synchronized void set(int value) {
@@ -118,6 +120,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicCasDemo {
     public static void main(String[] args) {
         AtomicInteger version = new AtomicInteger(1);
+        // 作用：CAS 会比较当前值，只有仍等于期望值才写入新值；失败时通常重试或走冲突路径。
         boolean updated = version.compareAndSet(1, 2);
         System.out.println(updated + ", version=" + version.get());
         // 输出：true, version=2
@@ -158,6 +161,7 @@ import java.util.concurrent.Executors;
 public class FutureHappensBeforeDemo {
     public static void main(String[] args) throws Exception {
         try (var executor = Executors.newSingleThreadExecutor()) {
+        // 初始状态：executor 当前为 Executors.newSingleThreadExecutor()) {。
             var future = executor.submit(() -> "ready");
             System.out.println(future.get());
             // 输出：ready
@@ -178,6 +182,7 @@ public class FinalFieldDemo {
         private final String name;
 
         User(String name) {
+        // 作用：final 字段在构造器正常完成后有额外的初始化安全保证，但不等于整个对象天然线程安全；可变字段和 this 逃逸仍需同步。
             this.name = name;
         }
 
@@ -203,6 +208,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 
 public class VarHandleDemo {
+// 作用：VarHandle 可以精细选择普通、opaque、acquire/release 或 volatile 访问语义，常用于并发库和高性能底层组件。业务代码优先用 Atomic、Lock 和并发集合，避免自己组合错误的内存语义。
     private int value;
 
     public static void main(String[] args) throws Exception {
@@ -227,7 +233,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class LazySetDemo {
     public static void main(String[] args) {
         AtomicInteger state = new AtomicInteger();
+        // 初始状态：state 当前为 new AtomicInteger()。
         state.lazySet(1);
+        // 作用：lazySet 允许延迟传播，适合不需要立即同步观察的状态清理；若后续代码依赖写入马上对其他线程可见，使用普通 set 更直白。
         System.out.println(state.get());
         // 输出：1
     }

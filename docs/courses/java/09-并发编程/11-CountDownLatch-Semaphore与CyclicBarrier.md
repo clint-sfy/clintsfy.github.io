@@ -110,7 +110,9 @@ import java.util.concurrent.Semaphore;
 public class SemaphoreTryDemo {
     public static void main(String[] args) {
         Semaphore semaphore = new Semaphore(1);
+        // 初始状态：semaphore 当前为 new Semaphore(1)。
         if (semaphore.tryAcquire()) {
+        // 作用：tryAcquire 不等待，适合快速失败；带超时版本允许有限等待。
             try {
                 System.out.println("accepted");
                 // 输出：accepted
@@ -139,10 +141,12 @@ public class BarrierDemo {
     public static void main(String[] args) throws Exception {
         CyclicBarrier barrier = new CyclicBarrier(1,
                 () -> {
+                // 初始状态：barrier 当前保存 new CyclicBarrier(1, () -> {的计算结果。
                     System.out.println("phase complete");
                     // 输出：phase complete
                 });
         barrier.await();
+        // 作用：参与者全部 await 后屏障动作执行一次并放行；通过后 barrier 可以再次使用。
     }
 }
 ```
@@ -160,7 +164,9 @@ import java.util.concurrent.CyclicBarrier;
 public class BarrierResetDemo {
     public static void main(String[] args) {
         CyclicBarrier barrier = new CyclicBarrier(2);
+        // 初始状态：barrier 当前为 new CyclicBarrier(2)。
         barrier.reset();
+        // 作用：reset 会让当前 generation 失效，正在等待的线程可能收到 BrokenBarrierException。
         System.out.println("parties=" + barrier.getParties());
         // 输出：parties=2
     }
@@ -218,6 +224,7 @@ import java.util.concurrent.Exchanger;
 public class ExchangerDemo {
     public static void main(String[] args) throws Exception {
         var exchanger = new Exchanger<String>();
+        // 作用：Exchanger 只有两个参与方，适合成对交换缓冲区；一般生产/消费流程应使用 BlockingQueue。
         Thread peer = new Thread(() -> {
             try {
                 exchanger.exchange("peer-data");
@@ -239,7 +246,6 @@ public class ExchangerDemo {
 公平 Semaphore 按等待顺序倾向授予许可证，但会付出排队成本；它和公平 ReentrantLock 一样需要基准证明。
 
 ```java
-// 作用：通过 Semaphore(fair) 公平许可证队列。
 import java.util.concurrent.Semaphore;
 
 public class FairSemaphoreDemo {
@@ -248,6 +254,7 @@ public class FairSemaphoreDemo {
         semaphore.acquire();
         try {
             System.out.println("fair=" + semaphore.isFair());
+            // 作用：通过 Semaphore(fair) 公平许可证队列。
             // 输出：fair=true
         } finally {
             semaphore.release();

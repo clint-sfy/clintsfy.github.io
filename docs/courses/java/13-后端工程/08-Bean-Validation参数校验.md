@@ -46,6 +46,7 @@ Bean Validation 只回答“输入是否满足声明的格式和规则”，不�
 ```java
 import jakarta.validation.constraints.NotBlank;
 record CreateNote(@NotBlank String title) {}
+// 作用：用途：用于拒绝 null、空串和只含空白字符的文本。
 
 System.out.println(new CreateNote("hello").title());
 // 输出：hello
@@ -62,6 +63,7 @@ System.out.println(new CreateNote("hello").title());
 import jakarta.validation.constraints.Size;
 
 record NoteBody(@Size(min = 1, max = 200) String body) {}
+// 作用：用途：用于限制字符序列、集合、Map 或数组的元素数量。
 System.out.println(new NoteBody("text").body().length());
 // 输出：4
 // 说明：@Size(min=2, max=20) 按字符序列长度检查 nickname，长度 1 或 21 失败；null 是否允许由 @NotNull/@NotBlank 另行决定。
@@ -81,6 +83,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 class NoteController {
     @PostMapping("/notes")
     String create(@Valid @RequestBody CreateNote request) {
+    // 作用：用途：用于在 Spring MVC 请求入口触发默认组校验和级联验证。
         return "accepted:" + request.title();
     }
 }
@@ -102,6 +105,7 @@ import org.springframework.validation.annotation.Validated;
 interface OnCreate {}
 @Validated(OnCreate.class)
 class CreateNoteService {}
+// 作用：用途：用于在 Spring 管理的入口上选择校验分组或启用方法约束。
 System.out.println(CreateNoteService.class.isAnnotationPresent(Validated.class));
 // 输出：true
 // 说明：@Validated(Update.class) 只执行 Update 组及其继承组约束；控制器必须由 Spring 管理，直接 new 后调用不会通过方法校验代理。
@@ -171,6 +175,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = StrongCodeValidator.class)
 @interface StrongCode {
+// 作用：用途：用于封装跨格式但与输入本身有关的可复用规则，例如固定前缀或校验码；验证器应保持无副作用、线程安全，并正确处理 null 语义。
     String message() default "{strongCode.invalid}";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
@@ -263,11 +268,12 @@ System.out.println("7/0");
 `@NotNull` 只排除 `null`，不限制字符串空白或容器长度；要按值类型叠加其他约束。
 
 ```java
-// 作用：通过 @NotNull 拒绝 null 值。
 // 结果：`dueDate=null` 产生约束违反，非 null 日期通过 `@NotNull`。
 record CreateTask(
     @NotNull LocalDate dueDate,
     @NotBlank String title) {}
+    // 作用：@NotNull 只排除 null，不限制字符串空白或容器长度；要按值类型叠加其他约束。
+    // 作用：通过 @NotNull 拒绝 null 值。
 
 class TaskFactory {
     CreateTask valid() {
@@ -283,12 +289,13 @@ class TaskFactory {
 `@Email` 检查形式而非邮箱真实存在；若不允许空值，需与 `@NotBlank` 组合。
 
 ```java
-// 作用：通过 @Email 检查邮箱形式。
 // 结果：`dev@example.com` 通过形式校验，但是否可投递仍需验证邮件。
 record SignupRequest(
     @NotBlank
     @Email
     String email) {}
+    // 作用：@Email 检查形式而非邮箱真实存在；若不允许空值，需与 @NotBlank 组合。
+    // 作用：通过 @Email 检查邮箱形式。
 
 class SignupExample {
     SignupRequest sample() {
@@ -304,13 +311,14 @@ class SignupExample {
 `@Pattern` 适合稳定的小型格式规则；复杂业务规则应使用自定义约束提供明确错误。
 
 ```java
-// 作用：通过 @Pattern 限制文本格式。
 // 结果：`zh-CN` 通过，`zh_cn` 返回 `must be ll or ll-CC`。
 record LocaleRequest(
     @Pattern(
         regexp = "[a-z]{2}(-[A-Z]{2})?",
         message = "must be ll or ll-CC")
     String locale) {}
+    // 作用：@Pattern 适合稳定的小型格式规则；复杂业务规则应使用自定义约束提供明确错误。
+    // 作用：通过 @Pattern 限制文本格式。
 
 class LocaleExample {
     LocaleRequest sample() { return new LocaleRequest("zh-CN"); }
@@ -324,13 +332,14 @@ class LocaleExample {
 `@Constraint` 将注解绑定到 `ConstraintValidator`；验证器应无状态，并把 null 策略交给 `@NotNull`。
 
 ```java
-// 作用：通过 @Constraint 声明自定义约束。
 // 结果：标注 `@Slug` 的值由 `SlugValidator` 检查，失败时输出 `invalid slug`。
 @Documented
 @Constraint(validatedBy = SlugValidator.class)
 @Target({ ElementType.FIELD, ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Slug {
+// 作用：@Constraint 将注解绑定到 ConstraintValidator；验证器应无状态，并把 null 策略交给 @NotNull。
+// 作用：通过 @Constraint 声明自定义约束。
     String message() default "invalid slug";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};

@@ -40,15 +40,16 @@ description: 速查 FIFO 队列、双端队列、栈、优先级队列及并发�
 offer 尝试把元素加入队尾，并用返回值表示是否成功。
 
 ```java
-// 语义：offer 尝试把元素加入队尾，并用返回值表示是否成功。
-// 初始状态：queue 初始为 new ArrayDeque<>()；accepted 初始为 queue.offer("job-1")。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class QueueOfferDemo {
     public static void main(String[] args) {
         Queue<String> queue = new ArrayDeque<>();
+        // 初始状态：queue 当前为 new ArrayDeque<>()。
         boolean accepted = queue.offer("job-1");
+        // 初始状态：accepted 当前为 queue.offer("job-1")。
+        // 作用：offer 尝试把元素加入队尾，并用返回值表示是否成功。
         System.out.println(accepted + ", " + queue);
         // 输出：true, [job-1]
     }
@@ -60,16 +61,16 @@ public class QueueOfferDemo {
 poll 返回并删除队首，队列为空时返回 null。
 
 ```java
-// 语义：poll 返回并删除队首，队列为空时返回 null。
-// 初始状态：queue 初始为 new ArrayDeque<>()。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class QueuePollDemo {
     public static void main(String[] args) {
         Queue<String> queue = new ArrayDeque<>();
+        // 初始状态：queue 当前为 new ArrayDeque<>()。
         queue.offer("job-1");
         System.out.println(queue.poll());
+        // 作用：poll 返回并删除队首，队列为空时返回 null。
         System.out.println(queue.poll());
         // 输出：job-1
         // 输出：null
@@ -82,16 +83,16 @@ public class QueuePollDemo {
 peek 返回但不删除队首，队列为空时返回 null。
 
 ```java
-// 语义：peek 返回但不删除队首，队列为空时返回 null。
-// 初始状态：queue 初始为 new ArrayDeque<>()。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class QueuePeekDemo {
     public static void main(String[] args) {
         Queue<String> queue = new ArrayDeque<>();
+        // 初始状态：queue 当前为 new ArrayDeque<>()。
         queue.offer("job-1");
         System.out.println(queue.peek());
+        // 作用：peek 返回但不删除队首，队列为空时返回 null。
         System.out.println(queue.size());
         // 输出：job-1
         // 输出：1
@@ -104,15 +105,16 @@ public class QueuePeekDemo {
 add 在无法加入元素时抛异常，适合把失败视为违背程序约束的场景。
 
 ```java
-// 语义：add 在无法加入元素时抛异常，适合把失败视为违背程序约束的场景。
-// 初始状态：queue 初始为 new ArrayDeque<>()；added 初始为 queue.add("required")。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class QueueAddDemo {
     public static void main(String[] args) {
         Queue<String> queue = new ArrayDeque<>();
+        // 初始状态：queue 当前为 new ArrayDeque<>()。
         boolean added = queue.add("required");
+        // 初始状态：added 当前为 queue.add("required")。
+        // 作用：add 在无法加入元素时抛异常，适合把失败视为违背程序约束的场景。
         System.out.println(added + ", " + queue);
         // 输出：true, [required]
     }
@@ -124,16 +126,16 @@ public class QueueAddDemo {
 remove 返回并删除队首，空队列调用会抛 NoSuchElementException。
 
 ```java
-// 语义：remove 返回并删除队首，空队列调用会抛 NoSuchElementException。
-// 初始状态：queue 初始为 new ArrayDeque<>()。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class QueueRemoveDemo {
     public static void main(String[] args) {
         Queue<String> queue = new ArrayDeque<>();
+        // 初始状态：queue 当前为 new ArrayDeque<>()。
         queue.add("required");
         System.out.println(queue.remove());
+        // 作用：remove 返回并删除队首，空队列调用会抛 NoSuchElementException。
         // 输出：required
     }
 }
@@ -144,16 +146,16 @@ public class QueueRemoveDemo {
 element 返回但不删除队首，空队列调用会抛 NoSuchElementException。
 
 ```java
-// 语义：element 返回但不删除队首，空队列调用会抛 NoSuchElementException。
-// 初始状态：queue 初始为 new ArrayDeque<>()。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class QueueElementDemo {
     public static void main(String[] args) {
         Queue<String> queue = new ArrayDeque<>();
+        // 初始状态：queue 当前为 new ArrayDeque<>()。
         queue.add("required");
         System.out.println(queue.element());
+        // 作用：element 返回但不删除队首，空队列调用会抛 NoSuchElementException。
         System.out.println(queue.size());
         // 输出：required
         // 输出：1
@@ -166,15 +168,15 @@ public class QueueElementDemo {
 offerFirst 尝试从双端队列头部加入元素，并返回是否成功。
 
 ```java
-// 语义：offerFirst 尝试从双端队列头部加入元素，并返回是否成功。
-// 初始状态：deque 初始为 new ArrayDeque<>()。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequeOfferFirstDemo {
     public static void main(String[] args) {
         Deque<String> deque = new ArrayDeque<>();
+        // 初始状态：deque 当前为 new ArrayDeque<>()。
         deque.offerFirst("urgent");
+        // 作用：offerFirst 尝试从双端队列头部加入元素，并返回是否成功。
         System.out.println(deque);
         // 输出：[urgent]
     }
@@ -186,15 +188,15 @@ public class DequeOfferFirstDemo {
 offerLast 尝试从双端队列尾部加入元素，并返回是否成功。
 
 ```java
-// 语义：offerLast 尝试从双端队列尾部加入元素，并返回是否成功。
-// 初始状态：deque 初始为 new ArrayDeque<>()。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequeOfferLastDemo {
     public static void main(String[] args) {
         Deque<String> deque = new ArrayDeque<>();
+        // 初始状态：deque 当前为 new ArrayDeque<>()。
         deque.offerLast("normal");
+        // 作用：offerLast 尝试从双端队列尾部加入元素，并返回是否成功。
         System.out.println(deque);
         // 输出：[normal]
     }
@@ -206,17 +208,17 @@ public class DequeOfferLastDemo {
 pollFirst 返回并删除头部元素，双端队列为空时返回 null。
 
 ```java
-// 语义：pollFirst 返回并删除头部元素，双端队列为空时返回 null。
-// 初始状态：deque 初始为 new ArrayDeque<>()。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequePollFirstDemo {
     public static void main(String[] args) {
         Deque<Integer> deque = new ArrayDeque<>();
+        // 初始状态：deque 当前为 new ArrayDeque<>()。
         deque.addLast(1);
         deque.addLast(2);
         System.out.println(deque.pollFirst());
+        // 作用：pollFirst 返回并删除头部元素，双端队列为空时返回 null。
         System.out.println(deque);
         // 输出：1
         // 输出：[2]
@@ -229,17 +231,17 @@ public class DequePollFirstDemo {
 pollLast 返回并删除尾部元素，双端队列为空时返回 null。
 
 ```java
-// 语义：pollLast 返回并删除尾部元素，双端队列为空时返回 null。
-// 初始状态：deque 初始为 new ArrayDeque<>()。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequePollLastDemo {
     public static void main(String[] args) {
         Deque<Integer> deque = new ArrayDeque<>();
+        // 初始状态：deque 当前为 new ArrayDeque<>()。
         deque.addLast(1);
         deque.addLast(2);
         System.out.println(deque.pollLast());
+        // 作用：pollLast 返回并删除尾部元素，双端队列为空时返回 null。
         System.out.println(deque);
         // 输出：2
         // 输出：[1]
@@ -252,17 +254,17 @@ public class DequePollLastDemo {
 peekFirst 返回但不删除头部元素，双端队列为空时返回 null。
 
 ```java
-// 语义：peekFirst 返回但不删除头部元素，双端队列为空时返回 null。
-// 初始状态：deque 初始为 new ArrayDeque<>()。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequePeekFirstDemo {
     public static void main(String[] args) {
         Deque<Integer> deque = new ArrayDeque<>();
+        // 初始状态：deque 当前为 new ArrayDeque<>()。
         deque.addLast(1);
         deque.addLast(2);
         System.out.println(deque.peekFirst());
+        // 作用：peekFirst 返回但不删除头部元素，双端队列为空时返回 null。
         System.out.println(deque);
         // 输出：1
         // 输出：[1, 2]
@@ -275,17 +277,17 @@ public class DequePeekFirstDemo {
 peekLast 返回但不删除尾部元素，双端队列为空时返回 null。
 
 ```java
-// 语义：peekLast 返回但不删除尾部元素，双端队列为空时返回 null。
-// 初始状态：deque 初始为 new ArrayDeque<>()。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequePeekLastDemo {
     public static void main(String[] args) {
         Deque<Integer> deque = new ArrayDeque<>();
+        // 初始状态：deque 当前为 new ArrayDeque<>()。
         deque.addLast(1);
         deque.addLast(2);
         System.out.println(deque.peekLast());
+        // 作用：peekLast 返回但不删除尾部元素，双端队列为空时返回 null。
         System.out.println(deque);
         // 输出：2
         // 输出：[1, 2]
@@ -298,15 +300,15 @@ public class DequePeekLastDemo {
 push 从头部压入元素，普通栈场景优先 Deque 而不是遗留 Stack。
 
 ```java
-// 语义：push 从头部压入元素，普通栈场景优先 Deque 而不是遗留 Stack。
-// 初始状态：stack 初始为 new ArrayDeque<>()。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequePushDemo {
     public static void main(String[] args) {
         Deque<String> stack = new ArrayDeque<>();
+        // 初始状态：stack 当前为 new ArrayDeque<>()。
         stack.push("page-1");
+        // 作用：push 从头部压入元素，普通栈场景优先 Deque 而不是遗留 Stack。
         System.out.println(stack);
         // 输出：[page-1]
     }
@@ -318,17 +320,17 @@ public class DequePushDemo {
 pop 返回并删除头部元素，空栈调用会抛 NoSuchElementException。
 
 ```java
-// 语义：pop 返回并删除头部元素，空栈调用会抛 NoSuchElementException。
-// 初始状态：stack 初始为 new ArrayDeque<>()。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequePopDemo {
     public static void main(String[] args) {
         Deque<String> stack = new ArrayDeque<>();
+        // 初始状态：stack 当前为 new ArrayDeque<>()。
         stack.push("page-1");
         stack.push("page-2");
         System.out.println(stack.pop());
+        // 作用：pop 返回并删除头部元素，空栈调用会抛 NoSuchElementException。
         // 输出：page-2
     }
 }
@@ -339,16 +341,16 @@ public class DequePopDemo {
 peek 返回但不删除头部元素，空栈时返回 null。
 
 ```java
-// 语义：peek 返回但不删除头部元素，空栈时返回 null。
-// 初始状态：stack 初始为 new ArrayDeque<>()。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequeStackPeekDemo {
     public static void main(String[] args) {
         Deque<String> stack = new ArrayDeque<>();
+        // 初始状态：stack 当前为 new ArrayDeque<>()。
         stack.push("page-1");
         System.out.println(stack.peek());
+        // 作用：peek 返回但不删除头部元素，空栈时返回 null。
         System.out.println(stack.size());
         // 输出：page-1
         // 输出：1
@@ -361,15 +363,15 @@ public class DequeStackPeekDemo {
 offer 把元素加入优先级队列，默认由自然顺序决定队首。
 
 ```java
-// 语义：offer 把元素加入优先级队列，默认由自然顺序决定队首。
-// 初始状态：queue 初始为 new PriorityQueue<>()。
 import java.util.PriorityQueue;
 import java.util.Queue;
 
 public class PriorityQueueDemo {
     public static void main(String[] args) {
         Queue<Integer> queue = new PriorityQueue<>();
+        // 初始状态：queue 当前为 new PriorityQueue<>()。
         queue.offer(30);
+        // 作用：offer 把元素加入优先级队列，默认由自然顺序决定队首。
         queue.offer(10);
         queue.offer(20);
         System.out.println(queue.offer(20));
@@ -385,17 +387,17 @@ public class PriorityQueueDemo {
 poll 删除当前最小元素，遍历顺序本身不代表完整排序结果。
 
 ```java
-// 语义：poll 删除当前最小元素，遍历顺序本身不代表完整排序结果。
-// 初始状态：queue 初始为 new PriorityQueue<>()。
 import java.util.PriorityQueue;
 
 public class PriorityQueuePollDemo {
     public static void main(String[] args) {
         PriorityQueue<Integer> queue = new PriorityQueue<>();
+        // 初始状态：queue 当前为 new PriorityQueue<>()。
         queue.offer(30);
         queue.offer(10);
         queue.offer(20);
         System.out.println(queue.poll());
+        // 作用：poll 删除当前最小元素，遍历顺序本身不代表完整排序结果。
         // 输出：10
     }
 }
@@ -406,16 +408,16 @@ public class PriorityQueuePollDemo {
 peek 查看但不删除当前最高优先级元素，空队列时返回 null。
 
 ```java
-// 语义：peek 查看但不删除当前最高优先级元素，空队列时返回 null。
-// 初始状态：queue 初始为 new PriorityQueue<>()。
 import java.util.PriorityQueue;
 
 public class PriorityQueuePeekDemo {
     public static void main(String[] args) {
         PriorityQueue<Integer> queue = new PriorityQueue<>();
+        // 初始状态：queue 当前为 new PriorityQueue<>()。
         queue.offer(30);
         queue.offer(10);
         System.out.println(queue.peek());
+        // 作用：peek 查看但不删除当前最高优先级元素，空队列时返回 null。
         System.out.println(queue.size());
         // 输出：10
         // 输出：2
@@ -451,13 +453,15 @@ public class CustomPriorityQueueDemo {
 put 在容量满时等待，take 在队列空时等待；它适合线程间交接，不要在不需要阻塞的单线程逻辑中使用。
 
 ```java
-// 初始状态：queue 是容量为 2 的空 ArrayBlockingQueue；put("task-1") 入队，take() 会移除并返回它。
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public class BlockingQueueDemo {
+// 初始状态：queue 是容量为 2 的空 ArrayBlockingQueue。
+// 初始状态：put("task-1") 入队，take() 会移除并返回它。
     public static void main(String[] args) throws InterruptedException {
         BlockingQueue<String> queue = new ArrayBlockingQueue<>(2);
+        // 初始状态：queue 当前为 new ArrayBlockingQueue<>(2)。
         queue.put("task-1");
         System.out.println(queue.take());
         // 输出：task-1
@@ -470,14 +474,15 @@ public class BlockingQueueDemo {
 offer 不等待容量，适合由调用方决定队列满时丢弃、重试还是降级。
 
 ```java
-// 作用：通过 BlockingQueue.offer 非阻塞入队。
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public class BlockingQueueOfferDemo {
     public static void main(String[] args) {
         BlockingQueue<String> queue = new ArrayBlockingQueue<>(1);
+        // 初始状态：queue 当前为 new ArrayBlockingQueue<>(1)。
         boolean accepted = queue.offer("task");
+        // 作用：通过 BlockingQueue.offer 非阻塞入队。
         boolean rejected = queue.offer("overflow");
         System.out.println(accepted + ", " + rejected);
         // 输出：true, false
@@ -490,15 +495,16 @@ public class BlockingQueueOfferDemo {
 poll 不等待元素，队列为空时返回 null；带 timeout 的重载会等待并可能被中断。
 
 ```java
-// 作用：通过 BlockingQueue.poll 非阻塞出队。
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public class BlockingQueuePollDemo {
     public static void main(String[] args) {
         BlockingQueue<String> queue = new ArrayBlockingQueue<>(1);
+        // 初始状态：queue 当前为 new ArrayBlockingQueue<>(1)。
         queue.offer("task");
         System.out.println(queue.poll());
+        // 作用：通过 BlockingQueue.poll 非阻塞出队。
         System.out.println(queue.poll());
         // 输出：task
         // 输出：null
@@ -511,13 +517,15 @@ public class BlockingQueuePollDemo {
 ConcurrentLinkedQueue 适合多线程下非阻塞入队出队，但不提供等待能力，也不适合把 size 当作精确并发协调条件。
 
 ```java
-// 初始状态：queue 是空 ConcurrentLinkedQueue；offer("task") 非阻塞入队，poll() 移除队头。
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ConcurrentQueueDemo {
+// 初始状态：queue 是空 ConcurrentLinkedQueue。
+// 初始状态：offer("task") 非阻塞入队，poll() 移除队头。
     public static void main(String[] args) {
         Queue<String> queue = new ConcurrentLinkedQueue<>();
+        // 作用：ConcurrentLinkedQueue 适合多线程下非阻塞入队出队，但不提供等待能力，也不适合把 size 当作精确并发协调条件。
         queue.offer("task");
         System.out.println(queue.poll());
         // 输出：task
@@ -530,17 +538,18 @@ public class ConcurrentQueueDemo {
 removeFirstOccurrence 按 equals 从头向尾删除第一个匹配元素。
 
 ```java
-// 作用：通过 Deque.removeFirstOccurrence 从头部方向删除匹配项。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequeRemoveFirstOccurrenceDemo {
     public static void main(String[] args) {
         Deque<String> deque = new ArrayDeque<>();
+        // 初始状态：deque 当前为 new ArrayDeque<>()。
         deque.addLast("a");
         deque.addLast("b");
         deque.addLast("a");
         deque.removeFirstOccurrence("a");
+        // 作用：通过 Deque.removeFirstOccurrence 从头部方向删除匹配项。
         System.out.println(deque);
         // 输出：[b, a]
     }
@@ -552,17 +561,18 @@ public class DequeRemoveFirstOccurrenceDemo {
 removeLastOccurrence 按 equals 从尾向头删除第一个匹配元素。
 
 ```java
-// 作用：通过 Deque.removeLastOccurrence 从尾部方向删除匹配项。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequeRemoveLastOccurrenceDemo {
     public static void main(String[] args) {
         Deque<String> deque = new ArrayDeque<>();
+        // 初始状态：deque 当前为 new ArrayDeque<>()。
         deque.addLast("a");
         deque.addLast("b");
         deque.addLast("a");
         deque.removeLastOccurrence("a");
+        // 作用：通过 Deque.removeLastOccurrence 从尾部方向删除匹配项。
         System.out.println(deque);
         // 输出：[a, b]
     }
@@ -574,16 +584,17 @@ public class DequeRemoveLastOccurrenceDemo {
 toArray 只得到某一时刻的数组，在并发队列中不能把它当作后续操作的事务快照。
 
 ```java
-// 作用：通过 Queue.toArray 查看当前快照。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class QueueToArrayDemo {
     public static void main(String[] args) {
         Queue<String> queue = new ArrayDeque<>();
+        // 初始状态：queue 当前为 new ArrayDeque<>()。
         queue.offer("a");
         queue.offer("b");
         String[] values = queue.toArray(String[]::new);
+        // 作用：通过 Queue.toArray 查看当前快照。
         System.out.println(values.length + ", " + values[0]);
         // 输出：2, a
     }

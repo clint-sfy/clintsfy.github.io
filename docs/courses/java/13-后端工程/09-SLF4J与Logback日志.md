@@ -69,7 +69,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class ImportService {
+// 作用：用途：用于按类获取 SLF4J Logger，让业务代码只依赖门面并保留统一级别和字段约定。
     private static final Logger log = LoggerFactory.getLogger(ImportService.class);
+    // 作用：用于按类获取 SLF4J `Logger`，让业务代码只依赖门面并保留统一级别和字段约定。
 
     void run(String jobId) {
         String safeJobId = safeContextId(jobId);
@@ -80,7 +82,6 @@ final class ImportService {
 
 new ImportService().run("job-1");
 // 输出：logged=job-1
-// 作用：用于按类获取 SLF4J `Logger`，让业务代码只依赖门面并保留统一级别和字段约定。
 // 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
 ```
 
@@ -97,11 +98,11 @@ import org.slf4j.Logger;
 
 void process(Logger log, String taskId) {
     log.info("task={} state={}", taskId, "running");
+    // 作用：用于在 info 级别开启时才用占位符格式化业务事件。
     System.out.println("logged=" + taskId);
 }
 
 // 输出：logged=task-7
-// 作用：用于在 info 级别开启时才用占位符格式化业务事件。
 // 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
 ```
 
@@ -114,8 +115,10 @@ void process(Logger log, String taskId) {
 ```java
 try {
     throw new IllegalStateException("temporary failure");
+    // 初始状态：本例的输入由 throw new IllegalStateException("temporary failure") 构造。
 } catch (RuntimeException ex) {
     log.error("task={} failed", "task-7", ex);
+    // 作用：用途：用于记录失败分支并把 Throwable 作为最后参数保留调用栈。
     System.out.println("handled=" + ex.getClass().getSimpleName());
 }
 // 输出：handled=IllegalStateException
@@ -131,6 +134,7 @@ try {
 
 ```java
 String appender = "RollingFileAppender";
+// 初始状态：appender 当前为 "RollingFileAppender"。
 String policy = "SizeAndTimeBasedRollingPolicy";
 String pattern = "%d %-5level [%X{traceId}] %logger - %msg%n";
 System.out.println(appender + "/" + policy + ":" + pattern);
@@ -149,7 +153,9 @@ Logback XML 中通常把 `RollingFileAppender` 配合 `SizeAndTimeBasedRollingPo
 import org.slf4j.MDC;
 
 void handle(String traceId) {
+// 作用：用途：用于让同一请求的日志带上 traceId，并在复用线程返回池前清理上下文。
     MDC.put("traceId", safeContextId(traceId));
+    // 作用：用于让同一请求的日志带上 `traceId`，并在复用线程返回池前清理上下文。
     try {
         System.out.println("trace=" + MDC.get("traceId"));
         // 输出：trace=req-7
@@ -157,7 +163,6 @@ void handle(String traceId) {
         MDC.remove("traceId");
     }
 }
-// 作用：用于让同一请求的日志带上 `traceId`，并在复用线程返回池前清理上下文。
 // 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
 ```
 
@@ -197,6 +202,7 @@ import org.aspectj.lang.annotation.Pointcut;
 class OperationLogAspect {
     @Pointcut("within(app.service..*) && execution(* *(..))")
     void serviceBoundary() {}
+    // 作用：用途：用于在稳定的服务方法边界记录操作者、操作名和结果，避免把每个 getter 或内部循环都变成噪声。
 
     @Around("serviceBoundary()")
     Object logOperation(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -240,12 +246,12 @@ void record(Logger log, boolean sampled, Throwable failure) {
 `Logger.debug` 适合诊断路径和中间状态；使用 `{}` 参数化，避免级别关闭时仍构造字符串。
 
 ```java
-// 作用：通过 Logger.debug 记录可按需开启的调试细节。
 final class CacheReader {
     private static final Logger log =
         LoggerFactory.getLogger(CacheReader.class);
     String read(String key) {
         log.debug("reading cache key={}", key);
+        // 作用：通过 Logger.debug 记录可按需开启的调试细节。
         String value = "hit";
         log.debug("cache result key={} present={}", key, value != null);
         return value;
@@ -261,7 +267,6 @@ final class CacheReader {
 `Logger.warn` 表示当前请求可继续但需关注；不要把每次正常分支或敏感数据记为警告。
 
 ```java
-// 作用：通过 Logger.warn 记录可恢复的异常状态。
 final class RemoteLookup {
     private static final Logger log =
         LoggerFactory.getLogger(RemoteLookup.class);
@@ -270,6 +275,7 @@ final class RemoteLookup {
             return callRemote(id);
         } catch (TimeoutException ex) {
             log.warn("remote timeout id={}; using fallback", id, ex);
+            // 作用：通过 Logger.warn 记录可恢复的异常状态。
             return "fallback";
         }
     }

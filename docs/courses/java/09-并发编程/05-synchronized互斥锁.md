@@ -43,6 +43,7 @@ synchronized 同时提供互斥和释放/获得锁之间的内存可见性。实
 // 说明：两次 increment() 都必须先持有私有 final lock，因此不同线程对 count++ 的读-改-写不会丢失更新。
 public class SynchronizedBlockDemo {
     private final Object lock = new Object();
+    // 作用：使用私有 final 锁对象可以避免外部代码意外锁住或替换锁。
     private int count;
 
     void increment() {
@@ -71,8 +72,10 @@ public class SynchronizedBlockDemo {
 // 说明：withdraw() 和 balance() 共用 account 监视器，amount<=balance 的检查与扣减在同一临界区内完成。
 public class SynchronizedMethodDemo {
     private int balance = 100;
+    // 初始状态：balance 当前为 100。
 
     synchronized void withdraw(int amount) {
+    // 作用：实例 synchronized 方法锁住当前对象。
         if (amount <= balance) {
             balance -= amount;
         }
@@ -103,6 +106,7 @@ public class SynchronizedStaticDemo {
     private static int created;
 
     static synchronized void record() {
+    // 作用：静态 synchronized 方法锁住 SynchronizedStaticDemo.class，所有实例共享这把类锁。
         created++;
     }
 
@@ -232,12 +236,12 @@ public class NotifyChoiceDemo {
 超时返回只说明等待结束，不说明条件已经满足；醒来后仍要在 while 中检查状态。纳秒级重载适合精细超时，但通常要把剩余时间重新计算。
 
 ```java
-// 作用：通过 wait(long) 带超时的条件等待。
 public class TimedWaitDemo {
     public static void main(String[] args) throws InterruptedException {
         Object lock = new Object();
         synchronized (lock) {
             long start = System.nanoTime();
+            // 作用：通过 wait(long) 带超时的条件等待。
             lock.wait(1);
             System.out.println("wait returned=" + (System.nanoTime() >= start));
             // 输出：wait returned=true
@@ -255,8 +259,10 @@ public class TimedWaitDemo {
 public class NotifyOneDemo {
     public static void main(String[] args) {
         Object lock = new Object();
+        // 初始状态：lock 当前为 new Object()。
         synchronized (lock) {
             lock.notify();
+            // 作用：notify() 不保证唤醒哪个线程，也不保证它能立即获得锁。生产者/消费者通常选择 notifyAll，并让每个醒来的线程重新检查自己的条件。
             System.out.println("one waiter may wake");
             // 输出：one waiter may wake
         }
@@ -272,6 +278,7 @@ public class NotifyOneDemo {
 // 说明：main 未进入 synchronized(lock) 就调用 lock.wait()，因此当前线程不是监视器所有者并抛出 IllegalMonitorStateException。
 public class WaitMonitorRuleDemo {
     public static void main(String[] args) {
+    // 作用：调用 wait、notify 或 notifyAll 前必须持有对应监视器，否则会抛 IllegalMonitorStateException。这个规则经常在把锁对象和条件对象拆开时被忽略。
         Object lock = new Object();
         try {
             lock.wait();
@@ -293,6 +300,7 @@ public class WaitMonitorRuleDemo {
 // 说明：shortWork() 持有 this 监视器期间不做阻塞 I/O；这样虚拟线程能尽快释放监视器及载体。
 public class MonitorBlockingBoundaryDemo {
     synchronized void shortWork() {
+    // 作用：在 JDK 20 虚拟线程预览实现中，监视器内的长时间阻塞可能 pin 住载体线程；这不是要求把所有 synchronized 换成 Lock，而是要通过 JFR 定位并缩短临界区。
         System.out.println("keep monitor work short");
         // 输出：keep monitor work short
     }

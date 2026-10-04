@@ -42,6 +42,7 @@ description: 从 I/O 类型选择开始，串起 Path、Files、字节流、字�
 import java.nio.file.Path;
 
 Path path = Path.of("docs", "guide.txt");
+// 作用：需要用多个路径片段构造与操作系统分隔符兼容的文件路径时使用 Path.of。
 System.out.println(path.getFileName());
 // 输出：guide.txt
 ```
@@ -56,7 +57,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 var file = Files.createTempFile("java-io-", ".txt");
+// 初始状态：file 当前为 Files.createTempFile("java-io-", ".txt")。
 Files.writeString(file, "java api", StandardCharsets.UTF_8);
+// 作用：需要一次写入能够放进内存的短文本时使用 Files.writeString，并应显式选择业务所需字符集。
 System.out.println(Files.size(file) > 0);
 // 输出：true
 Files.deleteIfExists(file);
@@ -71,8 +74,10 @@ Files.deleteIfExists(file);
 import java.nio.file.Files;
 
 var file = Files.createTempFile("java-lines-", ".txt");
+// 初始状态：file 当前为 Files.createTempFile("java-lines-", ".txt")。
 Files.writeString(file, "java\napi\n");
 try (var lines = Files.lines(file)) {
+// 作用：需要按行处理文本或避免一次载入整个文件时使用 Files.lines，并用 try-with-resources 关闭返回的流。
     System.out.println(lines.count());
     // 输出：2
 }
@@ -117,6 +122,7 @@ public class IoLayerChoiceDemo {
 import java.nio.ByteBuffer;
 
 ByteBuffer buffer = ByteBuffer.allocate(4);
+// 作用：需要为 NIO 分块读写准备内存区域时使用 ByteBuffer，写入数据后必须调用 flip() 才能按有效范围读取。
 buffer.put((byte) 7).put((byte) 8);
 buffer.flip();
 System.out.println(buffer.get() + ", " + buffer.get());
@@ -135,6 +141,8 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
 var file = Files.createTempFile("java-channel-", ".txt");
+// 初始状态：file 当前为 Files.createTempFile("java-channel-", ".txt")。
+// 作用：需要通过 NIO 通道分块读取文件时使用 FileChannel，并在资源边界关闭通道和处理未读完的数据。
 Files.writeString(file, "OK");
 try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
     ByteBuffer buffer = ByteBuffer.allocate(2);
@@ -159,7 +167,9 @@ import java.nio.file.Path;
 public class FilePathBridgeDemo {
     public static void main(String[] args) {
         File legacy = new File("notes.txt");
+        // 初始状态：legacy 当前为 new File("notes.txt")。
         Path modern = legacy.toPath();
+        // 作用：File 仍存在于旧库和旧签名中，但它的异常、属性和符号链接表达能力较弱；新代码从 Path 开始，需要兼容旧 API 时用 toPath() 或 toFile() 做边界转换。
         System.out.println(modern.getFileName());
         // 输出：notes.txt
     }

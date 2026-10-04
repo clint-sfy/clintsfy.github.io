@@ -39,12 +39,13 @@ Stream 管道应尽量保持无副作用。收集器会管理结果容器和合�
 空子列表自然产生空子流；如果子列表可能为 `null`，应先转换为 `List.of()` 或 `Stream.empty()`。
 
 ```java
-// 语义：空子列表自然产生空子流。
-// 初始状态：nested 初始为 List.of(List.of("Java", "SQL"), List.of("HTTP", "JVM"))；flat 初始为 nested.stream().flatMap(List::stream).toList()。
 import java.util.List;
 
 var nested = List.of(List.of("Java", "SQL"), List.of("HTTP", "JVM"));
+// 初始状态：nested 当前为 List.of(List.of("Java", "SQL"), List.of("HTTP", "JVM"))。
 var flat = nested.stream().flatMap(List::stream).toList();
+// 初始状态：flat 当前为 nested.stream().flatMap(List::stream).toList()。
+// 作用：空子列表自然产生空子流。
 System.out.println(flat);
 // 输出：[Java, SQL, HTTP, JVM]
 ```
@@ -71,12 +72,13 @@ System.out.println(items);
 `distinct` 依赖元素的 `equals`/`hashCode`；自定义对象应先正确实现值相等语义。
 
 ```java
-// 语义：distinct 依赖元素的 equals/hashCode。
-// 初始状态：tags 初始为 List.of(List.of("java", "sql"), List.of("java", "http"))；unique 初始为 tags.stream().flatMap(List::stream).distinct().toList()。
 import java.util.List;
 
 var tags = List.of(List.of("java", "sql"), List.of("java", "http"));
+// 初始状态：tags 当前为 List.of(List.of("java", "sql"), List.of("java", "http"))。
 var unique = tags.stream().flatMap(List::stream).distinct().toList();
+// 初始状态：unique 当前为 tags.stream().flatMap(List::stream).distinct().toList()。
+// 作用：distinct 依赖元素的 equals/hashCode。
 System.out.println(unique);
 // 输出：[java, sql, http]
 ```
@@ -86,15 +88,16 @@ System.out.println(unique);
 默认结果是 `Map<User, List<Order>>`；只需要汇总值时可以直接指定下游收集器，避免保留整组对象。
 
 ```java
-// 语义：默认结果是 Map<User, List<Order>>。
-// 初始状态：orders 初始为 List.of(new Order("ann", "book", 20), new Order("bob", "pen", 8), new Order("ann", "cup", 35))；groups 初始为 orders.stream().collect(Collectors.groupingBy(Order::user))。
 import java.util.List;
 import java.util.stream.Collectors;
 
 record Order(String user, String item, int amount) { }
 
 var orders = List.of(new Order("ann", "book", 20), new Order("bob", "pen", 8), new Order("ann", "cup", 35));
+// 初始状态：orders 当前为 List.of(new Order("ann", "book", 20), new Order("bob", "pen", 8), new Order("ann", "cup", 35))。
 var groups = orders.stream().collect(Collectors.groupingBy(Order::user));
+// 初始状态：groups 当前为 orders.stream().collect(Collectors.groupingBy(Order::user))。
+// 作用：默认结果是 Map<User, List<Order>>。
 System.out.println(groups.get("ann").size());
 // 输出：2
 ```
@@ -104,16 +107,16 @@ System.out.println(groups.get("ann").size());
 `mapping` 让结果只保留需要的字段；需要去重时替换下游为 `Collectors.toSet()`。
 
 ```java
-// 语义：mapping 让结果只保留需要的字段。
-// 初始状态：orders 初始为 List.of(new Order("ann", "book", 20), new Order("ann", "cup", 35))。
 import java.util.List;
 import java.util.stream.Collectors;
 
 record Order(String user, String item, int amount) { }
 
 var orders = List.of(new Order("ann", "book", 20), new Order("ann", "cup", 35));
+// 初始状态：orders 当前为 List.of(new Order("ann", "book", 20), new Order("ann", "cup", 35))。
 var items = orders.stream().collect(Collectors.groupingBy(
         Order::user, Collectors.mapping(Order::item, Collectors.toList())));
+        // 作用：mapping 让结果只保留需要的字段。
 System.out.println(items);
 // 输出：{ann=[book, cup]}
 ```
@@ -123,16 +126,16 @@ System.out.println(items);
 用数值下游收集器比先分组 List 再循环求和更直接，也减少中间对象。
 
 ```java
-// 语义：用数值下游收集器比先分组 List 再循环求和更直接，也减少中间对象。
-// 初始状态：orders 初始为 List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8))。
 import java.util.List;
 import java.util.stream.Collectors;
 
 record Order(String user, int amount) { }
 
 var orders = List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8));
+// 初始状态：orders 当前为 List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8))。
 var totals = orders.stream().collect(Collectors.groupingBy(
         Order::user, Collectors.summingInt(Order::amount)));
+        // 作用：用数值下游收集器比先分组 List 再循环求和更直接，也减少中间对象。
 System.out.println(totals);
 // 输出：{ann=55, bob=8}
 ```
@@ -142,16 +145,16 @@ System.out.println(totals);
 摘要同时提供数量、总和、最小、最大和平均值，适合报表或诊断数据。
 
 ```java
-// 语义：摘要同时提供数量、总和、最小、最大和平均值，适合报表或诊断数据。
-// 初始状态：orders 初始为 List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8))。
 import java.util.List;
 import java.util.stream.Collectors;
 
 record Order(String user, int amount) { }
 
 var orders = List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8));
+// 初始状态：orders 当前为 List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8))。
 var stats = orders.stream().collect(Collectors.groupingBy(
         Order::user, Collectors.summarizingInt(Order::amount)));
+        // 作用：摘要同时提供数量、总和、最小、最大和平均值，适合报表或诊断数据。
 System.out.println(stats.get("ann").getAverage());
 // 输出：27.5
 ```
@@ -161,16 +164,16 @@ System.out.println(stats.get("ann").getAverage());
 归约函数要明确初始值和结合规则；如果只是求和、最大值等常见统计，优先使用对应的专用收集器。
 
 ```java
-// 语义：归约函数要明确初始值和结合规则。
-// 初始状态：orders 初始为 List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8))。
 import java.util.List;
 import java.util.stream.Collectors;
 
 record Order(String user, int amount) { }
 
 var orders = List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8));
+// 初始状态：orders 当前为 List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8))。
 var max = orders.stream().collect(Collectors.groupingBy(
         Order::user, Collectors.reducing(0, Order::amount, Integer::max)));
+        // 作用：归约函数要明确初始值和结合规则。
 System.out.println(max);
 // 输出：{ann=35, bob=8}
 ```
@@ -180,7 +183,6 @@ System.out.println(max);
 二分条件用 `partitioningBy` 更清晰；多个分类值不要把复杂条件硬塞成真假。
 
 ```java
-// 作用：通过 partitioningBy 把数据切成两部分。
 // 语义：二分条件用 partitioningBy 更清晰。
 // 调用参数：代码依次使用 10、25、80、5、20。
 import java.util.List;
@@ -188,6 +190,8 @@ import java.util.stream.Collectors;
 
 var parts = List.of(10, 25, 80, 5).stream().collect(
         Collectors.partitioningBy(amount -> amount >= 20));
+        // 初始状态：parts 当前保存 List.of(10, 25, 80, 5).stream().collect( Collectors.partitioningBy(amount -> amount >= 20))的计算结果。
+        // 作用：通过 partitioningBy 把数据切成两部分。
 System.out.println(parts);
 // 输出：{false=[10, 5], true=[25, 80]}
 ```
@@ -203,6 +207,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 record Score(String name, int value) { }
+// 作用：没有合并策略的重复键会抛异常；覆盖、相加、取最大或收集列表都应在代码中明确表达。
 
 var scores = List.of(new Score("java", 80), new Score("java", 95));
 var best = scores.stream().collect(Collectors.toMap(
@@ -216,7 +221,6 @@ System.out.println(best);
 `collect` 适合可变结果容器或复杂聚合；只需要不可变 List 时直接使用 `toList()` 更简洁。
 
 ```java
-// 作用：通过 collect 把管道结果交给收集器。
 // 语义：collect 适合可变结果容器或复杂聚合。
 // 调用参数：代码依次使用 "java"、"stream"、"api"、4、"/"。
 import java.util.List;
@@ -225,6 +229,8 @@ import java.util.stream.Collectors;
 var result = List.of("java", "stream", "api").stream()
         .filter(text -> text.length() >= 4)
         .collect(Collectors.joining("/"));
+        // 初始状态：result 当前保存 List.of("java", "stream", "api").stream() .filter(text -> text.length() >= 4) .collect(Collectors.joining("/"))的计算结果。
+        // 作用：通过 collect 把管道结果交给收集器。
 System.out.println(result);
 // 输出：java/stream
 ```
@@ -234,11 +240,11 @@ System.out.println(result);
 `reduce` 的累加器应满足结合律，才能安全地考虑并行；需要同时保留多个字段时使用 `collect` 或记录类型。
 
 ```java
-// 语义：reduce 的累加器应满足结合律，才能安全地考虑并行。
-// 初始状态：total 初始为 List.of(20, 35, 8).stream().reduce(0, Integer::sum)。
 import java.util.List;
 
 int total = List.of(20, 35, 8).stream().reduce(0, Integer::sum);
+// 初始状态：total 当前为 List.of(20, 35, 8).stream().reduce(0, Integer::sum)。
+// 作用：reduce 的累加器应满足结合律，才能安全地考虑并行。
 System.out.println(total);
 // 输出：63
 ```
@@ -249,11 +255,12 @@ System.out.println(total);
 `mapMulti` 可避免为每个元素创建短生命周期子流，但回调逻辑比 `flatMap` 更难读；只有性能或多值回调确实需要时使用。
 
 ```java
-// 作用：通过 mapMulti 用回调直接发出多个元素（Java 16+）。
 import java.util.List;
 
 var result = List.of("java", "sql").stream()
         .<String>mapMulti((text, sink) -> {
+        // 初始状态：result 当前保存 List.of("java", "sql").stream() .<String>mapMulti((text, sink) -> {的计算结果。
+        // 作用：通过 mapMulti 用回调直接发出多个元素（Java 16+）。
             sink.accept(text);
             sink.accept(text.toUpperCase());
         })
@@ -267,12 +274,13 @@ System.out.println(result);
 它常用于把可变收集结果变成只读快照；不要为了少写一行而隐藏重要的业务转换。
 
 ```java
-// 作用：通过 collectingAndThen 分组后固定结果形态。
 import java.util.List;
 import java.util.stream.Collectors;
 
 var result = List.of("java", "sql").stream().collect(
         Collectors.collectingAndThen(Collectors.toList(), List::copyOf));
+        // 初始状态：result 当前保存 List.of("java", "sql").stream().collect( Collectors.collectingAndThen(Collectors.toList(), List::copyOf))的计算结果。
+        // 作用：通过 collectingAndThen 分组后固定结果形态。
 System.out.println(result);
 // 输出：[java, sql]
 ```
@@ -282,11 +290,12 @@ System.out.println(result);
 只有业务不需要遇到顺序时才可使用；分页、首个元素和有序输出不应取消顺序语义。
 
 ```java
-// 作用：通过 unordered 放弃顺序约束换取并行空间。
 import java.util.List;
 
 long count = List.of("java", "sql", "java").parallelStream()
         .unordered().distinct().count();
+        // 初始状态：count 当前保存 List.of("java", "sql", "java").parallelStream() .unordered().distinct().count()的计算结果。
+        // 作用：通过 unordered 放弃顺序约束换取并行空间。
 System.out.println(count);
 // 输出：2
 ```

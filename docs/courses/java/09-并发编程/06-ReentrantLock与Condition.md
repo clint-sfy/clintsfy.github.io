@@ -71,7 +71,9 @@ import java.util.concurrent.locks.ReentrantLock;
 public class TryLockDemo {
     public static void main(String[] args) throws InterruptedException {
         ReentrantLock lock = new ReentrantLock();
+        // 初始状态：lock 当前为 new ReentrantLock()。
         if (lock.tryLock(10, TimeUnit.MILLISECONDS)) {
+        // 作用：tryLock 能避免无限等待，适合降级、重试或按锁顺序获取；超时分支必须有业务策略，不能静默丢请求。
             try {
                 System.out.println("acquired");
                 // 输出：acquired
@@ -97,7 +99,9 @@ import java.util.concurrent.locks.ReentrantLock;
 public class InterruptibleLockDemo {
     public static void main(String[] args) throws InterruptedException {
         ReentrantLock lock = new ReentrantLock();
+        // 初始状态：lock 当前为 new ReentrantLock()。
         lock.lockInterruptibly();
+        // 作用：与不可中断的 lock() 相比，它允许上层取消等待；捕获 InterruptedException 后应决定退出、恢复中断或转成业务异常。
         try {
             System.out.println("interruptible lock");
             // 输出：interruptible lock
@@ -188,6 +192,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class HoldCountDemo {
     public static void main(String[] args) {
         ReentrantLock lock = new ReentrantLock();
+        // 初始状态：lock 当前为 new ReentrantLock()。
         lock.lock();
         try {
             lock.lock();
@@ -212,17 +217,18 @@ public class HoldCountDemo {
 超时等待可能被提前 signal 或中断，返回值只是剩余时间提示。业务条件仍需要在循环中检查，不应只依据返回值判定成功。
 
 ```java
-// 作用：通过 Condition.awaitNanos 带剩余时间的等待。
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ConditionTimeoutDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new ReentrantLock();
+        // 初始状态：lock 当前为 new ReentrantLock()。
         var condition = lock.newCondition();
         lock.lock();
         try {
             long remaining = condition.awaitNanos(TimeUnit.MILLISECONDS.toNanos(1));
+            // 作用：通过 Condition.awaitNanos 带剩余时间的等待。
             System.out.println("timed wait finished=" + (remaining <= 0));
             // 输出：通常是 timed wait finished=true；也可能是 false（提前唤醒）
         } finally {
@@ -243,6 +249,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ReadWriteLockLowFrequencyDemo {
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
+        // 作用：读锁并行不等于一定更快；写频繁、读临界区很短或升级路径复杂时，普通锁可能更清晰。不要在持有读锁时直接申请写锁形成升级死锁。
         lock.readLock().lock();
         try {
             System.out.println("shared read");
@@ -265,6 +272,7 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedLockLowFrequencyDemo {
     public static void main(String[] args) {
         StampedLock lock = new StampedLock();
+        // 作用：StampedLock 不可重入，乐观读必须 validate，失败后回退到读锁。只有读多写少且基准显示收益时才使用。
         long stamp = lock.tryOptimisticRead();
         int result = 7;
         if (!lock.validate(stamp)) {

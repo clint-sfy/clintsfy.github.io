@@ -56,7 +56,6 @@ System.out.println(first == second);
 重写时先判断类型，再比较参与身份的字段；允许 `null` 的字段用 `Objects.equals`，不要为了方便把所有字段都纳入相等规则。
 
 ```java
-// 作用：通过 equals 比较逻辑内容。
 // 语义：重写时先判断类型，再比较参与身份的字段。
 // 调用参数：代码依次使用 "U-1"、true。
 import java.util.Objects;
@@ -70,6 +69,7 @@ class UserId {
 
     @Override
     public boolean equals(Object other) {
+    // 作用：通过 equals 比较逻辑内容。
         return other instanceof UserId id && Objects.equals(value, id.value);
     }
 }
@@ -83,8 +83,6 @@ System.out.println(new UserId("U-1").equals(new UserId("U-1")));
 需要把对象放入哈希集合时应让 `hashCode` 与 `equals` 使用一致字段，并避免入集合后修改参与哈希的字段。
 
 ```java
-// 语义：需要把对象放入哈希集合时应让 hashCode 与 equals 使用一致字段，并避免入集合后修改参与哈希的字段。
-// 初始状态：ids 初始为 new HashSet<>()。
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -93,6 +91,7 @@ class UserId {
     private final String value;
 
     UserId(String value) { this.value = value; }
+    // 初始状态：value 当前为 value; }。
 
     @Override
     public boolean equals(Object other) {
@@ -101,11 +100,13 @@ class UserId {
 
     @Override
     public int hashCode() {
+    // 作用：需要把对象放入哈希集合时应让 hashCode 与 equals 使用一致字段，并避免入集合后修改参与哈希的字段。
         return Objects.hash(value);
     }
 }
 
 Set<UserId> ids = new HashSet<>();
+// 初始状态：ids 当前为 new HashSet<>()。
 ids.add(new UserId("U-1"));
 System.out.println(ids.contains(new UserId("U-1")));
 // 输出：true
@@ -116,16 +117,17 @@ System.out.println(ids.contains(new UserId("U-1")));
 `toString` 适合日志、调试和错误信息；不要拼出密码、令牌、身份证号等敏感字段，也不要让日志格式承担协议稳定性。
 
 ```java
-// 作用：通过 toString 提供安全可读表示。
 // 语义：toString 适合日志、调试和错误信息。
 // 调用参数：代码依次使用 "User[name="、"]"、"Ann"。
 class User {
     private final String name;
 
     User(String name) { this.name = name; }
+    // 初始状态：name 当前为 name; }。
 
     @Override
     public String toString() {
+    // 作用：通过 toString 提供安全可读表示。
         return "User[name=" + name + "]";
     }
 }
@@ -139,11 +141,12 @@ System.out.println(new User("Ann"));
 一方或双方为 `null` 时不会抛异常；业务仍要明确大小写、空白和规范化规则。
 
 ```java
-// 语义：一方或双方为 null 时不会抛异常。
-// 初始状态：left 初始为 null；right 初始为 "Java"。
 String left = null;
+// 初始状态：left 当前为 null。
 String right = "Java";
+// 初始状态：right 当前为 "Java"。
 System.out.println(Objects.equals(left, right));
+// 作用：一方或双方为 null 时不会抛异常。
 // 输出：false
 ```
 
@@ -152,9 +155,9 @@ System.out.println(Objects.equals(left, right));
 适合实现值对象 `hashCode`；字段顺序和字段集合要与 `equals` 保持一致。
 
 ```java
-// 语义：适合实现值对象 hashCode。
-// 初始状态：hash 初始为 Objects.hash("U-1", "Ann")。
 int hash = Objects.hash("U-1", "Ann");
+// 初始状态：hash 当前为 Objects.hash("U-1", "Ann")。
+// 作用：适合实现值对象 hashCode。
 System.out.println(hash != 0);
 // 输出：true
 ```
@@ -164,10 +167,10 @@ System.out.println(hash != 0);
 适合日志或展示的轻量默认值；不要用它把必填字段的缺失静默变成合法业务值。
 
 ```java
-// 语义：适合日志或展示的轻量默认值。
-// 初始状态：value 初始为 null。
 String value = null;
+// 初始状态：value 当前为 null。
 System.out.println(Objects.toString(value, "(missing)"));
+// 作用：适合日志或展示的轻量默认值。
 // 输出：(missing)
 ```
 
@@ -176,9 +179,9 @@ System.out.println(Objects.toString(value, "(missing)"));
 传入 `null` 会立即抛 `NullPointerException`，适合构造器和方法入口；延迟到深层调用才失败会丢失上下文。
 
 ```java
-// 语义：传入 null 会立即抛 NullPointerException，适合构造器和方法入口。
-// 初始状态：name 初始为 Objects.requireNonNull("Ann", "name")。
 String name = Objects.requireNonNull("Ann", "name");
+// 初始状态：name 当前为 Objects.requireNonNull("Ann", "name")。
+// 作用：传入 null 会立即抛 NullPointerException，适合构造器和方法入口。
 System.out.println(name);
 // 输出：Ann
 ```
@@ -188,10 +191,10 @@ System.out.println(name);
 `getClass()` 返回精确运行时类，不能替代多态；比较类型前要考虑代理、继承和接口边界。
 
 ```java
-// 语义：getClass() 返回精确运行时类，不能替代多态。
-// 初始状态：value 初始为 "Java"。
 Object value = "Java";
+// 初始状态：value 当前为 "Java"。
 System.out.println(value.getClass().getSimpleName());
+// 作用：getClass() 返回精确运行时类，不能替代多态。
 // 输出：String
 ```
 ## 不常用但需要知道
@@ -201,10 +204,11 @@ System.out.println(value.getClass().getSimpleName());
 它会对数组使用深层内容比较；普通对象仍依赖各自的 `equals`，不会自动递归所有字段。
 
 ```java
-// 作用：通过 Objects.deepEquals 比较嵌套数组或对象。
 int[][] left = {{1, 2}};
+// 初始状态：left 当前为 {{1, 2}}。
 int[][] right = {{1, 2}};
 System.out.println(Objects.deepEquals(left, right));
+// 作用：通过 Objects.deepEquals 比较嵌套数组或对象。
 // 输出：true
 ```
 
@@ -213,9 +217,10 @@ System.out.println(Objects.deepEquals(left, right));
 比较器由调用者决定 `null` 是否可接受；`Objects.compare` 不会自动把 `null` 当作最大或最小值。
 
 ```java
-// 作用：通过 Objects.compare 带比较器的空值边界。
 Comparator<String> byLength = Comparator.comparingInt(String::length);
+// 初始状态：byLength 当前为 Comparator.comparingInt(String::length)。
 int order = Objects.compare("Java", "API", byLength);
+// 作用：通过 Objects.compare 带比较器的空值边界。
 System.out.println(order > 0);
 // 输出：true
 ```
@@ -225,12 +230,13 @@ System.out.println(order > 0);
 `Object.clone` 默认是浅复制，嵌套可变字段仍可能共享；新设计通常优先使用复制构造器、静态工厂或明确的拷贝方法。
 
 ```java
-// 作用：通过 clone 受保护的浅复制入口。
 class Box implements Cloneable {
     int value = 7;
+    // 初始状态：value 当前为 7。
 
     @Override
     public Box clone() {
+    // 作用：通过 clone 受保护的浅复制入口。
         try {
             return (Box) super.clone();
         } catch (CloneNotSupportedException error) {
@@ -252,6 +258,7 @@ System.out.println(copy.value);
 // 前置条件：当前线程已经持有 lock 的监视器
 synchronized (lock) {
     while (!ready) lock.wait();
+    // 作用：wait 必须在持有同一对象监视器时调用，它会释放监视器；唤醒后还必须在循环中重新检查条件。
 }
 // 结果：被唤醒并重新取得监视器后才继续执行
 ```
@@ -261,10 +268,11 @@ synchronized (lock) {
 调用这些方法必须持有对象监视器，且要配合条件循环；并发代码通常优先使用 `java.util.concurrent` 工具，不要把任意对象当成全局锁。
 
 ```java
-// 作用：通过 Object.notifyAll 唤醒同一监视器上的等待线程。
 Object lock = new Object();
+// 初始状态：lock 当前为 new Object()。
 synchronized (lock) {
     lock.notifyAll();
+    // 作用：通过 Object.notifyAll 唤醒同一监视器上的等待线程。
     System.out.println("notified");
     // 输出：notified
 }
@@ -275,8 +283,9 @@ synchronized (lock) {
 `finalize` 已被弃用，不应在新代码中重写或用来释放资源；使用 `try-with-resources`、`AutoCloseable` 和显式生命周期管理。
 
 ```java
-// 作用：通过 finalize 不要依赖对象终结。
 Object value = new Object();
+// 初始状态：value 当前为 new Object()。
+// 作用：通过 finalize 不要依赖对象终结。
 System.out.println(value.getClass().getSimpleName());
 // 输出：Object
 ```
@@ -293,13 +302,14 @@ System.out.println(value.getClass().getSimpleName());
 Apache Commons Lang 的构造器按字段追加对象摘要；敏感字段仍需主动排除。
 
 ```java
-// 作用：通过 ToStringBuilder 生成可维护的 toString。
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 var text = new ToStringBuilder(new Object(), ToStringStyle.NO_CLASS_NAME_STYLE)
         .append("id", 7)
         .append("name", "job")
         .toString();
+        // 作用：Apache Commons Lang 的构造器按字段追加对象摘要；敏感字段仍需主动排除。
+        // 作用：通过 ToStringBuilder 生成可维护的 toString。
 System.out.println(text);
 // 输出：[id=7,name=job]
 ```

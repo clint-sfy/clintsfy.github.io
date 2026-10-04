@@ -258,7 +258,6 @@ public class WriteLockInterruptibleDemo {
 需要观测当前读者数量时使用该方法做诊断；返回值是瞬时估计，不能作为业务同步条件。
 
 ```java
-// 作用：通过 getReadLockCount() 只用于诊断当前读者数量。
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ReadLockCountDemo {
@@ -267,6 +266,7 @@ public class ReadLockCountDemo {
         lock.readLock().lock();
         try {
             System.out.println(lock.getReadLockCount());
+            // 作用：通过 getReadLockCount() 只用于诊断当前读者数量。
             // 输出：1
         } finally {
             lock.readLock().unlock();

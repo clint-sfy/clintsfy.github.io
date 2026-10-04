@@ -44,6 +44,7 @@ import java.net.ServerSocket;
 public class ServerSocketBindDemo {
     public static void main(String[] args) throws Exception {
         try (ServerSocket server = new ServerSocket(0)) {
+        // 作用：传入 0 让操作系统分配临时端口，适合测试；生产服务要明确绑定地址、端口占用、backlog 和防火墙边界。
             System.out.println(server.getLocalPort() > 0);
             // 输出：true
         }
@@ -133,12 +134,14 @@ import java.net.SocketTimeoutException;
 public class SocketTimeoutDemo {
     public static void main(String[] args) throws Exception {
         try (ServerSocket server = new ServerSocket(0)) {
+        // 初始状态：server 当前为 new ServerSocket(0)) {。
             new Thread(() -> {
                 try (Socket ignored = server.accept()) { }
                 catch (Exception ignored) { }
             }, "socket-timeout-service").start();
             try (Socket socket = new Socket("127.0.0.1", server.getLocalPort())) {
                 socket.setSoTimeout(50);
+                // 作用：SoTimeout 限制一次阻塞读取，不会自动关闭 Socket，也不等于连接超时；捕获后要决定重试、断开还是继续读取。
                 try {
                     socket.getInputStream().read();
                 } catch (SocketTimeoutException e) {
@@ -162,6 +165,7 @@ import java.net.InetSocketAddress;
 public class SocketAddressDemo {
     public static void main(String[] args) {
         var address = new InetSocketAddress("127.0.0.1", 8080);
+        // 作用：地址对象可以用于绑定和连接；主机名解析可能阻塞或返回多个地址，生产代码要考虑 DNS 超时、IPv4/IPv6 和 SSRF 校验。
         System.out.println(address.getHostString() + ":" + address.getPort());
         // 输出：127.0.0.1:8080
     }
@@ -208,6 +212,7 @@ import java.net.Socket;
 public class SocketHalfCloseDemo {
     public static void main(String[] args) throws Exception {
         try (ServerSocket server = new ServerSocket(0)) {
+        // 初始状态：server 当前为 new ServerSocket(0)) {。
             new Thread(() -> {
                 try (Socket socket = server.accept()) {
                     System.out.println(socket.getInputStream().read() == -1);
@@ -218,6 +223,7 @@ public class SocketHalfCloseDemo {
             }, "socket-half-close-service").start();
             try (Socket client = new Socket("127.0.0.1", server.getLocalPort())) {
                 client.shutdownOutput();
+                // 作用：客户端关闭输出后，服务端读到 EOF，但连接的另一方向仍可能可用；只有协议定义了结束方向时才使用半关闭。
             }
         }
     }
@@ -230,13 +236,14 @@ public class SocketHalfCloseDemo {
 选项要在 bind 前设置才更有机会生效；端口重用不是绕过端口冲突的万能开关，平台语义也可能不同。
 
 ```java
-// 作用：通过 setReuseAddress 端口重用选项。
 import java.net.ServerSocket;
 
 public class SocketOptionDemo {
     public static void main(String[] args) throws Exception {
         try (ServerSocket server = new ServerSocket()) {
+        // 初始状态：server 当前为 new ServerSocket()) {。
             server.setReuseAddress(true);
+            // 作用：通过 setReuseAddress 端口重用选项。
             server.bind(new java.net.InetSocketAddress("127.0.0.1", 0));
             System.out.println(server.getReuseAddress());
             // 输出：true
@@ -250,13 +257,14 @@ public class SocketOptionDemo {
 低延迟小消息可能需要 `TCP_NODELAY`，但它会增加包数量和网络开销；必须用真实延迟和吞吐数据验证。
 
 ```java
-// 作用：通过 setTcpNoDelay 禁用 Nagle 合并。
 import java.net.Socket;
 
 public class TcpNoDelayDemo {
     public static void main(String[] args) throws Exception {
         try (Socket socket = new Socket()) {
+        // 初始状态：socket 当前为 new Socket()) {。
             socket.setTcpNoDelay(true);
+            // 作用：通过 setTcpNoDelay 禁用 Nagle 合并。
             System.out.println(socket.getTcpNoDelay());
             // 输出：true
         }
@@ -269,13 +277,14 @@ public class TcpNoDelayDemo {
 Keep-alive 不能替代应用心跳、请求超时和连接池空闲淘汰；内核探测周期也通常不是业务可控的。
 
 ```java
-// 作用：通过 setKeepAlive 内核级保活。
 import java.net.Socket;
 
 public class TcpKeepAliveDemo {
     public static void main(String[] args) throws Exception {
         try (Socket socket = new Socket()) {
+        // 初始状态：socket 当前为 new Socket()) {。
             socket.setKeepAlive(true);
+            // 作用：通过 setKeepAlive 内核级保活。
             System.out.println(socket.getKeepAlive());
             // 输出：true
         }
@@ -292,6 +301,7 @@ backlog 是内核等待队列的建议值，不等于应用能同时处理的连
 import java.net.ServerSocket;
 
 public class BacklogDemo {
+// 作用：backlog 是内核等待队列的建议值，不等于应用能同时处理的连接数；服务端仍需线程池、连接上限和过载策略。
     public static void main(String[] args) throws Exception {
         try (ServerSocket server = new ServerSocket(0, 32)) {
             System.out.println(server.getLocalPort() > 0);
@@ -306,12 +316,13 @@ public class BacklogDemo {
 非阻塞 Channel 必须配合 Selector 或连接状态机处理 `finishConnect`、部分读写和 `OP_*` 事件；不能只把 blocking 改成 false 就得到高性能服务。
 
 ```java
-// 作用：通过 SocketChannel 从阻塞 Socket 迁移到 NIO。
 import java.nio.channels.SocketChannel;
 
 public class SocketChannelDemo {
+// 作用：非阻塞 Channel 必须配合 Selector 或连接状态机处理 finishConnect、部分读写和 OP_* 事件；不能只把 blocking 改成 false 就得到高性能服务。
     public static void main(String[] args) throws Exception {
         try (SocketChannel channel = SocketChannel.open()) {
+        // 作用：通过 SocketChannel 从阻塞 Socket 迁移到 NIO。
             channel.configureBlocking(false);
             System.out.println(channel.isBlocking());
             // 输出：false

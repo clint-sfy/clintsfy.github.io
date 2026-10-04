@@ -41,12 +41,13 @@ description: 速查 UTC 时间线、区域时区、时区转换、Duration、Per
 解析带 `Z` 或偏移的外部时间时得到唯一时刻；时间戳单位要在接口文档中明确是秒还是毫秒。
 
 ```java
-// 语义：解析带 Z 或偏移的外部时间时得到唯一时刻。
-// 初始状态：parsed 初始为 Instant.parse("2026-09-27T01:30:00Z")；fromMillis 初始为 Instant.ofEpochMilli(0)。
 import java.time.Instant;
 
 Instant parsed = Instant.parse("2026-09-27T01:30:00Z");
+// 初始状态：parsed 当前为 Instant.parse("2026-09-27T01:30:00Z")。
+// 作用：解析带 Z 或偏移的外部时间时得到唯一时刻。
 Instant fromMillis = Instant.ofEpochMilli(0);
+// 初始状态：fromMillis 当前为 Instant.ofEpochMilli(0)。
 System.out.println(parsed);
 // 输出：2026-09-27T01:30:00Z
 System.out.println(fromMillis);
@@ -58,8 +59,8 @@ System.out.println(fromMillis);
 `Instant.ofEpochMilli(0)` 明确把参数按毫秒解释，得到 Unix 时间纪元 `1970-01-01T00:00:00Z`。
 
 ```java
-// 输入：Instant.ofEpochMilli 把 0 按 Unix 纪元后的毫秒数解释，并将对应时刻写入 epoch。
 Instant epoch = Instant.ofEpochMilli(0);
+// 初始状态：Instant.ofEpochMilli 把 0 按 Unix 纪元后的毫秒数解释，并将对应时刻写入 epoch。
 // 结果：epoch 为 1970-01-01T00:00:00Z
 ```
 
@@ -68,13 +69,14 @@ Instant epoch = Instant.ofEpochMilli(0);
 转换不会改变时间线上的瞬间，只改变它的地区展示方式。
 
 ```java
-// 语义：转换不会改变时间线上的瞬间，只改变它的地区展示方式。
-// 初始状态：event 初始为 Instant.parse("2026-09-27T01:30:00Z")；shanghai 初始为 event.atZone(ZoneId.of("Asia/Shanghai"))。
 import java.time.Instant;
 import java.time.ZoneId;
 
 Instant event = Instant.parse("2026-09-27T01:30:00Z");
+// 初始状态：event 当前为 Instant.parse("2026-09-27T01:30:00Z")。
 var shanghai = event.atZone(ZoneId.of("Asia/Shanghai"));
+// 初始状态：shanghai 当前为 event.atZone(ZoneId.of("Asia/Shanghai"))。
+// 作用：转换不会改变时间线上的瞬间，只改变它的地区展示方式。
 System.out.println(shanghai);
 // 输出：2026-09-27T09:30+08:00[Asia/Shanghai]
 ```
@@ -84,13 +86,14 @@ System.out.println(shanghai);
 `withZoneSameInstant` 保持同一时间点，只改变本地显示；这是把会议时间展示给另一地区用户的常用操作。
 
 ```java
-// 语义：withZoneSameInstant 保持同一时间点，只改变本地显示。
-// 初始状态：shanghai 初始为 ZonedDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneId.of("Asia/Shanghai"))；newYork 初始为 shanghai.withZoneSameInstant(ZoneId.of("America/New_York"))。
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 var shanghai = ZonedDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneId.of("Asia/Shanghai"));
+// 初始状态：shanghai 当前为 ZonedDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneId.of("Asia/Shanghai"))。
 var newYork = shanghai.withZoneSameInstant(ZoneId.of("America/New_York"));
+// 初始状态：newYork 当前为 shanghai.withZoneSameInstant(ZoneId.of("America/New_York"))。
+// 作用：withZoneSameInstant 保持同一时间点，只改变本地显示。
 System.out.println(newYork.toLocalDateTime());
 // 输出：2026-09-26T21:30
 ```
@@ -100,13 +103,14 @@ System.out.println(newYork.toLocalDateTime());
 它改变的是事件发生的时间点，只适合“把同一墙上时间应用到另一个地区”的业务；不要把它误当成时区转换。
 
 ```java
-// 语义：它改变的是事件发生的时间点，只适合“把同一墙上时间应用到另一个地区”的业务。
-// 初始状态：local 初始为 ZonedDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneId.of("Asia/Shanghai"))；sameClock 初始为 local.withZoneSameLocal(ZoneId.of("America/New_York"))。
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 var local = ZonedDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneId.of("Asia/Shanghai"));
+// 初始状态：local 当前为 ZonedDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneId.of("Asia/Shanghai"))。
 var sameClock = local.withZoneSameLocal(ZoneId.of("America/New_York"));
+// 初始状态：sameClock 当前为 local.withZoneSameLocal(ZoneId.of("America/New_York"))。
+// 作用：它改变的是事件发生的时间点，只适合“把同一墙上时间应用到另一个地区”的业务。
 System.out.println(sameClock.toLocalDateTime());
 // 输出：2026-09-27T09:30
 ```
@@ -116,11 +120,11 @@ System.out.println(sameClock.toLocalDateTime());
 优先使用 IANA 区域名；`UTC` 是稳定区域，`+08:00` 则是固定偏移，不包含夏令时规则。
 
 ```java
-// 语义：优先使用 IANA 区域名。
-// 初始状态：zone 初始为 ZoneId.of("Asia/Shanghai")。
 import java.time.ZoneId;
 
 ZoneId zone = ZoneId.of("Asia/Shanghai");
+// 初始状态：zone 当前为 ZoneId.of("Asia/Shanghai")。
+// 作用：优先使用 IANA 区域名。
 System.out.println(zone.getId());
 // 输出：Asia/Shanghai
 ```
@@ -130,14 +134,15 @@ System.out.println(zone.getId());
 `Duration` 适合超时、耗时和倒计时；跨时区计算时先转换到 `Instant` 更不容易误判。
 
 ```java
-// 语义：Duration 适合超时、耗时和倒计时。
-// 初始状态：start 初始为 Instant.parse("2026-09-27T01:30:00Z")；end 初始为 start.plusSeconds(90)。
 import java.time.Duration;
 import java.time.Instant;
 
 Instant start = Instant.parse("2026-09-27T01:30:00Z");
+// 初始状态：start 当前为 Instant.parse("2026-09-27T01:30:00Z")。
 Instant end = start.plusSeconds(90);
+// 初始状态：end 当前为 start.plusSeconds(90)。
 System.out.println(Duration.between(start, end).toSeconds());
+// 作用：Duration 适合超时、耗时和倒计时。
 // 输出：90
 ```
 
@@ -146,14 +151,15 @@ System.out.println(Duration.between(start, end).toSeconds());
 `Period` 按年、月、日计算生日、账期等日历语义；不要用它替代精确耗时。
 
 ```java
-// 语义：Period 按年、月、日计算生日、账期等日历语义。
-// 初始状态：birth 初始为 LocalDate.of(2000, 9, 27)；date 初始为 LocalDate.of(2026, 9, 27)。
 import java.time.LocalDate;
 import java.time.Period;
 
 var birth = LocalDate.of(2000, 9, 27);
+// 初始状态：birth 当前为 LocalDate.of(2000, 9, 27)。
 var date = LocalDate.of(2026, 9, 27);
+// 初始状态：date 当前为 LocalDate.of(2026, 9, 27)。
 System.out.println(Period.between(birth, date).getYears());
+// 作用：Period 按年、月、日计算生日、账期等日历语义。
 // 输出：26
 ```
 
@@ -162,13 +168,13 @@ System.out.println(Period.between(birth, date).getYears());
 需要让依赖当前时间的测试可重复执行时注入 `Clock.fixed`，避免在业务深层直接调用 `Instant.now()`。
 
 ```java
-// 语义：需要让依赖当前时间的测试可重复执行时注入 Clock.fixed，避免在业务深层直接调用 Instant.now()。
-// 初始状态：clock 初始为 Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC)。
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 
 Clock clock = Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC);
+// 初始状态：clock 当前为 Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC)。
+// 作用：需要让依赖当前时间的测试可重复执行时注入 Clock.fixed，避免在业务深层直接调用 Instant.now()。
 System.out.println(Instant.now(clock));
 // 输出：2026-09-27T00:00:00Z
 ```
@@ -178,11 +184,11 @@ System.out.println(Instant.now(clock));
 需要在生产代码中以 UTC 时区读取系统当前时间时注入 `Clock.systemUTC`，调用方仍可在测试中替换该依赖。
 
 ```java
-// 语义：需要在生产代码中以 UTC 时区读取系统当前时间时注入 Clock.systemUTC，调用方仍可在测试中替换该依赖。
-// 初始状态：clock 初始为 Clock.systemUTC()。
 import java.time.Clock;
 
 Clock clock = Clock.systemUTC();
+// 初始状态：clock 当前为 Clock.systemUTC()。
+// 作用：需要在生产代码中以 UTC 时区读取系统当前时间时注入 Clock.systemUTC，调用方仍可在测试中替换该依赖。
 System.out.println(clock.getZone());
 // 输出：Z
 ```
@@ -209,10 +215,11 @@ System.out.println(instant);
 带偏移的输入已经给出该时刻相对于 UTC 的位置，但没有完整的地区历史规则；展示给用户时仍可转换为 `ZonedDateTime`。
 
 ```java
-// 作用：通过 ZoneOffset 解析固定偏移。
 import java.time.OffsetDateTime;
 
 var value = OffsetDateTime.parse("2026-09-27T09:30:00+08:00");
+// 初始状态：value 当前为 OffsetDateTime.parse("2026-09-27T09:30:00+08:00")。
+// 作用：通过 ZoneOffset 解析固定偏移。
 System.out.println(value.toInstant());
 // 输出：2026-09-27T01:30:00Z
 ```
@@ -222,12 +229,13 @@ System.out.println(value.toInstant());
 只有协议明确只需要固定偏移时才使用；区域规则丢失后不能再根据地区历史还原。
 
 ```java
-// 作用：通过 withFixedOffsetZone 保留当前偏移而去掉区域规则。
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 var value = ZonedDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneId.of("Asia/Shanghai"));
+// 初始状态：value 当前为 ZonedDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneId.of("Asia/Shanghai"))。
 System.out.println(value.withFixedOffsetZone());
+// 作用：通过 withFixedOffsetZone 保留当前偏移而去掉区域规则。
 // 输出：2026-09-27T09:30+08:00
 ```
 
@@ -236,7 +244,6 @@ System.out.println(value.withFixedOffsetZone());
 这些时钟主要用于测试和模拟；生产逻辑应保持时间来源简单且可观测。
 
 ```java
-// 作用：通过 Clock.offset 在基准时钟上增加固定偏移。
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -244,6 +251,7 @@ import java.time.ZoneOffset;
 
 Clock base = Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC);
 Clock shifted = Clock.offset(base, Duration.ofHours(8));
+// 作用：通过 Clock.offset 在基准时钟上增加固定偏移。
 System.out.println(Instant.now(shifted));
 // 输出：2026-09-27T08:00:00Z
 ```
@@ -253,8 +261,8 @@ System.out.println(Instant.now(shifted));
 `Clock.tick(base, Duration.ofMinutes(1))` 使得读取值只在整分钟边界变化，适合模拟低精度时钟；节拍必须满足 `Clock.tick` 的整除约束。
 
 ```java
-// 输入：Clock.tick 包装 Clock.systemUTC() 并使用 Duration.ofMinutes(1)，minuteClock 的读数因此以整分钟为节拍变化。
 Clock minuteClock = Clock.tick(Clock.systemUTC(), Duration.ofMinutes(1));
+// 初始状态：Clock.tick 包装 Clock.systemUTC() 并使用 Duration.ofMinutes(1)，minuteClock 的读数因此以整分钟为节拍变化。
 // 结果：minuteClock.instant() 只在整分钟边界变化
 ```
 
@@ -263,11 +271,11 @@ Clock minuteClock = Clock.tick(Clock.systemUTC(), Duration.ofMinutes(1));
 只有需要处理夏令时冲突、调度器或时区数据库细节时才直接使用规则对象；普通展示优先交给 `ZonedDateTime`。
 
 ```java
-// 作用：通过 ZoneRules 观察夏令时规则。
 import java.time.ZoneId;
 import java.time.zone.ZoneRules;
 
 ZoneRules rules = ZoneId.of("Europe/Paris").getRules();
+// 作用：通过 ZoneRules 观察夏令时规则。
 System.out.println(rules.isFixedOffset());
 // 输出：false
 ```
@@ -282,6 +290,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 var local = LocalDateTime.of(2026, 10, 25, 2, 30);
+// 作用：夏令时回拨时同一墙上时间可能对应两个偏移；预约系统应明确选择早/晚偏移或直接要求用户输入偏移。
 var value = local.atZone(ZoneId.of("Europe/Paris"));
 System.out.println(value.getOffset());
 // 输出：+02:00 或 +01:00（取决于时区规则）

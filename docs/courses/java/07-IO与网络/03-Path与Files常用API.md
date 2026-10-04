@@ -65,7 +65,9 @@ import java.nio.file.Path;
 public class PathResolveDemo {
     public static void main(String[] args) {
         Path root = Path.of("data");
+        // 初始状态：root 当前为 Path.of("data")。
         Path file = root.resolve("2026").resolve("report.txt");
+        // 作用：resolve 适合把受控的子路径接到根目录；如果参数是绝对路径，结果可能直接采用该绝对路径，因此用户输入仍需做根目录校验。
         System.out.println(file);
         // 输出：data/2026/report.txt
     }
@@ -100,6 +102,7 @@ import java.nio.file.Path;
 public class PathRelativizeDemo {
     public static void main(String[] args) {
         Path root = Path.of("/srv/app");
+        // 初始状态：root 当前为 Path.of("/srv/app")。
         Path file = Path.of("/srv/app/config/app.yml");
         System.out.println(root.relativize(file));
         // 输出：config/app.yml
@@ -255,8 +258,10 @@ import java.nio.file.StandardCopyOption;
 public class FilesCopyDemo {
     public static void main(String[] args) throws Exception {
         Path source = Files.createTempFile("java-source-", ".txt");
+        // 初始状态：source 当前为 Files.createTempFile("java-source-", ".txt")。
         Path target = source.resolveSibling("java-copy.txt");
         Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+        // 作用：默认不覆盖已存在目标；复制目录只复制目录项本身，不会自动递归复制内容，需要配合 walk。
         System.out.println(Files.exists(target));
         // 输出：true
         Files.deleteIfExists(source);
@@ -278,8 +283,10 @@ import java.nio.file.StandardCopyOption;
 public class FilesMoveDemo {
     public static void main(String[] args) throws Exception {
         Path source = Files.createTempFile("java-before-", ".txt");
+        // 初始状态：source 当前为 Files.createTempFile("java-before-", ".txt")。
         Path target = source.resolveSibling("java-after.txt");
         Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        // 作用：同一文件系统内移动通常比复制再删除更合适；ATOMIC_MOVE 是请求，不保证所有文件系统都支持，失败时应决定是否降级。
         System.out.println(Files.exists(target));
         // 输出：true
         Files.deleteIfExists(target);
@@ -318,8 +325,10 @@ import java.nio.file.Path;
 public class FilesLinesDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-lines-", ".txt");
+        // 初始状态：file 当前为 Files.createTempFile("java-lines-", ".txt")。
         Files.writeString(file, "java\nsql\njava\n");
         try (var lines = Files.lines(file)) {
+        // 作用：lines 不会在创建 Stream 时一次读完文件，且 Stream 必须关闭；异常发生在终端操作或关闭阶段时也要按 I/O 处理。
             System.out.println(lines.filter("java"::equals).count());
             // 输出：2
         }
@@ -380,15 +389,16 @@ public class FilesAttributesDemo {
 涉及权限、归档或上传目录时，要明确是否跟随链接；不跟随链接能减少把检查目标偷偷切换到其他目录的风险，但不是完整安全方案。
 
 ```java
-// 作用：通过 LinkOption.NOFOLLOW_LINKS 不跟随符号链接。
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 
 public class NoFollowLinksDemo {
+// 作用：涉及权限、归档或上传目录时，要明确是否跟随链接；不跟随链接能减少把检查目标偷偷切换到其他目录的风险，但不是完整安全方案。
     public static void main(String[] args) {
         Path path = Path.of("config");
         System.out.println(Files.exists(path, LinkOption.NOFOLLOW_LINKS));
+        // 作用：通过 LinkOption.NOFOLLOW_LINKS 不跟随符号链接。
         // 输出：false
     }
 }
@@ -399,14 +409,15 @@ public class NoFollowLinksDemo {
 该方法可能访问文件系统并解析符号链接，和 `Path.equals` 的字符串结构比较不是一回事。
 
 ```java
-// 作用：通过 Files.isSameFile 判断两个路径是否指向同一文件。
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class SameFileDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-same-", ".txt");
+        // 初始状态：file 当前为 Files.createTempFile("java-same-", ".txt")。
         System.out.println(Files.isSameFile(file, file.toAbsolutePath()));
+        // 作用：通过 Files.isSameFile 判断两个路径是否指向同一文件。
         // 输出：true
         Files.deleteIfExists(file);
     }
@@ -418,17 +429,18 @@ public class SameFileDemo {
 返回 `-1` 表示内容相同，否则返回首个不同位置；它仍需读取文件，不能当作恒定时间的安全比较。
 
 ```java
-// 作用：通过 Files.mismatch 查找首个不同字节。
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class FilesMismatchDemo {
     public static void main(String[] args) throws Exception {
         Path left = Files.createTempFile("java-left-", ".bin");
+        // 初始状态：left 当前为 Files.createTempFile("java-left-", ".bin")。
         Path right = Files.createTempFile("java-right-", ".bin");
         Files.write(left, new byte[]{1, 2, 3});
         Files.write(right, new byte[]{1, 9, 3});
         System.out.println(Files.mismatch(left, right));
+        // 作用：通过 Files.mismatch 查找首个不同字节。
         // 输出：1
         Files.deleteIfExists(left);
         Files.deleteIfExists(right);
@@ -441,15 +453,16 @@ public class FilesMismatchDemo {
 文件系统的时间精度和可写性因平台而异，时间戳不能单独作为版本或并发控制依据。
 
 ```java
-// 作用：通过 FileTime 读写文件时间。
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 
 public class FileTimeDemo {
+// 作用：文件系统的时间精度和可写性因平台而异，时间戳不能单独作为版本或并发控制依据。
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-time-", ".txt");
         FileTime now = FileTime.fromMillis(0);
+        // 作用：通过 FileTime 读写文件时间。
         Files.setLastModifiedTime(file, now);
         System.out.println(Files.getLastModifiedTime(file).toMillis());
         // 输出：0
@@ -473,6 +486,7 @@ import java.util.Map;
 
 public class ZipFileSystemDemo {
     public static void main(String[] args) throws Exception {
+    // 作用：Zip 文件系统适合批处理压缩包内容；必须关闭 FileSystem，且不要把不可信压缩包直接展开到未校验的目录。
         Path zip = Files.createTempFile("java-zip-", ".zip");
         URI uri = URI.create("jar:" + zip.toUri());
         try (FileSystem fs = FileSystems.newFileSystem(uri, Map.of("create", "true"))) {

@@ -47,8 +47,10 @@ description: 速查 static、final、常量、静态导入和嵌套类型，建�
 // 初始状态：next 初始为 1。
 class Sequence {
     private static int next = 1;
+    // 初始状态：next 当前为 1。
 
     static int nextValue() {
+    // 作用：静态字段只有一份，所有实例共享；并发计数器要使用合适的同步或原子类型，不能把普通 ++ 当成线程安全操作。
         return next++;
     }
 }
@@ -65,6 +67,7 @@ System.out.println(Sequence.nextValue() + ", " + Sequence.nextValue());
 // 输入：Texts.quote("Java") 通过类名调用 static 方法，将 value 包在 "[" 和 "]" 之间。
 class Texts {
     static String quote(String value) {
+    // 作用：静态方法通过类名调用，不能直接访问实例字段；如果行为要替换或依赖对象状态，应考虑实例方法和接口。
         return "[" + value + "]";
     }
 }
@@ -81,6 +84,7 @@ System.out.println(Texts.quote("Java"));
 // 语义：常量名通常使用大写下划线。
 // 初始状态：MAX_RETRY 初始为 3。
 class Limits {
+// 作用：常量名通常使用大写下划线；值应稳定且不依赖可变运行时状态，配置项不要伪装成编译期常量。
     static final int MAX_RETRY = 3;
 }
 
@@ -96,6 +100,7 @@ System.out.println(Limits.MAX_RETRY);
 // 语义：局部 final 只能赋值一次，适合表达不应被后续分支覆盖的中间值。
 // 初始状态：port 初始为 8080。
 final int port = 8080;
+// 初始状态：port 当前为 8080。
 System.out.println(port);
 // 输出：8080
 ```
@@ -110,6 +115,7 @@ class User {
     private final String id;
 
     User(String id) {
+    // 作用：final 字段必须在声明处、初始化块或每个构造器路径赋值；它能固定引用，但引用指向的对象仍可能可变。
         this.id = id;
     }
 
@@ -133,6 +139,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 final List<String> names = new ArrayList<>();
+// 作用：引用不能重新指向另一个列表，但列表内容仍可修改；需要不可变结果时用 List.copyOf 或防御性复制。
 names.add("Ann");
 System.out.println(names);
 // 输出：[Ann]
@@ -146,6 +153,7 @@ System.out.println(names);
 // 说明：Template.run 被声明为 final，子类不能重写这个返回 "fixed" 的方法。
 class Template {
     final String run() {
+    // 作用：final 方法适合固定算法骨架或安全不变式；可变步骤可以委托给受控的私有/抽象方法。
         return "fixed";
     }
 }
@@ -164,6 +172,7 @@ final class Token {
     private final String value;
 
     Token(String value) {
+    // 作用：final 类可避免被扩展破坏不变式，但不自动保证字段对象深层不可变；设计时仍要处理可变引用和公开 API。
         this.value = value;
     }
 
@@ -235,6 +244,7 @@ System.out.println(max(3, 5));
 ```java
 // 输入：doubleValue 收到 final 参数 value=21，方法内不能将 value 重新赋值。
 static int doubleValue(final int value) {
+// 作用：参数 final 只限制方法体内重新赋值，不改变调用者传入对象的可变性；团队可按代码风格选择是否广泛使用。
     return value * 2;
 }
 
@@ -252,6 +262,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 static final List<String> ROLES = new ArrayList<>(List.of("reader"));
+// 作用：常量引用指向可变集合时仍能修改内容；公开共享集合应使用 List.of、Set.of 或不可变视图，并在文档中说明线程安全。
 
 ROLES.add("writer");
 System.out.println(ROLES);
@@ -268,6 +279,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 final List<String> values = new ArrayList<>();
+// 作用：final 不阻止引用指向的具体实现执行可变操作；若要限制替换实现、扩展和状态变化，需要分别使用 final 类、接口契约和不可变数据结构。
 values.add("ok");
 System.out.println(values.get(0));
 // 输出：ok

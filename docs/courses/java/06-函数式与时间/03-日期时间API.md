@@ -40,11 +40,11 @@ description: 使用 java.time 处理日期、时间、时区、格式化和周�
 `new Date(long)` 把自 Unix 时间纪元起的毫秒数包装为可变的旧式时间对象；新代码优先使用不可变的 `Instant`，仅在旧 API 边界转换。
 
 ```java
-// 语义：Date(long) 把毫秒时间戳保存在旧式 Date 对象中。
-// 初始状态：epoch 由 new Date(0L) 构造，对应 1970-01-01T00:00:00Z。
 import java.util.Date;
 
 Date epoch = new Date(0L);
+// 初始状态：epoch 由 new Date(0L) 构造，对应 1970-01-01T00:00:00Z。
+// 作用：Date(long) 把毫秒时间戳保存在旧式 Date 对象中。
 System.out.println(epoch.getTime());
 // 输出：0
 ```
@@ -54,12 +54,13 @@ System.out.println(epoch.getTime());
 `LocalDate` 适合生日、营业日等只关心年月日的值，不能独立定位全球时间线上的时刻。
 
 ```java
-// 语义：LocalDate 适合生日、营业日等只关心年月日的值，不能独立定位全球时间线上的时刻。
-// 初始状态：release 初始为 LocalDate.of(2026, 9, 27)；nextDay 初始为 release.plusDays(1)。
 import java.time.LocalDate;
 
 LocalDate release = LocalDate.of(2026, 9, 27);
+// 初始状态：release 当前为 LocalDate.of(2026, 9, 27)。
+// 作用：LocalDate 适合生日、营业日等只关心年月日的值，不能独立定位全球时间线上的时刻。
 LocalDate nextDay = release.plusDays(1);
+// 初始状态：nextDay 当前为 release.plusDays(1)。
 
 System.out.println(release);
 // 输出：2026-09-27
@@ -72,12 +73,13 @@ System.out.println(nextDay);
 `LocalTime` 适合每日营业时间等时钟读数，跨地区安排不能只保存这一类型。
 
 ```java
-// 语义：LocalTime 适合每日营业时间等时钟读数，跨地区安排不能只保存这一类型。
-// 初始状态：opensAt 初始为 LocalTime.of(9, 30)；closesAt 初始为 opensAt.plusHours(8)。
 import java.time.LocalTime;
 
 LocalTime opensAt = LocalTime.of(9, 30);
+// 初始状态：opensAt 当前为 LocalTime.of(9, 30)。
+// 作用：LocalTime 适合每日营业时间等时钟读数，跨地区安排不能只保存这一类型。
 LocalTime closesAt = opensAt.plusHours(8);
+// 初始状态：closesAt 当前为 opensAt.plusHours(8)。
 
 System.out.println(opensAt);
 // 输出：09:30
@@ -90,15 +92,16 @@ System.out.println(closesAt);
 `LocalDateTime` 适合尚未绑定地区的表单值，转换为唯一时刻前必须补充 `ZoneId` 或偏移。
 
 ```java
-// 语义：LocalDateTime 适合尚未绑定地区的表单值，转换为唯一时刻前必须补充 ZoneId 或偏移。
-// 初始状态：date 初始为 LocalDate.of(2026, 9, 27)；time 初始为 LocalTime.of(9, 30)。
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 LocalDate date = LocalDate.of(2026, 9, 27);
+// 初始状态：date 当前为 LocalDate.of(2026, 9, 27)。
 LocalTime time = LocalTime.of(9, 30);
+// 初始状态：time 当前为 LocalTime.of(9, 30)。
 LocalDateTime meeting = LocalDateTime.of(date, time);
+// 作用：LocalDateTime 适合尚未绑定地区的表单值，转换为唯一时刻前必须补充 ZoneId 或偏移。
 System.out.println(meeting);
 // 输出：2026-09-27T09:30
 ```
@@ -108,11 +111,11 @@ System.out.println(meeting);
 `Instant` 适合数据库、日志和消息传输；它不直接携带用户要看的地区时间。
 
 ```java
-// 语义：Instant 适合数据库、日志和消息传输。
-// 初始状态：event 初始为 Instant.parse("2026-09-27T01:30:00Z")。
 import java.time.Instant;
 
 Instant event = Instant.parse("2026-09-27T01:30:00Z");
+// 初始状态：event 当前为 Instant.parse("2026-09-27T01:30:00Z")。
+// 作用：Instant 适合数据库、日志和消息传输。
 System.out.println(event.plusSeconds(60));
 // 输出：2026-09-27T01:31:00Z
 ```
@@ -122,13 +125,13 @@ System.out.println(event.plusSeconds(60));
 区域时区包含历史和夏令时规则，不要用一个固定偏移量替代所有地区。
 
 ```java
-// 语义：区域时区包含历史和夏令时规则，不要用一个固定偏移量替代所有地区。
-// 初始状态：event 初始为 Instant.parse("2026-09-27T01:30:00Z")。
 import java.time.Instant;
 import java.time.ZoneId;
 
 Instant event = Instant.parse("2026-09-27T01:30:00Z");
+// 初始状态：event 当前为 Instant.parse("2026-09-27T01:30:00Z")。
 System.out.println(event.atZone(ZoneId.of("Asia/Shanghai")));
+// 作用：区域时区包含历史和夏令时规则，不要用一个固定偏移量替代所有地区。
 // 输出：2026-09-27T09:30+08:00[Asia/Shanghai]
 ```
 
@@ -137,13 +140,14 @@ System.out.println(event.atZone(ZoneId.of("Asia/Shanghai")));
 外部协议应固定格式和 Locale；`DateTimeFormatter` 可共享，因为它是不可变且线程安全的。
 
 ```java
-// 语义：外部协议应固定格式和 Locale。
-// 初始状态：formatter 初始为 DateTimeFormatter.ofPattern("uuuu-MM-dd")；date 初始为 LocalDate.parse("2026-09-27", formatter)。
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd");
+// 初始状态：formatter 当前为 DateTimeFormatter.ofPattern("uuuu-MM-dd")。
+// 作用：外部协议应固定格式和 Locale。
 LocalDate date = LocalDate.parse("2026-09-27", formatter);
+// 初始状态：date 当前为 LocalDate.parse("2026-09-27", formatter)。
 System.out.println(formatter.format(date));
 // 输出：2026-09-27
 ```
@@ -153,14 +157,15 @@ System.out.println(formatter.format(date));
 `Duration` 按秒和纳秒表达时长，适合超时、耗时等连续时间线计算。
 
 ```java
-// 语义：Duration 按秒和纳秒表达时长，适合超时、耗时等连续时间线计算。
-// 初始状态：start 初始为 Instant.parse("2026-09-27T01:00:00Z")；end 初始为 Instant.parse("2026-09-27T03:30:00Z")。
 import java.time.Duration;
 import java.time.Instant;
 
 Instant start = Instant.parse("2026-09-27T01:00:00Z");
+// 初始状态：start 当前为 Instant.parse("2026-09-27T01:00:00Z")。
 Instant end = Instant.parse("2026-09-27T03:30:00Z");
+// 初始状态：end 当前为 Instant.parse("2026-09-27T03:30:00Z")。
 Duration elapsed = Duration.between(start, end);
+// 作用：Duration 按秒和纳秒表达时长，适合超时、耗时等连续时间线计算。
 
 System.out.println(elapsed.toMinutes());
 // 输出：150
@@ -171,14 +176,15 @@ System.out.println(elapsed.toMinutes());
 `Period` 按年、月、日表达周期，适合账期和日期跨度，不等价于固定秒数。
 
 ```java
-// 语义：Period 按年、月、日表达周期，适合账期和日期跨度，不等价于固定秒数。
-// 初始状态：start 初始为 LocalDate.of(2026, 1, 1)；end 初始为 LocalDate.of(2026, 1, 3)。
 import java.time.LocalDate;
 import java.time.Period;
 
 LocalDate start = LocalDate.of(2026, 1, 1);
+// 初始状态：start 当前为 LocalDate.of(2026, 1, 1)。
 LocalDate end = LocalDate.of(2026, 1, 3);
+// 初始状态：end 当前为 LocalDate.of(2026, 1, 3)。
 Period period = Period.between(start, end);
+// 作用：Period 按年、月、日表达周期，适合账期和日期跨度，不等价于固定秒数。
 
 System.out.println(period.getDays());
 // 输出：2
@@ -189,13 +195,13 @@ System.out.println(period.getDays());
 生产代码可使用系统时钟，测试使用固定时钟；不要把直接 `now()` 藏在难以替换的业务逻辑里。
 
 ```java
-// 语义：生产代码可使用系统时钟，测试使用固定时钟。
-// 初始状态：fixed 初始为 Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC)。
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 
 Clock fixed = Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC);
+// 初始状态：fixed 当前为 Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC)。
+// 作用：生产代码可使用系统时钟，测试使用固定时钟。
 System.out.println(Instant.now(fixed));
 // 输出：2026-09-27T00:00:00Z
 ```
@@ -206,11 +212,11 @@ System.out.println(Instant.now(fixed));
 固定偏移不包含地区规则，适合协议中已明确偏移的时间，不等于 `Asia/Shanghai` 这样的区域时区。
 
 ```java
-// 作用：通过 ZoneOffset 使用固定偏移量。
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
 OffsetDateTime value = OffsetDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneOffset.ofHours(8));
+// 作用：通过 ZoneOffset 使用固定偏移量。
 System.out.println(value.getOffset());
 // 输出：+08:00
 ```
@@ -220,12 +226,14 @@ System.out.println(value.getOffset());
 它适合账期、月初和月末等规则日期；复杂节假日仍需要业务日历，而不是简单调节器。
 
 ```java
-// 作用：通过 TemporalAdjusters 寻找下一个日历位置。
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 
 LocalDate date = LocalDate.of(2026, 9, 27);
+// 初始状态：date 当前为 LocalDate.of(2026, 9, 27)。
+// 作用：它适合账期、月初和月末等规则日期；复杂节假日仍需要业务日历，而不是简单调节器。
 System.out.println(date.with(TemporalAdjusters.firstDayOfNextMonth()));
+// 作用：通过 TemporalAdjusters 寻找下一个日历位置。
 // 输出：2026-10-01
 ```
 
@@ -234,11 +242,11 @@ System.out.println(date.with(TemporalAdjusters.firstDayOfNextMonth()));
 账期或生日等确实缺少日、年的场景可用它们；不要为了凑成完整时间而随意补一个日期。
 
 ```java
-// 作用：通过 YearMonth.of 构造年月值。
 import java.time.MonthDay;
 import java.time.YearMonth;
 
 System.out.println(YearMonth.of(2026, 9));
+// 作用：通过 YearMonth.of 构造年月值。
 // 输出：2026-09
 ```
 
@@ -247,11 +255,11 @@ System.out.println(YearMonth.of(2026, 9));
 `MonthDay` 不包含年份，适合每年重复的生日或纪念日；与具体年份结合前需考虑 2 月 29 日。
 
 ```java
-// 作用：通过 MonthDay.of 构造月日值。
 // 语义：MonthDay.of(9, 27) 只保存 9 月 27 日，不附加年份。
 import java.time.MonthDay;
 
 System.out.println(MonthDay.of(9, 27));
+// 作用：通过 MonthDay.of 构造月日值。
 // 输出：--09-27
 ```
 ## 专题导航

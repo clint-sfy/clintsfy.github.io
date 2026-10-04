@@ -52,16 +52,17 @@ description: 使用 Hutool JSONUtil 完成 JSON 字符串、JavaBean、Map、数
 需要把 JavaBean、集合或 Map 序列化为 JSON 字符串时使用该方法，同时要明确字段可见性、`null` 和日期配置等协议边界。
 
 ```java
-// 语义：需要把 JavaBean、集合或 Map 序列化为 JSON 字符串时使用该方法，同时要明确字段可见性、null 和日期配置等协议边界。
-// 初始状态：user 初始为 new LinkedHashMap<>()；json 初始为 JSONUtil.toJsonStr(user)。
 import cn.hutool.json.JSONUtil;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 Map<String, Object> user = new LinkedHashMap<>();
+// 初始状态：user 当前为 new LinkedHashMap<>()。
 user.put("name", "Ann");
 user.put("age", 18);
 String json = JSONUtil.toJsonStr(user);
+// 初始状态：json 当前为 JSONUtil.toJsonStr(user)。
+// 作用：需要把 JavaBean、集合或 Map 序列化为 JSON 字符串时使用该方法，同时要明确字段可见性、null 和日期配置等协议边界。
 System.out.println(json);
 // 输出：{"name":"Ann","age":18}
 ```
@@ -71,11 +72,12 @@ System.out.println(json);
 适合少量字段读取或先观察结构；字段缺失时要区分 `null`、默认值和“输入无效”，不要把动态读取当作完整校验。
 
 ```java
-// 语义：适合少量字段读取或先观察结构。
-// 初始状态：object 初始为 JSONUtil.parseObj("{\"name\":\"Ann\",\"age\":18}")；name 初始为 object.getStr("name")。
 import cn.hutool.json.JSONUtil;
 
 var object = JSONUtil.parseObj("{\"name\":\"Ann\",\"age\":18}");
+// 初始状态：object 当前为 JSONUtil.parseObj("{\"name\":\"Ann\",\"age\":18}")。
+// 初始状态：name 当前为 object.getStr("name")。
+// 作用：适合少量字段读取或先观察结构。
 String name = object.getStr("name");
 System.out.println(name + ", " + object.getInt("age"));
 // 输出：Ann, 18
@@ -86,11 +88,11 @@ System.out.println(name + ", " + object.getInt("age"));
 输入根节点必须是数组；按索引读取前要考虑数组为空、元素不是对象以及字段缺失。
 
 ```java
-// 语义：输入根节点必须是数组。
-// 初始状态：array 初始为 JSONUtil.parseArray("[{\"name\":\"Ann\"},{\"name\":\"Bo\"}]")。
 import cn.hutool.json.JSONUtil;
 
 var array = JSONUtil.parseArray("[{\"name\":\"Ann\"},{\"name\":\"Bo\"}]");
+// 初始状态：array 当前为 JSONUtil.parseArray("[{\"name\":\"Ann\"},{\"name\":\"Bo\"}]")。
+// 作用：输入根节点必须是数组。
 System.out.println(array.size() + ", " + array.getJSONObject(0).getStr("name"));
 // 输出：2, Ann
 ```
@@ -100,8 +102,6 @@ System.out.println(array.size() + ", " + array.getJSONObject(0).getStr("name"));
 把一个 JSON 对象映射为明确的 Bean，目标类应有可写属性或符合映射要求的构造方式；映射完成后仍应做必填、范围和权限校验。
 
 ```java
-// 语义：把一个 JSON 对象映射为明确的 Bean，目标类应有可写属性或符合映射要求的构造方式。
-// 初始状态：user 初始为 JSONUtil.toBean("{\"name\":\"Ann\",\"age\":18}", User.class)。
 import cn.hutool.json.JSONUtil;
 
 class User {
@@ -110,6 +110,8 @@ class User {
 }
 
 User user = JSONUtil.toBean("{\"name\":\"Ann\",\"age\":18}", User.class);
+// 初始状态：user 当前为 JSONUtil.toBean("{\"name\":\"Ann\",\"age\":18}", User.class)。
+// 作用：把一个 JSON 对象映射为明确的 Bean，目标类应有可写属性或符合映射要求的构造方式。
 System.out.println(user.name + ", " + user.age);
 // 输出：Ann, 18
 ```
@@ -119,8 +121,6 @@ System.out.println(user.name + ", " + user.age);
 显式传入元素类型，避免只得到原始 `List`；转换后要考虑空数组、元素类型和异常元素的错误处理。
 
 ```java
-// 语义：显式传入元素类型，避免只得到原始 List。
-// 初始状态：array 初始为 JSONUtil.parseArray("[{\"name\":\"Ann\"}]")；users 初始为 JSONUtil.toList(array, User.class)。
 import cn.hutool.json.JSONUtil;
 import java.util.List;
 
@@ -129,7 +129,10 @@ class User {
 }
 
 var array = JSONUtil.parseArray("[{\"name\":\"Ann\"}]");
+// 初始状态：array 当前为 JSONUtil.parseArray("[{\"name\":\"Ann\"}]")。
 List<User> users = JSONUtil.toList(array, User.class);
+// 初始状态：users 当前为 JSONUtil.toList(array, User.class)。
+// 作用：显式传入元素类型，避免只得到原始 List。
 System.out.println(users.get(0).name);
 // 输出：Ann
 ```
@@ -139,12 +142,12 @@ System.out.println(users.get(0).name);
 返回更宽的 `JSON` 抽象，适合根节点形状暂时不确定的场景；确定协议后优先使用 `parseObj`、`parseArray` 或 `toBean`。
 
 ```java
-// 语义：返回更宽的 JSON 抽象，适合根节点形状暂时不确定的场景。
-// 初始状态：parsed 初始为 JSONUtil.parse("[1, 2]")。
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 
 JSON parsed = JSONUtil.parse("[1, 2]");
+// 初始状态：parsed 当前为 JSONUtil.parse("[1, 2]")。
+// 作用：返回更宽的 JSON 抽象，适合根节点形状暂时不确定的场景。
 System.out.println(parsed.getClass().getSimpleName());
 // 输出：JSONArray
 ```
@@ -154,17 +157,19 @@ System.out.println(parsed.getClass().getSimpleName());
 `Class<T>` 无法表达 `Map<String, List<User>>` 等嵌套参数时，使用 `TypeReference` 捕获完整泛型结构。
 
 ```java
-// 输入：TypeReference 描述 Map<String, List<User>>，json 含一个 admins 元素
 import cn.hutool.core.lang.TypeReference;
 import java.util.List;
 import java.util.Map;
 
 class User {
+// 初始状态：TypeReference 描述 Map<String, List<User>>，json 含一个 admins 元素。
     public String name;
 }
 
 TypeReference<Map<String, List<User>>> type =
     new TypeReference<Map<String, List<User>>>() {};
+    // 初始状态：type 当前保存 new TypeReference<Map<String, List<User>>>() {}的计算结果。
+    // 作用：Class<T> 无法表达 Map<String, List<User>> 等嵌套参数时，使用 TypeReference 捕获完整泛型结构。
 System.out.println(type.getType().getTypeName().contains("java.util.List"));
 // 输出：true
 ```
@@ -174,19 +179,21 @@ System.out.println(type.getType().getTypeName().contains("java.util.List"));
 目标类型包含多层泛型时，把 `TypeReference` 和 JSON 文本交给 `toBean`，并显式选择是否忽略转换错误。
 
 ```java
-// 输入：JSONUtil.toBean 把 admins 数组映射为 TypeReference 指定的嵌套类型
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.json.JSONUtil;
 import java.util.List;
 import java.util.Map;
 
 class User {
+// 初始状态：JSONUtil.toBean 把 admins 数组映射为 TypeReference 指定的嵌套类型。
     public String name;
 }
 
 String json = "{\"admins\":[{\"name\":\"Ann\"}]}";
+// 初始状态：json 当前为 "{\"admins\":[{\"name\":\"Ann\"}]}"。
 Map<String, List<User>> grouped = JSONUtil.toBean(
     json, new TypeReference<Map<String, List<User>>>() {}, false);
+    // 作用：目标类型包含多层泛型时，把 TypeReference 和 JSON 文本交给 toBean，并显式选择是否忽略转换错误。
 System.out.println(grouped.get("admins").get(0).name);
 // 输出：Ann
 ```
@@ -196,16 +203,18 @@ System.out.println(grouped.get("admins").get(0).name);
 需要按 JSON 字段语义复制对象时，先用 `toJsonStr` 生成中间文本；它可能丢失未序列化字段，因此不是通用深复制保证。
 
 ```java
-// 输入：JSONUtil.toJsonStr 序列化 name 为 "Ann" 的 source
 import cn.hutool.json.JSONUtil;
 
 class User {
+// 初始状态：JSONUtil.toJsonStr 序列化 name 为 "Ann" 的 source。
     public String name;
 }
 
 User source = new User();
+// 初始状态：source 当前为 new User()。
 source.name = "Ann";
 String json = JSONUtil.toJsonStr(source);
+// 作用：需要按 JSON 字段语义复制对象时，先用 toJsonStr 生成中间文本；它可能丢失未序列化字段，因此不是通用深复制保证。
 System.out.println(json);
 // 输出：{"name":"Ann"}
 ```
@@ -215,17 +224,19 @@ System.out.println(json);
 已有中间 JSON 时使用 `toBean` 创建新的目标实例；复制前要评估字段丢失、日期格式和嵌套引用语义。
 
 ```java
-// 输入：JSONUtil.toBean 解析 json，并创建不同于 source 的 User 实例
 import cn.hutool.json.JSONUtil;
 
 class User {
+// 初始状态：JSONUtil.toBean 解析 json，并创建不同于 source 的 User 实例。
     public String name;
 }
 
 User source = new User();
+// 初始状态：source 当前为 new User()。
 source.name = "Ann";
 String json = "{\"name\":\"Ann\"}";
 User copy = JSONUtil.toBean(json, User.class);
+// 作用：已有中间 JSON 时使用 toBean 创建新的目标实例；复制前要评估字段丢失、日期格式和嵌套引用语义。
 System.out.println(copy.name + ", same=" + (source == copy));
 // 输出：Ann, same=false
 ```
@@ -235,14 +246,15 @@ System.out.println(copy.name + ", same=" + (source == copy));
 日期格式、时区和类型转换必须由项目协议明确约定；跨服务优先考虑带时区的 ISO-8601，而不是依赖机器默认时区。
 
 ```java
-// 语义：日期格式、时区和类型转换必须由项目协议明确约定。
-// 初始状态：config 初始为 JSONConfig.create().setDateFormat("yyyy-MM-dd HH:mm:ss")；json 初始为 JSONUtil.toJsonStr(java.util.Map.of("date", new Date(0)), config)。
 import cn.hutool.json.JSONConfig;
 import cn.hutool.json.JSONUtil;
 import java.util.Date;
 
 JSONConfig config = JSONConfig.create().setDateFormat("yyyy-MM-dd HH:mm:ss");
+// 初始状态：config 当前为 JSONConfig.create().setDateFormat("yyyy-MM-dd HH:mm:ss")。
+// 作用：日期格式、时区和类型转换必须由项目协议明确约定。
 String json = JSONUtil.toJsonStr(java.util.Map.of("date", new Date(0)), config);
+// 初始状态：json 当前为 JSONUtil.toJsonStr(java.util.Map.of("date", new Date(0)), config)。
 System.out.println(config.getDateFormat());
 // 输出：yyyy-MM-dd HH:mm:ss
 ```
@@ -253,11 +265,11 @@ System.out.println(config.getDateFormat());
 适合日志和人工阅读，不建议把带缩进的文本直接当作高频网络协议格式。
 
 ```java
-// 作用：通过 JSONUtil.toJsonPrettyStr 输出缩进 JSON。
 import cn.hutool.json.JSONUtil;
 import java.util.Map;
 
 String pretty = JSONUtil.toJsonPrettyStr(Map.of("name", "Ann"));
+// 作用：通过 JSONUtil.toJsonPrettyStr 输出缩进 JSON。
 System.out.println(pretty.contains("\n"));
 // 输出：true
 ```
@@ -267,13 +279,13 @@ System.out.println(pretty.contains("\n"));
 快捷读取仍需自行处理文件不存在、文件大小、权限、字符集和异常；不应把本地文件内容直接当作可信输入。
 
 ```java
-// 作用：通过 JSONUtil.readJSON 从文件读取 JSON。
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 
 JSON json = JSONUtil.readJSON(new File("user.json"), StandardCharsets.UTF_8);
+// 作用：通过 JSONUtil.readJSON 从文件读取 JSON。
 System.out.println(json != null);
 // 输出：true
 ```
@@ -283,10 +295,10 @@ System.out.println(json != null);
 动态容器适合渐进式读取，但嵌套字段较多时容易出现空指针或类型假设；稳定协议优先映射成 Bean。
 
 ```java
-// 作用：通过 JSONUtil.parseObj 从动态对象读取嵌套结构。
 import cn.hutool.json.JSONUtil;
 
 var object = JSONUtil.parseObj("{\"profile\":{\"name\":\"Ann\"}}");
+// 作用：通过 JSONUtil.parseObj 从动态对象读取嵌套结构。
 String name = object.getJSONObject("profile").getStr("name");
 System.out.println(name);
 // 输出：Ann
@@ -297,11 +309,11 @@ System.out.println(name);
 元素不是对象时同样要显式声明类型；类型转换失败不要用空列表掩盖输入错误。
 
 ```java
-// 作用：通过 JSONUtil.toList 读取标量列表。
 import cn.hutool.json.JSONUtil;
 import java.util.List;
 
 List<Integer> values = JSONUtil.toList(JSONUtil.parseArray("[1, 2, 3]"), Integer.class);
+// 作用：通过 JSONUtil.toList 读取标量列表。
 System.out.println(values);
 // 输出：[1, 2, 3]
 ```

@@ -227,6 +227,7 @@ import java.util.List;
 public class InstanceReflectDemo {
     public static void main(String[] args) {
         List<String> list = new ArrayList<>();
+        // 初始状态：list 当前为 new ArrayList<>()。
         System.out.println(List.class.isInstance(list));
         // 输出：true
     }
@@ -258,15 +259,16 @@ public class ArrayReflectDemo {
 相比直接 `setAccessible(true)`，`trySetAccessible` 可以把当前访问是否成功作为结果处理；强模块边界下仍可能返回 false。
 
 ```java
-// 作用：通过 trySetAccessible 探测访问是否可打开。
 import java.lang.reflect.Field;
 
 class PrivateValue { private int value = 1; }
+// 初始状态：value 当前为 1; }。
 
 public class TryAccessibleDemo {
     public static void main(String[] args) throws Exception {
         Field field = PrivateValue.class.getDeclaredField("value");
         System.out.println(field.trySetAccessible());
+        // 作用：通过 trySetAccessible 探测访问是否可打开。
         // 输出：true
     }
 }
@@ -277,7 +279,6 @@ public class TryAccessibleDemo {
 只有声明位置的泛型签名可能保留在 class 文件中；普通 `new ArrayList<String>()` 的对象实例本身通常不知道 String。
 
 ```java
-// 作用：通过 getGenericSuperclass 读取部分泛型签名。
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 
@@ -286,6 +287,7 @@ class Names extends ArrayList<String> { }
 public class GenericSuperclassDemo {
     public static void main(String[] args) {
         var type = (ParameterizedType) Names.class.getGenericSuperclass();
+        // 作用：通过 getGenericSuperclass 读取部分泛型签名。
         System.out.println(type.getActualTypeArguments()[0].getTypeName());
         // 输出：java.lang.String
     }
@@ -297,12 +299,12 @@ public class GenericSuperclassDemo {
 record 组件提供名称、类型和访问器信息，但反射读取不改变 record 的浅不可变语义。
 
 ```java
-// 作用：通过 getRecordComponents 读取 record 组件。
 record Point(int x, int y) { }
 
 public class RecordComponentReflectDemo {
     public static void main(String[] args) {
         var components = Point.class.getRecordComponents();
+        // 作用：通过 getRecordComponents 读取 record 组件。
         System.out.println(components[0].getName() + " / " + components.length);
         // 输出：x / 2
     }
@@ -329,11 +331,11 @@ public class NestReflectDemo {
 框架日志和异常转换应优先记录 `getCause()`；只打印 InvocationTargetException 会丢失真正业务根因。
 
 ```java
-// 作用：通过 InvocationTargetException 还原目标异常。
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class InvocationTargetDemo {
+// 作用：框架日志和异常转换应优先记录 getCause()；只打印 InvocationTargetException 会丢失真正业务根因。
     static void fail() { throw new IllegalArgumentException("bad input"); }
 
     public static void main(String[] args) throws Exception {
@@ -341,6 +343,7 @@ public class InvocationTargetDemo {
         try {
             method.invoke(null);
         } catch (InvocationTargetException e) {
+        // 作用：通过 InvocationTargetException 还原目标异常。
             System.out.println(e.getCause().getClass().getSimpleName());
             // 输出：IllegalArgumentException
         }
@@ -353,7 +356,6 @@ public class InvocationTargetDemo {
 `AnnotatedType` 关注类型使用位置，而不是方法/字段声明本身；它通常服务于校验框架或静态/运行时类型工具。
 
 ```java
-// 作用：通过 getAnnotatedType 读取类型使用位置注解。
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -362,6 +364,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE_USE)
 @interface NonNull { }
+// 作用：AnnotatedType 关注类型使用位置，而不是方法/字段声明本身；它通常服务于校验框架或静态/运行时类型工具。
+// 作用：通过 getAnnotatedType 读取类型使用位置注解。
 
 public class AnnotatedTypeDemo {
     static @NonNull String value() { return "java"; }

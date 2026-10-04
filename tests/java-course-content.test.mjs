@@ -909,6 +909,85 @@ function getLanguageComments(language, code) {
     .map((line) => line.slice(marker.length).trim())
 }
 
+function getJavaStatementComment(code, statementIndex) {
+  const lines = code.split(/\r?\n/u)
+  const comments = []
+  for (let index = statementIndex + 1; index < lines.length; index += 1) {
+    const nextLine = lines[index].trim()
+    if (!nextLine.startsWith('//')) break
+    comments.push(nextLine.slice(2).trim())
+  }
+  return comments.join('\n')
+}
+
+function getJavaStatementEndIndex(code, statementIndex) {
+  const lines = code.split(/\r?\n/u)
+  for (let index = statementIndex; index < lines.length; index += 1) {
+    if (/[;{}]\s*$/u.test(lines[index].trim())) return index
+  }
+  return statementIndex
+}
+
+function inspectJavaStatementAdjacentComments(heading, code) {
+  const lines = code.split(/\r?\n/u)
+  const codeLines = lines
+    .map((line, index) => ({ index, text: line.trim() }))
+    .filter(({ text }) =>
+      text !== '' &&
+      !text.startsWith('//') &&
+      !/^(?:package|import)\s/u.test(text) &&
+      !/^[{}]+;?$/u.test(text),
+    )
+  if (codeLines.length === 0) return []
+
+  const headingLabel = heading.split(/[：:]/u, 1)[0].replaceAll('`', '')
+  const apiName = headingLabel.match(/(@?[A-Za-z_$][\w$]*)\s*$/u)?.[1] ?? ''
+  const bareApiName = apiName.replace(/^@/u, '')
+  const escapedApiName = bareApiName.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+  const keyPattern = apiName.startsWith('@')
+    ? new RegExp(`@${escapedApiName}\\b`, 'u')
+    : new RegExp(`(?:\\b${escapedApiName}\\s*\\(|\\bnew\\s+${escapedApiName}\\b)`, 'u')
+  const outputPattern = /\bSystem\.out\.(?:print|println|printf)\s*\(/u
+  const keyLine = codeLines.find(({ text }) => keyPattern.test(text)) ??
+    codeLines.find(({ index }) => {
+      const statementEnd = getJavaStatementEndIndex(code, index)
+      return /(?:作用|关键变化|当前状态|结果|输出|异常|效果|返回)\s*[:：]/u.test(
+        getJavaStatementComment(code, statementEnd),
+      )
+    }) ?? codeLines.find(({ text }) => !outputPattern.test(text)) ?? codeLines[0]
+  const setupCandidates = codeLines.filter(({ index, text }) =>
+    index <= keyLine.index &&
+    !keyPattern.test(text) &&
+    /(?:\bnew\s+|\b(?:var|byte|short|int|long|float|double|boolean|char|String|List|Set|Map|Queue|Deque|Path|File|URI|URL|Optional|Stream|LocalDate|LocalTime|LocalDateTime|Instant|Duration|Period|Pattern|Matcher|Class|Method|Field|Constructor|Thread|Executor\w*|Future|CompletableFuture|Atomic\w*|CountDownLatch|Semaphore|CyclicBarrier|ReentrantLock|ReadWriteLock|StampedLock|ObjectMapper|JSONObject|Workbook|Sheet|Row|CellStyle|JobDataMap)\b[^;=]*=)/u.test(text),
+  )
+  const setupLine = setupCandidates.find(({ index }) => {
+    const statementEnd = getJavaStatementEndIndex(code, index)
+    return /(?:输入|初始(?:状态)?|当前状态|说明)\s*[:：]/u.test(
+      getJavaStatementComment(code, statementEnd),
+    )
+  }) ?? setupCandidates[0]
+
+  const issues = []
+  if (setupLine) {
+    const setupEnd = getJavaStatementEndIndex(code, setupLine.index)
+    const comment = getJavaStatementComment(code, setupEnd)
+    if (!/(?:输入|初始(?:状态)?|当前状态|说明)\s*[:：]/u.test(comment)) {
+      issues.push(`[${heading}] first java block must explain the input or initial state on the line after its setup statement`)
+    }
+  }
+
+  const keyEnd = getJavaStatementEndIndex(code, keyLine.index)
+  const keyComment = getJavaStatementComment(code, keyEnd)
+  const keyNeedsOwnComment = setupLine?.index !== keyLine.index
+  const keyLabels = keyNeedsOwnComment
+    ? /(?:作用|关键变化|当前状态|结果|输出|异常|效果|返回)\s*[:：]/u
+    : /(?:输入|初始(?:状态)?|作用|关键变化|当前状态|结果|输出|异常|效果|返回|说明)\s*[:：]/u
+  if (!keyLabels.test(keyComment)) {
+    issues.push(`[${heading}] first java block must explain the API call or state change on the line after its key statement`)
+  }
+  return issues
+}
+
 function inspectApiExampleComments(body) {
   const issues = []
   for (const { heading, content } of getSupportedApiH3Subsections(body)) {
@@ -929,6 +1008,9 @@ function inspectApiExampleComments(body) {
     }
     if (!comments.some((comment) => RESULT_COMMENT_LABEL.test(comment))) {
       issues.push(`[${heading}] first ${language} block needs a result/output comment`)
+    }
+    if (language === 'java' && explanationComments.length > 0) {
+      issues.push(...inspectJavaStatementAdjacentComments(heading, firstSupportedBlock[2]))
     }
   }
   return issues
@@ -2264,8 +2346,8 @@ test('common-usage first examples require explanation and result comments in the
 ### \`List.get\`：读取元素
 
 \`\`\`java
-// 初始状态：List.get 将读取列表中的 first
 int first = 1;
+// 初始状态：List.get 将读取列表中的 first
 // 输出：1
 \`\`\`
 
@@ -2320,6 +2402,26 @@ java Demo
     inspectApiExampleComments(onlyOutput),
     ['[`List.get`：读取元素] first java block needs an explanation comment'],
     'an output comment alone must not satisfy the explanation requirement',
+  )
+
+  const detachedSummary = `
+## 常用用法
+### \`List.add\`：追加元素
+\`\`\`java
+// 说明：names 初始包含 Alice、Bob，List.add 会追加 Carol
+List<String> names = new ArrayList<>(List.of("Alice", "Bob"));
+names.add("Carol");
+System.out.println(names);
+// 输出：[Alice, Bob, Carol]
+\`\`\`
+`
+  assert.deepEqual(
+    inspectApiExampleComments(detachedSummary),
+    [
+      '[\`List.add\`：追加元素] first java block must explain the input or initial state on the line after its setup statement',
+      '[\`List.add\`：追加元素] first java block must explain the API call or state change on the line after its key statement',
+    ],
+    'a detached summary plus output must not replace statement-adjacent input and action comments',
   )
 
   const onlyExplanation = valid.replace('// 输出：1\n', '')

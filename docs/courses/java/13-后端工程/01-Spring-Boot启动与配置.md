@@ -50,6 +50,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class BackendApplication {
+// 作用：用途：用于声明应用配置、组件扫描和自动配置的根入口；启动类应放在业务包的共同父包。
     public static void main(String[] args) {
         var context = SpringApplication.run(BackendApplication.class, args);
         System.out.println(context != null);
@@ -66,7 +67,6 @@ public class BackendApplication {
 用途：用于把一组 Bean 定义交给 Spring 容器；下例注册名为 `systemClock` 的 UTC `Clock`，业务 Bean 可通过构造器按类型注入。
 
 ```java
-// 作用：通过 @Configuration 声明配置类。
 import java.time.Clock;
 import java.time.ZoneOffset;
 import org.springframework.context.annotation.Bean;
@@ -74,6 +74,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 class TimeConfiguration {
+// 作用：用途：用于把一组 Bean 定义交给 Spring 容器；下例注册名为 systemClock 的 UTC Clock，业务 Bean 可通过构造器按类型注入。
+// 作用：通过 @Configuration 声明配置类。
     @Bean("systemClock")
     Clock systemClock() {
         return Clock.system(ZoneOffset.UTC);
@@ -90,6 +92,8 @@ class TimeConfiguration {
 
 ```java
 String yml = "server:\n  port: 8080\nclient:\n  timeout: 2s\n";
+// 初始状态：yml 当前为 "server:\n  port: 8080\nclient:\n  timeout: 2s\n"。
+// 作用：用途：用于按环境层级表达端口、超时和业务开关；文件中的值最终会进入 Spring Environment。
 boolean hasPort = yml.contains("port: 8080");
 System.out.println(hasPort);
 // 输出：true
@@ -107,6 +111,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "client")
 public record ClientProperties(String baseUrl, int timeoutSeconds) {
+// 作用：用途：用于把同一前缀下的多项配置绑定到不可变或可校验的类型，避免在业务代码散落字符串键。
     public ClientProperties {
         if (timeoutSeconds <= 0) {
             throw new IllegalArgumentException("timeoutSeconds must be positive");
@@ -176,6 +181,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 class WarmupRunner implements ApplicationRunner {
+// 作用：用途：用于在应用上下文完成刷新后执行轻量初始化；不适合阻塞启动线程或处理可重试的长任务。
     @Override
     public void run(ApplicationArguments args) {
         System.out.println("cache warmup");
@@ -197,6 +203,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 class PropertyProbe {
+// 作用：用途：用于诊断属性来源或读取少量动态开关；重复读取同一业务配置时优先使用 @ConfigurationProperties。
     PropertyProbe(Environment environment) {
         String port = environment.getProperty("server.port", "8080");
         System.out.println(port);

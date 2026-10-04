@@ -43,6 +43,7 @@ CAS 失败时通常重试，竞争激烈会消耗 CPU。LongAdder 的总和适�
 ```java
 // 说明：main 线程将 volatile running 从 true 改为 false，读取该标志的工作线程不需额外锁即可看到停止请求。
 public class VolatileStopDemo {
+// 作用：普通字段可能被编译器或处理器重排、缓存观察；volatile 读写建立跨线程可见性。
     private static volatile boolean running = true;
 
     public static void main(String[] args) {
@@ -66,7 +67,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicIncrementDemo {
     public static void main(String[] args) {
         AtomicInteger count = new AtomicInteger(0);
+        // 初始状态：count 当前为 new AtomicInteger(0)。
         int current = count.incrementAndGet();
+        // 作用：incrementAndGet 用于把读、加一、写回封装为一个原子更新。
         System.out.println(current + ", stored=" + count.get());
         // 输出：1, stored=1
     }
@@ -86,7 +89,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicCompareDemo {
     public static void main(String[] args) {
         AtomicInteger state = new AtomicInteger(0);
+        // 初始状态：state 当前为 new AtomicInteger(0)。
         boolean first = state.compareAndSet(0, 1);
+        // 作用：CAS 失败说明当前值已经被其他路径改变，调用方可以重试、放弃或走冲突处理。
         boolean second = state.compareAndSet(0, 2);
         System.out.println(first + ", " + second + ", state=" + state.get());
         // 输出：true, false, state=1
@@ -109,6 +114,7 @@ public class AtomicReferenceDemo {
 
     public static void main(String[] args) {
         AtomicReference<Config> ref = new AtomicReference<>(new Config("a", 80));
+        // 作用：用不可变对象整体替换引用，能避免读线程看到半更新状态。
         ref.updateAndGet(old -> new Config(old.host(), old.port() + 1));
         System.out.println(ref.get());
         // 输出：Config[host=a, port=81]
@@ -129,6 +135,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
 public class AtomicArrayDemo {
     public static void main(String[] args) {
         AtomicLongArray values = new AtomicLongArray(2);
+        // 作用：AtomicLongArray 保护每个索引的更新，不会把两个索引的组合关系变成一次原子事务。
         values.incrementAndGet(1);
         values.addAndGet(1, 4);
         System.out.println(values.get(1));
@@ -150,6 +157,7 @@ import java.util.concurrent.atomic.LongAdder;
 public class LongAdderCounterDemo {
     public static void main(String[] args) {
         LongAdder hits = new LongAdder();
+        // 作用：LongAdder 把热点分散到多个槽，适合 QPS、命中次数等最终汇总；清零和读取期间如果还有并发更新，观察到的是近似时间点的统计。
         hits.add(2);
         hits.increment();
         System.out.println(hits.sum());
@@ -169,6 +177,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class AtomicBooleanDemo {
     public static void main(String[] args) {
         AtomicBoolean started = new AtomicBoolean(false);
+        // 作用：CAS 可以表达“只有第一个线程成功初始化”的状态迁移；初始化失败时要定义是否允许回滚或重试。
         boolean first = started.compareAndSet(false, true);
         boolean second = started.compareAndSet(false, true);
         System.out.println(first + ", " + second);
@@ -206,9 +215,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class WeakCasDemo {
     public static void main(String[] args) {
         AtomicInteger value = new AtomicInteger();
+        // 初始状态：value 当前为 new AtomicInteger()。
         boolean changed;
         do {
             changed = value.weakCompareAndSet(0, 1);
+            // 作用：弱 CAS 允许无理由失败，必须放在循环算法里；简单业务代码优先使用 compareAndSet，语义更容易读懂。特定 JDK 文档对内存语义的说明优先于经验。
         } while (!changed);
         System.out.println(changed + ", value=" + value.get());
         // 输出：true, value=1
@@ -227,6 +238,7 @@ import java.util.concurrent.atomic.LongAccumulator;
 public class LongAccumulatorDemo {
     public static void main(String[] args) {
         LongAccumulator max = new LongAccumulator(Math::max, Long.MIN_VALUE);
+        // 作用：累积函数必须满足结合性，且初始值要合理；如果只统计加法，LongAdder 更直接。
         max.accumulate(7);
         max.accumulate(3);
         System.out.println(max.get());

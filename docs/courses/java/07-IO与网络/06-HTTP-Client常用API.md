@@ -47,6 +47,7 @@ public class HttpClientTimeoutDemo {
         HttpClient client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(3))
                 .build();
+                // 作用：连接超时覆盖建立连接阶段，DNS、TLS、服务器处理和响应读取仍可能耗时；不要把它当成完整请求超时。
         System.out.println(client.connectTimeout().orElseThrow().toSeconds());
         // 输出：3
     }
@@ -62,6 +63,7 @@ public class HttpClientTimeoutDemo {
 import java.net.http.HttpClient;
 
 public class HttpRedirectDemo {
+// 作用：NORMAL 遵循常见浏览器式重定向规则，ALWAYS 更激进，NEVER 交给业务处理；跨域重定向还要重新审视凭证和敏感请求头。
     public static void main(String[] args) {
         var client = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
@@ -178,6 +180,8 @@ public class HttpRequestTimeoutDemo {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .timeout(Duration.ofSeconds(5))
                 .GET().build();
+                // 初始状态：request 当前保存 HttpRequest.newBuilder(URI.create("https://example.com")) .timeout(Duration.ofSeconds(5)) .GET().build()的计算结果。
+                // 作用：请求超时是一次 Request 的等待边界，触发时通常以 HttpTimeoutException 表示；重试前仍要判断操作是否幂等。
         System.out.println(request.timeout().orElseThrow().toSeconds());
         // 输出：5
     }
@@ -199,8 +203,10 @@ public class HttpAsyncDemo {
     public static void main(String[] args) throws Exception {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
+                // 初始状态：request 当前保存 HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build()的计算结果。
         var future = HttpClient.newHttpClient().sendAsync(
                 request, HttpResponse.BodyHandlers.ofString());
+                // 作用：sendAsync 返回 CompletableFuture，join 会重新抛出包装后的异常；生产代码要在链上使用 exceptionally/handle，不要无条件阻塞等待所有 Future。
         int status = future.thenApply(HttpResponse::statusCode).join();
         System.out.println(status);
         // 输出：200
@@ -223,7 +229,9 @@ public class HttpBytesResponseDemo {
     public static void main(String[] args) throws Exception {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
+                // 初始状态：request 当前保存 HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build()的计算结果。
         var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofByteArray());
+        // 作用：二进制响应不要强行转 String；图片、压缩数据和协议字节应使用 byte[] 或文件 BodyHandler，并设置大小保护。
         System.out.println(response.body().length > 0);
         // 输出：true
     }
@@ -246,9 +254,11 @@ import java.nio.file.Path;
 public class HttpFileResponseDemo {
     public static void main(String[] args) throws Exception {
         Path target = Files.createTempFile("http-body-", ".bin");
+        // 初始状态：target 当前为 Files.createTempFile("http-body-", ".bin")。
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
         var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofFile(target));
+        // 作用：ofFile 适合下载大响应，目标文件的覆盖、权限、磁盘空间和失败清理仍由调用方负责。
         System.out.println(response.statusCode() + ", " + (Files.size(target) > 0));
         // 输出：200, true
         Files.deleteIfExists(target);
@@ -271,7 +281,9 @@ public class HttpLinesResponseDemo {
     public static void main(String[] args) throws Exception {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
+                // 初始状态：request 当前保存 HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build()的计算结果。
         var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofLines());
+        // 作用：响应行 Stream 也要关闭；它适合边读边处理，但不应在没有协议限制时无限累积到集合。
         try (var lines = response.body()) {
             System.out.println(lines.findFirst().isPresent());
             // 输出：true
@@ -307,12 +319,13 @@ public class HttpHeadersDemo {
 这是偏好而不是对端强制结果；HTTP/2 需要服务端、TLS 和代理链路共同支持。
 
 ```java
-// 作用：通过 HttpClient.Version 偏好 HTTP/2 或 HTTP/1.1。
 import java.net.http.HttpClient;
 
 public class HttpVersionDemo {
+// 作用：这是偏好而不是对端强制结果；HTTP/2 需要服务端、TLS 和代理链路共同支持。
     public static void main(String[] args) {
         var client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
+        // 作用：通过 HttpClient.Version 偏好 HTTP/2 或 HTTP/1.1。
         System.out.println(client.version());
         // 输出：HTTP_1_1
     }
@@ -324,7 +337,6 @@ public class HttpVersionDemo {
 取消是协作式的，可能已经建立连接或收到部分响应；业务代码还要停止后续解析、重试和界面更新。
 
 ```java
-// 作用：通过 CompletableFuture.cancel 取消异步请求。
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -333,9 +345,11 @@ public class HttpCancelDemo {
     public static void main(String[] args) {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
+                // 初始状态：request 当前保存 HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build()的计算结果。
         var future = HttpClient.newHttpClient().sendAsync(request,
                 java.net.http.HttpResponse.BodyHandlers.ofString());
         System.out.println(future.cancel(true));
+        // 作用：通过 CompletableFuture.cancel 取消异步请求。
         // 输出：true
     }
 }
@@ -346,7 +360,6 @@ public class HttpCancelDemo {
 上传要设置大小上限、内容类型和重试策略；文件变更、权限和删除时机都属于调用方责任。
 
 ```java
-// 作用：通过 BodyPublishers.ofFile 从文件上传请求体。
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.nio.file.Files;
@@ -354,11 +367,14 @@ import java.nio.file.Files;
 public class HttpFileUploadDemo {
     public static void main(String[] args) throws Exception {
         var file = Files.createTempFile("http-upload-", ".txt");
+        // 初始状态：file 当前为 Files.createTempFile("http-upload-", ".txt")。
         Files.writeString(file, "payload");
         var request = HttpRequest.newBuilder(URI.create("https://example.com/upload"))
                 .header("Content-Type", "text/plain")
                 .POST(HttpRequest.BodyPublishers.ofFile(file))
                 .build();
+                // 作用：上传要设置大小上限、内容类型和重试策略；文件变更、权限和删除时机都属于调用方责任。
+                // 作用：通过 BodyPublishers.ofFile 从文件上传请求体。
         System.out.println(request.method() + ", " + Files.size(file));
         // 输出：POST, 7
         Files.deleteIfExists(file);
@@ -371,13 +387,13 @@ public class HttpFileUploadDemo {
 不要在源码中硬编码凭证；认证回调可能被多次触发，需结合 host、port、protocol 和凭证存储做限制。
 
 ```java
-// 作用：通过 Authenticator 代理或服务端认证回调。
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 
 public class HttpAuthenticatorDemo {
     public static void main(String[] args) {
         Authenticator authenticator = new Authenticator() {
+        // 作用：通过 Authenticator 代理或服务端认证回调。
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication("user", "secret".toCharArray());
@@ -416,10 +432,10 @@ public class HttpBodyHandlerBoundaryDemo {
 它执行 `application/x-www-form-urlencoded` 编码，只编码参数值，不能直接编码整条 URL。
 
 ```java
-// 作用：通过 URLEncoder.encode 编码查询参数值。
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 String keyword = URLEncoder.encode("Java 入门", StandardCharsets.UTF_8);
+// 作用：通过 URLEncoder.encode 编码查询参数值。
 String url = "https://example.test/search?q=" + keyword;
 System.out.println(keyword);
 System.out.println(url);
@@ -431,10 +447,10 @@ System.out.println(url);
 `URL` 构造器把协议、主机、端口和路径解析为结构化地址，但不会在构造时连接服务器。固定地址可以直接构造；新代码通常优先用 `URI` 表达和校验地址，再在需要旧 API 时转为 `URL`。
 
 ```java
-// 作用：通过 URL(String) 解析绝对资源地址。
 import java.net.URL;
 
 URL endpoint = new URL("https://example.test:8443/api/users");
+// 作用：通过 URL(String) 解析绝对资源地址。
 // endpoint 只保存地址组件，这一行没有发生 DNS 查询或网络 I/O。
 System.out.println(endpoint.getHost() + ":" + endpoint.getPort());
 // 输出：example.test:8443
@@ -445,10 +461,11 @@ System.out.println(endpoint.getHost() + ":" + endpoint.getPort());
 它只创建连接对象；真实网络访问还需读写，并应显式设置连接与读取超时。
 
 ```java
-// 作用：通过 URL.openConnection 创建底层 URLConnection。
 import java.net.URL;
 URL endpoint = new URL("https://example.test/api");
+// 初始状态：endpoint 当前为 new URL("https://example.test/api")。
 var connection = endpoint.openConnection();
+// 作用：通过 URL.openConnection 创建底层 URLConnection。
 // connection 还未读写网络；先在它上设置连接与读取超时。
 connection.setConnectTimeout(3_000);
 connection.setReadTimeout(5_000);

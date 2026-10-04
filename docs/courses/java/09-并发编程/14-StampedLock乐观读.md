@@ -171,7 +171,9 @@ import java.util.concurrent.locks.StampedLock;
 public class OptimisticStampDemo {
     public static void main(String[] args) {
         var lock = new StampedLock();
+        // 初始状态：lock 当前为 new StampedLock()。
         long stamp = lock.tryOptimisticRead();
+        // 作用：只想快速探测是否能进行无阻塞读取时使用该方法；stamp 只有通过 validate 校验后才可使用。
         System.out.println("valid=" + lock.validate(stamp));
         // 输出：valid=true（校验期间没有写入时）
     }
@@ -187,11 +189,11 @@ public class OptimisticStampDemo {
 不能无限等待读锁时使用带超时的获取；返回零 stamp 时应及时降级或返回，而不是继续解锁无效凭证。
 
 ```java
-// 作用：通过 tryReadLock(timeout) 带超时的真实读锁。
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.StampedLock;
 
 public class StampedReadTimeoutDemo {
+// 作用：通过 tryReadLock(timeout) 带超时的真实读锁。
     public static void main(String[] args) throws InterruptedException {
         var lock = new StampedLock();
         long stamp = lock.tryReadLock(1, TimeUnit.MILLISECONDS);
@@ -211,11 +213,11 @@ public class StampedReadTimeoutDemo {
 写锁等待需要时间上限且可响应中断时使用该方法；成功后仍要在 `finally` 中释放对应 stamp。
 
 ```java
-// 作用：通过 tryWriteLock(timeout) 可被中断的有界写锁等待。
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.StampedLock;
 
 public class StampedWriteTimeoutDemo {
+// 作用：通过 tryWriteLock(timeout) 可被中断的有界写锁等待。
     public static void main(String[] args) throws InterruptedException {
         var lock = new StampedLock();
         long stamp = lock.tryWriteLock(1, TimeUnit.MILLISECONDS);
@@ -258,7 +260,6 @@ public class StampedInterruptibleLockDemo {
 已持有读 stamp 且希望原子升级时可以尝试转换；转换返回零表示失败，不能假设升级一定成功。
 
 ```java
-// 作用：通过 tryConvertToWriteLock(stamp) 尝试读锁转写锁。
 import java.util.concurrent.locks.StampedLock;
 
 public class StampedConvertWriteDemo {
@@ -267,6 +268,7 @@ public class StampedConvertWriteDemo {
 
     void increment() {
         long stamp = lock.readLock();
+        // 作用：通过 tryConvertToWriteLock(stamp) 尝试读锁转写锁。
         try {
             long converted = lock.tryConvertToWriteLock(stamp);
             if (converted != 0L) {
@@ -308,13 +310,13 @@ public class StampedConvertWriteDemo {
 写入完成后还需保持读保护时使用转换降级；转换成功后要用新的读 stamp 解锁，失败则继续使用旧模式。
 
 ```java
-// 作用：通过 tryConvertToReadLock(stamp) 写锁降级为读锁。
 import java.util.concurrent.locks.StampedLock;
 
 public class StampedConvertReadDemo {
     public static void main(String[] args) {
         var lock = new StampedLock();
         long stamp = lock.writeLock();
+        // 作用：通过 tryConvertToReadLock(stamp) 写锁降级为读锁。
         try {
             long readStamp = lock.tryConvertToReadLock(stamp);
             if (readStamp != 0L) {
@@ -372,11 +374,11 @@ public class StampedNonReentrantDemo {
 需要同时限制等待时间并观察中断时使用超时获取；失败和中断都必须明确返回、重试或取消路径。
 
 ```java
-// 作用：通过 tryWriteLock(timeout) 用超时获取响应中断。
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.StampedLock;
 
 public class StampedInterruptBoundaryDemo {
+// 作用：通过 tryWriteLock(timeout) 用超时获取响应中断。
     public static void main(String[] args) {
         var lock = new StampedLock();
         Thread.currentThread().interrupt();

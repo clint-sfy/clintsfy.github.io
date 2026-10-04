@@ -45,6 +45,7 @@ Lambda 不是“自动多线程”，只是把一段行为交给一个有唯一�
 import java.util.function.Predicate;
 
 Predicate<String> longName = name -> name.length() >= 4;
+// 作用：test 返回布尔值，适合过滤、校验和权限判断；不要在谓词里偷偷修改共享状态。
 System.out.println(longName.test("Java"));
 // 输出：true
 ```
@@ -54,13 +55,14 @@ System.out.println(longName.test("Java"));
 `and` 会先检查左侧条件，左侧为 `false` 时短路，不再执行右侧条件。
 
 ```java
-// 语义：and 会先检查左侧条件，左侧为 false 时短路，不再执行右侧条件。
-// 初始状态：notBlank 初始为 text -> !text.isBlank()；startsWithJava 初始为 text -> text.startsWith("Java")。
 import java.util.function.Predicate;
 
 Predicate<String> notBlank = text -> !text.isBlank();
+// 初始状态：notBlank 当前为 text -> !text.isBlank()。
 Predicate<String> startsWithJava = text -> text.startsWith("Java");
+// 初始状态：startsWithJava 当前为 text -> text.startsWith("Java")。
 Predicate<String> valid = notBlank.and(startsWithJava);
+// 作用：and 会先检查左侧条件，左侧为 false 时短路，不再执行右侧条件。
 
 System.out.println(valid.test("Java 21"));
 // 输出：true
@@ -71,13 +73,14 @@ System.out.println(valid.test("Java 21"));
 `or` 适合表达候选条件，左侧为 `true` 时会短路，不再执行右侧条件。
 
 ```java
-// 语义：or 适合表达候选条件，左侧为 true 时会短路，不再执行右侧条件。
-// 初始状态：isJava 初始为 "Java"::equals；isKotlin 初始为 "Kotlin"::equals。
 import java.util.function.Predicate;
 
 Predicate<String> isJava = "Java"::equals;
+// 初始状态：isJava 当前为 "Java"::equals。
 Predicate<String> isKotlin = "Kotlin"::equals;
+// 初始状态：isKotlin 当前为 "Kotlin"::equals。
 Predicate<String> supported = isJava.or(isKotlin);
+// 作用：or 适合表达候选条件，左侧为 true 时会短路，不再执行右侧条件。
 
 System.out.println(supported.test("Kotlin"));
 // 输出：true
@@ -88,12 +91,13 @@ System.out.println(supported.test("Kotlin"));
 `negate` 用于复用已有条件的反义逻辑，避免再写一份容易漂移的判断。
 
 ```java
-// 语义：negate 用于复用已有条件的反义逻辑，避免再写一份容易漂移的判断。
-// 初始状态：blank 初始为 String::isBlank；notBlank 初始为 blank.negate()。
 import java.util.function.Predicate;
 
 Predicate<String> blank = String::isBlank;
+// 初始状态：blank 当前为 String::isBlank。
 Predicate<String> notBlank = blank.negate();
+// 初始状态：notBlank 当前为 blank.negate()。
+// 作用：negate 用于复用已有条件的反义逻辑，避免再写一份容易漂移的判断。
 String input = "Java";
 
 System.out.println(notBlank.test(input));
@@ -110,6 +114,7 @@ System.out.println(notBlank.test(input));
 import java.util.function.Function;
 
 Function<String, Integer> length = String::length;
+// 初始状态：length 当前为 String::length。
 System.out.println(length.apply("Java"));
 // 输出：4
 ```
@@ -119,13 +124,14 @@ System.out.println(length.apply("Java"));
 `compose` 先把输入交给参数函数，再把中间结果交给当前函数。
 
 ```java
-// 语义：compose 先把输入交给参数函数，再把中间结果交给当前函数。
-// 初始状态：trim 初始为 String::trim；length 初始为 String::length。
 import java.util.function.Function;
 
 Function<String, String> trim = String::trim;
+// 初始状态：trim 当前为 String::trim。
 Function<String, Integer> length = String::length;
+// 初始状态：length 当前为 String::length。
 Function<String, Integer> trimmedLength = length.compose(trim);
+// 作用：compose 先把输入交给参数函数，再把中间结果交给当前函数。
 
 System.out.println(trimmedLength.apply(" Java "));
 // 输出：4
@@ -136,13 +142,14 @@ System.out.println(trimmedLength.apply(" Java "));
 `andThen` 先执行当前函数，再把结果传给参数函数，适合按阅读顺序组织转换。
 
 ```java
-// 语义：andThen 先执行当前函数，再把结果传给参数函数，适合按阅读顺序组织转换。
-// 初始状态：trim 初始为 String::trim；upper 初始为 String::toUpperCase。
 import java.util.function.Function;
 
 Function<String, String> trim = String::trim;
+// 初始状态：trim 当前为 String::trim。
 Function<String, String> upper = String::toUpperCase;
+// 初始状态：upper 当前为 String::toUpperCase。
 Function<String, String> normalize = trim.andThen(upper);
+// 作用：andThen 先执行当前函数，再把结果传给参数函数，适合按阅读顺序组织转换。
 
 System.out.println(normalize.apply(" java "));
 // 输出：JAVA
@@ -160,6 +167,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 List<String> log = new ArrayList<>();
+// 作用：Consumer 没有返回值，常用于日志、通知和写入；并行流中使用它修改普通集合通常不安全。
 Consumer<String> record = log::add;
 record.accept("saved");
 System.out.println(log);
@@ -171,16 +179,17 @@ System.out.println(log);
 组合的两个动作按顺序执行；前一个动作抛异常时，后一个动作不会执行。
 
 ```java
-// 语义：组合的两个动作按顺序执行。
-// 初始状态：output 初始为 new ArrayList<>()；print 初始为 text -> output.add("value=" + text)。
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 List<String> output = new ArrayList<>();
+// 初始状态：output 当前为 new ArrayList<>()。
 Consumer<String> print = text -> output.add("value=" + text);
+// 初始状态：print 当前为 text -> output.add("value=" + text)。
 Consumer<String> count = text -> output.add("length=" + text.length());
 print.andThen(count).accept("Java");
+// 作用：组合的两个动作按顺序执行。
 System.out.println(output);
 // 输出：[value=Java, length=4]
 ```
@@ -195,6 +204,7 @@ System.out.println(output);
 import java.util.function.Supplier;
 
 Supplier<String> requestId = () -> "REQ-20";
+// 初始状态：requestId 当前为 () -> "REQ-20"。
 System.out.println(requestId.get());
 // 输出：REQ-20
 ```
@@ -209,6 +219,7 @@ System.out.println(requestId.get());
 import java.util.function.UnaryOperator;
 
 UnaryOperator<String> normalize = String::trim;
+// 初始状态：normalize 当前为 String::trim。
 System.out.println(normalize.apply(" Java "));
 // 输出：Java
 ```
@@ -248,11 +259,12 @@ names.stream().map(String::toUpperCase).forEach(System.out::println);
 三参数以上通常应使用自定义类型，避免把参数顺序藏在 Lambda 里。
 
 ```java
-// 作用：通过 BiPredicate 用两个输入判断条件。
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 
 BiPredicate<String, Integer> longEnough = (text, min) -> text.length() >= min;
+// 初始状态：longEnough 当前为 (text, min) -> text.length() >= min。
+// 作用：通过 BiPredicate 用两个输入判断条件。
 BiFunction<String, String, String> join = (left, right) -> left + ":" + right;
 System.out.println(longEnough.test("Java", 4));
 // 输出：true
@@ -265,8 +277,8 @@ System.out.println(join.apply("id", "20"));
 上例的 `join` 接收 `"id"` 和 `"20"`，按 `left + ":" + right` 返回 `"id:20"`；两个参数的类型可不同。
 
 ```java
-// 输入：左值为 id，右值为 20
 BiFunction<String, Integer, String> join = (left, right) -> left + ":" + right;
+// 初始状态：左值为 id，右值为 20。
 String text = join.apply("id", 20);
 // 结果：text 为 "id:20"
 ```
@@ -276,11 +288,11 @@ String text = join.apply("id", 20);
 `BiConsumer` 没有返回值，适合把键和值一起交给日志、填充或输出操作。
 
 ```java
-// 语义：printer.accept 把键 "id" 和值 20 交给同一个无返回值动作。
-// 初始状态：printer 由两参数 Lambda 初始化，输出格式为 key=value。
 import java.util.function.BiConsumer;
 
 BiConsumer<String, Integer> printer = (key, value) -> System.out.println(key + "=" + value);
+// 初始状态：printer 由两参数 Lambda 初始化，输出格式为 key=value。
+// 作用：printer.accept 把键 "id" 和值 20 交给同一个无返回值动作。
 printer.accept("id", 20);
 // 输出：id=20
 ```
@@ -290,7 +302,6 @@ printer.accept("id", 20);
 只在收集器需要一个“键就是元素本身”的函数时使用；直接写 `name -> name` 也完全可以。
 
 ```java
-// 作用：通过 Function.identity() 原样返回元素。
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -298,6 +309,7 @@ import java.util.stream.Collectors;
 List<String> names = List.of("Ann", "Bob");
 var same = names.stream().collect(
         Collectors.toMap(Function.identity(), String::length));
+        // 作用：通过 Function.identity() 原样返回元素。
 System.out.println(same);
 // 输出：{Ann=3, Bob=3}
 ```
@@ -324,6 +336,7 @@ System.out.println(memberRule.priceAfterDiscount(80));
 ```java
 // 初始状态：limit=10 且后续没有重新赋值，因此 underLimit Lambda 可以捕获它并测试 value=8。
 int limit = 10;
+// 初始状态：limit 当前为 10。
 java.util.function.Predicate<Integer> underLimit = value -> value < limit;
 System.out.println(underLimit.test(8));
 // 输出：true

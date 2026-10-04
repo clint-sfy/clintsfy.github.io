@@ -63,6 +63,7 @@ Runtime 的数值受启动参数和容器限制影响，适合做运行时观测
 ```java
 // 说明：Runtime：观察当前进程的内存上限。
 public class RuntimeMemoryDemo {
+// 作用：Runtime 的数值受启动参数和容器限制影响，适合做运行时观测，不能直接当成“应用实际可用内存”或据此盲目调大堆。
     public static void main(String[] args) {
         Runtime runtime = Runtime.getRuntime();
         System.out.println("processors>0=" + (runtime.availableProcessors() > 0));
@@ -111,6 +112,7 @@ public class ClassForNameDemo {
 
     public static void main(String[] args) throws ClassNotFoundException {
         Class.forName(Plugin.class.getName(), false, Plugin.class.getClassLoader());
+        // 作用：Class.forName(name, false, loader) 只加载并链接，不主动初始化；传 true 或直接使用需要初始化的静态成员时才可能执行 <clinit>。
         System.out.println("loaded only");
         // 输出：loaded only
     }
@@ -126,6 +128,7 @@ public class ClassForNameDemo {
 ```java
 // 说明：ClassLoader：查看类的定义加载器。
 public class ClassLoaderDemo {
+// 作用：核心类通常由 bootstrap loader 定义，因此 getClassLoader() 返回 null；应用类通常由应用类加载器定义。
     public static void main(String[] args) {
         ClassLoader loader = String.class.getClassLoader();
         System.out.println(loader == null ? "bootstrap" : loader.getClass().getSimpleName());
@@ -168,6 +171,7 @@ public class ClassInitializationDemo {
 import java.nio.ByteBuffer;
 
 public class DirectMemoryDemo {
+// 作用：直接缓冲区的内容不在普通 Java 堆中，适合与本地 I/O 交互；它仍受本地内存和 MaxDirectMemorySize 等边界影响，忘记释放引用也会造成压力。
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(4);
         buffer.putInt(42).flip();
