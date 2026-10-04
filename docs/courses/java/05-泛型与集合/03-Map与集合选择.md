@@ -66,8 +66,8 @@ import java.util.Map;
 Map<String, Integer> scores = Map.of("java", 95);
 // 初始状态：scores 当前为 Map.of("java", 95)。
 System.out.println(scores.get("java"));
-// 作用：需要读取键对应的值时使用 get，键缺失时返回 null。
 // 输出：95
+// 作用：需要读取键对应的值时使用 get，键缺失时返回 null。
 ```
 
 ### `Map.containsKey`：判断键是否存在
@@ -82,8 +82,8 @@ Map<String, Integer> scores = new HashMap<>();
 // 初始状态：scores 当前为 new HashMap<>()。
 scores.put("java", null);
 System.out.println(scores.containsKey("java"));
-// 作用：需要区分“键不存在”和“键映射到 null”时使用 containsKey。
 // 输出：true
+// 作用：需要区分“键不存在”和“键映射到 null”时使用 containsKey。
 ```
 
 ### `Map.merge`：合并键对应的值
@@ -197,6 +197,8 @@ record UserKey(String id) {}
 public class MapStableKeyDemo {
     public static void main(String[] args) {
         Map<UserKey, Integer> map = new HashMap<>();
+// 关键变化：map 接收表达式 new HashMap<>() 的计算结果。
+// 初始状态：map 的初始值为 new HashMap<>()。
         map.put(new UserKey("u-1"), 95);
         System.out.println(map.get(new UserKey("u-1")));
         // 输出：95
@@ -217,6 +219,8 @@ import java.util.Map;
 public class MapEntryOverviewDemo {
     public static void main(String[] args) {
         Map<String, Integer> map = new LinkedHashMap<>(Map.of("java", 95));
+// 关键变化：map 接收表达式 new LinkedHashMap<>(Map.of("java", 95)) 的计算结果。
+// 初始状态：map 的初始值为 new LinkedHashMap<>(Map.of("java", 95))。
         for (Map.Entry<String, Integer> entry : map.entrySet()) {
             System.out.println(entry.getKey() + "=" + entry.getValue());
             // 输出：java=95
@@ -259,6 +263,8 @@ public class MapAccessOrderOverviewDemo {
     // 作用：访问顺序只维护最近访问排列，不自动实现容量淘汰；完整边界见 Map 常用 API。
         LinkedHashMap<String, Integer> map =
             new LinkedHashMap<>(16, 0.75f, true);
+// // 关键变化：LinkedHashMap<String, Integer> map = 使用表达式中的具体参数完成本次调用。
+// 初始状态：表达式为 LinkedHashMap<String, Integer> map =。
         map.put("A", 1);
         map.put("B", 2);
         map.get("A");
@@ -280,6 +286,7 @@ public class ConcurrentMapOverviewDemo {
 // 初始状态：merge("java", 1, Integer::sum) 原子地建立 java -> 1。
     public static void main(String[] args) {
         ConcurrentHashMap<String, Integer> count = new ConcurrentHashMap<>();
+// 输入：count 的初始值为 new ConcurrentHashMap<>()。
         // 作用：ConcurrentHashMap 不接受 null；merge、computeIfAbsent 的原子性以单键操作为边界，跨键流程仍需要锁或事务协调。
         count.merge("java", 1, Integer::sum);
         System.out.println(count.get("java"));

@@ -176,8 +176,8 @@ System.out.println(user);
 import java.util.Optional;
 
 Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));
+// 输出：status=saved；输入：Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));。
 // 作用：通过 ifPresent 有值时执行动作。
-// 输出：status=saved
 ```
 
 ### `ifPresentOrElse`：分别处理有值和缺失（Java 9+）
@@ -207,6 +207,7 @@ System.out.println(output);
 import java.util.Optional;
 
 Optional<String> missing = Optional.empty();
+// 输入：missing 的初始值为 Optional.empty()。
 // 作用：通过 empty 明确创建空结果。
 System.out.println(missing.isPresent());
 // 输出：false
@@ -238,6 +239,7 @@ List<String> values = List.of("java", "", "sql").stream()
         .map(text -> text.isBlank() ? java.util.Optional.<String>empty() : java.util.Optional.of(text))
         .flatMap(java.util.Optional::stream)
         .toList();
+// 输入：values 的初始值为 List.of("java", "", "sql").stream()。
         // 作用：Optional.stream() 在有值时产生一个元素、无值时产生空流，适合拼接批量转换管道。
         // 作用：通过 stream 把 Optional 接入 Stream（Java 9+）。
 System.out.println(values);
@@ -254,8 +256,8 @@ import java.util.Optional;
 Optional<String> value = Optional.of("Java");
 // 初始状态：value 当前为 Optional.of("Java")。
 System.out.println(value.get());
-// 作用：通过 get 直接取值（谨慎使用）。
 // 输出：Java
+// 作用：通过 get 直接取值（谨慎使用）。
 ```
 
 ### `OptionalInt`：避免基本类型装箱

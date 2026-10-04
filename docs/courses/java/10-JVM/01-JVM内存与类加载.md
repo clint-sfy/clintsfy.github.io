@@ -45,6 +45,8 @@ description: 建立 JVM 运行时内存区、对象生命周期和类加载初�
 public class HeapStackDemo {
     static int add(int left, int right) {
         int sum = left + right;
+// 关键变化：sum 接收表达式 left + right 的计算结果。
+// 初始状态：sum 的初始值为 left + right。
         return sum;
     }
 
@@ -90,6 +92,8 @@ public class ClassLiteralDemo {
 
     public static void main(String[] args) {
         Class<Service> type = Service.class;
+// 关键变化：type 接收表达式 Service.class 的计算结果。
+// 初始状态：type 的初始值为 Service.class。
         System.out.println(type.getSimpleName());
         // 输出：Service
     }
@@ -112,6 +116,7 @@ public class ClassForNameDemo {
 
     public static void main(String[] args) throws ClassNotFoundException {
         Class.forName(Plugin.class.getName(), false, Plugin.class.getClassLoader());
+// 输入：表达式为 Class.forName(Plugin.class.getName(), false, Plugin.class.getClassLoader())。
         // 作用：Class.forName(name, false, loader) 只加载并链接，不主动初始化；传 true 或直接使用需要初始化的静态成员时才可能执行 <clinit>。
         System.out.println("loaded only");
         // 输出：loaded only
@@ -148,6 +153,8 @@ public class ClassLoaderDemo {
 public class ClassInitializationDemo {
     static class Config {
         static final String VALUE = new String("ready");
+// 关键变化：VALUE 接收右侧表达式 new String("ready") 的计算结果。
+// 初始状态：VALUE 的初始值为 new String("ready")。
 
         static {
             System.out.println("init once");
@@ -190,6 +197,8 @@ public class DirectMemoryDemo {
 public class ClassInitializationFlagDemo {
     static class Feature {
         static int value = 42;
+// 关键变化：value 接收右侧表达式 42 的计算结果。
+// 初始状态：value 的初始值为 42。
     }
 
     public static void main(String[] args) throws Exception {
@@ -213,6 +222,8 @@ import java.lang.ref.WeakReference;
 public class ClassUnloadHintDemo {
     public static void main(String[] args) {
         Object plugin = new Object();
+// 关键变化：plugin 接收表达式 new Object() 的计算结果。
+// 初始状态：plugin 的初始值为 new Object()。
         WeakReference<Object> reference = new WeakReference<>(plugin);
         plugin = null;
         System.out.println(reference.get() != null);

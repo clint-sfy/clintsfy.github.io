@@ -399,8 +399,9 @@ var values = List.of("a", "a", "b").stream()
         // 初始状态：values 当前保存 List.of("a", "a", "b").stream() .collect(Collectors.toSet())的计算结果。
         // 作用：通过 Collectors.toSet 收集并去重。
 System.out.println(values.size());
-System.out.println(values.containsAll(List.of("a", "b")));
 // 输出：2、true
+System.out.println(values.containsAll(List.of("a", "b")));
+// 输出：System.out 调用参数为 values.containsAll(List.of("a", "b"))。
 ```
 
 ### `Collectors.toMap`：按键和值构造映射
@@ -453,8 +454,9 @@ var groups = List.of("a", "bb", "c").stream()
         // 初始状态：groups 当前保存 List.of("a", "bb", "c").stream() .collect(Collectors.groupingBy(String::length))的计算结果。
         // 作用：通过 Collectors.groupingBy 按分类键分组。
 System.out.println(groups.get(1));
-System.out.println(groups.get(2));
 // 输出：[a, c]、[bb]
+System.out.println(groups.get(2));
+// 输出：System.out 调用参数为 groups.get(2)。
 ```
 
 具体收集器的更多组合可查 [Collectors 收集器速查](./05-Collectors收集器速查)。
@@ -469,6 +471,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 Stream<String> stream = List.of("a", "b").stream();
+// 关键变化：stream 接收表达式 List.of("a", "b").stream() 的计算结果。
+// 初始状态：stream 的初始值为 List.of("a", "b").stream()。
 System.out.println(stream.count());
 // 输出：2
 try {
@@ -488,7 +492,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 List<Integer> target = new ArrayList<>();
+// 初始状态：target 的初始值为 new ArrayList<>()。
 List.of(1, 2, 3).stream().forEach(target::add);
+// // 关键变化：List.of(1, 2, 3).stream().forEach(target::add) 使用表达式中的具体参数完成本次调用。
 System.out.println(target.size());
 // 输出：3
 ```
@@ -503,6 +509,7 @@ import java.util.List;
 long count = List.of(1, 2, 3, 4).parallelStream()
         .filter(number -> number % 2 == 0)
         .count();
+// 输入：count 的初始值为 List.of(1, 2, 3, 4).parallelStream()。
         // 作用：并行不等于更快；小数据、阻塞 I/O、顺序敏感和共享状态场景通常应保持串行，并用基准测试验证收益。
         // 作用：通过 Collection.parallelStream 从集合创建并行流。
 System.out.println(count);
@@ -516,6 +523,8 @@ System.out.println(count);
 ```java
 // 关键变化：Stream.of(1, 2, 3) 初始为顺序流，parallel() 把管道标记为并行，所以 isParallel() 写入 true。
 boolean parallel = Stream.of(1, 2, 3).parallel().isParallel();
+// 返回：parallel 接收 Stream.of(1, 2, 3).parallel().isParallel() 的返回值。
+// 输入：parallel 的初始值为 Stream.of(1, 2, 3).parallel().isParallel()。
 // 结果：parallel 为 true
 ```
 
@@ -527,6 +536,7 @@ boolean parallel = Stream.of(1, 2, 3).parallel().isParallel();
 import java.util.List;
 
 long count = List.of("a", "b", "c").parallelStream().unordered().distinct().count();
+// 输入：count 的初始值为 List.of("a", "b", "c").parallelStream().unordered().distinct().count()。
 // 作用：通过 unordered 声明不需要遇到顺序。
 System.out.println(count);
 // 输出：3
@@ -558,6 +568,7 @@ try-with-resources 在代码块结束时调用 `close()`，因此上例注册的
 
 ```java
 try (Stream<String> lines = Files.lines(Path.of("data.txt"))) {
+// 关键变化：lines 接收表达式 Files.lines(Path.of("data.txt"))) { 的计算结果。
 // 初始状态：Files.lines(Path.of("data.txt")) 打开文件并返回 lines，try-with-resources 在离开块时调用 lines.close()。
     lines.findFirst();
 }

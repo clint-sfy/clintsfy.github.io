@@ -45,6 +45,8 @@ import java.nio.file.Paths;
 public class PathCreateDemo {
     public static void main(String[] args) {
         Path first = Path.of("logs", "app.log");
+// 关键变化：first 接收表达式 Path.of("logs", "app.log") 的计算结果。
+// 初始状态：first 的初始值为 Path.of("logs", "app.log")。
         Path second = Paths.get("logs", "app.log");
         System.out.println(first.equals(second));
         // 输出：true
@@ -85,6 +87,8 @@ import java.nio.file.Path;
 public class PathNormalizeDemo {
     public static void main(String[] args) {
         Path path = Path.of("data", "logs", "..", "app.log");
+// 关键变化：path 接收表达式 Path.of("data", "logs", "..", "app.log") 的计算结果。
+// 初始状态：path 的初始值为 Path.of("data", "logs", "..", "app.log")。
         System.out.println(path.normalize());
         // 输出：data/app.log
     }
@@ -121,6 +125,8 @@ import java.nio.file.Path;
 public class PathPartsDemo {
     public static void main(String[] args) {
         Path path = Path.of("data", "app.log");
+// 关键变化：path 接收表达式 Path.of("data", "app.log") 的计算结果。
+// 初始状态：path 的初始值为 Path.of("data", "app.log")。
         System.out.println(path.getFileName() + " / " + path.getParent() + " / " + path.getName(0));
         // 输出：app.log / data / data
     }
@@ -139,6 +145,8 @@ import java.nio.file.Path;
 public class FilesCheckDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-files-", ".txt");
+// 关键变化：file 接收表达式 Files.createTempFile("java-files-", ".txt") 的计算结果。
+// 初始状态：file 的初始值为 Files.createTempFile("java-files-", ".txt")。
         System.out.println(Files.exists(file) + ", " + Files.isRegularFile(file) + ", " + Files.isReadable(file));
         // 输出：true, true, true
         Files.deleteIfExists(file);
@@ -158,6 +166,8 @@ import java.nio.file.Path;
 public class FilesCreateDemo {
     public static void main(String[] args) throws Exception {
         Path directory = Files.createTempDirectory("java-dir-");
+// 关键变化：directory 接收表达式 Files.createTempDirectory("java-dir-") 的计算结果。
+// 初始状态：directory 的初始值为 Files.createTempDirectory("java-dir-")。
         Path nested = directory.resolve("a").resolve("b");
         Files.createDirectories(nested);
         Path file = Files.createFile(nested.resolve("app.txt"));
@@ -186,6 +196,8 @@ import java.nio.file.Path;
 public class FilesTextDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-text-", ".txt");
+// 关键变化：file 接收表达式 Files.createTempFile("java-text-", ".txt") 的计算结果。
+// 初始状态：file 的初始值为 Files.createTempFile("java-text-", ".txt")。
         Files.writeString(file, "你好 Java", StandardCharsets.UTF_8);
         System.out.println(Files.readString(file, StandardCharsets.UTF_8));
         // 输出：你好 Java
@@ -209,6 +221,8 @@ import java.util.Arrays;
 public class FilesBytesDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-bytes-", ".bin");
+// 关键变化：file 接收表达式 Files.createTempFile("java-bytes-", ".bin") 的计算结果。
+// 初始状态：file 的初始值为 Files.createTempFile("java-bytes-", ".bin")。
         Files.write(file, new byte[]{1, 2, 3});
         System.out.println(Arrays.toString(Files.readAllBytes(file)));
         // 输出：[1, 2, 3]
@@ -231,6 +245,8 @@ import java.nio.file.Path;
 public class FilesBufferedTextDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-buffered-", ".txt");
+// 关键变化：file 接收表达式 Files.createTempFile("java-buffered-", ".txt") 的计算结果。
+// 初始状态：file 的初始值为 Files.createTempFile("java-buffered-", ".txt")。
         try (var writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
             writer.write("first");
             writer.newLine();
@@ -306,6 +322,8 @@ import java.nio.file.Path;
 public class FilesDeleteDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-delete-", ".txt");
+// 关键变化：file 接收表达式 Files.createTempFile("java-delete-", ".txt") 的计算结果。
+// 初始状态：file 的初始值为 Files.createTempFile("java-delete-", ".txt")。
         Files.delete(file);
         System.out.println(Files.deleteIfExists(file));
         // 输出：false
@@ -349,6 +367,8 @@ import java.nio.file.Path;
 public class FilesWalkDemo {
     public static void main(String[] args) throws Exception {
         Path directory = Files.createTempDirectory("java-walk-");
+// 关键变化：directory 接收表达式 Files.createTempDirectory("java-walk-") 的计算结果。
+// 初始状态：directory 的初始值为 Files.createTempDirectory("java-walk-")。
         Files.writeString(directory.resolve("a.txt"), "a");
         Files.createDirectory(directory.resolve("sub"));
         try (var paths = Files.walk(directory)) {
@@ -374,6 +394,8 @@ import java.nio.file.Path;
 public class FilesAttributesDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-attr-", ".txt");
+// 关键变化：file 接收表达式 Files.createTempFile("java-attr-", ".txt") 的计算结果。
+// 初始状态：file 的初始值为 Files.createTempFile("java-attr-", ".txt")。
         long size = (long) Files.getAttribute(file, "basic:size");
         var attributes = Files.readAttributes(file, "basic:size,lastModifiedTime");
         System.out.println(size == (long) attributes.get("size"));
@@ -397,9 +419,11 @@ public class NoFollowLinksDemo {
 // 作用：涉及权限、归档或上传目录时，要明确是否跟随链接；不跟随链接能减少把检查目标偷偷切换到其他目录的风险，但不是完整安全方案。
     public static void main(String[] args) {
         Path path = Path.of("config");
+// 关键变化：path 接收表达式 Path.of("config") 的计算结果。
+// 初始状态：path 的初始值为 Path.of("config")。
         System.out.println(Files.exists(path, LinkOption.NOFOLLOW_LINKS));
+// 输出：false
         // 作用：通过 LinkOption.NOFOLLOW_LINKS 不跟随符号链接。
-        // 输出：false
     }
 }
 ```
@@ -417,8 +441,8 @@ public class SameFileDemo {
         Path file = Files.createTempFile("java-same-", ".txt");
         // 初始状态：file 当前为 Files.createTempFile("java-same-", ".txt")。
         System.out.println(Files.isSameFile(file, file.toAbsolutePath()));
+// 输出：true
         // 作用：通过 Files.isSameFile 判断两个路径是否指向同一文件。
-        // 输出：true
         Files.deleteIfExists(file);
     }
 }
@@ -440,8 +464,8 @@ public class FilesMismatchDemo {
         Files.write(left, new byte[]{1, 2, 3});
         Files.write(right, new byte[]{1, 9, 3});
         System.out.println(Files.mismatch(left, right));
+// 输出：1
         // 作用：通过 Files.mismatch 查找首个不同字节。
-        // 输出：1
         Files.deleteIfExists(left);
         Files.deleteIfExists(right);
     }
@@ -461,6 +485,8 @@ public class FileTimeDemo {
 // 作用：文件系统的时间精度和可写性因平台而异，时间戳不能单独作为版本或并发控制依据。
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-time-", ".txt");
+// 关键变化：file 接收表达式 Files.createTempFile("java-time-", ".txt") 的计算结果。
+// 初始状态：file 的初始值为 Files.createTempFile("java-time-", ".txt")。
         FileTime now = FileTime.fromMillis(0);
         // 作用：通过 FileTime 读写文件时间。
         Files.setLastModifiedTime(file, now);
@@ -488,6 +514,8 @@ public class ZipFileSystemDemo {
     public static void main(String[] args) throws Exception {
     // 作用：Zip 文件系统适合批处理压缩包内容；必须关闭 FileSystem，且不要把不可信压缩包直接展开到未校验的目录。
         Path zip = Files.createTempFile("java-zip-", ".zip");
+// 关键变化：zip 接收表达式 Files.createTempFile("java-zip-", ".zip") 的计算结果。
+// 初始状态：zip 的初始值为 Files.createTempFile("java-zip-", ".zip")。
         URI uri = URI.create("jar:" + zip.toUri());
         try (FileSystem fs = FileSystems.newFileSystem(uri, Map.of("create", "true"))) {
             Files.writeString(fs.getPath("/inside.txt"), "zip");

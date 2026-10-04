@@ -65,9 +65,9 @@ public class SetAddDemo {
         Set<String> set = new HashSet<>();
         // 初始状态：set 当前为 new HashSet<>()。
         System.out.println(set.add("java"));
+// 输出：true
         // 作用：add 在元素尚不存在时写入并返回 true，重复元素不会再次加入。
         System.out.println(set.add("java"));
-        // 输出：true
         // 输出：false
     }
 }
@@ -214,8 +214,8 @@ public class SetSizeDemo {
         set.add(1);
         set.add(1);
         System.out.println(set.size());
+// 输出：1
         // 作用：size 返回去重后的元素个数，而不是 add 的调用次数。
-        // 输出：1
     }
 }
 ```
@@ -233,10 +233,10 @@ public class SetIsEmptyDemo {
         Set<Integer> set = new HashSet<>();
         // 初始状态：set 当前为 new HashSet<>()。
         System.out.println(set.isEmpty());
+// 输出：true
         // 作用：isEmpty 直接表达“没有元素”，比比较 size 是否为 0 更清晰。
         set.add(1);
         System.out.println(set.isEmpty());
-        // 输出：true
         // 输出：false
     }
 }
@@ -319,8 +319,8 @@ public class TreeSetFirstDemo {
         set.add(30);
         set.add(10);
         System.out.println(set.first());
+// 输出：10
         // 作用：first 返回排序后的第一个元素，空集合调用会抛 NoSuchElementException。
-        // 输出：10
     }
 }
 ```
@@ -339,8 +339,8 @@ public class TreeSetLastDemo {
         set.add(10);
         set.add(30);
         System.out.println(set.last());
+// 输出：30
         // 作用：last 返回排序后的最后一个元素，调用前要确认集合不为空。
-        // 输出：30
     }
 }
 ```
@@ -357,9 +357,9 @@ public class TreeSetCeilingDemo {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
         // 初始状态：set 当前为 new TreeSet<>(java.util.Set.of(10, 20, 30))。
         System.out.println(set.ceiling(15));
+// 输出：20
         // 作用：ceiling 返回不小于目标的最近元素，不存在时返回 null。
         System.out.println(set.ceiling(31));
-        // 输出：20
         // 输出：null
     }
 }
@@ -377,9 +377,9 @@ public class TreeSetFloorDemo {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
         // 初始状态：set 当前为 new TreeSet<>(java.util.Set.of(10, 20, 30))。
         System.out.println(set.floor(15));
+// 输出：10
         // 作用：floor 返回不大于目标的最近元素，不存在时返回 null。
         System.out.println(set.floor(9));
-        // 输出：10
         // 输出：null
     }
 }
@@ -398,8 +398,8 @@ public class TreeSetLowerDemo {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
         // 初始状态：set 当前为 new TreeSet<>(java.util.Set.of(10, 20, 30))。
         System.out.println(set.lower(20));
+// 输出：10
         // 作用：通过 TreeSet.lower 查询严格小于目标的最大元素。
-        // 输出：10
     }
 }
 ```
@@ -416,8 +416,8 @@ public class TreeSetHigherDemo {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
         // 初始状态：set 当前为 new TreeSet<>(java.util.Set.of(10, 20, 30))。
         System.out.println(set.higher(20));
+// 输出：30
         // 作用：通过 TreeSet.higher 查询严格大于目标的最小元素。
-        // 输出：30
     }
 }
 ```
@@ -434,8 +434,8 @@ public class TreeSetRangeDemo {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));
         // 初始状态：set 当前为 new TreeSet<>(java.util.Set.of(1, 2, 3, 4))。
         System.out.println(set.subSet(2, true, 4, false));
+// 输出：[2, 3]
         // 作用：通过 TreeSet.subSet 查询区间视图。
-        // 输出：[2, 3]
     }
 }
 ```
@@ -452,8 +452,8 @@ public class TreeSetHeadSetDemo {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));
         // 初始状态：set 当前为 new TreeSet<>(java.util.Set.of(1, 2, 3, 4))。
         System.out.println(set.headSet(3, true));
+// 输出：[1, 2, 3]
         // 作用：通过 TreeSet.headSet 查询小于上界的视图。
-        // 输出：[1, 2, 3]
     }
 }
 ```
@@ -470,8 +470,8 @@ public class TreeSetTailSetDemo {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));
         // 初始状态：set 当前为 new TreeSet<>(java.util.Set.of(1, 2, 3, 4))。
         System.out.println(set.tailSet(3, false));
+// 输出：[4]
         // 作用：通过 TreeSet.tailSet 查询大于下界的视图。
-        // 输出：[4]
     }
 }
 ```
@@ -488,6 +488,7 @@ public class EnumSetDemo {
 
     public static void main(String[] args) {
         EnumSet<Permission> set = EnumSet.of(Permission.READ, Permission.WRITE);
+// 输入：set 的初始值为 EnumSet.of(Permission.READ, Permission.WRITE)。
         // 作用：通过 EnumSet.of 枚举状态集合。
         System.out.println(set.contains(Permission.WRITE));
         // 输出：true
@@ -508,6 +509,7 @@ public class EnumSetComplementDemo {
     public static void main(String[] args) {
         EnumSet<Permission> missing =
             EnumSet.complementOf(EnumSet.of(Permission.READ));
+// 输入：表达式为 EnumSet.complementOf(EnumSet.of(Permission.READ))。
             // 作用：通过 EnumSet.complementOf 枚举补集。
         System.out.println(missing);
         // 输出：[WRITE, DELETE]
@@ -526,6 +528,7 @@ import java.util.Set;
 public class DisjointSetDemo {
     public static void main(String[] args) {
         boolean disjoint = Collections.disjoint(Set.of("java"), Set.of("sql"));
+// 输入：disjoint 的初始值为 Collections.disjoint(Set.of("java"), Set.of("sql"))。
         // 作用：通过 Collections.disjoint 判断两个集合是否没有交集。
         System.out.println(disjoint);
         // 输出：true
@@ -544,6 +547,8 @@ import java.util.TreeSet;
 public class TreeSetComparatorDemo {
     public static void main(String[] args) {
         TreeSet<String> set = new TreeSet<>(Comparator.comparingInt(String::length));
+// 返回：set 接收 new TreeSet<>(Comparator.comparingInt(String::length)) 的返回值。
+// 输入：set 的初始值为 new TreeSet<>(Comparator.comparingInt(String::length))。
         set.add("a");
         set.add("bb");
         set.add("cc");

@@ -44,6 +44,7 @@ import java.net.ServerSocket;
 public class ServerSocketBindDemo {
     public static void main(String[] args) throws Exception {
         try (ServerSocket server = new ServerSocket(0)) {
+// 输入：server 的初始值为 new ServerSocket(0))。
         // 作用：传入 0 让操作系统分配临时端口，适合测试；生产服务要明确绑定地址、端口占用、backlog 和防火墙边界。
             System.out.println(server.getLocalPort() > 0);
             // 输出：true
@@ -65,6 +66,8 @@ import java.util.concurrent.Executors;
 public class SocketAcceptDemo {
     public static void main(String[] args) throws Exception {
         try (ServerSocket server = new ServerSocket(0);
+// 关键变化：server 接收表达式 new ServerSocket(0) 的计算结果。
+// 初始状态：server 的初始值为 new ServerSocket(0)。
              var executor = Executors.newSingleThreadExecutor()) {
             executor.submit(() -> {
                 try (Socket socket = server.accept()) {
@@ -98,6 +101,8 @@ import java.nio.charset.StandardCharsets;
 public class SocketTextDemo {
     public static void main(String[] args) throws Exception {
         try (ServerSocket server = new ServerSocket(0)) {
+// 关键变化：server 接收表达式 new ServerSocket(0)) { 的计算结果。
+// 初始状态：server 的初始值为 new ServerSocket(0))。
             Thread service = new Thread(() -> {
                 try (Socket socket = server.accept();
                      var reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
@@ -165,6 +170,7 @@ import java.net.InetSocketAddress;
 public class SocketAddressDemo {
     public static void main(String[] args) {
         var address = new InetSocketAddress("127.0.0.1", 8080);
+// 输入：address 的初始值为 new InetSocketAddress("127.0.0.1", 8080)。
         // 作用：地址对象可以用于绑定和连接；主机名解析可能阻塞或返回多个地址，生产代码要考虑 DNS 超时、IPv4/IPv6 和 SSRF 校验。
         System.out.println(address.getHostString() + ":" + address.getPort());
         // 输出：127.0.0.1:8080
@@ -186,6 +192,8 @@ import java.nio.charset.StandardCharsets;
 public class UdpLoopbackDemo {
     public static void main(String[] args) throws Exception {
         try (DatagramSocket receiver = new DatagramSocket(0);
+// 关键变化：receiver 接收表达式 new DatagramSocket(0) 的计算结果。
+// 初始状态：receiver 的初始值为 new DatagramSocket(0)。
              DatagramSocket sender = new DatagramSocket()) {
             byte[] bytes = "ping".getBytes(StandardCharsets.UTF_8);
             sender.send(new DatagramPacket(bytes, bytes.length,
@@ -304,6 +312,8 @@ public class BacklogDemo {
 // 作用：backlog 是内核等待队列的建议值，不等于应用能同时处理的连接数；服务端仍需线程池、连接上限和过载策略。
     public static void main(String[] args) throws Exception {
         try (ServerSocket server = new ServerSocket(0, 32)) {
+// 关键变化：server 接收表达式 new ServerSocket(0, 32)) { 的计算结果。
+// 初始状态：server 的初始值为 new ServerSocket(0, 32))。
             System.out.println(server.getLocalPort() > 0);
             // 输出：true
         }
@@ -342,6 +352,8 @@ import java.net.URL;
 public class UriUrlDemo {
     public static void main(String[] args) throws Exception {
         URI uri = URI.create("https://example.com");
+// 关键变化：uri 接收表达式 URI.create("https: 的计算结果。
+// 初始状态：uri 的初始值为 URI.create("https:。
         URL url = uri.toURL();
         System.out.println(uri.getHost() + " / " + url.getProtocol());
         // 输出：example.com / https

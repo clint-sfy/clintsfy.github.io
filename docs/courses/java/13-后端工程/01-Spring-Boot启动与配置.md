@@ -50,7 +50,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class BackendApplication {
-// 作用：用途：用于声明应用配置、组件扫描和自动配置的根入口；启动类应放在业务包的共同父包。
+// 输入：表达式为 @SpringBootApplication。
+// // 关键变化：public class BackendApplication { 使用表达式中的具体参数完成本次调用。
     public static void main(String[] args) {
         var context = SpringApplication.run(BackendApplication.class, args);
         System.out.println(context != null);
@@ -74,7 +75,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 class TimeConfiguration {
-// 作用：用途：用于把一组 Bean 定义交给 Spring 容器；下例注册名为 systemClock 的 UTC Clock，业务 Bean 可通过构造器按类型注入。
+// 输入：表达式为 @Configuration。
+// // 关键变化：class TimeConfiguration { 使用表达式中的具体参数完成本次调用。
 // 作用：通过 @Configuration 声明配置类。
     @Bean("systemClock")
     Clock systemClock() {
@@ -93,7 +95,7 @@ class TimeConfiguration {
 ```java
 String yml = "server:\n  port: 8080\nclient:\n  timeout: 2s\n";
 // 初始状态：yml 当前为 "server:\n  port: 8080\nclient:\n  timeout: 2s\n"。
-// 作用：用途：用于按环境层级表达端口、超时和业务开关；文件中的值最终会进入 Spring Environment。
+// 关键变化：yml 接收右侧表达式 "server:\n port: 8080\nclient:\n timeout: 2s\n" 的计算结果。
 boolean hasPort = yml.contains("port: 8080");
 System.out.println(hasPort);
 // 输出：true
@@ -111,7 +113,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "client")
 public record ClientProperties(String baseUrl, int timeoutSeconds) {
-// 作用：用途：用于把同一前缀下的多项配置绑定到不可变或可校验的类型，避免在业务代码散落字符串键。
+// 输入：prefix 的初始值为 "client")。
+// // 关键变化：public record ClientProperties(String baseUrl, int timeoutSeconds) { 使用表达式中的具体参数完成本次调用。
     public ClientProperties {
         if (timeoutSeconds <= 0) {
             throw new IllegalArgumentException("timeoutSeconds must be positive");
@@ -163,6 +166,8 @@ import org.springframework.boot.diagnostics.FailureAnalysis;
 
 FailureAnalysis analysis = new FailureAnalysis(
     "端口已被占用", "server.port", new IllegalStateException("bind failed"));
+// 关键变化：analysis 接收表达式 new FailureAnalysis( "端口已被占用", "server.port", new IllegalStateException("bind failed")) 的计算结果。
+// 初始状态：analysis 的初始值为 new FailureAnalysis(。
 System.out.println(analysis.getDescription());
 // 输出：端口已被占用
 // 作用：用于把“启动失败”拆成配置解析、Bean 创建、端口占用和条件不匹配等可验证原因。
@@ -181,7 +186,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 class WarmupRunner implements ApplicationRunner {
-// 作用：用途：用于在应用上下文完成刷新后执行轻量初始化；不适合阻塞启动线程或处理可重试的长任务。
+// // 关键变化：class WarmupRunner implements ApplicationRunner { 使用表达式中的具体参数完成本次调用。
     @Override
     public void run(ApplicationArguments args) {
         System.out.println("cache warmup");
@@ -203,9 +208,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 class PropertyProbe {
-// 作用：用途：用于诊断属性来源或读取少量动态开关；重复读取同一业务配置时优先使用 @ConfigurationProperties。
+// // 关键变化：class PropertyProbe { 使用表达式中的具体参数完成本次调用。
     PropertyProbe(Environment environment) {
         String port = environment.getProperty("server.port", "8080");
+// 关键变化：port 接收表达式 environment.getProperty("server.port", "8080") 的计算结果。
+// 初始状态：port 的初始值为 environment.getProperty("server.port", "8080")。
         System.out.println(port);
         // 输出：8080
     }

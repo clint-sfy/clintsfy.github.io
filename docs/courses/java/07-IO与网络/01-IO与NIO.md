@@ -42,6 +42,7 @@ description: 从 I/O 类型选择开始，串起 Path、Files、字节流、字�
 import java.nio.file.Path;
 
 Path path = Path.of("docs", "guide.txt");
+// 输入：path 的初始值为 Path.of("docs", "guide.txt")。
 // 作用：需要用多个路径片段构造与操作系统分隔符兼容的文件路径时使用 Path.of。
 System.out.println(path.getFileName());
 // 输出：guide.txt
@@ -101,6 +102,8 @@ import java.nio.file.Path;
 public class IoLayerChoiceDemo {
     public static void main(String[] args) throws IOException {
         Path file = Files.createTempFile("java-text-", ".txt");
+// 关键变化：file 接收表达式 Files.createTempFile("java-text-", ".txt") 的计算结果。
+// 初始状态：file 的初始值为 Files.createTempFile("java-text-", ".txt")。
         Files.writeString(file, "你好", StandardCharsets.UTF_8);
         try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             System.out.println(reader.readLine());
@@ -190,6 +193,8 @@ import java.io.ObjectOutputStream;
 public class SerializationBoundaryDemo {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         var bytes = new ByteArrayOutputStream();
+// 关键变化：bytes 接收表达式 new ByteArrayOutputStream() 的计算结果。
+// 初始状态：bytes 的初始值为 new ByteArrayOutputStream()。
         try (var out = new ObjectOutputStream(bytes)) {
             out.writeObject("java");
         }
@@ -211,6 +216,8 @@ import java.nio.file.Path;
 public class PathBoundaryDemo {
     public static void main(String[] args) {
         Path root = Path.of("/srv/data").toAbsolutePath().normalize();
+// 关键变化：root 接收表达式 Path.of("/srv/data").toAbsolutePath().normalize() 的计算结果。
+// 初始状态：root 的初始值为 Path.of("/srv/data").toAbsolutePath().normalize()。
         Path candidate = root.resolve("reports", "2026.txt").normalize();
         System.out.println(candidate.startsWith(root));
         // 输出：true

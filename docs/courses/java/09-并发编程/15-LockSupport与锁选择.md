@@ -52,6 +52,8 @@ import java.util.concurrent.locks.LockSupport;
 public class ParkUnparkDemo {
     public static void main(String[] args) throws InterruptedException {
         Thread worker = new Thread(() -> {
+// 关键变化：worker 接收表达式 new Thread(() -> { 的计算结果。
+// 初始状态：worker 的初始值为 new Thread(() ->。
             LockSupport.park();
             System.out.println("worker resumed");
             // 输出：worker resumed
@@ -139,6 +141,8 @@ public class ParkConditionLoopDemo {
     public static void main(String[] args) throws InterruptedException {
     // 作用：条件可能虚假返回或被多个线程竞争时必须在 while 中重查；先更新条件，再调用 unpark 唤醒等待者。
         var ready = new AtomicBoolean(false);
+// 关键变化：ready 接收表达式 new AtomicBoolean(false) 的计算结果。
+// 初始状态：ready 的初始值为 new AtomicBoolean(false)。
         Thread worker = new Thread(() -> {
             while (!ready.get()) {
                 LockSupport.park();
@@ -172,6 +176,8 @@ public class ParkBlockerDemo {
     public static void main(String[] args) throws InterruptedException {
         Object blocker = "demo-blocker";
         Thread worker = new Thread(() -> LockSupport.park(blocker));
+// 关键变化：worker 接收表达式 new Thread(() -> LockSupport.park(blocker)) 的计算结果。
+// 初始状态：worker 的初始值为 new Thread(() -> LockSupport.park(blocker))。
         worker.start();
         while (LockSupport.getBlocker(worker) == null) {
             Thread.yield();
@@ -199,8 +205,8 @@ public class ParkUntilDemo {
     public static void main(String[] args) {
         LockSupport.parkUntil(System.currentTimeMillis() + 1);
         System.out.println("deadline reached or signal received");
+// 输出：deadline reached or signal received
         // 作用：通过 parkUntil(deadline) 按绝对时间等待。
-        // 输出：deadline reached or signal received
     }
 }
 ```
@@ -223,6 +229,8 @@ public class SynchronizedChoiceDemo {
 
     public static void main(String[] args) {
         var counter = new SynchronizedChoiceDemo();
+// 关键变化：counter 接收表达式 new SynchronizedChoiceDemo() 的计算结果。
+// 初始状态：counter 的初始值为 new SynchronizedChoiceDemo()。
         counter.increment();
         System.out.println(counter.count);
         // 输出：1
@@ -244,6 +252,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ReentrantLockChoiceDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new ReentrantLock();
+// 输入：lock 的初始值为 new ReentrantLock()。
         // 作用：需要可中断、超时获取或多个条件队列时选择 ReentrantLock；每次成功 lock 都要在 finally 中 unlock。
         if (lock.tryLock(1, TimeUnit.MILLISECONDS)) {
             try {
@@ -274,6 +283,8 @@ public class ReadWriteChoiceDemo {
 // 作用：读操作明显多于写操作且临界区值得并行时适合评估 ReadWriteLock；读写协议必须覆盖所有访问路径。
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
+// 关键变化：lock 接收表达式 new ReentrantReadWriteLock() 的计算结果。
+// 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
         lock.readLock().lock();
         try {
             System.out.println("shared read");
@@ -298,6 +309,7 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedChoiceDemo {
     public static void main(String[] args) {
         var lock = new StampedLock();
+// 输入：lock 的初始值为 new StampedLock()。
         // 作用：低冲突的短读可能从乐观读受益时选择 StampedLock；它不可重入、没有 Condition，读取后必须校验 stamp。
         long stamp = lock.tryOptimisticRead();
         boolean valid = lock.validate(stamp);
@@ -321,6 +333,8 @@ public class CasChoiceDemo {
 // 作用：只有一个独立变量需要比较更新时使用 CAS；它没有持有与释放生命周期，不能保护多字段复合不变式。
     public static void main(String[] args) {
         var count = new AtomicInteger(0);
+// 关键变化：count 接收表达式 new AtomicInteger(0) 的计算结果。
+// 初始状态：count 的初始值为 new AtomicInteger(0)。
         boolean updated = count.compareAndSet(0, 1);
         System.out.println("updated=" + updated + ", value=" + count.get());
         // 输出：updated=true, value=1
@@ -341,6 +355,7 @@ import java.util.concurrent.Semaphore;
 public class SemaphoreChoiceDemo {
     public static void main(String[] args) throws InterruptedException {
         var permits = new Semaphore(2);
+// 输入：permits 的初始值为 new Semaphore(2)。
         // 作用：需要限制并发名额或管理资源池时使用 Semaphore；许可证数量可大于一，获取成功后必须在释放路径归还。
         permits.acquire();
         try {
@@ -365,6 +380,8 @@ public class ImmutableChoiceDemo {
 
     public static void main(String[] args) {
         Snapshot current = new Snapshot(1, "ready");
+// 关键变化：current 接收表达式 new Snapshot(1, "ready") 的计算结果。
+// 初始状态：current 的初始值为 new Snapshot(1, "ready")。
         Snapshot next = new Snapshot(current.version() + 1, "done");
         System.out.println(next);
         // 输出：Snapshot[version=2, value=done]
@@ -385,6 +402,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ConcurrentContainerChoiceDemo {
     public static void main(String[] args) {
         var cache = new ConcurrentHashMap<String, Integer>();
+// 输入：cache 的初始值为 new ConcurrentHashMap<String, Integer>()。
         // 作用：业务只需要标准容器的并发操作时选择 ConcurrentHashMap；单次方法安全不等于跨多个操作或系统的不变式安全。
         cache.merge("java", 1, Integer::sum);
         System.out.println(cache.get("java"));

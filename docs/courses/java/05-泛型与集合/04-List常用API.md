@@ -46,6 +46,8 @@ import java.util.List;
 public class ListCreateDemo {
     public static void main(String[] args) {
         List<String> names = new ArrayList<>(List.of("Alice", "Bob"));
+// 关键变化：names 接收表达式 new ArrayList<>(List.of("Alice", "Bob")) 的计算结果。
+// 初始状态：names 的初始值为 new ArrayList<>(List.of("Alice", "Bob"))。
         names.add("Carol");
         System.out.println(names);
         // 输出：[Alice, Bob, Carol]
@@ -68,6 +70,7 @@ public class ListAddDemo {
         list.add("d");
         // 作用：add(value) 追加到末尾，add(index, value) 会移动后续元素。
         list.add(1, "b");
+// // 关键变化：list.add(1, "b") 使用括号内的具体实参更新接收对象状态。
         System.out.println(list);
         // 输出：[a, b, c, d]
     }
@@ -89,6 +92,7 @@ public class ListAddAllDemo {
         list.addAll(List.of("b", "c"));
         // 作用：addAll 返回是否发生变化。
         list.addAll(1, List.of("x", "y"));
+// // 关键变化：list.addAll(1, List.of("x", "y")) 使用括号内的具体实参更新接收对象状态。
         System.out.println(list);
         // 输出：[a, x, y, b, c]
     }
@@ -105,8 +109,8 @@ import java.util.List;
 List<String> list = List.of("a", "b");
 // 初始状态：list 当前为 List.of("a", "b")。
 System.out.println(list.get(1));
-// 作用：需要读取指定位置的元素时使用 get，索引必须在 0 到 size - 1 之间。
 // 输出：b
+// 作用：需要读取指定位置的元素时使用 get，索引必须在 0 到 size - 1 之间。
 ```
 
 ### `List.set`：按索引替换
@@ -147,6 +151,7 @@ public class ListRemoveDemo {
         // 作用：需要从 List<Integer> 删除元素时应区分按索引的 remove(1) 和按值的 remove(Integer.valueOf(1))，后者找不到时返回 false。
         // numbers：[10, 30]
         numbers.remove(Integer.valueOf(30));
+// // 关键变化：numbers.remove(Integer.valueOf(30)) 使用括号内的具体实参更新接收对象状态。
         System.out.println(numbers);
         // 输出：[10]
     }
@@ -163,8 +168,8 @@ import java.util.List;
 List<String> list = List.of("java", "sql", "java");
 // 初始状态：list 当前为 List.of("java", "sql", "java")。
 System.out.println(list.contains("sql"));
-// 作用：只需要知道列表是否含有某元素时使用 contains，比较依赖元素的 equals。
 // 输出：true
+// 作用：只需要知道列表是否含有某元素时使用 contains，比较依赖元素的 equals。
 ```
 
 ### `List.indexOf`：查找首次位置
@@ -179,8 +184,8 @@ public class ListSearchDemo {
         List<String> list = List.of("java", "sql", "java");
         // 初始状态：list 当前为 List.of("java", "sql", "java")。
         System.out.println(list.indexOf("java"));
+// 输出：0
         // 作用：需要元素第一次出现的索引时使用 indexOf，找不到返回 -1。
-        // 输出：0
     }
 }
 ```
@@ -195,8 +200,8 @@ import java.util.List;
 List<String> list = List.of("java", "sql", "java");
 // 初始状态：list 当前为 List.of("java", "sql", "java")。
 System.out.println(list.lastIndexOf("java"));
-// 作用：需要元素最后一次出现的索引时使用 lastIndexOf，找不到返回 -1。
 // 输出：2
+// 作用：需要元素最后一次出现的索引时使用 lastIndexOf，找不到返回 -1。
 ```
 
 ### `List.iterator`：创建显式迭代器
@@ -215,8 +220,8 @@ Iterator<String> iterator = names.iterator();
 // 作用：需要显式控制遍历进度时先调用 iterator，并用 hasNext 判断后再调用 next 取值。
 while (iterator.hasNext()) {
     System.out.println(iterator.next());
-}
 // 输出：Alice、Bob
+}
 ```
 
 ### `List.forEach`：以动作遍历
@@ -227,6 +232,7 @@ while (iterator.hasNext()) {
 // 语义：需要把每个元素交给同一 Consumer 时使用 forEach。
 // 调用参数：代码依次使用 "java"。
 java.util.List.of("java").forEach(System.out::println);
+// 输入：表达式为 java.util.List.of("java").forEach(System.out::println)。
 // 作用：通过 List.forEach 以动作遍历。
 // 输出：java
 ```
@@ -387,6 +393,7 @@ import java.util.List;
 public class ArraysAsListDemo {
     public static void main(String[] args) {
         List<String> fixed = Arrays.asList("a", "b");
+// 输入：fixed 的初始值为 Arrays.asList("a", "b")。
         // 作用：通过 Arrays.asList 固定大小数组视图。
         fixed.set(0, "A");
         System.out.println(fixed);
@@ -472,7 +479,7 @@ import java.util.Collections;
 import java.util.List;
 
 List<String> list = new ArrayList<>(List.of("a", "b", "c"));
-// 初始状态：Collections.rotate 将 [a, b, c] 向右移动 1 位。
+// 初始状态：Collections.rotate 将 [a, b, c] 向右移动 1 位。；具体值：list = new ArrayList<>(List.of("a", "b", "c"))
 Collections.rotate(list, 1);
 // 作用：需要按固定距离循环调整列表顺序时使用，正数向右移动，且会直接修改可变列表。
 System.out.println(list);
@@ -524,9 +531,11 @@ var names = new ArrayList<String>();
 boolean changed = names.add("Ann");
 // 作用：通过 ArrayList.add 向可变数组列表追加元素。
 names.add("Bob");
+// // 关键变化：names.add("Bob") 使用括号内的具体实参更新接收对象状态。
 System.out.println(changed);
-System.out.println(names);
 // 输出：true、[Ann, Bob]
+System.out.println(names);
+// 输出：System.out 调用参数为 names。
 ```
 
 ### `Iterator.hasNext`：判断是否还有元素
@@ -538,10 +547,13 @@ import java.util.List;
 var iterator = List.of("A").iterator();
 // 初始状态：iterator 当前为 List.of("A").iterator()。
 System.out.println(iterator.hasNext());
+// 输出：true、A、false
 // 作用：通过 Iterator.hasNext 判断是否还有元素。
 System.out.println(iterator.next());
+// 输出：System.out 调用参数为 iterator.next()。
 System.out.println(iterator.hasNext());
-// 输出：true、A、false
+// 输出：System.out 调用参数为 iterator.hasNext()。
+// 作用：System.out.println 使用实参 iterator.hasNext() 写出结果。
 ```
 
 ### `Iterator.next`：取得下一个元素
@@ -555,9 +567,11 @@ var iterator = List.of("A", "B").iterator();
 String first = iterator.next();
 // 作用：通过 Iterator.next 取得下一个元素。
 String second = iterator.next();
+// 返回：second 接收 iterator.next() 的返回值。
 System.out.println(first);
-System.out.println(second);
 // 输出：A、B
+System.out.println(second);
+// 输出：System.out 调用参数为 second。
 ```
 
 ### `List.size`：读取列表元素数量
@@ -569,9 +583,9 @@ import java.util.List;
 List<String> names = List.of("A", "B", "C");
 // 初始状态：names 当前为 List.of("A", "B", "C")。
 System.out.println(names.size());
+// 输出：3
 // 作用：通过 List.size 读取列表元素数量。
 System.out.println(names.get(names.size() - 1));
-// 输出：3
 // 输出：C
 ```
 
@@ -586,8 +600,8 @@ import java.util.Set;
 Collection<String> tags = Set.of("java", "sql");
 // 初始状态：tags 包含 "java" 和 "sql"，因此 size() 返回 2。
 System.out.println(tags.size());
-// 作用：Collection.size 根据当前集合内容返回元素数量。
 // 输出：2
+// 作用：Collection.size 根据当前集合内容返回元素数量。
 ```
 
 ### `List.stream`：把列表接入流式处理
@@ -616,11 +630,14 @@ System.out.println(count);
 import java.util.ArrayList;
 import java.util.List;
 List<String> names = new ArrayList<>(List.of("A", "B"));
+// 初始状态：names 当前为 [A, B]，本次 set 使用索引 1 和新值 "C"。
 // 作用：put 属于 Map；列表按位置覆盖必须使用 set，索引也必须已存在。
 String old = names.set(1, "C");
+// 返回：List.set 返回被替换的旧值 "B"，names 变为 [A, C]。
 System.out.println(old);
+// 输出：B
 System.out.println(names);
-// 输出：B、[A, C]
+// 输出：[A, C]
 ```
 
 ```java

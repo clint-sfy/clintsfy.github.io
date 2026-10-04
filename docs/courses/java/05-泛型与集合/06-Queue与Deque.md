@@ -70,9 +70,9 @@ public class QueuePollDemo {
         // 初始状态：queue 当前为 new ArrayDeque<>()。
         queue.offer("job-1");
         System.out.println(queue.poll());
+// 输出：job-1
         // 作用：poll 返回并删除队首，队列为空时返回 null。
         System.out.println(queue.poll());
-        // 输出：job-1
         // 输出：null
     }
 }
@@ -92,9 +92,9 @@ public class QueuePeekDemo {
         // 初始状态：queue 当前为 new ArrayDeque<>()。
         queue.offer("job-1");
         System.out.println(queue.peek());
+// 输出：job-1
         // 作用：peek 返回但不删除队首，队列为空时返回 null。
         System.out.println(queue.size());
-        // 输出：job-1
         // 输出：1
     }
 }
@@ -135,8 +135,8 @@ public class QueueRemoveDemo {
         // 初始状态：queue 当前为 new ArrayDeque<>()。
         queue.add("required");
         System.out.println(queue.remove());
+// 输出：required
         // 作用：remove 返回并删除队首，空队列调用会抛 NoSuchElementException。
-        // 输出：required
     }
 }
 ```
@@ -155,9 +155,9 @@ public class QueueElementDemo {
         // 初始状态：queue 当前为 new ArrayDeque<>()。
         queue.add("required");
         System.out.println(queue.element());
+// 输出：required
         // 作用：element 返回但不删除队首，空队列调用会抛 NoSuchElementException。
         System.out.println(queue.size());
-        // 输出：required
         // 输出：1
     }
 }
@@ -218,9 +218,9 @@ public class DequePollFirstDemo {
         deque.addLast(1);
         deque.addLast(2);
         System.out.println(deque.pollFirst());
+// 输出：1
         // 作用：pollFirst 返回并删除头部元素，双端队列为空时返回 null。
         System.out.println(deque);
-        // 输出：1
         // 输出：[2]
     }
 }
@@ -241,9 +241,9 @@ public class DequePollLastDemo {
         deque.addLast(1);
         deque.addLast(2);
         System.out.println(deque.pollLast());
+// 输出：2
         // 作用：pollLast 返回并删除尾部元素，双端队列为空时返回 null。
         System.out.println(deque);
-        // 输出：2
         // 输出：[1]
     }
 }
@@ -264,9 +264,9 @@ public class DequePeekFirstDemo {
         deque.addLast(1);
         deque.addLast(2);
         System.out.println(deque.peekFirst());
+// 输出：1
         // 作用：peekFirst 返回但不删除头部元素，双端队列为空时返回 null。
         System.out.println(deque);
-        // 输出：1
         // 输出：[1, 2]
     }
 }
@@ -287,9 +287,9 @@ public class DequePeekLastDemo {
         deque.addLast(1);
         deque.addLast(2);
         System.out.println(deque.peekLast());
+// 输出：2
         // 作用：peekLast 返回但不删除尾部元素，双端队列为空时返回 null。
         System.out.println(deque);
-        // 输出：2
         // 输出：[1, 2]
     }
 }
@@ -330,8 +330,8 @@ public class DequePopDemo {
         stack.push("page-1");
         stack.push("page-2");
         System.out.println(stack.pop());
+// 输出：page-2
         // 作用：pop 返回并删除头部元素，空栈调用会抛 NoSuchElementException。
-        // 输出：page-2
     }
 }
 ```
@@ -350,9 +350,9 @@ public class DequeStackPeekDemo {
         // 初始状态：stack 当前为 new ArrayDeque<>()。
         stack.push("page-1");
         System.out.println(stack.peek());
+// 输出：page-1
         // 作用：peek 返回但不删除头部元素，空栈时返回 null。
         System.out.println(stack.size());
-        // 输出：page-1
         // 输出：1
     }
 }
@@ -373,10 +373,12 @@ public class PriorityQueueDemo {
         queue.offer(30);
         // 作用：offer 把元素加入优先级队列，默认由自然顺序决定队首。
         queue.offer(10);
+// // 关键变化：queue.offer(10) 使用括号内的具体实参更新接收对象状态。
         queue.offer(20);
+// // 关键变化：queue.offer(20) 使用括号内的具体实参更新接收对象状态。
         System.out.println(queue.offer(20));
+// 输出：true
         System.out.println(queue.peek());
-        // 输出：true
         // 输出：10
     }
 }
@@ -397,8 +399,8 @@ public class PriorityQueuePollDemo {
         queue.offer(10);
         queue.offer(20);
         System.out.println(queue.poll());
+// 输出：10
         // 作用：poll 删除当前最小元素，遍历顺序本身不代表完整排序结果。
-        // 输出：10
     }
 }
 ```
@@ -417,9 +419,9 @@ public class PriorityQueuePeekDemo {
         queue.offer(30);
         queue.offer(10);
         System.out.println(queue.peek());
+// 输出：10
         // 作用：peek 查看但不删除当前最高优先级元素，空队列时返回 null。
         System.out.println(queue.size());
-        // 输出：10
         // 输出：2
     }
 }
@@ -439,6 +441,8 @@ public class CustomPriorityQueueDemo {
     public static void main(String[] args) {
         PriorityQueue<String> queue =
             new PriorityQueue<>(Comparator.comparingInt(String::length).reversed());
+// // 关键变化：PriorityQueue<String> queue = 使用表达式中的具体参数完成本次调用。
+// 初始状态：表达式为 PriorityQueue<String> queue =。
         queue.offer("a");
         queue.offer("long");
         System.out.println(queue.poll());
@@ -484,6 +488,7 @@ public class BlockingQueueOfferDemo {
         boolean accepted = queue.offer("task");
         // 作用：通过 BlockingQueue.offer 非阻塞入队。
         boolean rejected = queue.offer("overflow");
+// 返回：rejected 接收 queue.offer("overflow") 的返回值。
         System.out.println(accepted + ", " + rejected);
         // 输出：true, false
     }
@@ -504,9 +509,9 @@ public class BlockingQueuePollDemo {
         // 初始状态：queue 当前为 new ArrayBlockingQueue<>(1)。
         queue.offer("task");
         System.out.println(queue.poll());
+// 输出：task
         // 作用：通过 BlockingQueue.poll 非阻塞出队。
         System.out.println(queue.poll());
-        // 输出：task
         // 输出：null
     }
 }
@@ -525,6 +530,7 @@ public class ConcurrentQueueDemo {
 // 初始状态：offer("task") 非阻塞入队，poll() 移除队头。
     public static void main(String[] args) {
         Queue<String> queue = new ConcurrentLinkedQueue<>();
+// 输入：queue 的初始值为 new ConcurrentLinkedQueue<>()。
         // 作用：ConcurrentLinkedQueue 适合多线程下非阻塞入队出队，但不提供等待能力，也不适合把 size 当作精确并发协调条件。
         queue.offer("task");
         System.out.println(queue.poll());

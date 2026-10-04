@@ -253,6 +253,7 @@ public class ThenAcceptDemo {
         CompletableFuture.completedFuture("saved")
                 .thenAccept(System.out::println)
                 .join();
+// 输入：表达式为 .thenAccept(System.out::println)。
                 // 作用：thenAccept 返回 CompletableFuture<Void>，适合通知、写日志等末端动作；需要返回新业务结果时使用 thenApply。
         // 输出：saved
     }

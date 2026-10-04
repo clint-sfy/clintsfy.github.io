@@ -50,6 +50,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ReadWriteLockCreateDemo {
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
+// 关键变化：lock 接收表达式 new ReentrantReadWriteLock() 的计算结果。
+// 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
         System.out.println("fair=" + lock.isFair());
         // 输出：fair=false
     }
@@ -68,6 +70,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ReadLockDemo {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+// 关键变化：lock 接收右侧表达式 new ReentrantReadWriteLock() 的计算结果。
+// 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
     private int value = 42;
 
     int read() {
@@ -99,6 +103,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class WriteLockDemo {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+// 关键变化：lock 接收右侧表达式 new ReentrantReadWriteLock() 的计算结果。
+// 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
     private int value;
 
     void add(int delta) {
@@ -131,6 +137,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class LockDowngradeDemo {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+// 关键变化：lock 接收右侧表达式 new ReentrantReadWriteLock() 的计算结果。
+// 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
     private int version;
 
     int refreshAndRead() {
@@ -170,6 +178,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class FairReadWriteLockDemo {
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock(true);
+// 关键变化：lock 接收表达式 new ReentrantReadWriteLock(true) 的计算结果。
+// 初始状态：lock 的初始值为 new ReentrantReadWriteLock(true)。
         System.out.println("fair=" + lock.isFair());
         // 输出：fair=true
     }
@@ -190,6 +200,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class LockUpgradeRiskDemo {
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
+// 关键变化：lock 接收表达式 new ReentrantReadWriteLock() 的计算结果。
+// 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
         lock.readLock().lock();
         try {
             boolean upgraded = lock.writeLock().tryLock();
@@ -215,6 +227,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ReadLockTimeoutDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new ReentrantReadWriteLock();
+// 关键变化：lock 接收表达式 new ReentrantReadWriteLock() 的计算结果。
+// 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
         boolean acquired = lock.readLock().tryLock(1, TimeUnit.MILLISECONDS);
         try {
             System.out.println("acquired=" + acquired);
@@ -240,6 +254,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class WriteLockInterruptibleDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new ReentrantReadWriteLock();
+// 关键变化：lock 接收表达式 new ReentrantReadWriteLock() 的计算结果。
+// 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
         lock.writeLock().lockInterruptibly();
         try {
             System.out.println("write lock acquired");
@@ -263,11 +279,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ReadLockCountDemo {
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
+// 关键变化：lock 接收表达式 new ReentrantReadWriteLock() 的计算结果。
+// 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
         lock.readLock().lock();
         try {
             System.out.println(lock.getReadLockCount());
+// 输出：1
             // 作用：通过 getReadLockCount() 只用于诊断当前读者数量。
-            // 输出：1
         } finally {
             lock.readLock().unlock();
         }
@@ -287,6 +305,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ReadLockConditionDemo {
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
+// 关键变化：lock 接收表达式 new ReentrantReadWriteLock() 的计算结果。
+// 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
         try {
             lock.readLock().newCondition();
         } catch (UnsupportedOperationException ex) {

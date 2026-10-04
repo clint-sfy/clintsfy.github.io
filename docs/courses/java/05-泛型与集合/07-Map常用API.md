@@ -70,9 +70,9 @@ public class MapGetDemo {
         // 初始状态：scores 当前为 new LinkedHashMap<>()。
         scores.put("java", 95);
         System.out.println(scores.get("java"));
+// 输出：95
         // 作用：get 返回键对应的值，键不存在时返回 null。
         System.out.println(scores.get("sql"));
-        // 输出：95
         // 输出：null
     }
 }
@@ -90,8 +90,8 @@ public class MapDefaultDemo {
         Map<String, Integer> map = Map.of("java", 95);
         // 初始状态：map 当前为 Map.of("java", 95)。
         System.out.println(map.getOrDefault("sql", 0));
+// 输出：0
         // 作用：getOrDefault 只提供读取时的兜底，不会把默认值写回 Map。
-        // 输出：0
     }
 }
 ```
@@ -108,8 +108,8 @@ public class MapContainsKeyDemo {
         Map<String, Integer> map = Map.of("java", 95);
         // 初始状态：map 当前为 Map.of("java", 95)。
         System.out.println(map.containsKey("java"));
+// 输出：true
         // 作用：containsKey 能区分“键缺失”和“键存在但映射到 null”。
-        // 输出：true
     }
 }
 ```
@@ -126,9 +126,9 @@ public class MapContainsValueDemo {
         Map<String, Integer> map = Map.of("java", 95);
         // 初始状态：map 当前为 Map.of("java", 95)。
         System.out.println(map.containsValue(95));
+// 输出：true
         // 作用：containsValue 通常需要扫描全部值，不适合放在高频热点循环中。
         System.out.println(map.containsValue(90));
-        // 输出：true
         // 输出：false
     }
 }
@@ -174,7 +174,6 @@ public class MapEntrySetDemo {
         // 作用：同时需要键和值时优先 entrySet。
             System.out.println(entry.getKey() + "=" + entry.getValue());
             // 输出：java=95
-            // 输出：sql=88
         }
     }
 }
@@ -195,6 +194,7 @@ public class MapPutIfAbsentDemo {
         map.putIfAbsent("java", 95);
         // 作用：键不存在或当前值为 null 时写入，已有非 null 值不覆盖。
         map.putIfAbsent("java", 100);
+// // 关键变化：map.putIfAbsent("java", 100) 使用括号内的具体实参更新接收对象状态。
         System.out.println(map);
         // 输出：{java=95}
     }
@@ -216,6 +216,7 @@ public class MapMergeDemo {
         count.merge("java", 1, Integer::sum);
         // 作用：缺失键直接放入给定值，已有值才执行合并函数。
         count.merge("java", 1, Integer::sum);
+// // 关键变化：count.merge("java", 1, Integer::sum) 使用括号内的具体实参更新接收对象状态。
         System.out.println(count);
         // 输出：{java=2}
     }
@@ -303,8 +304,8 @@ public class MapValuesDemo {
         map.put("java", 95);
         map.put("sql", 95);
         System.out.println(map.values());
+// 输出：[95, 95]
         // 作用：values 返回与源 Map 联动的值视图，并允许出现重复值。
-        // 输出：[95, 95]
     }
 }
 ```
@@ -323,8 +324,8 @@ public class MapEntrySetViewDemo {
         // 初始状态：map 当前为 new LinkedHashMap<>()。
         map.put("java", 95);
         System.out.println(map.entrySet());
+// 输出：[java=95]
         // 作用：entrySet 适合同时读取键和值，条目视图也会与源 Map 联动。
-        // 输出：[java=95]
     }
 }
 ```
@@ -468,6 +469,7 @@ import java.util.Map;
 public class MapOfDemo {
     public static void main(String[] args) {
         Map<String, Integer> codes = Map.of("ok", 200, "notFound", 404);
+// 输入：codes 的初始值为 Map.of("ok", 200, "notFound", 404)。
         // 作用：通过 Map.of 创建少量不可变映射。
         System.out.println(codes.get("ok"));
         // 输出：200
@@ -487,6 +489,7 @@ public class MapOfEntriesDemo {
         Map<String, Integer> codes = Map.ofEntries(
             Map.entry("created", 201),
             Map.entry("badRequest", 400));
+// 输入：codes 的初始值为 Map.ofEntries(。
             // 作用：Map.ofEntries 用条目参数创建不可变映射，适合键值对较多的常量。
             // 作用：通过 Map.ofEntries 创建多条不可变映射。
         System.out.println(codes.get("created"));
@@ -530,6 +533,8 @@ public class AccessOrderMapDemo {
     // 作用：最后一个构造参数 true 开启访问顺序；这只是 LRU 的基础，不自动限制容量或提供并发保护。
         LinkedHashMap<String, Integer> map =
             new LinkedHashMap<>(16, 0.75f, true);
+// // 关键变化：LinkedHashMap<String, Integer> map = 使用表达式中的具体参数完成本次调用。
+// 初始状态：表达式为 LinkedHashMap<String, Integer> map =。
         map.put("A", 1);
         map.put("B", 2);
         map.get("A");
@@ -555,8 +560,8 @@ public class TreeMapRangeDemo {
         map.put(2, "b");
         map.put(3, "c");
         System.out.println(map.subMap(1, true, 3, false));
+// 输出：{1=a, 2=b}
         // 作用：通过 TreeMap.subMap 查询键区间视图。
-        // 输出：{1=a, 2=b}
     }
 }
 ```
@@ -576,8 +581,8 @@ public class TreeMapHeadMapDemo {
         map.put(2, "b");
         map.put(3, "c");
         System.out.println(map.headMap(2, true));
+// 输出：{1=a, 2=b}
         // 作用：通过 TreeMap.headMap 查询小于上界的键视图。
-        // 输出：{1=a, 2=b}
     }
 }
 ```
@@ -597,8 +602,8 @@ public class TreeMapTailMapDemo {
         map.put(2, "b");
         map.put(3, "c");
         System.out.println(map.tailMap(2, false));
+// 输出：{3=c}
         // 作用：通过 TreeMap.tailMap 查询大于下界的键视图。
-        // 输出：{3=c}
     }
 }
 ```
@@ -616,6 +621,7 @@ public class ConcurrentMapDemo {
 // 初始状态：两次 merge("java", 1, Integer::sum) 以单键原子更新将计数累加到 2。
     public static void main(String[] args) {
         ConcurrentMap<String, Integer> counts = new ConcurrentHashMap<>();
+// 输入：counts 的初始值为 new ConcurrentHashMap<>()。
         // 作用：ConcurrentHashMap 支持并发访问和单键 compute、merge、putIfAbsent；不接受 null，也不自动把多个键的业务更新组成事务。
         counts.merge("java", 1, Integer::sum);
         counts.merge("java", 1, Integer::sum);
@@ -662,8 +668,8 @@ Map<String, Integer> scores = new HashMap<>();
 scores.put("A", 1);
 scores.put("A", 2);
 System.out.println(scores.size());
-// 作用：通过 Map.size 统计映射条目数量。
 // 输出：1
+// 作用：通过 Map.size 统计映射条目数量。
 ```
 
 ```java
@@ -673,6 +679,7 @@ import java.util.Map;
 public class MapSummaryDemo {
     public static void main(String[] args) {
         Map<String, Integer> count = new HashMap<>();
+// 初始状态：count 的初始值为 new HashMap<>()。
         count.merge("java", 1, Integer::sum);
         System.out.println(count);
         // 输出：{java=1}

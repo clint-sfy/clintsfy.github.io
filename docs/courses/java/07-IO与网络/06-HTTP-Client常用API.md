@@ -47,6 +47,7 @@ public class HttpClientTimeoutDemo {
         HttpClient client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(3))
                 .build();
+// 输入：client 的初始值为 HttpClient.newBuilder()。
                 // 作用：连接超时覆盖建立连接阶段，DNS、TLS、服务器处理和响应读取仍可能耗时；不要把它当成完整请求超时。
         System.out.println(client.connectTimeout().orElseThrow().toSeconds());
         // 输出：3
@@ -68,6 +69,8 @@ public class HttpRedirectDemo {
         var client = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
+// 关键变化：client 接收表达式 HttpClient.newBuilder() .followRedirects(HttpClient.Redirect.NORMAL) .build() 的计算结果。
+// 初始状态：client 的初始值为 HttpClient.newBuilder()。
         System.out.println(client.followRedirects());
         // 输出：NORMAL
     }
@@ -89,6 +92,8 @@ public class HttpGetRequestDemo {
                 .header("Accept", "application/json")
                 .GET()
                 .build();
+// 关键变化：request 接收表达式 HttpRequest.newBuilder(URI.create("https: 的计算结果。
+// 初始状态：request 的初始值为 HttpRequest.newBuilder(URI.create("https:。
         System.out.println(request.method() + " " + request.uri());
         // 输出：GET https://example.com/items
     }
@@ -110,6 +115,8 @@ public class HttpPostRequestDemo {
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"java\"}"))
                 .build();
+// 关键变化：request 接收表达式 HttpRequest.newBuilder(URI.create("https: 的计算结果。
+// 初始状态：request 的初始值为 HttpRequest.newBuilder(URI.create("https:。
         System.out.println(request.method());
         // 输出：POST
     }
@@ -132,6 +139,8 @@ import java.net.http.HttpResponse;
 public class HttpSendDemo {
     public static void main(String[] args) throws Exception {
         var client = HttpClient.newHttpClient();
+// 关键变化：client 接收表达式 HttpClient.newHttpClient() 的计算结果。
+// 初始状态：client 的初始值为 HttpClient.newHttpClient()。
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -156,6 +165,8 @@ public class HttpResponseDemo {
     public static void main(String[] args) throws Exception {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
+// 关键变化：request 接收表达式 HttpRequest.newBuilder(URI.create("https: 的计算结果。
+// 初始状态：request 的初始值为 HttpRequest.newBuilder(URI.create("https:。
         var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
         System.out.println(response.statusCode() + ", " + response.headers().firstValue("content-type").isPresent());
         // 输出：200, true
@@ -307,6 +318,8 @@ public class HttpHeadersDemo {
                 .header("Accept", "application/json")
                 .header("X-Request-Id", "demo-1")
                 .GET().build();
+// 关键变化：request 接收表达式 HttpRequest.newBuilder(URI.create("https: 的计算结果。
+// 初始状态：request 的初始值为 HttpRequest.newBuilder(URI.create("https:。
         System.out.println(request.headers().firstValue("accept").orElse("missing"));
         // 输出：application/json
     }
@@ -325,6 +338,7 @@ public class HttpVersionDemo {
 // 作用：这是偏好而不是对端强制结果；HTTP/2 需要服务端、TLS 和代理链路共同支持。
     public static void main(String[] args) {
         var client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
+// 初始状态：client 的初始值为 HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()。
         // 作用：通过 HttpClient.Version 偏好 HTTP/2 或 HTTP/1.1。
         System.out.println(client.version());
         // 输出：HTTP_1_1
@@ -349,8 +363,8 @@ public class HttpCancelDemo {
         var future = HttpClient.newHttpClient().sendAsync(request,
                 java.net.http.HttpResponse.BodyHandlers.ofString());
         System.out.println(future.cancel(true));
+// 输出：true
         // 作用：通过 CompletableFuture.cancel 取消异步请求。
-        // 输出：true
     }
 }
 ```
@@ -393,6 +407,7 @@ import java.net.PasswordAuthentication;
 public class HttpAuthenticatorDemo {
     public static void main(String[] args) {
         Authenticator authenticator = new Authenticator() {
+// 输入：authenticator 的初始值为 new Authenticator()。
         // 作用：通过 Authenticator 代理或服务端认证回调。
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
@@ -417,6 +432,8 @@ public class HttpBodyHandlerBoundaryDemo {
         HttpResponse.BodyHandler<byte[]> handler = info ->
                 HttpResponse.BodySubscribers.mapping(
                         HttpResponse.BodySubscribers.ofByteArray(), bytes -> {
+// 关键变化：handler 接收右侧表达式 info -> 的计算结果。
+// 初始状态：handler 的初始值为 info ->。
                             if (bytes.length > 1024) throw new IllegalStateException("too large");
                             return bytes;
                         });
@@ -435,11 +452,13 @@ public class HttpBodyHandlerBoundaryDemo {
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 String keyword = URLEncoder.encode("Java 入门", StandardCharsets.UTF_8);
+// 输入：keyword 的初始值为 URLEncoder.encode("Java 入门", StandardCharsets.UTF_8)。
 // 作用：通过 URLEncoder.encode 编码查询参数值。
 String url = "https://example.test/search?q=" + keyword;
 System.out.println(keyword);
-System.out.println(url);
 // 输出：Java+%E5%85%A5%E9%97%A8
+System.out.println(url);
+// 输出：System.out 调用参数为 url。
 ```
 
 ### `URL(String)`：解析绝对资源地址
@@ -450,6 +469,7 @@ System.out.println(url);
 import java.net.URL;
 
 URL endpoint = new URL("https://example.test:8443/api/users");
+// 初始状态：endpoint 的初始值为 new URL("https:。
 // 作用：通过 URL(String) 解析绝对资源地址。
 // endpoint 只保存地址组件，这一行没有发生 DNS 查询或网络 I/O。
 System.out.println(endpoint.getHost() + ":" + endpoint.getPort());
@@ -470,8 +490,9 @@ var connection = endpoint.openConnection();
 connection.setConnectTimeout(3_000);
 connection.setReadTimeout(5_000);
 System.out.println(connection.getConnectTimeout());
-System.out.println(connection.getReadTimeout());
 // 输出：3000、5000；示例未发起网络读取
+System.out.println(connection.getReadTimeout());
+// 输出：System.out 调用参数为 connection.getReadTimeout()。
 ```
 
 ```java
@@ -487,6 +508,7 @@ public class HttpClientDemo {
                 .connectTimeout(Duration.ofSeconds(3))
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
+// 初始状态：client 的初始值为 HttpClient.newBuilder()。
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .timeout(Duration.ofSeconds(5))
                 .header("Accept", "text/html")

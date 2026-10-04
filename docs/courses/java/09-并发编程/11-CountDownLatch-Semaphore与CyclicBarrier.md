@@ -47,6 +47,8 @@ import java.util.concurrent.CountDownLatch;
 public class LatchInitDemo {
     public static void main(String[] args) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(2);
+// 关键变化：latch 接收表达式 new CountDownLatch(2) 的计算结果。
+// 初始状态：latch 的初始值为 new CountDownLatch(2)。
         latch.countDown();
         latch.countDown();
         latch.await();
@@ -70,6 +72,8 @@ import java.util.concurrent.TimeUnit;
 public class LatchTimeoutDemo {
     public static void main(String[] args) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
+// 关键变化：latch 接收表达式 new CountDownLatch(1) 的计算结果。
+// 初始状态：latch 的初始值为 new CountDownLatch(1)。
         boolean ready = latch.await(1, TimeUnit.MILLISECONDS);
         System.out.println("ready=" + ready);
         // 输出：ready=false
@@ -88,6 +92,8 @@ import java.util.concurrent.Semaphore;
 public class SemaphoreDemo {
     public static void main(String[] args) throws InterruptedException {
         Semaphore semaphore = new Semaphore(1);
+// 关键变化：semaphore 接收表达式 new Semaphore(1) 的计算结果。
+// 初始状态：semaphore 的初始值为 new Semaphore(1)。
         semaphore.acquire();
         try {
             System.out.println("permit acquired");
@@ -186,6 +192,8 @@ import java.util.concurrent.Phaser;
 public class PhaserDemo {
     public static void main(String[] args) {
         Phaser phaser = new Phaser(1);
+// 关键变化：phaser 接收表达式 new Phaser(1) 的计算结果。
+// 初始状态：phaser 的初始值为 new Phaser(1)。
         int phase = phaser.arriveAndAwaitAdvance();
         System.out.println("next phase=" + phase);
         // 输出：next phase=1
@@ -204,6 +212,8 @@ import java.util.concurrent.Phaser;
 public class PhaserRegisterDemo {
     public static void main(String[] args) {
         Phaser phaser = new Phaser();
+// 关键变化：phaser 接收表达式 new Phaser() 的计算结果。
+// 初始状态：phaser 的初始值为 new Phaser()。
         phaser.bulkRegister(2);
         System.out.println(phaser.getRegisteredParties());
         // 输出：2
@@ -224,6 +234,7 @@ import java.util.concurrent.Exchanger;
 public class ExchangerDemo {
     public static void main(String[] args) throws Exception {
         var exchanger = new Exchanger<String>();
+// 输入：exchanger 的初始值为 new Exchanger<String>()。
         // 作用：Exchanger 只有两个参与方，适合成对交换缓冲区；一般生产/消费流程应使用 BlockingQueue。
         Thread peer = new Thread(() -> {
             try {
@@ -251,11 +262,13 @@ import java.util.concurrent.Semaphore;
 public class FairSemaphoreDemo {
     public static void main(String[] args) throws InterruptedException {
         Semaphore semaphore = new Semaphore(1, true);
+// 关键变化：semaphore 接收表达式 new Semaphore(1, true) 的计算结果。
+// 初始状态：semaphore 的初始值为 new Semaphore(1, true)。
         semaphore.acquire();
         try {
             System.out.println("fair=" + semaphore.isFair());
+// 输出：fair=true
             // 作用：通过 Semaphore(fair) 公平许可证队列。
-            // 输出：fair=true
         } finally {
             semaphore.release();
         }

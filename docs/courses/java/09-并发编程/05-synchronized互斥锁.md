@@ -43,6 +43,7 @@ synchronized 同时提供互斥和释放/获得锁之间的内存可见性。实
 // 说明：两次 increment() 都必须先持有私有 final lock，因此不同线程对 count++ 的读-改-写不会丢失更新。
 public class SynchronizedBlockDemo {
     private final Object lock = new Object();
+// 初始状态：lock 的初始值为 new Object()。
     // 作用：使用私有 final 锁对象可以避免外部代码意外锁住或替换锁。
     private int count;
 
@@ -72,6 +73,7 @@ public class SynchronizedBlockDemo {
 // 说明：withdraw() 和 balance() 共用 account 监视器，amount<=balance 的检查与扣减在同一临界区内完成。
 public class SynchronizedMethodDemo {
     private int balance = 100;
+// 关键变化：balance 接收右侧表达式 100 的计算结果。
     // 初始状态：balance 当前为 100。
 
     synchronized void withdraw(int amount) {
@@ -143,6 +145,8 @@ public class ClassAndObjectLockDemo {
 
     public static void main(String[] args) {
         var demo = new ClassAndObjectLockDemo();
+// 关键变化：demo 接收表达式 new ClassAndObjectLockDemo() 的计算结果。
+// 初始状态：demo 的初始值为 new ClassAndObjectLockDemo()。
         demo.instancePart();
         classPart();
         System.out.println(demo.value);
@@ -169,6 +173,8 @@ public class ReentrantMonitorDemo {
 
     public static void main(String[] args) {
         new ReentrantMonitorDemo().outer();
+// // 返回：new ReentrantMonitorDemo().outer() 按构造参数创建新对象。
+// 初始状态：表达式为 new ReentrantMonitorDemo().outer()。
     }
 }
 ```
@@ -183,6 +189,8 @@ public class ReentrantMonitorDemo {
 // 说明：等待监视器条件：释放锁并广播唤醒。
 public class WaitNotifyDemo {
     private final Object lock = new Object();
+// 关键变化：lock 接收右侧表达式 new Object() 的计算结果。
+// 初始状态：lock 的初始值为 new Object()。
     private boolean ready;
 
     void awaitReady() throws InterruptedException {
@@ -221,6 +229,8 @@ public class WaitNotifyDemo {
 public class NotifyChoiceDemo {
     public static void main(String[] args) {
         Object lock = new Object();
+// 关键变化：lock 接收表达式 new Object() 的计算结果。
+// 初始状态：lock 的初始值为 new Object()。
         synchronized (lock) {
             lock.notifyAll();
             System.out.println("all waiters notified");
@@ -239,6 +249,8 @@ public class NotifyChoiceDemo {
 public class TimedWaitDemo {
     public static void main(String[] args) throws InterruptedException {
         Object lock = new Object();
+// 关键变化：lock 接收表达式 new Object() 的计算结果。
+// 初始状态：lock 的初始值为 new Object()。
         synchronized (lock) {
             long start = System.nanoTime();
             // 作用：通过 wait(long) 带超时的条件等待。
@@ -280,6 +292,8 @@ public class WaitMonitorRuleDemo {
     public static void main(String[] args) {
     // 作用：调用 wait、notify 或 notifyAll 前必须持有对应监视器，否则会抛 IllegalMonitorStateException。这个规则经常在把锁对象和条件对象拆开时被忽略。
         Object lock = new Object();
+// 关键变化：lock 接收表达式 new Object() 的计算结果。
+// 初始状态：lock 的初始值为 new Object()。
         try {
             lock.wait();
         } catch (InterruptedException ex) {
@@ -307,6 +321,8 @@ public class MonitorBlockingBoundaryDemo {
 
     public static void main(String[] args) {
         new MonitorBlockingBoundaryDemo().shortWork();
+// // 返回：new MonitorBlockingBoundaryDemo().shortWork() 按构造参数创建新对象。
+// 初始状态：表达式为 new MonitorBlockingBoundaryDemo().shortWork()。
     }
 }
 ```

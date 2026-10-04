@@ -195,6 +195,8 @@ public class JfrApiDemo {
 // 作用：Recording API 适合应用自己围绕一次请求或测试控制记录，但必须设置时长、事件和文件目录，避免无界记录。
     public static void main(String[] args) throws Exception {
         try (Recording recording = new Recording()) {
+// 关键变化：recording 接收表达式 new Recording()) { 的计算结果。
+// 初始状态：recording 的初始值为 new Recording())。
             recording.start();
             System.out.println("recording");
             // 输出：recording
@@ -250,6 +252,8 @@ public class JfrEventSettingDemo {
 // 作用：按需开启事件、设置阈值和采样周期可以减少文件大小；事件名称和字段以目标 JDK 文档为准，不能把某一版本的事件集合当成永久稳定清单。
     public static void main(String[] args) throws Exception {
         try (Recording recording = new Recording()) {
+// 关键变化：recording 接收表达式 new Recording()) { 的计算结果。
+// 初始状态：recording 的初始值为 new Recording())。
             recording.enable("jdk.CPULoad").withPeriod(java.time.Duration.ofSeconds(1));
             recording.start();
             recording.stop();

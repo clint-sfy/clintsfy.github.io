@@ -37,9 +37,9 @@ try (var ps = connection.prepareStatement(sql)) {
     ps.setLong(1, 42L);
     try (var rs = ps.executeQuery()) {
         if (rs.next()) System.out.println(rs.getString("name"));
+// 输出：存在 id=42 的账户时输出其 name；不存在时无输出。
     }
 }
-// 输出：存在 id=42 的账户时输出其 name；不存在时无输出。
 ```
 
 ### JDBC 事务：提交或回滚一组更新
@@ -75,8 +75,8 @@ try (var connection = dataSource.getConnection();
      var result = statement.executeQuery()) {
     result.next();
     System.out.println(result.getInt(1));
-}
 // 输出：1（前提：数据库支持 select 1）。
+}
 ```
 
 ## 综合练习

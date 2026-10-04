@@ -45,6 +45,8 @@ CAS 失败时通常重试，竞争激烈会消耗 CPU。LongAdder 的总和适�
 public class VolatileStopDemo {
 // 作用：普通字段可能被编译器或处理器重排、缓存观察；volatile 读写建立跨线程可见性。
     private static volatile boolean running = true;
+// 关键变化：running 接收右侧表达式 true 的计算结果。
+// 初始状态：running 的初始值为 true。
 
     public static void main(String[] args) {
         running = false;
@@ -93,6 +95,7 @@ public class AtomicCompareDemo {
         boolean first = state.compareAndSet(0, 1);
         // 作用：CAS 失败说明当前值已经被其他路径改变，调用方可以重试、放弃或走冲突处理。
         boolean second = state.compareAndSet(0, 2);
+// 返回：second 接收 state.compareAndSet(0, 2) 的返回值。
         System.out.println(first + ", " + second + ", state=" + state.get());
         // 输出：true, false, state=1
     }
@@ -114,6 +117,7 @@ public class AtomicReferenceDemo {
 
     public static void main(String[] args) {
         AtomicReference<Config> ref = new AtomicReference<>(new Config("a", 80));
+// 输入：ref 的初始值为 new AtomicReference<>(new Config("a", 80))。
         // 作用：用不可变对象整体替换引用，能避免读线程看到半更新状态。
         ref.updateAndGet(old -> new Config(old.host(), old.port() + 1));
         System.out.println(ref.get());
@@ -135,6 +139,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
 public class AtomicArrayDemo {
     public static void main(String[] args) {
         AtomicLongArray values = new AtomicLongArray(2);
+// 输入：values 的初始值为 new AtomicLongArray(2)。
         // 作用：AtomicLongArray 保护每个索引的更新，不会把两个索引的组合关系变成一次原子事务。
         values.incrementAndGet(1);
         values.addAndGet(1, 4);
@@ -157,6 +162,7 @@ import java.util.concurrent.atomic.LongAdder;
 public class LongAdderCounterDemo {
     public static void main(String[] args) {
         LongAdder hits = new LongAdder();
+// 输入：hits 的初始值为 new LongAdder()。
         // 作用：LongAdder 把热点分散到多个槽，适合 QPS、命中次数等最终汇总；清零和读取期间如果还有并发更新，观察到的是近似时间点的统计。
         hits.add(2);
         hits.increment();
@@ -177,6 +183,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class AtomicBooleanDemo {
     public static void main(String[] args) {
         AtomicBoolean started = new AtomicBoolean(false);
+// 输入：started 的初始值为 new AtomicBoolean(false)。
         // 作用：CAS 可以表达“只有第一个线程成功初始化”的状态迁移；初始化失败时要定义是否允许回滚或重试。
         boolean first = started.compareAndSet(false, true);
         boolean second = started.compareAndSet(false, true);
@@ -197,6 +204,8 @@ import java.util.concurrent.atomic.AtomicStampedReference;
 public class StampedReferenceDemo {
     public static void main(String[] args) {
         var ref = new AtomicStampedReference<>("A", 1);
+// 关键变化：ref 接收表达式 new AtomicStampedReference<>("A", 1) 的计算结果。
+// 初始状态：ref 的初始值为 new AtomicStampedReference<>("A", 1)。
         boolean changed = ref.compareAndSet("A", "B", 1, 2);
         System.out.println(changed + ", value=" + ref.getReference() + ", stamp=" + ref.getStamp());
         // 输出：true, value=B, stamp=2
@@ -238,6 +247,7 @@ import java.util.concurrent.atomic.LongAccumulator;
 public class LongAccumulatorDemo {
     public static void main(String[] args) {
         LongAccumulator max = new LongAccumulator(Math::max, Long.MIN_VALUE);
+// 输入：max 的初始值为 new LongAccumulator(Math::max, Long.MIN_VALUE)。
         // 作用：累积函数必须满足结合性，且初始值要合理；如果只统计加法，LongAdder 更直接。
         max.accumulate(7);
         max.accumulate(3);

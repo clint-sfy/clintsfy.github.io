@@ -47,6 +47,7 @@ description: 速查 static、final、常量、静态导入和嵌套类型，建�
 // 初始状态：next 初始为 1。
 class Sequence {
     private static int next = 1;
+// 关键变化：next 接收右侧表达式 1 的计算结果。
     // 初始状态：next 当前为 1。
 
     static int nextValue() {
@@ -86,6 +87,8 @@ System.out.println(Texts.quote("Java"));
 class Limits {
 // 作用：常量名通常使用大写下划线；值应稳定且不依赖可变运行时状态，配置项不要伪装成编译期常量。
     static final int MAX_RETRY = 3;
+// 关键变化：MAX_RETRY 接收右侧表达式 3 的计算结果。
+// 初始状态：MAX_RETRY 的初始值为 3。
 }
 
 System.out.println(Limits.MAX_RETRY);
@@ -100,6 +103,7 @@ System.out.println(Limits.MAX_RETRY);
 // 语义：局部 final 只能赋值一次，适合表达不应被后续分支覆盖的中间值。
 // 初始状态：port 初始为 8080。
 final int port = 8080;
+// 关键变化：port 接收表达式 8080 的计算结果。
 // 初始状态：port 当前为 8080。
 System.out.println(port);
 // 输出：8080
@@ -125,7 +129,7 @@ class User {
 }
 
 System.out.println(new User("U-1").id());
-// 输出：U-1
+// 输出：U-1；System.out.println 的实参为 new User("U-1").id()。
 ```
 
 ### `final` 引用：固定指向，不固定对象内容
@@ -139,6 +143,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 final List<String> names = new ArrayList<>();
+// 初始状态：names 的初始值为 new ArrayList<>()。
 // 作用：引用不能重新指向另一个列表，但列表内容仍可修改；需要不可变结果时用 List.copyOf 或防御性复制。
 names.add("Ann");
 System.out.println(names);
@@ -159,7 +164,7 @@ class Template {
 }
 
 System.out.println(new Template().run());
-// 输出：fixed
+// 输出：fixed；System.out.println 的实参为 new Template().run()。
 ```
 
 ### `final` 类：禁止继承
@@ -182,7 +187,7 @@ final class Token {
 }
 
 System.out.println(new Token("abc").value());
-// 输出：abc
+// 输出：abc；System.out.println 的实参为 new Token("abc").value()。
 ```
 
 ### 静态嵌套类：组织不需要外部实例的类型
@@ -203,7 +208,7 @@ class Parser {
 }
 
 System.out.println(new Parser.Result(true).ok);
-// 输出：true
+// 输出：true；System.out.println 的实参为 new Parser.Result(true).ok。
 ```
 ## 不常用但需要知道
 
@@ -214,6 +219,8 @@ System.out.println(new Parser.Result(true).ok);
 ```java
 class Registry {
     static String name = "ready";
+// 关键变化：name 接收右侧表达式 "ready" 的计算结果。
+// 初始状态：name 的初始值为 "ready"。
 
     static {
         System.out.println("load");
@@ -262,6 +269,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 static final List<String> ROLES = new ArrayList<>(List.of("reader"));
+// 初始状态：ROLES 的初始值为 new ArrayList<>(List.of("reader"))。
 // 作用：常量引用指向可变集合时仍能修改内容；公开共享集合应使用 List.of、Set.of 或不可变视图，并在文档中说明线程安全。
 
 ROLES.add("writer");
@@ -279,6 +287,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 final List<String> values = new ArrayList<>();
+// 初始状态：values 的初始值为 new ArrayList<>()。
 // 作用：final 不阻止引用指向的具体实现执行可变操作；若要限制替换实现、扩展和状态变化，需要分别使用 final 类、接口契约和不可变数据结构。
 values.add("ok");
 System.out.println(values.get(0));

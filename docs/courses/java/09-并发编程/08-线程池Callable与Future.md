@@ -48,6 +48,8 @@ import java.util.concurrent.Executors;
 public class CallableFutureDemo {
     public static void main(String[] args) throws Exception {
         try (var executor = Executors.newSingleThreadExecutor()) {
+// 关键变化：executor 接收表达式 Executors.newSingleThreadExecutor()) { 的计算结果。
+// 初始状态：executor 的初始值为 Executors.newSingleThreadExecutor())。
             Callable<Integer> task = () -> 20 + 22;
             var future = executor.submit(task);
             System.out.println(future.get());
@@ -104,6 +106,8 @@ import java.util.concurrent.TimeoutException;
 public class FutureTimeoutDemo {
     public static void main(String[] args) {
         FutureTask<String> future = new FutureTask<>(() -> "ready");
+// 关键变化：future 接收表达式 new FutureTask<>(() -> "ready") 的计算结果。
+// 初始状态：future 的初始值为 new FutureTask<>(() -> "ready")。
         try {
             System.out.println(future.get(1, TimeUnit.MILLISECONDS));
             // 输出：ready
@@ -153,6 +157,7 @@ import java.util.concurrent.FutureTask;
 public class FutureTaskDemo {
     public static void main(String[] args) throws Exception {
         FutureTask<Integer> task = new FutureTask<>(() -> 6 * 7);
+// 输入：task 的初始值为 new FutureTask<>(() -> 6 * 7)。
         // 作用：FutureTask 可被 Thread 或 Executor 执行，也能被多个调用方等待同一个结果；它只执行一次，适合简单的可复用异步计算句柄。
         Thread worker = new Thread(task, "calculator");
         worker.start();
@@ -178,6 +183,7 @@ public class ThreadPoolConfigDemo {
                 1, 2, 10, TimeUnit.SECONDS,
                 new ArrayBlockingQueue<>(2),
                 new ThreadPoolExecutor.AbortPolicy());
+// 输入：executor 的初始值为 new ThreadPoolExecutor(。
                 // 作用：核心线程数控制常驻处理能力，最大线程数处理队列满后的短时扩展，keepAlive 回收多余线程，ArrayBlockingQueue 给堆积设置上限。
         try {
             var future = executor.submit(() -> "bounded");
@@ -208,6 +214,8 @@ public class AbortPolicyDemo {
                 1, 1, 0, java.util.concurrent.TimeUnit.SECONDS,
                 new java.util.concurrent.SynchronousQueue<>(),
                 new ThreadPoolExecutor.AbortPolicy());
+// 关键变化：executor 接收表达式 new ThreadPoolExecutor( 1, 1, 0, java.util.concurrent.TimeUnit.SECONDS, new java.util.concurrent.SynchronousQueue<>(), new ThreadPoolExecutor.AbortPolicy()) 的计算结果。
+// 初始状态：executor 的初始值为 new ThreadPoolExecutor(。
         executor.shutdown();
         try {
             executor.execute(() -> { });
@@ -233,6 +241,8 @@ import java.util.concurrent.ThreadFactory;
 public class ThreadFactoryDemo {
     public static void main(String[] args) throws Exception {
         ThreadFactory factory = new ThreadFactory() {
+// 关键变化：factory 接收表达式 new ThreadFactory() { 的计算结果。
+// 初始状态：factory 的初始值为 new ThreadFactory()。
             private int nextId;
 
             @Override
@@ -287,6 +297,8 @@ public class CompletionServiceDemo {
 // 作用：完成顺序由调度决定，上例两行的先后是可能变化的；需要输入顺序时保留 Future 列表并按索引读取。CompletionService 适合“谁先完成先处理”的批量任务。
     public static void main(String[] args) throws Exception {
         try (var executor = Executors.newFixedThreadPool(2)) {
+// 关键变化：executor 接收表达式 Executors.newFixedThreadPool(2)) { 的计算结果。
+// 初始状态：executor 的初始值为 Executors.newFixedThreadPool(2))。
             var completion = new ExecutorCompletionService<String>(executor);
             completion.submit(() -> "done-1");
             completion.submit(() -> "done-2");

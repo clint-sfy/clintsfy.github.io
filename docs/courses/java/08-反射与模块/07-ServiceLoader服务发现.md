@@ -58,6 +58,7 @@ interface Formatter { String format(String value); }
 public class ServiceLoadDemo {
     public static void main(String[] args) {
         ServiceLoader<Formatter> loader = ServiceLoader.load(Formatter.class);
+// 输入：loader 的初始值为 ServiceLoader.load(Formatter.class)。
         // 作用：load 只创建发现器，不保证已经实例化提供方；要看到实现必须在 classpath 配置 META-INF/services/Formatter，或在模块中声明 uses/provides。
         System.out.println(loader != null);
         // 输出：true
@@ -124,6 +125,7 @@ interface ClockSource { String now(); }
 public class ServiceFirstDemo {
     public static void main(String[] args) {
         var first = ServiceLoader.load(ClockSource.class).findFirst();
+// 输入：first 的初始值为 ServiceLoader.load(ClockSource.class).findFirst()。
         // 作用：findFirst 只适合“任意一个实现都能工作”的协议；若有多个实现，要明确选择规则并把缺失服务当成配置错误还是可选能力。
         System.out.println(first.isPresent());
         // 输出：true 或 false
@@ -146,6 +148,8 @@ public class ServiceProviderDemo {
         long providers = ServiceLoader.load(Parser.class).stream()
                 .filter(provider -> provider.type().getSimpleName().endsWith("Parser"))
                 .count();
+// 关键变化：providers 接收表达式 ServiceLoader.load(Parser.class).stream() .filter(provider -> provider.type().getSimpleName().endsWith("Parser")) .count() 的计算结果。
+// 初始状态：providers 的初始值为 ServiceLoader.load(Parser.class).stream()。
         System.out.println(providers >= 0);
         // 输出：true
     }
@@ -207,6 +211,7 @@ public class ServiceReloadDemo {
     public static void main(String[] args) {
         ServiceLoader<Reloadable> loader = ServiceLoader.load(Reloadable.class);
         loader.reload();
+// 输入：表达式为 loader.reload()。
         // 作用：通过 reload 刷新发现结果。
         System.out.println(loader != null);
         // 输出：true
@@ -229,8 +234,8 @@ public class ServiceProviderGetDemo {
         // 初始状态：provider 当前为 ServiceLoader.load(Renderer.class).stream().findFirst()。
         if (provider.isPresent()) {
             System.out.println(provider.get().getClass().getSimpleName());
+// 输出：由配置的实现类决定
             // 作用：通过 Provider.get 按需创建单个实现。
-            // 输出：由配置的实现类决定
         } else {
             System.out.println("none");
             // 输出：none
@@ -255,11 +260,12 @@ public class ServiceErrorDemo {
         try {
             for (BrokenService ignored : ServiceLoader.load(BrokenService.class)) {
                 System.out.println(ignored);
+// 输出：ServiceConfigurationError
             }
         } catch (ServiceConfigurationError e) {
         // 作用：通过 ServiceConfigurationError 处理服务配置错误。
             System.out.println(e.getClass().getSimpleName());
-            // 输出：ServiceConfigurationError
+// 输出：System.out 调用参数为 e.getClass().getSimpleName()。
         }
     }
 }
@@ -276,6 +282,8 @@ public final class FactoryFormatter implements com.example.spi.Formatter {
 
     public static FactoryFormatter provider() {
         return new FactoryFormatter();
+// 返回：return new FactoryFormatter() 把该表达式交给调用方。
+// 初始状态：表达式为 return new FactoryFormatter()。
     }
 
     public String format(String value) { return "factory:" + value; }

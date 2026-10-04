@@ -45,6 +45,7 @@ Lambda 不是“自动多线程”，只是把一段行为交给一个有唯一�
 import java.util.function.Predicate;
 
 Predicate<String> longName = name -> name.length() >= 4;
+// 初始状态：longName 的初始值为 name -> name.length() >= 4。
 // 作用：test 返回布尔值，适合过滤、校验和权限判断；不要在谓词里偷偷修改共享状态。
 System.out.println(longName.test("Java"));
 // 输出：true
@@ -114,6 +115,7 @@ System.out.println(notBlank.test(input));
 import java.util.function.Function;
 
 Function<String, Integer> length = String::length;
+// 关键变化：length 接收表达式 String::length 的计算结果。
 // 初始状态：length 当前为 String::length。
 System.out.println(length.apply("Java"));
 // 输出：4
@@ -167,6 +169,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 List<String> log = new ArrayList<>();
+// 初始状态：log 的初始值为 new ArrayList<>()。
 // 作用：Consumer 没有返回值，常用于日志、通知和写入；并行流中使用它修改普通集合通常不安全。
 Consumer<String> record = log::add;
 record.accept("saved");
@@ -204,6 +207,7 @@ System.out.println(output);
 import java.util.function.Supplier;
 
 Supplier<String> requestId = () -> "REQ-20";
+// 关键变化：requestId 接收表达式 () -> "REQ-20" 的计算结果。
 // 初始状态：requestId 当前为 () -> "REQ-20"。
 System.out.println(requestId.get());
 // 输出：REQ-20
@@ -219,6 +223,7 @@ System.out.println(requestId.get());
 import java.util.function.UnaryOperator;
 
 UnaryOperator<String> normalize = String::trim;
+// 关键变化：normalize 接收表达式 String::trim 的计算结果。
 // 初始状态：normalize 当前为 String::trim。
 System.out.println(normalize.apply(" Java "));
 // 输出：Java
@@ -248,6 +253,8 @@ System.out.println(add.apply(20, 22));
 import java.util.List;
 
 List<String> names = List.of("Bob", "Ann");
+// 关键变化：names 接收表达式 List.of("Bob", "Ann") 的计算结果。
+// 初始状态：names 的初始值为 List.of("Bob", "Ann")。
 names.stream().map(String::toUpperCase).forEach(System.out::println);
 // 输出：BOB
 // 输出：ANN
@@ -278,7 +285,8 @@ System.out.println(join.apply("id", "20"));
 
 ```java
 BiFunction<String, Integer, String> join = (left, right) -> left + ":" + right;
-// 初始状态：左值为 id，右值为 20。
+// 关键变化：join 接收表达式 (left, right) -> left + ":" + right 的计算结果。
+// 初始状态：左值为 id，右值为 20。；具体值：join = (left, right) -> left + ":" + right
 String text = join.apply("id", 20);
 // 结果：text 为 "id:20"
 ```
@@ -291,10 +299,10 @@ String text = join.apply("id", 20);
 import java.util.function.BiConsumer;
 
 BiConsumer<String, Integer> printer = (key, value) -> System.out.println(key + "=" + value);
+// 输出：id=20
 // 初始状态：printer 由两参数 Lambda 初始化，输出格式为 key=value。
 // 作用：printer.accept 把键 "id" 和值 20 交给同一个无返回值动作。
 printer.accept("id", 20);
-// 输出：id=20
 ```
 
 ### `Function.identity()`：原样返回元素
@@ -307,6 +315,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 List<String> names = List.of("Ann", "Bob");
+// 关键变化：names 接收表达式 List.of("Ann", "Bob") 的计算结果。
+// 初始状态：names 的初始值为 List.of("Ann", "Bob")。
 var same = names.stream().collect(
         Collectors.toMap(Function.identity(), String::length));
         // 作用：通过 Function.identity() 原样返回元素。
@@ -336,6 +346,7 @@ System.out.println(memberRule.priceAfterDiscount(80));
 ```java
 // 初始状态：limit=10 且后续没有重新赋值，因此 underLimit Lambda 可以捕获它并测试 value=8。
 int limit = 10;
+// 关键变化：limit 接收表达式 10 的计算结果。
 // 初始状态：limit 当前为 10。
 java.util.function.Predicate<Integer> underLimit = value -> value < limit;
 System.out.println(underLimit.test(8));

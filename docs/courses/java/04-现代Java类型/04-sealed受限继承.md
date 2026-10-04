@@ -57,6 +57,8 @@ public class SealedInterfaceDemo {
             return "declined:" + declined.reason();
         }
         throw new IllegalStateException("unreachable");
+// 异常：throw new IllegalStateException("unreachable") 立即进入异常路径。
+// 初始状态：表达式为 throw new IllegalStateException("unreachable")。
     }
 
     public static void main(String[] args) {
@@ -94,7 +96,7 @@ final class DeleteUser extends Command {
 public class SealedClassDemo {
     public static void main(String[] args) {
         System.out.println(new CreateUser().name());
-        // 输出：create
+// 输出：create；System.out.println 的实参为 new CreateUser().name()。
     }
 }
 ```
@@ -117,7 +119,7 @@ final class Success implements Result {
 public class SealedFinalDemo {
     public static void main(String[] args) {
         System.out.println(new Success().message());
-        // 输出：ok
+// 输出：ok；System.out.println 的实参为 new Success().message()。
     }
 }
 ```
@@ -140,7 +142,7 @@ final class Directory implements FileNode {}
 public class NestedSealedDemo {
     public static void main(String[] args) {
         System.out.println(new TextFile() instanceof FileNode);
-        // 输出：true
+// 输出：true；System.out.println 的实参为 new TextFile() instanceof FileNode。
     }
 }
 ```
@@ -162,7 +164,7 @@ class VendorEvent extends ExternalEvent {}
 public class NonSealedDemo {
     public static void main(String[] args) {
         System.out.println(new VendorEvent() instanceof Event);
-        // 输出：true
+// 输出：true；System.out.println 的实参为 new VendorEvent() instanceof Event。
     }
 }
 ```
@@ -189,7 +191,7 @@ public class SealedPatternDemo {
 
     public static void main(String[] args) {
         System.out.println(area(new Rectangle(3, 4)));
-        // 输出：12.0
+// 输出：12.0；System.out.println 的实参为 area(new Rectangle(3, 4))。
     }
 }
 ```
@@ -208,7 +210,7 @@ final class Closed implements LocalState {}
 public class InferredPermitsDemo {
     public static void main(String[] args) {
         System.out.println(new Ready() instanceof LocalState);
-        // 输出：true
+// 输出：true
     }
 }
 ```
@@ -224,7 +226,7 @@ final class LocalCreate implements LocalCommand {}
 public class SealedBoundaryDemo {
     public static void main(String[] args) {
         System.out.println(new LocalCreate() instanceof LocalCommand);
-        // 输出：true
+// 输出：true；System.out.println 的实参为 new LocalCreate() instanceof LocalCommand。
     }
 }
 ```
@@ -242,7 +244,7 @@ enum ImportStatus { CREATED, UPDATED }
 public class SealedDomainDemo {
     public static void main(String[] args) {
         System.out.println(new Imported("a.csv", ImportStatus.CREATED).status());
-        // 输出：CREATED
+// 输出：CREATED；System.out.println 的实参为 new Imported("a.csv", ImportStatus.CREATED).status()。
     }
 }
 ```

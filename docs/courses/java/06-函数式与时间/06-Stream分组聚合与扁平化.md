@@ -62,7 +62,9 @@ import java.util.List;
 record Order(String id, List<String> items) { }
 
 var orders = List.of(new Order("A", List.of("book", "pen")), new Order("B", List.of("cup")));
+// 初始状态：orders 的初始值为 List.of(new Order("A", List.of("book", "pen")), new Order("B", List.of("cup")))。
 var items = orders.stream().flatMap(order -> order.items().stream()).toList();
+// 返回：items 接收 orders.stream().flatMap(order -> order.items().stream()).toList() 的返回值。
 System.out.println(items);
 // 输出：[book, pen, cup]
 ```
@@ -210,6 +212,8 @@ record Score(String name, int value) { }
 // 作用：没有合并策略的重复键会抛异常；覆盖、相加、取最大或收集列表都应在代码中明确表达。
 
 var scores = List.of(new Score("java", 80), new Score("java", 95));
+// 关键变化：scores 接收表达式 List.of(new Score("java", 80), new Score("java", 95)) 的计算结果。
+// 初始状态：scores 的初始值为 List.of(new Score("java", 80), new Score("java", 95))。
 var best = scores.stream().collect(Collectors.toMap(
         Score::name, Score::value, Integer::max));
 System.out.println(best);
@@ -309,6 +313,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 List<Integer> result = new ArrayList<>();
+// 关键变化：result 接收表达式 new ArrayList<>() 的计算结果。
+// 初始状态：result 的初始值为 new ArrayList<>()。
 List.of(1, 2, 3, 4).parallelStream().forEach(result::add);
 System.out.println(result.size());
 // 输出：不应依赖具体结果（共享 ArrayList 非线程安全）

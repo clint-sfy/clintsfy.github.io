@@ -159,6 +159,7 @@ import java.util.stream.Collectors;
 Long count = List.of("java", "sql", "http").stream()
         .filter(word -> word.length() >= 4)
         .collect(Collectors.counting());
+// 输入：表达式为 .collect(Collectors.counting())。
         // 作用：通过 counting 统计元素数量。
 
 System.out.println(count);
@@ -255,6 +256,8 @@ record Score(String name, int value) { }
 // 作用：合并函数应明确“保留、相加还是报错”；需要保留插入顺序时使用 toMap 的 Map 工厂重载。
 
 var scores = List.of(new Score("java", 80), new Score("java", 95));
+// 关键变化：scores 接收表达式 List.of(new Score("java", 80), new Score("java", 95)) 的计算结果。
+// 初始状态：scores 的初始值为 List.of(new Score("java", 80), new Score("java", 95))。
 var best = scores.stream().collect(Collectors.toMap(
         Score::name, Score::value, Integer::max));
 System.out.println(best);
@@ -398,6 +401,7 @@ var range = List.of(10, 20, 30).stream().collect(Collectors.teeing(
         Collectors.minBy(Integer::compareTo),
         Collectors.maxBy(Integer::compareTo),
         (min, max) -> min.orElse(0) + ".." + max.orElse(0)));
+// 输入：range 的初始值为 List.of(10, 20, 30).stream().collect(Collectors.teeing(。
         // 作用：teeing 会同时维护两个下游结果，适合一个遍历需要多个统计值；逻辑过于复杂时拆成清晰的两次计算反而更容易维护。
         // 作用：通过 teeing 同时计算两个结果再合并（Java 12+）。
 System.out.println(range);
@@ -433,6 +437,7 @@ import java.util.stream.Collectors;
 
 var result = List.of("b", "a", "b").stream().collect(Collectors.groupingBy(
         text -> text, LinkedHashMap::new, Collectors.counting()));
+// 初始状态：result 的初始值为 List.of("b", "a", "b").stream().collect(Collectors.groupingBy(。
         // 作用：默认 HashMap 不承诺键顺序；只有输出协议依赖顺序时才指定 LinkedHashMap 或排序 Map。
 System.out.println(result);
 // 输出：{b=2, a=1}

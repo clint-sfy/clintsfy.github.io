@@ -51,6 +51,8 @@ dependencies {
 import java.util.Properties;
 
 Properties config = new Properties();
+// 关键变化：config 接收表达式 new Properties() 的计算结果。
+// 初始状态：config 的初始值为 new Properties()。
 config.setProperty("resource.loader.file.path", "templates");
 // config 中的 templates 是引擎随后查找 .vm 文件的受信任根目录。
 System.out.println(config.getProperty("resource.loader.file.path"));
@@ -79,7 +81,7 @@ public class VelocityInitDemo {
         VelocityEngine engine = new VelocityEngine(config);
         // init() 根据 config 创建文件资源加载器，之后 engine 才能查找模板。
         engine.init();
-        // 作用：用途：用于显式指定受信任模板目录、UTF-8 编码并完成引擎初始化。
+// // 关键变化：engine.init() 使用表达式中的具体参数完成本次调用。
         System.out.println("Velocity ready");
         // 输出：Velocity ready
     }
@@ -102,9 +104,11 @@ public class VelocityContextDemo {
         // fields 保留字段顺序，模板中的 #foreach 会按 id、name 的顺序迭代。
         VelocityContext context = new VelocityContext();
         context.put("packageName", "example.user");
-        // 作用：用途：用于按稳定键名写入模板真正需要的数据，形成可测试的输入契约。
+// // 关键变化：context.put("packageName", "example.user") 使用括号内的具体实参更新接收对象状态。
         context.put("className", "UserView");
+// // 关键变化：context.put("className", "UserView") 使用括号内的具体实参更新接收对象状态。
         context.put("fields", fields);
+// // 关键变化：context.put("fields", fields) 使用括号内的具体实参更新接收对象状态。
         // context 只暴露模板使用的三个键，不向模板传递文件系统或反射能力。
         System.out.println(context.get("className"));
         // 输出：UserView
@@ -131,7 +135,7 @@ public class VelocityMergeDemo {
         StringWriter writer = new StringWriter();
         // merge() 执行 template 并把结果写入内存 writer，此时还没有覆盖任何文件。
         template.merge(context, writer);
-        // 作用：用途：用于将已加载模板与上下文合并到 writer，并在落盘前检查生成结果。
+// // 关键变化：template.merge(context, writer) 使用括号内的具体实参更新接收对象状态。
         String source = writer.toString();
         System.out.println(source.contains("UserService"));
         // 输出：模板使用 $className 时为 true
@@ -159,7 +163,7 @@ public class VelocityLoadDemo {
         Template template = engine.getTemplate(
                 templateName,
                 StandardCharsets.UTF_8.name());
-                // 作用：用途：用于从初始化时配置的资源目录加载固定模板名，并返回可重复合并的模板对象。
+// // 关键变化：StandardCharsets.UTF_8.name()) 使用表达式中的具体参数完成本次调用。
                 // 作用：通过 VelocityEngine.getTemplate 按 UTF-8 加载受信任模板。
         // template 来自 engine 配置的 templates 根目录，并以 UTF-8 解码。
         System.out.println(template.getName());

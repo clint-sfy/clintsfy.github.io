@@ -47,6 +47,8 @@ record Point(int x, int y) {}
 public class RecordBasicDemo {
     public static void main(String[] args) {
         Point left = new Point(3, 4);
+// 关键变化：left 接收表达式 new Point(3, 4) 的计算结果。
+// 初始状态：left 的初始值为 new Point(3, 4)。
         Point right = new Point(3, 4);
         System.out.println(left.x() + ", " + left.y());
         // 输出：3, 4
@@ -67,6 +69,8 @@ record UserName(String value) {
     public UserName {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("name must not be blank");
+// 异常：throw new IllegalArgumentException("name must not be blank") 立即进入异常路径。
+// 初始状态：表达式为 throw new IllegalArgumentException("name must not be blank")。
         }
         value = value.trim();
     }
@@ -92,6 +96,8 @@ record Port(int value) {
     public Port(int value) {
         if (value < 1 || value > 65535) {
             throw new IllegalArgumentException("port out of range");
+// 异常：throw new IllegalArgumentException("port out of range") 立即进入异常路径。
+// 初始状态：表达式为 throw new IllegalArgumentException("port out of range")。
         }
         this.value = value;
     }
@@ -117,6 +123,8 @@ record User(String name, int age) {}
 public class RecordAccessorDemo {
     public static void main(String[] args) {
         User user = new User("Alice", 20);
+// 关键变化：user 接收表达式 new User("Alice", 20) 的计算结果。
+// 初始状态：user 的初始值为 new User("Alice", 20)。
         System.out.println(user.name() + ", " + user.age());
         // 输出：Alice, 20
     }
@@ -142,6 +150,8 @@ record Order(List<String> items) {
 public class RecordShallowImmutableDemo {
     public static void main(String[] args) {
         List<String> source = new ArrayList<>(List.of("book"));
+// 关键变化：source 接收表达式 new ArrayList<>(List.of("book")) 的计算结果。
+// 初始状态：source 的初始值为 new ArrayList<>(List.of("book"))。
         Order order = new Order(source);
         source.add("pen");
         System.out.println(order.items());
@@ -170,7 +180,7 @@ public class RecordInterfaceDemo {
 
     public static void main(String[] args) {
         System.out.println(show(new Product("p-1", "Book")));
-        // 输出：p-1
+// 输出：p-1；System.out.println 的实参为 show(new Product("p-1", "Book"))。
     }
 }
 ```
@@ -194,7 +204,7 @@ public class RecordPatternDemo {
 
     public static void main(String[] args) {
         System.out.println(locate(new Point(2, 5)));
-        // 输出：x=2, y=5
+// 输出：x=2, y=5；System.out.println 的实参为 locate(new Point(2, 5))。
     }
 }
 ```
@@ -224,7 +234,7 @@ public class NestedRecordPatternDemo {
 
     public static void main(String[] args) {
         System.out.println(cityOf(new User("Alice", new Address("Shanghai"))));
-        // 输出：Alice@Shanghai
+// 输出：Alice@Shanghai；System.out.println 的实参为 cityOf(new User("Alice", new Address("Shanghai")))。
     }
 }
 ```
@@ -240,6 +250,8 @@ record Pair<L, R>(L left, R right) {}
 public class GenericRecordDemo {
     public static void main(String[] args) {
         Pair<String, Integer> pair = new Pair<>("age", 20);
+// 关键变化：pair 接收表达式 new Pair<>("age", 20) 的计算结果。
+// 初始状态：pair 的初始值为 new Pair<>("age", 20)。
         System.out.println(pair.left() + "=" + pair.right());
         // 输出：age=20
     }
@@ -254,6 +266,8 @@ record 不是只能放字段的哑数据结构，可以声明静态工厂和派�
 record Celsius(double value) {
     static Celsius ofFahrenheit(double fahrenheit) {
         return new Celsius((fahrenheit - 32) * 5 / 9);
+// 返回：return new Celsius((fahrenheit - 32) * 5 / 9) 把该表达式交给调用方。
+// 初始状态：表达式为 return new Celsius((fahrenheit - 32) * 5 / 9)。
     }
 
     double rounded() {
@@ -283,7 +297,10 @@ record CaseInsensitiveName(String value) {
 
     @Override
     public int hashCode() {
+// // 关键变化：public int hashCode() { 使用表达式中的具体参数完成本次调用。
+// 输入：表达式为 public int hashCode() {。
         return value.toLowerCase(java.util.Locale.ROOT).hashCode();
+// 返回：return value.toLowerCase(java.util.Locale.ROOT).hashCode() 把该表达式交给调用方。
     }
 }
 
@@ -309,7 +326,7 @@ record UserSnapshot(String id) implements Serializable {}
 public class RecordSerializableDemo {
     public static void main(String[] args) {
         System.out.println(new UserSnapshot("u-1") instanceof Serializable);
-        // 输出：true
+// 输出：true；System.out.println 的实参为 new UserSnapshot("u-1") instanceof Serializable。
     }
 }
 ```

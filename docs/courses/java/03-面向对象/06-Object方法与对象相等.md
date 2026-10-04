@@ -46,6 +46,8 @@ description: 速查 Object、Objects、equals、hashCode、toString 和对象身
 // 语义：== 对引用比较对象身份，对基本类型比较数值。
 // 初始状态：first 初始为 new String("Java")；second 初始为 new String("Java")。
 String first = new String("Java");
+// 关键变化：first 接收表达式 new String("Java") 的计算结果。
+// 初始状态：first 的初始值为 new String("Java")。
 String second = new String("Java");
 System.out.println(first == second);
 // 输出：false
@@ -69,8 +71,10 @@ class UserId {
 
     @Override
     public boolean equals(Object other) {
+// 输入：表达式为 public boolean equals(Object other) {。
     // 作用：通过 equals 比较逻辑内容。
         return other instanceof UserId id && Objects.equals(value, id.value);
+// 返回：return other instanceof UserId id && Objects.equals(value, id.value) 把该表达式交给调用方。
     }
 }
 
@@ -146,8 +150,8 @@ String left = null;
 String right = "Java";
 // 初始状态：right 当前为 "Java"。
 System.out.println(Objects.equals(left, right));
-// 作用：一方或双方为 null 时不会抛异常。
 // 输出：false
+// 作用：一方或双方为 null 时不会抛异常。
 ```
 
 ### `Objects.hash`：按字段组合哈希
@@ -170,8 +174,8 @@ System.out.println(hash != 0);
 String value = null;
 // 初始状态：value 当前为 null。
 System.out.println(Objects.toString(value, "(missing)"));
-// 作用：适合日志或展示的轻量默认值。
 // 输出：(missing)
+// 作用：适合日志或展示的轻量默认值。
 ```
 
 ### `Objects.requireNonNull`：构造入口校验
@@ -194,8 +198,8 @@ System.out.println(name);
 Object value = "Java";
 // 初始状态：value 当前为 "Java"。
 System.out.println(value.getClass().getSimpleName());
+// 输出：String；输入：System.out.println(value.getClass().getSimpleName());。
 // 作用：getClass() 返回精确运行时类，不能替代多态。
-// 输出：String
 ```
 ## 不常用但需要知道
 
@@ -208,8 +212,8 @@ int[][] left = {{1, 2}};
 // 初始状态：left 当前为 {{1, 2}}。
 int[][] right = {{1, 2}};
 System.out.println(Objects.deepEquals(left, right));
-// 作用：通过 Objects.deepEquals 比较嵌套数组或对象。
 // 输出：true
+// 作用：通过 Objects.deepEquals 比较嵌套数组或对象。
 ```
 
 ### `Objects.compare`：带比较器的空值边界
@@ -239,6 +243,7 @@ class Box implements Cloneable {
     // 作用：通过 clone 受保护的浅复制入口。
         try {
             return (Box) super.clone();
+// 返回：return (Box) super.clone() 把该表达式交给调用方。
         } catch (CloneNotSupportedException error) {
             throw new AssertionError(error);
         }
@@ -246,6 +251,7 @@ class Box implements Cloneable {
 }
 
 Box copy = new Box().clone();
+// 返回：copy 接收 new Box().clone() 的返回值。
 System.out.println(copy.value);
 // 输出：7
 ```
@@ -258,6 +264,7 @@ System.out.println(copy.value);
 // 前置条件：当前线程已经持有 lock 的监视器
 synchronized (lock) {
     while (!ready) lock.wait();
+// 输入：表达式为 while (!ready) lock.wait()。
     // 作用：wait 必须在持有同一对象监视器时调用，它会释放监视器；唤醒后还必须在循环中重新检查条件。
 }
 // 结果：被唤醒并重新取得监视器后才继续执行
@@ -308,6 +315,7 @@ var text = new ToStringBuilder(new Object(), ToStringStyle.NO_CLASS_NAME_STYLE)
         .append("id", 7)
         .append("name", "job")
         .toString();
+// 输入：text 的初始值为 new ToStringBuilder(new Object(), ToStringStyle.NO_CLASS_NAME_STYLE)。
         // 作用：Apache Commons Lang 的构造器按字段追加对象摘要；敏感字段仍需主动排除。
         // 作用：通过 ToStringBuilder 生成可维护的 toString。
 System.out.println(text);
@@ -329,6 +337,7 @@ public class ValueObjectDemo {
 
     public static void main(String[] args) {
         Map<UserKey, String> names = new HashMap<>();
+// 初始状态：names 的初始值为 new HashMap<>()。
         names.put(new UserKey("acme", "U-1"), "Ann");
 
         System.out.println(names.get(new UserKey("acme", "U-1")));

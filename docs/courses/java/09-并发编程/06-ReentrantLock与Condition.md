@@ -46,6 +46,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class LockFinallyDemo {
     public static void main(String[] args) {
         ReentrantLock lock = new ReentrantLock();
+// 关键变化：lock 接收表达式 new ReentrantLock() 的计算结果。
+// 初始状态：lock 的初始值为 new ReentrantLock()。
         lock.lock();
         try {
             System.out.println("inside lock");
@@ -123,6 +125,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ConditionDemo {
     private final ReentrantLock lock = new ReentrantLock();
+// 关键变化：lock 接收右侧表达式 new ReentrantLock() 的计算结果。
+// 初始状态：lock 的初始值为 new ReentrantLock()。
     private final Condition ready = lock.newCondition();
     private boolean available;
 
@@ -170,6 +174,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class FairLockDemo {
     public static void main(String[] args) {
         ReentrantLock fair = new ReentrantLock(true);
+// 关键变化：fair 接收表达式 new ReentrantLock(true) 的计算结果。
+// 初始状态：fair 的初始值为 new ReentrantLock(true)。
         fair.lock();
         try {
             System.out.println("fair lock configured=" + fair.isFair());
@@ -249,6 +255,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ReadWriteLockLowFrequencyDemo {
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
+// 输入：lock 的初始值为 new ReentrantReadWriteLock()。
         // 作用：读锁并行不等于一定更快；写频繁、读临界区很短或升级路径复杂时，普通锁可能更清晰。不要在持有读锁时直接申请写锁形成升级死锁。
         lock.readLock().lock();
         try {
@@ -272,6 +279,7 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedLockLowFrequencyDemo {
     public static void main(String[] args) {
         StampedLock lock = new StampedLock();
+// 输入：lock 的初始值为 new StampedLock()。
         // 作用：StampedLock 不可重入，乐观读必须 validate，失败后回退到读锁。只有读多写少且基准显示收益时才使用。
         long stamp = lock.tryOptimisticRead();
         int result = 7;

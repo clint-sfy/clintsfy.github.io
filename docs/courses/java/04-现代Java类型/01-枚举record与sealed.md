@@ -70,7 +70,7 @@ record Money(String currency, long cents) {}
 public class RecordOverviewDemo {
     public static void main(String[] args) {
         System.out.println(new Money("CNY", 1999).currency());
-        // 输出：CNY
+// 输出：CNY；System.out.println 的实参为 new Money("CNY", 1999).currency()。
     }
 }
 ```
@@ -89,6 +89,8 @@ record LoginFailure(String reason) implements LoginResult {}
 public class SealedOverviewDemo {
     public static void main(String[] args) {
         LoginResult result = new LoginSuccess("u-1");
+// 关键变化：result 接收表达式 new LoginSuccess("u-1") 的计算结果。
+// 初始状态：result 的初始值为 new LoginSuccess("u-1")。
         System.out.println(result instanceof LoginSuccess);
         // 输出：true
     }
@@ -114,7 +116,7 @@ public class PatternOverviewDemo {
 
     public static void main(String[] args) {
         System.out.println(label(new User("Alice", 20)));
-        // 输出：Alice:20
+// 输出：Alice:20；System.out.println 的实参为 label(new User("Alice", 20))。
     }
 }
 ```
@@ -166,7 +168,7 @@ class VendorEvent extends ExtensionEvent {}
 public class SealedExtensionOverviewDemo {
     public static void main(String[] args) {
         System.out.println(new VendorEvent() instanceof Event);
-        // 输出：true
+// 输出：true；System.out.println 的实参为 new VendorEvent() instanceof Event。
     }
 }
 ```

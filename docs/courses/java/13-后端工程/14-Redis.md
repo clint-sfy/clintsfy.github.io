@@ -42,10 +42,11 @@ Redis 很快，但它首先是一个网络服务和内存数据结构服务器�
 
 ```java
 redisTemplate.opsForHash().put("user:7", "name", "Ann");
-// 作用：用途：用于在一个 Redis Hash 中按字段读写结构化对象的局部数据。
+// 关键变化：调用表达式 redisTemplate.opsForHash().put("user:7", "name", "Ann"); 读取或更新本行列出的对象和参数。
+// 输入：key="user:7"、field="name"、value="Ann"；写入后该 Hash 的 name 字段为 Ann。
 System.out.println(redisTemplate.opsForHash().get("user:7", "name"));
 // 输出：Ann
-// 说明：opsForHash().put("user:42", "name", "Alice") 写入 key=user:42、field=name、value=Alice；get 用同一 key/field 返回 Alice。
+// 返回：get("user:7", "name") 读取刚写入的字段，返回字符串 Ann。
 ```
 
 ### `RedisTemplate.opsForList`：维护列表元素
@@ -54,10 +55,11 @@ System.out.println(redisTemplate.opsForHash().get("user:7", "name"));
 
 ```java
 redisTemplate.opsForList().rightPush("jobs", "job-1");
-// 作用：用途：用于按队列或栈语义向 Redis List 写入并读取元素。
+// 关键变化：调用表达式 redisTemplate.opsForList().rightPush("jobs", "job-1"); 读取或更新本行列出的对象和参数。
+// 输入：key="jobs"、value="job-1"；rightPush 完成后 jobs 的右端为 job-1。
 System.out.println(redisTemplate.opsForList().leftPop("jobs"));
 // 输出：job-1
-// 说明：rightPush("jobs", "job-1") 把 job-1 追加到列表右端，leftPop("jobs") 从左端取出，形成 FIFO；空列表返回 null。
+// 返回：leftPop("jobs") 从左端取出 job-1；列表为空时本次返回 null。
 ```
 
 ### `RedisTemplate.delete`：删除明确缓存键
@@ -66,10 +68,11 @@ System.out.println(redisTemplate.opsForList().leftPop("jobs"));
 
 ```java
 Boolean deleted = redisTemplate.delete("user:7");
-// 作用：用途：用于在数据变更后删除一个已知缓存键并观察是否存在目标。
+// 关键变化：deleted 接收表达式 redisTemplate.delete("user:7") 的计算结果。
+// 输入：删除精确 key="user:7"；deleted 接收删除结果，键存在时为 true，不存在时为 false。
 System.out.println(Boolean.TRUE.equals(deleted));
 // 输出：删除到键时为 true。
-// 说明：redisTemplate.delete("user:42") 只删除精确 key user:42，返回 true 表示原键存在并被删除，false 表示不存在。
+// 返回：Boolean.TRUE.equals(deleted) 把 Redis 删除结果转换为可观察的布尔值。
 ```
 
 ### `RedisTemplate.keys`：查找匹配键及生产风险
@@ -78,10 +81,11 @@ System.out.println(Boolean.TRUE.equals(deleted));
 
 ```java
 Set<String> keys = redisTemplate.keys("demo:user:*");
-// 作用：用途：用于小型受控数据集的诊断查找；生产大键空间应改用游标式 SCAN。
+// 关键变化：keys 接收表达式 redisTemplate.keys("demo:user:*") 的计算结果。
+// 输入：匹配模式为 "demo:user:*"；keys 接收匹配集合，当前没有匹配键时可能为 null。
 System.out.println(keys == null ? 0 : keys.size());
 // 输出：当前匹配键数量；禁止把外部输入直接作为模式。
-// 说明：keys("user:*") 返回当前数据库中匹配 user: 前缀的 key 集合，但会阻塞遍历整个 keyspace；生产环境用 SCAN 游标分批读取。
+// 返回：本次调用返回 demo:user: 前缀的键集合，println 展示集合大小；生产环境用 SCAN 游标分批读取。
 ```
 
 ### `RedisTemplate.execute`：原子执行 Lua 脚本
@@ -91,11 +95,12 @@ System.out.println(keys == null ? 0 : keys.size());
 ```java
 DefaultRedisScript<Long> script = new DefaultRedisScript<>("return redis.call('INCR', KEYS[1])", Long.class);
 // 初始状态：script 当前为 new DefaultRedisScript<>("return redis.call('INCR', KEYS[1])", Long.class)。
+redisTemplate.opsForValue().set("counter", "4");
+// 输入：先把 Redis key="counter" 设置为字符串值 "4"，Lua 的 INCR 将它提升为 5。
 Long value = redisTemplate.execute(script, List.of("counter"));
-// 作用：用途：用于在 Redis 服务端一次完成需要原子性的检查与更新。
+// 返回：execute 将 KEYS[1]="counter" 交给 Lua，Redis 中 counter 从 4 变为 5，value 接收 Long 结果 5。
 System.out.println(value);
-// 输出：counter 自增后的值。
-// 说明：execute(script, List.of("counter:42"), "10") 在 Redis 单次 Lua 执行中检查并更新 key counter:42，返回值按脚本声明类型转换；keys 与 argv 分开传入。
+// 输出：5
 ```
 
 ### `DefaultRedisScript`：构造带返回类型的脚本
@@ -104,10 +109,11 @@ System.out.println(value);
 
 ```java
 DefaultRedisScript<Long> script = new DefaultRedisScript<>("return 1", Long.class);
-// 作用：用途：用于声明 Lua 文本及其 Java 返回类型，便于复用和结果转换。
+// 输入：script 的初始值为 new DefaultRedisScript<>("return 1", Long.class)。
+// 返回：script 保存 Lua 文本 return 1，并声明 Redis 整数结果转换为 Long。
 System.out.println(script.getResultType().getSimpleName());
 // 输出：Long
-// 说明：DefaultRedisScript<Long> 同时保存 Lua 文本和 Long 返回类型，因此 Redis 整数回复被转换为 Java Long；脚本本身应作为单例 Bean 复用 SHA 缓存。
+// 返回：getResultType() 返回 Long.class，getSimpleName() 把本次返回类型展示为 Long。
 ```
 
 ### `StringRedisSerializer`：构造字符串序列化器
@@ -116,10 +122,11 @@ System.out.println(script.getResultType().getSimpleName());
 
 ```java
 StringRedisSerializer serializer = new StringRedisSerializer(StandardCharsets.UTF_8);
-// 作用：用途：用于把 Redis key 或字符串值编码为稳定 UTF-8 字节。
+// 输入：serializer 的初始值为 new StringRedisSerializer(StandardCharsets.UTF_8)。
+// 返回：serializer 使用 UTF-8 编码 key/value 字节。
 System.out.println(new String(serializer.serialize("user:7"), StandardCharsets.UTF_8));
 // 输出：user:7
-// 说明：StringRedisSerializer 把 "user:42" 编码为 UTF-8 字节并可无损还原；它不负责把 User 对象序列化为 JSON。
+// 返回：serialize("user:7") 后按 UTF-8 解码仍得到 user:7；该 serializer 不会把 User 对象变成 JSON。
 ```
 
 ### RedisTemplate.opsForValue：读写带前缀的值
@@ -134,11 +141,12 @@ RedisTemplate<String, String> redis = redisTemplate;
 // 初始状态：redis 当前为 redisTemplate。
 String key = "app:profile:7";
 redis.opsForValue().set(key, "active", Duration.ofMinutes(5));
-// 作用：用途：用于存放计数器、短文本或序列化后的单对象，并显式设置命名空间和过期时间。
+// 关键变化：调用表达式 redis.opsForValue().set(key, "active", Duration.ofMinutes(5)); 读取或更新本行列出的对象和参数。
+// 输入：key="app:profile:7"、value="active"、TTL=5 分钟；set 后该 key 存在且将在约 5 分钟后过期。
 String value = redis.opsForValue().get(key);
+// 返回：get("app:profile:7") 读取刚写入的 value="active"；key 过期或不存在时返回 null。
 System.out.println(value);
 // 输出：active
-// 说明：opsForValue 对带业务前缀的 key（如 session:42）写入单个值，并按示例 TTL 自动过期；读取不存在或已过期 key 返回 null。
 ```
 
 字符串 key 要包含业务前缀和版本；`get` 返回 `null` 时要走缓存未命中路径，不能把空值误当作异常或直接拼接进 SQL。
@@ -149,10 +157,10 @@ System.out.println(value);
 
 ```java
 redis.opsForHash().put("app:user:7", "status", "ACTIVE");
-// 作用：用途：用于在同一 key 下按 field 读写对象的局部属性。
+// 输入：key="app:user:7"、field="status"、value="ACTIVE"；写入后该字段状态为 ACTIVE。
 System.out.println(redis.opsForHash().get("app:user:7", "status"));
 // 输出：ACTIVE
-// 说明：Hash key=user:42 下可分别写 field=name/value=Alice 与 field=status/value=ACTIVE，更新 status 不会重写 name。
+// 返回：get("app:user:7", "status") 读取同一 key/field，返回 ACTIVE；其他 field 不受影响。
 ```
 
 Hash field 需要稳定命名和类型契约；多个 field 的跨 key 更新不是自动事务。
@@ -163,10 +171,10 @@ Hash field 需要稳定命名和类型契约；多个 field 的跨 key 更新不
 
 ```java
 redis.opsForList().rightPush("app:jobs", "job-1");
-// 作用：用途：用于按插入顺序追加并消费简单队列元素。
+// 输入：key="app:jobs"、value="job-1"；rightPush 后列表右端新增 job-1。
 System.out.println(redis.opsForList().leftPop("app:jobs"));
 // 输出：job-1
-// 说明：List key=jobs 右端依次追加 job-1、job-2，左端弹出时先得到 job-1；该简单队列不提供确认或失败重投语义。
+// 返回：leftPop("app:jobs") 从左端移除并返回 job-1；此时该列表恢复为空。
 ```
 
 List 需要设置长度上限并处理消费失败；需要可靠消息时应评估 Redis Streams 或专用消息系统。
@@ -177,10 +185,10 @@ List 需要设置长度上限并处理消费失败；需要可靠消息时应评
 
 ```java
 redis.opsForSet().add("app:roles:7", "reader", "reader");
-// 作用：用途：用于保存不需要业务顺序的去重成员集合。
+// 输入：key="app:roles:7"，传入成员 reader 两次；Set 去重后只保留一个 reader。
 System.out.println(redis.opsForSet().size("app:roles:7"));
 // 输出：1
-// 说明：Set key=user:42:roles 添加 ADMIN 两次仍只有一个成员，isMember 精确判断 ADMIN 是否存在；集合迭代顺序不属于契约。
+// 返回：size("app:roles:7") 返回 1；集合迭代顺序不属于契约。
 ```
 
 Set 只保证成员唯一，不保证顺序；集合过大时应限制基数并避免一次返回全部成员。
@@ -193,8 +201,9 @@ Set 只保证成员唯一，不保证顺序；集合过大时应限制基数并�
 import java.time.Duration;
 
 redis.opsForValue().set("app:token:7", "opaque", Duration.ofSeconds(60));
-// 作用：用于给缓存、验证码和短期会话设置过期时间，并在续期、删除和未设置 TTL 时做可观测判断。
+// 输入：key="app:token:7"、value="opaque"、TTL=60 秒；set 后该 key 具有明确过期时间。
 Long seconds = redis.getExpire("app:token:7");
+// 返回：getExpire("app:token:7") 返回剩余秒数，刚设置后应为 0 到 60 之间。
 System.out.println(seconds != null && seconds > 0);
 // 输出：true
 ```
@@ -211,14 +220,21 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 StringRedisTemplate redis = stringRedisTemplate;
 StringRedisSerializer text = new StringRedisSerializer();
+// 关键变化：text 接收表达式 new StringRedisSerializer() 的计算结果。
+// 初始状态：text 的初始值为 new StringRedisSerializer()。
 redis.setKeySerializer(text);
+// 输入：把 key serializer 设置为 text，后续 key="app:user:7" 按字符串编码。
 redis.setValueSerializer(text);
+// 输入：把 value serializer 设置为 text，后续 value="ACTIVE" 按字符串编码。
 redis.setHashKeySerializer(text);
+// 输入：把 Hash field serializer 设置为 text，field="status" 按字符串编码。
 redis.setHashValueSerializer(text);
+// 输入：把 Hash value serializer 设置为 text，value="ACTIVE" 按字符串编码。
 redis.afterPropertiesSet();
+// 关键变化：完成 serializer 初始化；随后写入 app:user:7/status=ACTIVE 时四类字节契约一致。
 System.out.println(redis.getKeySerializer().getClass().getSimpleName());
 // 输出：StringRedisSerializer
-// 作用：用于让不同服务、版本和语言能够稳定读写 Redis，并避免 JDK 原生序列化带来的安全和兼容风险。
+// 返回：getKeySerializer() 返回刚配置的 StringRedisSerializer。
 ```
 
 这个模板把 key、value、Hash field 和 Hash value 都按字符串契约编码；如果 value 改成 JSON 或二进制，必须同时为对应字段选择明确 serializer，并记录版本。跨服务读取时不要默认相信类名和类型信息。序列化升级应通过双读、版本 key 或迁移脚本逐步切换，而不是直接让旧字节被新类强转。
@@ -237,15 +253,18 @@ StringRedisTemplate redis = stringRedisTemplate;
 String lua = "local n = redis.call('GET', KEYS[1]); "
     + "if n and tonumber(n) >= tonumber(ARGV[1]) then "
     + "redis.call('DECRBY', KEYS[1], ARGV[1]); return 1; end; return 0;";
+// 关键变化：调用表达式 String lua = "local n = redis.call('GET', KEYS[1]); " + "if n and tonumber(n) >= tonumber(ARGV[1]) then " + "redis.call('DECRBY', KEYS[1], ARGV[1]); return 1; end; return 0;"; 读取或更新本行列出的对象和参数。
 // 初始状态：lua 包含基于 KEYS[1] 和 ARGV[1] 的原子配额检查与扣减逻辑。
 var script = new DefaultRedisScript<Long>(lua, Long.class);
+// 初始状态：Lua 脚本按 KEYS[1]="app:quota:7"、ARGV[1]="1" 检查并扣减配额。
 java.util.List<String> keys = java.util.List.of("app:quota:7");
 String amount = "1";
+redis.opsForValue().set("app:quota:7", "3");
+// 输入：先把配额 key="app:quota:7" 设置为 "3"，本次请求 amount="1"。
 Long allowed = redis.execute(script, keys, amount);
-// 作用：用于实现限额、令牌桶或“只有当前值匹配才删除”等读改写操作，避免客户端往返造成竞态。
+// 返回：execute 在 Redis 内原子读取 3、扣减 1 并返回 Long=1；调用后 app:quota:7 的值为 2。
 System.out.println(allowed);
 // 输出：1
-// 说明：Lua 在 Redis 服务端对 KEYS[1] 指定的限流/锁 key 比较当前值与 ARGV[1]，仅匹配时更新或删除；检查与写入不会被其他命令插入。
 ```
 
 `StringRedisTemplate` 使用字符串 serializer 编解码 `KEYS` 和 `ARGV`，`DefaultRedisScript<Long>` 把 Redis 的整数回复还原为 `Long`；自定义 `RedisTemplate` 时必须显式配置等价的 key/argument/result serializer。脚本必须限制执行时间和输入规模，KEYS 只传同一 Redis hash slot 可处理的 key；Lua 的原子性不覆盖数据库更新、消息发送或网络调用。
@@ -279,6 +298,8 @@ class UserService {
     void updateStatus(long id, String status) {
         repository.updateStatus(id, status);
         events.publishEvent(new UserStatusChanged(id));
+// // 关键变化：events.publishEvent(new UserStatusChanged(id)) 使用表达式中的具体参数完成本次调用。
+// 初始状态：表达式为 events.publishEvent(new UserStatusChanged(id))。
     }
 }
 
@@ -293,6 +314,7 @@ class UserCacheInvalidator {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     void evict(UserStatusChanged event) {
         Boolean deleted = redis.delete("app:user:" + event.id());
+        // 输入：event.id()=7 时删除精确 key="app:user:7"；deleted=true 表示该缓存键存在并已移除。
         System.out.println(deleted);
         // 输出：true
     }
@@ -308,9 +330,13 @@ class UserCacheInvalidator {
 
 ```java
 String key = "app:item:404";
+// 关键变化：key 接收表达式 "app:item:404" 的计算结果。
+// 初始状态：key 的初始值为 "app:item:404"。
 String cached = redis.opsForValue().get(key);
+// 返回：get("app:item:404") 读取不到商品时返回 null，cached 进入缓存未命中分支。
 if (cached == null) {
     redis.opsForValue().set(key, "__NULL__", Duration.ofSeconds(20));
+    // 输入：为 key="app:item:404" 写入空值标记 "__NULL__"，TTL=20 秒；短暂阻止重复回源。
 }
 System.out.println("negative-cache");
 // 输出：negative-cache
@@ -325,9 +351,13 @@ System.out.println("negative-cache");
 
 ```java
 String key = "app:rate:user:7:202610010930";
+// 关键变化：key 接收表达式 "app:rate:user:7:202610010930" 的计算结果。
+// 初始状态：key 的初始值为 "app:rate:user:7:202610010930"。
 Long count = redis.opsForValue().increment(key);
+// 返回：increment("app:rate:user:7:202610010930") 将不存在的计数器从 0 原子加到 1，并返回 1。
 if (count != null && count == 1) {
     redis.expire(key, Duration.ofSeconds(60));
+    // 输入：仅首次计数时为 key="app:rate:user:7:202610010930" 设置 60 秒 TTL。
 }
 boolean accepted = count != null && count <= 100;
 System.out.println(accepted);
@@ -344,6 +374,7 @@ System.out.println(accepted);
 ```java
 try {
     String value = redis.opsForValue().get("app:health");
+// 返回：get("app:health") 返回缓存值；key 不存在时 value=null，本示例按 miss 降级。
     System.out.println(value == null ? "miss" : value);
     // 输出：miss
 } catch (RuntimeException timeout) {
@@ -367,10 +398,12 @@ try {
 ```java
 String key = "app:article:42";
 String cached = redis.opsForValue().get(key);
+// 返回：get("app:article:42") 以业务前缀读取缓存；不存在时 cached=null。
 if (cached == null) {
     String loaded = repository.findArticleJson(42L);
     if (loaded != null) {
         redis.opsForValue().set(key, loaded, Duration.ofMinutes(2));
+        // 输入：数据库返回 loaded 后，把同一 key="app:article:42" 写入该 JSON，TTL=2 分钟。
         cached = loaded;
     }
 }

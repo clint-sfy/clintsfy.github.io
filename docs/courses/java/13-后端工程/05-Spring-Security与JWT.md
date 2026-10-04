@@ -119,7 +119,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Bean
 SecurityFilterChain apiSecurity(HttpSecurity http) throws Exception {
-// 作用：用途：用于把 CSRF、无状态会话和 URL 授权规则放在一个可审计的过滤链中；仅在明确的 Bearer API 边界关闭 CSRF，浏览器会话仍需按风险评估处理。
+// // 关键变化：SecurityFilterChain apiSecurity(HttpSecurity http) throws Exception { 使用表达式中的具体参数完成本次调用。
     http
         .csrf(csrf -> csrf.disable())
         .sessionManagement(session -> session.sessionCreationPolicy(
@@ -149,7 +149,8 @@ void configure(HttpSecurity http) throws Exception {
         .requestMatchers("/reports/**").hasAuthority("report:read")
         .requestMatchers("/admin/**").hasRole("ADMIN")
         .anyRequest().authenticated());
-        // 作用：用途：用于把公开端点、角色权限和默认拒绝边界写成 URL 规则；认证成功不代表每个 URL 都有访问资格。
+// 输入：表达式为 http.authorizeHttpRequests(auth -> auth。
+// // 关键变化：.anyRequest().authenticated()) 使用表达式中的具体参数完成本次调用。
     System.out.println("/admin requires ROLE_ADMIN");
     // 输出：/admin requires ROLE_ADMIN
 }
@@ -185,7 +186,7 @@ class MethodSecurityConfig {
 class ReportService {
     @PreAuthorize("hasAuthority('report:read') and #ownerId == authentication.name")
     public String read(@P("ownerId") String ownerId) {
-    // 作用：用途：用于把依赖方法参数或细粒度权限的授权放在服务方法入口；它需要 @EnableMethodSecurity 和 Spring 容器创建的 Bean 代理，不能代替 URL 层的粗粒度防护。
+// // 关键变化：public String read(@P("ownerId") String ownerId) { 使用表达式中的具体参数完成本次调用。
     // 作用：用于把依赖方法参数或细粒度权限的授权放在服务方法入口；它需要 `@EnableMethodSecurity` 和 Spring 容器创建的 Bean 代理，不能代替 URL 层的粗粒度防护。
         return "report-for-" + ownerId;
     }
@@ -196,17 +197,17 @@ try (var context = new AnnotationConfigApplicationContext(MethodSecurityConfig.c
     SecurityContextHolder.getContext().setAuthentication(
         new TestingAuthenticationToken("user-7", "n/a", "report:read"));
     System.out.println("授权成功=" + service.read("user-7"));
+// 输出：授权成功=report-for-user-7
     SecurityContextHolder.getContext().setAuthentication(
         new TestingAuthenticationToken("user-8", "n/a"));
     try {
         service.read("user-7");
     } catch (AccessDeniedException error) {
         System.out.println("denied=403");
+// 输出：denied=403
     }
     SecurityContextHolder.clearContext();
 }
-// 输出：授权成功=report-for-user-7
-// 输出：denied=403
 ```
 
 `context.getBean(ReportService.class)` 取得的是由 Spring 创建的代理，调用它才会进入方法授权拦截器；直接 `new ReportService()` 会绕过代理。示例中的 `denied=403` 是方法授权拒绝的概念映射：这里捕获 `AccessDeniedException` 便于展示失败路径，真正 HTTP 请求的 403 响应由 `AccessDeniedHandler` 生成。`#ownerId` 通过 `@P("ownerId")` 显式绑定；如果不使用 `@P`，就要在编译时开启 `-parameters` 保留方法参数名。方法授权要与数据查询的租户边界一起设计；只在 Controller 上检查角色，不能保证内部异步调用或其他入口也经过同样的限制。表达式中不应拼接用户输入来生成规则。
@@ -235,7 +236,7 @@ System.out.println(encoder.matches("correct-horse", storedHash));
 ```java
 String authorization = "Bearer <access-token>";
 // 初始状态：authorization 当前为 "Bearer <access-token>"。
-// 作用：用途：用于让客户端在每次请求中提交访问令牌；服务端必须先验证签名、算法、受众、过期时间和撤销状态，再把主体放进安全上下文。
+// 关键变化：authorization 接收右侧表达式 "Bearer <access-token>" 的计算结果。
 boolean bearer = authorization.regionMatches(true, 0, "Bearer ", 0, 7)
     && authorization.length() > 7;
 System.out.println("bearer=" + bearer);
@@ -255,7 +256,7 @@ import java.util.Map;
 Map<String, Object> claims = Map.of(
     "sub", "user-7", "jti", "token-7");
     // 初始状态：claims 当前保存 Map.of( "sub", "user-7", "jti", "token-7")的计算结果。
-    // 作用：用途：用于从已完成签名、算法、发行者和受众校验的 JWT 中读取主体。
+// // 关键变化："sub", "user-7", "jti", "token-7") 使用表达式中的具体参数完成本次调用。
 System.out.println(claims.get("sub"));
 // 输出：user-7
 // 作用：用于从已完成签名、算法、发行者和受众校验的 JWT 中读取主体。
@@ -272,7 +273,7 @@ import java.time.Instant;
 
 long expiresAt = 4_102_444_800L;
 // 初始状态：expiresAt 当前为 4_102_444_800L。
-// 作用：用途：用于把已验签 JWT 的过期时间与统一时钟比较并进入认证失败路径。
+// 关键变化：expiresAt 接收右侧表达式 4_102_444_800L 的计算结果。
 boolean active = Instant.now().getEpochSecond() < expiresAt;
 System.out.println("active=" + active);
 // 输出：active=true
@@ -292,7 +293,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 
 AuthenticationEntryPoint entryPoint = (request, response, exception) ->
     response.sendError(401, "unauthorized");
-    // 作用：用途：用于把缺少凭据、凭据无效或 JWT 已过期的请求统一映射为 HTTP 401；不要把未认证伪装成业务 403。
+// // 关键变化：response.sendError(401, "unauthorized") 使用表达式中的具体参数完成本次调用。
     // 作用：用于把缺少凭据、凭据无效或 JWT 已过期的请求统一映射为 HTTP 401；不要把未认证伪装成业务 403。
 System.out.println("entry-point=401");
 // 输出：entry-point=401
@@ -309,7 +310,7 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 
 AccessDeniedHandler denied = (request, response, exception) ->
     response.sendError(403, "forbidden");
-    // 作用：用途：用于把已通过认证但不满足角色或权限规则的请求统一映射为 HTTP 403；这能区分“需要登录”和“登录后仍无权”。
+// // 关键变化：response.sendError(403, "forbidden") 使用表达式中的具体参数完成本次调用。
     // 作用：用于把已通过认证但不满足角色或权限规则的请求统一映射为 HTTP 403；这能区分“需要登录”和“登录后仍无权”。
 System.out.println("access-denied=403");
 // 输出：access-denied=403
@@ -326,6 +327,8 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 
 var request = SecurityMockMvcRequestPostProcessors.jwt()
     .jwt(jwt -> jwt.subject("user-7").claim("scope", "report:read"));
+// 关键变化：request 接收表达式 SecurityMockMvcRequestPostProcessors.jwt() .jwt(jwt -> jwt.subject("user-7").claim("scope", "report:read")) 的计算结果。
+// 初始状态：request 的初始值为 SecurityMockMvcRequestPostProcessors.jwt()。
 System.out.println(request != null ? "scope=report:read" : "missing");
 // 输出：scope=report:read
 // 作用：用于在安全测试中注入明确的主体和权限，验证 401/403/成功三条路径；它是测试替身，不是生产认证实现。
@@ -344,6 +347,7 @@ System.out.println(request != null ? "scope=report:read" : "missing");
 @Configuration
 @EnableMethodSecurity
 class MethodSecurityConfiguration {
+// 输入：表达式为 @EnableMethodSecurity。
 // 作用：@EnableMethodSecurity 让 @PreAuthorize 等注解生效；它不代替 URL 层的请求授权和对象所有权检查。
 // 作用：通过 @EnableMethodSecurity 启用方法级授权。
     @Bean
@@ -364,6 +368,7 @@ class MethodSecurityConfiguration {
 // 结果：声明 `userId=42` 时返回 `42`；缺失或非法时拒绝认证。
 long readUserId(Claims claims) {
     Long userId = claims.get("userId", Long.class);
+// 输入：userId 的初始值为 claims.get("userId", Long.class)。
     // 作用：通过 Claims.get 按类型读取已验签声明。
     if (userId == null || userId <= 0) {
         throw new BadCredentialsException("invalid userId claim");
@@ -388,6 +393,7 @@ Claims parseLegacy(String token, String secret) {
         .setSigningKey(secret)
         .parseClaimsJws(token)
         .getBody();
+// 输入：表达式为 return Jwts.parser()。
         // 作用：Jwts.parser 属于旧版 JJWT API；维护旧项目时必须先配置验签密钥，不能只 Base64 解码 payload。
         // 作用：通过 Jwts.parser 构建 JWT 解析验证器。
 }
@@ -405,6 +411,7 @@ String inputKind() { return "signed JWT"; }
 // 结果：`matches` 对正确密码返回 `true`，不正确密码返回 `false`。
 PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder(12);
+// 输入：表达式为 return new BCryptPasswordEncoder(12)。
     // 作用：通过 BCryptPasswordEncoder 创建密码哈希器。
 }
 

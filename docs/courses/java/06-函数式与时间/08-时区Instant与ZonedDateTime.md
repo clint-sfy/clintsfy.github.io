@@ -142,8 +142,8 @@ Instant start = Instant.parse("2026-09-27T01:30:00Z");
 Instant end = start.plusSeconds(90);
 // 初始状态：end 当前为 start.plusSeconds(90)。
 System.out.println(Duration.between(start, end).toSeconds());
-// 作用：Duration 适合超时、耗时和倒计时。
 // 输出：90
+// 作用：Duration 适合超时、耗时和倒计时。
 ```
 
 ### `Period.between`：计算日历周期
@@ -159,8 +159,8 @@ var birth = LocalDate.of(2000, 9, 27);
 var date = LocalDate.of(2026, 9, 27);
 // 初始状态：date 当前为 LocalDate.of(2026, 9, 27)。
 System.out.println(Period.between(birth, date).getYears());
-// 作用：Period 按年、月、日计算生日、账期等日历语义。
 // 输出：26
+// 作用：Period 按年、月、日计算生日、账期等日历语义。
 ```
 
 ### `Clock.fixed`：在测试中固定当前时间
@@ -204,6 +204,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 LocalDateTime input = LocalDateTime.of(2026, 9, 27, 9, 30);
+// 关键变化：input 接收表达式 LocalDateTime.of(2026, 9, 27, 9, 30) 的计算结果。
+// 初始状态：input 的初始值为 LocalDateTime.of(2026, 9, 27, 9, 30)。
 var instant = input.atZone(ZoneId.of("Asia/Shanghai")).toInstant();
 System.out.println(instant);
 // 输出：2026-09-27T01:30:00Z
@@ -235,8 +237,8 @@ import java.time.ZonedDateTime;
 var value = ZonedDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneId.of("Asia/Shanghai"));
 // 初始状态：value 当前为 ZonedDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneId.of("Asia/Shanghai"))。
 System.out.println(value.withFixedOffsetZone());
-// 作用：通过 withFixedOffsetZone 保留当前偏移而去掉区域规则。
 // 输出：2026-09-27T09:30+08:00
+// 作用：通过 withFixedOffsetZone 保留当前偏移而去掉区域规则。
 ```
 
 ### `Clock.offset`：在基准时钟上增加固定偏移
@@ -251,6 +253,7 @@ import java.time.ZoneOffset;
 
 Clock base = Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC);
 Clock shifted = Clock.offset(base, Duration.ofHours(8));
+// 输入：shifted 的初始值为 Clock.offset(base, Duration.ofHours(8))。
 // 作用：通过 Clock.offset 在基准时钟上增加固定偏移。
 System.out.println(Instant.now(shifted));
 // 输出：2026-09-27T08:00:00Z
@@ -290,6 +293,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 var local = LocalDateTime.of(2026, 10, 25, 2, 30);
+// 初始状态：local 的初始值为 LocalDateTime.of(2026, 10, 25, 2, 30)。
 // 作用：夏令时回拨时同一墙上时间可能对应两个偏移；预约系统应明确选择早/晚偏移或直接要求用户输入偏移。
 var value = local.atZone(ZoneId.of("Europe/Paris"));
 System.out.println(value.getOffset());

@@ -47,7 +47,8 @@ import org.mybatis.spring.annotation.MapperScan;
 
 @MapperScan("example.persistence")
 class PersistenceConfig {}
-// 作用：用途：用于指定 Mapper 接口包，让 Spring 批量创建 MyBatis 代理。
+// 输入：表达式为 @MapperScan("example.persistence")。
+// // 关键变化：class PersistenceConfig {} 使用表达式中的具体参数完成本次调用。
 // 输出：example.persistence 下的 Mapper 接口可被依赖注入。
 // 说明：@MapperScan("com.example.mapper") 为该包下的 Mapper 接口注册代理 Bean；接口无需实现类，直接 new 配置类不会创建 Mapper 代理。
 ```
@@ -61,7 +62,8 @@ import org.apache.ibatis.annotations.Param;
 
 interface UserMapper {
     User find(@Param("tenantId") long tenantId, @Param("userId") long userId);
-    // 作用：用途：用于给多个 Mapper 参数提供稳定名称，供 XML 中的 #{} 引用。
+// 输入：表达式为 User find(@Param("tenantId") long tenantId, @Param("userId") long userId)。
+// // 关键变化：User find(@Param("tenantId") long tenantId, @Param("userId") long userId) 使用表达式中的具体参数完成本次调用。
 }
 // 输出：XML 可分别使用 #{tenantId} 与 #{userId}。
 // 说明：@Param("status") 与 @Param("limit") 让 XML 用 #{status}、#{limit} 取值；二者作为 PreparedStatement 参数绑定，不是字符串拼接。
@@ -73,7 +75,8 @@ interface UserMapper {
 
 ```java
 PageHelper.startPage(2, 20);
-// 作用：用途：用于在当前线程的下一条查询前设置页码和每页条数。
+// 输入：表达式为 PageHelper.startPage(2, 20)。
+// // 关键变化：PageHelper.startPage(2, 20) 使用表达式中的具体参数完成本次调用。
 List<User> users = userMapper.selectAll();
 System.out.println(users.size() <= 20);
 // 输出：true
@@ -91,6 +94,7 @@ String orderBy = switch (sortKey) {
     default -> "id ASC";
 };
 PageHelper.orderBy(orderBy);
+// // 关键变化：PageHelper.orderBy(orderBy) 使用表达式中的具体参数完成本次调用。
 // 输出：排序字段只能来自代码白名单。
 // 说明：白名单把请求 sort=name 映射为数据库表达式 user_name asc，再交给 PageHelper.orderBy；原始请求参数不能直接拼入 ORDER BY。
 ```
@@ -105,7 +109,8 @@ try {
     userMapper.selectAll();
 } finally {
     PageHelper.clearPage();
-    // 作用：用途：用于在查询未正常消费分页状态时主动清理 ThreadLocal，防止影响同线程后续查询。
+// 输入：表达式为 PageHelper.clearPage()。
+// // 关键变化：PageHelper.clearPage() 使用表达式中的具体参数完成本次调用。
 }
 // 输出：当前线程不再保留本次分页参数。
 // 说明：finally 中 PageHelper.clearPage() 删除尚未消费的分页参数，避免线程池复用时把后续 SELECT 误限制为旧页码。
@@ -117,7 +122,8 @@ try {
 
 ```java
 PageInfo<User> page = new PageInfo<>(users);
-// 作用：用途：用于从一次分页结果构造总数、页码和列表等响应元数据。
+// 输入：page 的初始值为 new PageInfo<>(users)。
+// 关键变化：page 接收右侧表达式 new PageInfo<>(users) 的计算结果。
 System.out.println(page.getPageNum() + "/" + page.getTotal());
 // 输出：当前页码/符合条件的总记录数。
 // 说明：new PageInfo<>(users) 从 PageHelper 结果读取 pageNum、pageSize、total 和当前页列表；普通 List 本身没有总行数元数据。
@@ -235,7 +241,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 
 @TableName("app_user")
 class User {
-// 作用：用途：用于让实体 Mapper 获得按主键查询、插入、更新和删除等通用方法，适合表结构与 CRUD 语义稳定的场景。
+// // 关键变化：class User { 使用表达式中的具体参数完成本次调用。
     @TableId(type = IdType.AUTO)
     private Long id;
     private String username;
@@ -246,6 +252,8 @@ class User {
     public void setId(Long id) { this.id = id; }
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
+// 关键变化：username 接收右侧表达式 username; } 的计算结果。
+// 初始状态：username 的初始值为 username; }。
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public java.time.Instant getCreatedAt() { return createdAt; }
@@ -280,7 +288,7 @@ class UserReader {
 import com.baomidou.mybatisplus.extension.service.IService;
 
 interface UserService extends IService<User> {}
-// 作用：用途：用于把通用 CRUD 入口放在 Service 层，集中事务、权限和领域校验，而不是让控制器直接调用 Mapper。
+// // 关键变化：interface UserService extends IService<User> {} 使用表达式中的具体参数完成本次调用。
 
 class UserFacade {
     private final UserService service;
@@ -291,6 +299,8 @@ class UserFacade {
 
     boolean create() {
         User entity = new User();
+// 关键变化：entity 接收表达式 new User() 的计算结果。
+// 初始状态：entity 的初始值为 new User()。
         entity.setUsername("ann");
         entity.setStatus("ACTIVE");
         boolean saved = service.save(entity);
@@ -314,7 +324,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 LambdaQueryWrapper<User> query = new LambdaQueryWrapper<User>()
     .eq(User::getStatus, "ACTIVE")
     .orderByDesc(User::getCreatedAt);
-    // 作用：用途：用于组合等值、范围和排序条件；Lambda 版本通过方法引用减少字符串列名拼写错误。
+// 输入：query 的初始值为 new LambdaQueryWrapper<User>()。
+// // 关键变化：.orderByDesc(User::getCreatedAt) 使用表达式中的具体参数完成本次调用。
 System.out.println(query.getSqlSegment().contains("status"));
 // 输出：true
 // 说明：wrapper.eq(User::getStatus, "ACTIVE").ge(User::getAge, 18) 生成 status = ? AND age >= ?，绑定值为 ACTIVE 与 18。
@@ -340,6 +351,8 @@ class UserPager {
 
     void show() {
         Page<User> page = new Page<>(2, 20);
+// 关键变化：page 接收表达式 new Page<>(2, 20) 的计算结果。
+// 初始状态：page 的初始值为 new Page<>(2, 20)。
         IPage<User> result = mapper.selectPage(page, new QueryWrapper<>());
         System.out.println(result.getCurrent() + "/" + result.getSize());
         // 输出：2/20

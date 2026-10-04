@@ -863,7 +863,10 @@ const COMMON_USAGE_CODE_LANGUAGES = new Set([
 ])
 const EXPLANATION_COMMENT_LABEL = /(?:输入|初始(?:状态)?|前置(?:条件)?|作用|关键变化|当前状态|说明)\s*[:：]/u
 const RESULT_COMMENT_LABEL = /(?:输出|结果)\s*[:：]/u
-const FORBIDDEN_EXAMPLE_COMMENT_PATTERN = /关键输入或调用是|执行后[^\r\n]*(?:完成|进入|得到|产生)|本例演示|示例完成/u
+const JAVA_INPUT_COMMENT_LABEL = /(?:输入|初始(?:状态)?|前置(?:条件)?)\s*[:：]/u
+const JAVA_ACTION_COMMENT_LABEL = /(?:作用|关键变化|当前状态|效果|返回|结果)\s*[:：]/u
+const JAVA_RESULT_COMMENT_LABEL = /(?:输出|结果|返回|异常)\s*[:：]/u
+const FORBIDDEN_EXAMPLE_COMMENT_PATTERN = /关键输入或调用是|执行后[^\r\n]*(?:完成|进入|得到|产生)|本例演示|示例完成|本次输出调用已产生可观察结果|接收对象或返回值按该参数产生对应状态|使用给定参数产生该输出/u
 
 const WEAK_EXPLANATION_ANCHORS = new Set([
   'abstract', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const',
@@ -928,6 +931,27 @@ function getJavaStatementEndIndex(code, statementIndex) {
   return statementIndex
 }
 
+const JAVA_SETUP_IGNORED_TOKENS = new Set([
+  'abstract', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const',
+  'continue', 'default', 'do', 'double', 'else', 'enum', 'extends', 'false', 'final',
+  'finally', 'float', 'for', 'goto', 'if', 'implements', 'import', 'instanceof', 'int',
+  'interface', 'long', 'native', 'new', 'null', 'package', 'private', 'protected',
+  'public', 'record', 'return', 'sealed', 'short', 'static', 'super', 'switch',
+  'synchronized', 'this', 'throw', 'throws', 'transient', 'true', 'try', 'var', 'void',
+  'volatile', 'while', 'yield',
+])
+
+function hasConcreteJavaStatementReference(comment, statement) {
+  const codeWithoutComments = statement.replace(/\/\/.*$/u, '')
+  const identifiers = [...codeWithoutComments.matchAll(/\b[A-Za-z_$][\w$]*\b/gu)]
+    .map((match) => match[0])
+    .filter((token) => token.length > 1 && !JAVA_SETUP_IGNORED_TOKENS.has(token))
+  const literals = [
+    ...codeWithoutComments.matchAll(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\b\d+(?:\.\d+)?\b/gu),
+  ].map((match) => match[0])
+  return [...new Set([...identifiers, ...literals])].some((anchor) => comment.includes(anchor))
+}
+
 function inspectJavaStatementAdjacentComments(heading, code) {
   const lines = code.split(/\r?\n/u)
   const codeLines = lines
@@ -944,46 +968,62 @@ function inspectJavaStatementAdjacentComments(heading, code) {
   const apiName = headingLabel.match(/(@?[A-Za-z_$][\w$]*)\s*$/u)?.[1] ?? ''
   const bareApiName = apiName.replace(/^@/u, '')
   const escapedApiName = bareApiName.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
-  const keyPattern = apiName.startsWith('@')
-    ? new RegExp(`@${escapedApiName}\\b`, 'u')
-    : new RegExp(`(?:\\b${escapedApiName}\\s*\\(|\\bnew\\s+${escapedApiName}\\b)`, 'u')
+  const keyPattern = apiName === ''
+    ? null
+    : apiName.startsWith('@')
+      ? new RegExp(`@${escapedApiName}\\b`, 'u')
+      : new RegExp(`(?:\\b${escapedApiName}\\s*\\(|\\bnew\\s+${escapedApiName}\\b)`, 'u')
   const outputPattern = /\bSystem\.out\.(?:print|println|printf)\s*\(/u
-  const keyLine = codeLines.find(({ text }) => keyPattern.test(text)) ??
-    codeLines.find(({ index }) => {
-      const statementEnd = getJavaStatementEndIndex(code, index)
-      return /(?:作用|关键变化|当前状态|结果|输出|异常|效果|返回)\s*[:：]/u.test(
-        getJavaStatementComment(code, statementEnd),
-      )
-    }) ?? codeLines.find(({ text }) => !outputPattern.test(text)) ?? codeLines[0]
+  const keyLines = keyPattern ? codeLines.filter(({ text }) => keyPattern.test(text)) : []
   const setupCandidates = codeLines.filter(({ index, text }) =>
-    index <= keyLine.index &&
-    !keyPattern.test(text) &&
+    (keyLines.length === 0 || index <= keyLines[0].index) &&
+    (!keyPattern || !keyPattern.test(text)) &&
+    !outputPattern.test(text) &&
     /(?:\bnew\s+|\b(?:var|byte|short|int|long|float|double|boolean|char|String|List|Set|Map|Queue|Deque|Path|File|URI|URL|Optional|Stream|LocalDate|LocalTime|LocalDateTime|Instant|Duration|Period|Pattern|Matcher|Class|Method|Field|Constructor|Thread|Executor\w*|Future|CompletableFuture|Atomic\w*|CountDownLatch|Semaphore|CyclicBarrier|ReentrantLock|ReadWriteLock|StampedLock|ObjectMapper|JSONObject|Workbook|Sheet|Row|CellStyle|JobDataMap)\b[^;=]*=)/u.test(text),
   )
   const setupLine = setupCandidates.find(({ index }) => {
     const statementEnd = getJavaStatementEndIndex(code, index)
-    return /(?:输入|初始(?:状态)?|当前状态|说明)\s*[:：]/u.test(
-      getJavaStatementComment(code, statementEnd),
-    )
+    return JAVA_INPUT_COMMENT_LABEL.test(getJavaStatementComment(code, statementEnd))
   }) ?? setupCandidates[0]
 
   const issues = []
   if (setupLine) {
     const setupEnd = getJavaStatementEndIndex(code, setupLine.index)
     const comment = getJavaStatementComment(code, setupEnd)
-    if (!/(?:输入|初始(?:状态)?|当前状态|说明)\s*[:：]/u.test(comment)) {
+    if (!JAVA_INPUT_COMMENT_LABEL.test(comment)) {
       issues.push(`[${heading}] first java block must explain the input or initial state on the line after its setup statement`)
+    } else if (!hasConcreteJavaStatementReference(comment, codeLines.find(({ index }) => index === setupLine.index)?.text ?? '')) {
+      issues.push(`[${heading}] first java block setup comment must include a concrete input or initial value`)
     }
   }
 
-  const keyEnd = getJavaStatementEndIndex(code, keyLine.index)
-  const keyComment = getJavaStatementComment(code, keyEnd)
-  const keyNeedsOwnComment = setupLine?.index !== keyLine.index
-  const keyLabels = keyNeedsOwnComment
-    ? /(?:作用|关键变化|当前状态|结果|输出|异常|效果|返回)\s*[:：]/u
-    : /(?:输入|初始(?:状态)?|作用|关键变化|当前状态|结果|输出|异常|效果|返回|说明)\s*[:：]/u
-  if (!keyLabels.test(keyComment)) {
-    issues.push(`[${heading}] first java block must explain the API call or state change on the line after its key statement`)
+  const observableOutputLines = keyLines.length === 0 ? codeLines.filter(({ text }) => outputPattern.test(text)) : []
+  const effectiveKeyLines = keyLines.length > 0
+    ? keyLines
+    : observableOutputLines.length > 0
+      ? observableOutputLines
+      : setupLine
+        ? [setupLine]
+        : []
+  for (const [keyIndex, keyLine] of effectiveKeyLines.entries()) {
+    const keyEnd = getJavaStatementEndIndex(code, keyLine.index)
+    const keyComment = getJavaStatementComment(code, keyEnd)
+    const keyIsObservableOutput = outputPattern.test(keyLine.text)
+    if (keyIndex === 0 && !setupLine && !keyIsObservableOutput && !JAVA_INPUT_COMMENT_LABEL.test(keyComment)) {
+      issues.push(`[${heading}] first java block must explain the input on the line after its key statement when no setup statement exists`)
+    }
+    if (!JAVA_ACTION_COMMENT_LABEL.test(keyComment) && !(keyIsObservableOutput && JAVA_RESULT_COMMENT_LABEL.test(keyComment))) {
+      issues.push(`[${heading}] first java block must explain the API call or state change on the line after its key statement`)
+    }
+  }
+
+  const outputLines = codeLines.filter(({ text }) => outputPattern.test(text))
+  for (const outputLine of outputLines) {
+    const outputComment = getJavaStatementComment(code, getJavaStatementEndIndex(code, outputLine.index))
+    if (!JAVA_RESULT_COMMENT_LABEL.test(outputComment)) {
+      issues.push(`[${heading}] first java block must put its result/output comment on the line after the observable statement`)
+      break
+    }
   }
   return issues
 }
@@ -1002,15 +1042,17 @@ function inspectApiExampleComments(body) {
       issues.push(`[${heading}] first ${language} block needs an explanation comment`)
     } else if (!['properties', 'yaml', 'xml'].includes(language)) {
       const anchors = getExplanationAnchors(heading, firstSupportedBlock[2])
-      if (!explanationComments.some((comment) => anchors.some((anchor) => comment.includes(anchor)))) {
+      const hasAnchoredExplanation = explanationComments.some((comment) =>
+        anchors.some((anchor) => comment.includes(anchor)),
+      )
+      if (!hasAnchoredExplanation) {
         issues.push(`[${heading}] first ${language} block explanation must name its API or a real code identifier/literal`)
+      } else if (language === 'java') {
+        issues.push(...inspectJavaStatementAdjacentComments(heading, firstSupportedBlock[2]))
       }
     }
     if (!comments.some((comment) => RESULT_COMMENT_LABEL.test(comment))) {
       issues.push(`[${heading}] first ${language} block needs a result/output comment`)
-    }
-    if (language === 'java' && explanationComments.length > 0) {
-      issues.push(...inspectJavaStatementAdjacentComments(heading, firstSupportedBlock[2]))
     }
   }
   return issues
@@ -2348,6 +2390,7 @@ test('common-usage first examples require explanation and result comments in the
 \`\`\`java
 int first = 1;
 // 初始状态：List.get 将读取列表中的 first
+// 作用：List.get 返回索引 0 的元素
 // 输出：1
 \`\`\`
 
@@ -2400,7 +2443,7 @@ java Demo
   const onlyOutput = valid.replace('// 初始状态：List.get 将读取列表中的 first\n', '')
   assert.deepEqual(
     inspectApiExampleComments(onlyOutput),
-    ['[`List.get`：读取元素] first java block needs an explanation comment'],
+    ['[`List.get`：读取元素] first java block must explain the input or initial state on the line after its setup statement'],
     'an output comment alone must not satisfy the explanation requirement',
   )
 
@@ -2422,6 +2465,74 @@ System.out.println(names);
       '[\`List.add\`：追加元素] first java block must explain the API call or state change on the line after its key statement',
     ],
     'a detached summary plus output must not replace statement-adjacent input and action comments',
+  )
+
+  const externalMutationWithoutInput = `
+## 常用用法
+### \`RedisTemplate.opsForHash\`：写入 Hash 字段
+\`\`\`java
+redisTemplate.opsForHash().put("user:7", "name", "Ann");
+// 关键变化：key=user:7 的 name 字段变为 Ann
+System.out.println(redisTemplate.opsForHash().get("user:7", "name"));
+// 输出：Ann
+\`\`\`
+`
+  assert.deepEqual(
+    inspectApiExampleComments(externalMutationWithoutInput),
+    ['[\`RedisTemplate.opsForHash\`：写入 Hash 字段] first java block must explain the input on the line after its key statement when no setup statement exists'],
+    'an external state mutation still needs explicit key/value input even without a local setup variable',
+  )
+
+  const outputMasqueradingAsAction = `
+## 常用用法
+### \`List.add\`：追加元素
+\`\`\`java
+List<String> names = new ArrayList<>(List.of("Alice", "Bob"));
+// 初始状态：names 包含 Alice、Bob
+names.add("Carol");
+// 输出：[Alice, Bob, Carol]
+\`\`\`
+`
+  assert.deepEqual(
+    inspectApiExampleComments(outputMasqueradingAsAction),
+    ['[\`List.add\`：追加元素] first java block must explain the API call or state change on the line after its key statement'],
+    'an output comment must not also satisfy the call-effect contract',
+  )
+
+  const detachedResult = `
+## 常用用法
+### \`List.size\`：读取元素数
+\`\`\`java
+// 输出：2
+List<String> names = List.of("Alice", "Bob");
+// 初始状态：names 包含 Alice、Bob
+int size = names.size();
+// 作用：List.size 返回 names 的元素数
+System.out.println(size);
+\`\`\`
+`
+  assert.deepEqual(
+    inspectApiExampleComments(detachedResult),
+    ['[\`List.size\`：读取元素数] first java block must put its result/output comment on the line after the observable statement'],
+    'a detached result comment must not satisfy the observable-result contract',
+  )
+
+  const vagueInitialState = `
+## 常用用法
+### \`List.add\`：追加元素
+\`\`\`java
+List<String> names = new ArrayList<>(List.of("Alice", "Bob"));
+// 初始状态：准备输入
+names.add("Carol");
+// 关键变化：names 增加一个元素
+System.out.println(names);
+// 输出：[Alice, Bob, Carol]
+\`\`\`
+`
+  assert.deepEqual(
+    inspectApiExampleComments(vagueInitialState),
+    ['[\`List.add\`：追加元素] first java block setup comment must include a concrete input or initial value'],
+    'a setup label without the actual variable, literal, or API input must be rejected',
   )
 
   const onlyExplanation = valid.replace('// 输出：1\n', '')
@@ -2473,7 +2584,12 @@ int first = numbers.get(0);
     ['[`List.get`：读取元素] first java block explanation must name its API or a real code identifier/literal'],
   )
 
-  const concreteExplanation = vagueExplanation.replace('读取需要的内容', 'List.get 从 numbers 读取索引 0')
+  const concreteExplanation = vagueExplanation
+    .replace('// 说明：读取需要的内容', '// 输入：numbers 包含 "Alice"，List.get 读取索引 0')
+    .replace(
+      'int first = numbers.get(0);\n// 输出：1',
+      'int first = numbers.get(0);\n// 输入：numbers 包含 "Alice"，本次读取索引 0。\n// 作用：List.get 返回 numbers 在索引 0 的元素。\n// 输出：1',
+    )
   assert.deepEqual(inspectApiExampleComments(concreteExplanation), [])
 
   const keywordOnlyExplanation = vagueExplanation.replace(
@@ -2500,6 +2616,7 @@ test('all 94 Java articles explain and report the first supported example under 
 test('all Java course prose stays free of known generated template filler', () => {
   const badResultFixture = '// 结果：执行后，注册静态资源 URL。'
   const badBranchFixture = '// 结果：import 示例执行到' + '预期分支'
+  const badAdjacentFixture = '// 关键变化：本次调用 foo();；接收对象或返回值按该参数产生对应状态。'
   assert.ok(
     FORBIDDEN_TEMPLATE_PHRASES.some((phrase) => badResultFixture.includes(phrase)),
     'generic 结果：执行后 comments must remain a locked bad fixture',
@@ -2507,6 +2624,11 @@ test('all Java course prose stays free of known generated template filler', () =
   assert.ok(
     FORBIDDEN_TEMPLATE_PHRASES.some((phrase) => badBranchFixture.includes(phrase)),
     'generic expected-branch comments must remain a locked bad fixture',
+  )
+  assert.match(
+    badAdjacentFixture,
+    FORBIDDEN_EXAMPLE_COMMENT_PATTERN,
+    'generic adjacent API comments must remain a locked bad fixture',
   )
 
   const violations = []

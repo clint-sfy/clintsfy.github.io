@@ -64,6 +64,7 @@ public class ByteBufferFlipDemo {
         ByteBuffer buffer = ByteBuffer.allocate(4);
         buffer.put((byte) 10).put((byte) 20);
         buffer.flip();
+// 输入：表达式为 buffer.flip()。
         // 作用：flip 把当前 position 变成 limit，再把 position 归零；每次写完准备读都要正确切换，否则读到的可能是空区间。
         System.out.println(buffer.get() + "," + buffer.get());
         // 输出：10,20
@@ -82,11 +83,11 @@ import java.nio.ByteBuffer;
 public class ByteBufferGetDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.wrap(new byte[]{1, 2, 3});
+// 关键变化：buffer 接收表达式 ByteBuffer.wrap(new byte[]{1, 2, 3}) 的计算结果。
+// 初始状态：buffer 的初始值为 ByteBuffer.wrap(new byte[]{1, 2, 3})。
         while (buffer.hasRemaining()) {
             System.out.println(buffer.get());
             // 输出：1
-            // 输出：2
-            // 输出：3
         }
     }
 }
@@ -126,6 +127,8 @@ import java.nio.ByteBuffer;
 public class ByteBufferMarkDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.wrap(new byte[]{1, 2, 3});
+// 关键变化：buffer 接收表达式 ByteBuffer.wrap(new byte[]{1, 2, 3}) 的计算结果。
+// 初始状态：buffer 的初始值为 ByteBuffer.wrap(new byte[]{1, 2, 3})。
         buffer.get();
         buffer.mark();
         int second = buffer.get();
@@ -213,6 +216,8 @@ public class FileChannelPositionDemo {
     public static void main(String[] args) throws Exception {
     // 作用：随机访问适合固定格式文件和分块任务；多个线程共享同一 Channel 时要明确 position 是否共享，必要时使用带 position 参数的读写方法。
         Path file = Files.createTempFile("channel-position-", ".bin");
+// 关键变化：file 接收表达式 Files.createTempFile("channel-position-", ".bin") 的计算结果。
+// 初始状态：file 的初始值为 Files.createTempFile("channel-position-", ".bin")。
         Files.write(file, new byte[]{10, 20, 30});
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
             channel.position(1);
@@ -241,6 +246,8 @@ import java.nio.file.StandardOpenOption;
 public class FileChannelTransferDemo {
     public static void main(String[] args) throws Exception {
         Path source = Files.createTempFile("channel-source-", ".bin");
+// 关键变化：source 接收表达式 Files.createTempFile("channel-source-", ".bin") 的计算结果。
+// 初始状态：source 的初始值为 Files.createTempFile("channel-source-", ".bin")。
         Path target = Files.createTempFile("channel-target-", ".bin");
         Files.write(source, new byte[]{1, 2, 3});
         try (var in = FileChannel.open(source, StandardOpenOption.READ);
@@ -316,6 +323,7 @@ import java.nio.ByteBuffer;
 public class DirectBufferDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(4);
+// 输入：buffer 的初始值为 ByteBuffer.allocateDirect(4)。
         // 作用：通过 ByteBuffer.allocateDirect 堆外缓冲。
         buffer.put((byte) 1).flip();
         System.out.println(buffer.get());
@@ -334,6 +342,8 @@ import java.nio.ByteBuffer;
 public class BufferViewDemo {
     public static void main(String[] args) {
         ByteBuffer source = ByteBuffer.wrap(new byte[]{1, 2, 3});
+// 关键变化：source 接收表达式 ByteBuffer.wrap(new byte[]{1, 2, 3}) 的计算结果。
+// 初始状态：source 的初始值为 ByteBuffer.wrap(new byte[]{1, 2, 3})。
         source.position(1);
         ByteBuffer slice = source.slice();
         slice.put(0, (byte) 9);
@@ -353,6 +363,7 @@ import java.nio.ByteBuffer;
 public class ReadOnlyBufferDemo {
     public static void main(String[] args) {
         ByteBuffer readOnly = ByteBuffer.wrap(new byte[]{1}).asReadOnlyBuffer();
+// 输入：readOnly 的初始值为 ByteBuffer.wrap(new byte[]{1}).asReadOnlyBuffer()。
         // 作用：通过 asReadOnlyBuffer 只读视图。
         System.out.println(readOnly.isReadOnly());
         // 输出：true
@@ -374,6 +385,8 @@ import java.nio.file.StandardOpenOption;
 public class ScatterGatherDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("scatter-gather-", ".bin");
+// 关键变化：file 接收表达式 Files.createTempFile("scatter-gather-", ".bin") 的计算结果。
+// 初始状态：file 的初始值为 Files.createTempFile("scatter-gather-", ".bin")。
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {
             long count = channel.write(new ByteBuffer[]{ByteBuffer.wrap(new byte[]{1}), ByteBuffer.wrap(new byte[]{2})});
             System.out.println(count);
@@ -399,6 +412,8 @@ public class AsyncFileChannelDemo {
 // 作用：异步 Channel 的 completion handler/future 让等待方式不同，但不代表磁盘本身一定并行；需要结合线程池、队列和取消策略测量。
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("async-channel-", ".txt");
+// 关键变化：file 接收表达式 Files.createTempFile("async-channel-", ".txt") 的计算结果。
+// 初始状态：file 的初始值为 Files.createTempFile("async-channel-", ".txt")。
         Files.writeString(file, "java");
         try (var channel = AsynchronousFileChannel.open(file, StandardOpenOption.READ)) {
         // 作用：通过 AsynchronousFileChannel 异步文件操作。

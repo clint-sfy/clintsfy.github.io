@@ -50,6 +50,8 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedLockCreateDemo {
     public static void main(String[] args) {
         var lock = new StampedLock();
+// 关键变化：lock 接收表达式 new StampedLock() 的计算结果。
+// 初始状态：lock 的初始值为 new StampedLock()。
         System.out.println("created=" + (lock != null));
         // 输出：created=true
     }
@@ -68,6 +70,8 @@ import java.util.concurrent.locks.StampedLock;
 
 public class StampedWriteLockDemo {
     private final StampedLock lock = new StampedLock();
+// 关键变化：lock 接收右侧表达式 new StampedLock() 的计算结果。
+// 初始状态：lock 的初始值为 new StampedLock()。
     private int value;
 
     void add(int delta) {
@@ -100,6 +104,8 @@ import java.util.concurrent.locks.StampedLock;
 
 public class StampedReadLockDemo {
     private final StampedLock lock = new StampedLock();
+// 关键变化：lock 接收右侧表达式 new StampedLock() 的计算结果。
+// 初始状态：lock 的初始值为 new StampedLock()。
     private int value = 42;
 
     int read() {
@@ -131,6 +137,8 @@ import java.util.concurrent.locks.StampedLock;
 
 public class OptimisticReadDemo {
     private final StampedLock lock = new StampedLock();
+// 关键变化：lock 接收右侧表达式 new StampedLock() 的计算结果。
+// 初始状态：lock 的初始值为 new StampedLock()。
     private int x = 3;
     private int y = 4;
 
@@ -196,6 +204,8 @@ public class StampedReadTimeoutDemo {
 // 作用：通过 tryReadLock(timeout) 带超时的真实读锁。
     public static void main(String[] args) throws InterruptedException {
         var lock = new StampedLock();
+// 关键变化：lock 接收表达式 new StampedLock() 的计算结果。
+// 初始状态：lock 的初始值为 new StampedLock()。
         long stamp = lock.tryReadLock(1, TimeUnit.MILLISECONDS);
         System.out.println("stampAvailable=" + (stamp != 0L));
         // 输出：stampAvailable=true（没有写者占用时）
@@ -220,6 +230,8 @@ public class StampedWriteTimeoutDemo {
 // 作用：通过 tryWriteLock(timeout) 可被中断的有界写锁等待。
     public static void main(String[] args) throws InterruptedException {
         var lock = new StampedLock();
+// 关键变化：lock 接收表达式 new StampedLock() 的计算结果。
+// 初始状态：lock 的初始值为 new StampedLock()。
         long stamp = lock.tryWriteLock(1, TimeUnit.MILLISECONDS);
         System.out.println("stampAvailable=" + (stamp != 0L));
         // 输出：stampAvailable=true（没有读者或写者占用时）
@@ -242,6 +254,8 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedInterruptibleLockDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new StampedLock();
+// 关键变化：lock 接收表达式 new StampedLock() 的计算结果。
+// 初始状态：lock 的初始值为 new StampedLock()。
         long stamp = lock.writeLockInterruptibly();
         try {
             System.out.println("interruptible write acquired");
@@ -264,6 +278,8 @@ import java.util.concurrent.locks.StampedLock;
 
 public class StampedConvertWriteDemo {
     private final StampedLock lock = new StampedLock();
+// 关键变化：lock 接收右侧表达式 new StampedLock() 的计算结果。
+// 初始状态：lock 的初始值为 new StampedLock()。
     private int value;
 
     void increment() {
@@ -315,6 +331,8 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedConvertReadDemo {
     public static void main(String[] args) {
         var lock = new StampedLock();
+// 关键变化：lock 接收表达式 new StampedLock() 的计算结果。
+// 初始状态：lock 的初始值为 new StampedLock()。
         long stamp = lock.writeLock();
         // 作用：通过 tryConvertToReadLock(stamp) 写锁降级为读锁。
         try {
@@ -352,6 +370,8 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedNonReentrantDemo {
     public static void main(String[] args) {
         var lock = new StampedLock();
+// 关键变化：lock 接收表达式 new StampedLock() 的计算结果。
+// 初始状态：lock 的初始值为 new StampedLock()。
         long stamp = lock.writeLock();
         try {
             long nested = lock.tryWriteLock();
@@ -381,6 +401,8 @@ public class StampedInterruptBoundaryDemo {
 // 作用：通过 tryWriteLock(timeout) 用超时获取响应中断。
     public static void main(String[] args) {
         var lock = new StampedLock();
+// 关键变化：lock 接收表达式 new StampedLock() 的计算结果。
+// 初始状态：lock 的初始值为 new StampedLock()。
         Thread.currentThread().interrupt();
         try {
             lock.tryWriteLock(1, TimeUnit.MILLISECONDS);

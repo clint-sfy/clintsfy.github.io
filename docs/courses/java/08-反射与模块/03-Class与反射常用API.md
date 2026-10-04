@@ -42,6 +42,8 @@ description: 直接用 Java 案例速查 Class、构造器、方法、字段、�
 public class ClassGetDemo {
     public static void main(String[] args) throws Exception {
         Class<String> literal = String.class;
+// 关键变化：literal 接收表达式 String.class 的计算结果。
+// 初始状态：literal 的初始值为 String.class。
         Class<?> object = "java".getClass();
         Class<?> loaded = Class.forName("java.lang.String");
         System.out.println(literal == object && object == loaded);
@@ -59,6 +61,8 @@ public class ClassGetDemo {
 public class ClassNameDemo {
     public static void main(String[] args) {
         Class<?> type = java.util.ArrayList.class;
+// 关键变化：type 接收表达式 java.util.ArrayList.class 的计算结果。
+// 初始状态：type 的初始值为 java.util.ArrayList.class。
         System.out.println(type.getName() + " / " + type.getSimpleName() + " / " + type.getPackageName());
         // 输出：java.util.ArrayList / ArrayList / java.util
     }
@@ -76,6 +80,8 @@ import java.util.ArrayList;
 public class ClassHierarchyDemo {
     public static void main(String[] args) {
         Class<?> type = ArrayList.class;
+// 关键变化：type 接收表达式 ArrayList.class 的计算结果。
+// 初始状态：type 的初始值为 ArrayList.class。
         System.out.println(type.getSuperclass().getSimpleName());
         // 输出：AbstractList
         System.out.println(type.getInterfaces()[0].getSimpleName());
@@ -96,6 +102,8 @@ class User {
     private final String name;
 
     User(String name) { this.name = name; }
+// 关键变化：name 接收右侧表达式 name; } 的计算结果。
+// 初始状态：name 的初始值为 name; }。
 
     String name() { return name; }
 }
@@ -121,6 +129,8 @@ import java.lang.reflect.Method;
 public class MethodInvokeDemo {
     public static void main(String[] args) throws Exception {
         Method method = String.class.getMethod("substring", int.class, int.class);
+// 关键变化：method 接收表达式 String.class.getMethod("substring", int.class, int.class) 的计算结果。
+// 初始状态：method 的初始值为 String.class.getMethod("substring", int.class, int.class)。
         String result = (String) method.invoke("java", 1, 3);
         System.out.println(result);
         // 输出：av
@@ -144,6 +154,8 @@ class Commands {
 public class DeclaredMethodDemo {
     public static void main(String[] args) throws Exception {
         Method hidden = Commands.class.getDeclaredMethod("hidden");
+// 关键变化：hidden 接收表达式 Commands.class.getDeclaredMethod("hidden") 的计算结果。
+// 初始状态：hidden 的初始值为 Commands.class.getDeclaredMethod("hidden")。
         long count = java.util.Arrays.stream(Commands.class.getDeclaredMethods()).count();
         System.out.println(hidden.getName() + " / " + count);
         // 输出：hidden / 2
@@ -161,6 +173,8 @@ import java.lang.reflect.Field;
 
 class Config {
     private String value = "old";
+// 关键变化：value 接收右侧表达式 "old" 的计算结果。
+// 初始状态：value 的初始值为 "old"。
 }
 
 public class FieldReflectDemo {
@@ -208,7 +222,7 @@ import java.util.List;
 public class AssignableDemo {
     public static void main(String[] args) {
         System.out.println(List.class.isAssignableFrom(ArrayList.class));
-        // 输出：true
+// 输出：true；输入：System.out.println(List.class.isAssignableFrom(ArrayList.class));。
         System.out.println(ArrayList.class.isAssignableFrom(List.class));
         // 输出：false
     }
@@ -245,6 +259,8 @@ import java.lang.reflect.Array;
 public class ArrayReflectDemo {
     public static void main(String[] args) {
         Class<?> type = String[].class;
+// 关键变化：type 接收表达式 String[].class 的计算结果。
+// 初始状态：type 的初始值为 String[].class。
         Object values = Array.newInstance(type.getComponentType(), 2);
         Array.set(values, 0, "java");
         System.out.println(type.isArray() + " / " + Array.get(values, 0));
@@ -268,8 +284,8 @@ public class TryAccessibleDemo {
     public static void main(String[] args) throws Exception {
         Field field = PrivateValue.class.getDeclaredField("value");
         System.out.println(field.trySetAccessible());
+// 输出：true
         // 作用：通过 trySetAccessible 探测访问是否可打开。
-        // 输出：true
     }
 }
 ```
@@ -287,6 +303,7 @@ class Names extends ArrayList<String> { }
 public class GenericSuperclassDemo {
     public static void main(String[] args) {
         var type = (ParameterizedType) Names.class.getGenericSuperclass();
+// 输入：type 的初始值为 (ParameterizedType) Names.class.getGenericSuperclass()。
         // 作用：通过 getGenericSuperclass 读取部分泛型签名。
         System.out.println(type.getActualTypeArguments()[0].getTypeName());
         // 输出：java.lang.String
@@ -304,6 +321,7 @@ record Point(int x, int y) { }
 public class RecordComponentReflectDemo {
     public static void main(String[] args) {
         var components = Point.class.getRecordComponents();
+// 输入：components 的初始值为 Point.class.getRecordComponents()。
         // 作用：通过 getRecordComponents 读取 record 组件。
         System.out.println(components[0].getName() + " / " + components.length);
         // 输出：x / 2
@@ -337,6 +355,8 @@ import java.lang.reflect.Method;
 public class InvocationTargetDemo {
 // 作用：框架日志和异常转换应优先记录 getCause()；只打印 InvocationTargetException 会丢失真正业务根因。
     static void fail() { throw new IllegalArgumentException("bad input"); }
+// // 关键变化：static void fail() { throw new IllegalArgumentException("bad input"); } 使用表达式中的具体参数完成本次调用。
+// 初始状态：表达式为 static void fail() { throw new IllegalArgumentException("bad input"); }。
 
     public static void main(String[] args) throws Exception {
         Method method = InvocationTargetDemo.class.getDeclaredMethod("fail");
@@ -372,6 +392,8 @@ public class AnnotatedTypeDemo {
 
     public static void main(String[] args) throws Exception {
         var type = AnnotatedTypeDemo.class.getDeclaredMethod("value").getAnnotatedReturnType();
+// 关键变化：type 接收表达式 AnnotatedTypeDemo.class.getDeclaredMethod("value").getAnnotatedReturnType() 的计算结果。
+// 初始状态：type 的初始值为 AnnotatedTypeDemo.class.getDeclaredMethod("value").getAnnotatedReturnType()。
         System.out.println(type.isAnnotationPresent(NonNull.class));
         // 输出：true
     }

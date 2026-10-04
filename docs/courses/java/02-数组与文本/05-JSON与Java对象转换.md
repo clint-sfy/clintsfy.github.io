@@ -269,6 +269,7 @@ import cn.hutool.json.JSONUtil;
 import java.util.Map;
 
 String pretty = JSONUtil.toJsonPrettyStr(Map.of("name", "Ann"));
+// 输入：pretty 的初始值为 JSONUtil.toJsonPrettyStr(Map.of("name", "Ann"))。
 // 作用：通过 JSONUtil.toJsonPrettyStr 输出缩进 JSON。
 System.out.println(pretty.contains("\n"));
 // 输出：true
@@ -285,6 +286,7 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 
 JSON json = JSONUtil.readJSON(new File("user.json"), StandardCharsets.UTF_8);
+// 输入：json 的初始值为 JSONUtil.readJSON(new File("user.json"), StandardCharsets.UTF_8)。
 // 作用：通过 JSONUtil.readJSON 从文件读取 JSON。
 System.out.println(json != null);
 // 输出：true
@@ -298,6 +300,7 @@ System.out.println(json != null);
 import cn.hutool.json.JSONUtil;
 
 var object = JSONUtil.parseObj("{\"profile\":{\"name\":\"Ann\"}}");
+// 输入：object 的初始值为 JSONUtil.parseObj("{\"profile\":{\"name\":\"Ann\"}}")。
 // 作用：通过 JSONUtil.parseObj 从动态对象读取嵌套结构。
 String name = object.getJSONObject("profile").getStr("name");
 System.out.println(name);
@@ -313,6 +316,7 @@ import cn.hutool.json.JSONUtil;
 import java.util.List;
 
 List<Integer> values = JSONUtil.toList(JSONUtil.parseArray("[1, 2, 3]"), Integer.class);
+// 输入：values 的初始值为 JSONUtil.toList(JSONUtil.parseArray("[1, 2, 3]"), Integer.class)。
 // 作用：通过 JSONUtil.toList 读取标量列表。
 System.out.println(values);
 // 输出：[1, 2, 3]

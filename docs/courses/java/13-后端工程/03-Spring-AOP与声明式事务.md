@@ -52,7 +52,8 @@ import org.springframework.stereotype.Component;
 @Aspect
 @Component
 class AuditAspect {
-// 作用：用途：用于标记集中承载通知与切点定义的切面类。
+// 输入：表达式为 @Aspect。
+// // 关键变化：class AuditAspect { 使用表达式中的具体参数完成本次调用。
     String name() { return "audit"; }
 }
 
@@ -75,7 +76,8 @@ import org.aspectj.lang.annotation.Pointcut;
 class AuditPointcuts {
     @Pointcut("execution(* com.example.service..*(..))")
     void serviceOperation() {}
-    // 作用：用途：用于命名一组方法匹配规则，供多个通知复用。
+// 输入：表达式为 @Pointcut("execution(* com.example.service..*(..))")。
+// // 关键变化：void serviceOperation() {} 使用表达式中的具体参数完成本次调用。
 }
 
 System.out.println("pointcut=serviceOperation");
@@ -98,7 +100,8 @@ import org.aspectj.lang.annotation.Aspect;
 class TimingAspect {
     @Around("execution(* com.example.service..*(..))")
     Object time(ProceedingJoinPoint joinPoint) throws Throwable {
-    // 作用：用途：用于在目标方法前后统一计时、记录结果或转换异常；正常路径必须调用 proceed 并保留返回值。
+// 输入：表达式为 @Around("execution(* com.example.service..*(..))")。
+// // 关键变化：Object time(ProceedingJoinPoint joinPoint) throws Throwable { 使用表达式中的具体参数完成本次调用。
     // 作用：用于在目标方法前后统一计时、记录结果或转换异常；正常路径必须调用 `proceed` 并保留返回值。
         long start = System.nanoTime();
         Object result = joinPoint.proceed();
@@ -126,7 +129,8 @@ class Guard {
             return null;
         }
         return joinPoint.proceed();
-        // 作用：用途：用于在环绕通知中决定是否进入目标方法；权限拒绝或短路缓存命中时可以有意识地不调用它。
+// 输入：表达式为 return joinPoint.proceed()。
+// 返回：return joinPoint.proceed() 把该表达式交给调用方。
     }
 }
 // 说明：joinPoint.proceed() 才把调用交给目标方法并返回其 Object 结果；省略它会让目标方法完全不执行，调用两次则会重复业务副作用。
@@ -147,7 +151,8 @@ import org.springframework.transaction.annotation.Transactional;
 class TransferService {
     @Transactional
     public void transfer() {
-    // 作用：用途：用于让一个公开的代理方法在同一事务资源上执行多步数据库操作；方法应放在服务边界而不是每个简单 DAO 调用上。
+// 输入：表达式为 @Transactional。
+// // 关键变化：public void transfer() { 使用表达式中的具体参数完成本次调用。
         System.out.println("debit then credit");
         // 输出：debit then credit
     }
@@ -199,6 +204,7 @@ class OrderService {
     @Transactional
     void writeAudit() {
         System.out.println("audit");
+// 输出：System.out 调用参数为 "audit"。
     }
 }
 // 作用：用于定位“注解存在但事务/切面没生效”的问题；同一对象内的 `this` 调用不会重新经过 Spring 代理。
@@ -220,7 +226,8 @@ import org.springframework.core.annotation.Order;
 @Aspect
 @Order(1)
 class SecurityAspect {
-// 作用：用途：用于明确安全、事务、日志等多个切面的先后关系；顺序值越小通常越外层，但要以实际代理组合验证。
+// 输入：表达式为 @Order(1)。
+// // 关键变化：class SecurityAspect { 使用表达式中的具体参数完成本次调用。
     @Before("execution(* com.example..service..*(..))")
     void check() {
         System.out.println("security-first");
@@ -240,7 +247,7 @@ class SecurityAspect {
 import org.springframework.transaction.support.TransactionTemplate;
 
 class ImportService {
-// 作用：用途：用于事务边界需要由运行时分支决定，或需要明确区分多个事务块时；普通固定服务边界优先 @Transactional。
+// // 关键变化：class ImportService { 使用表达式中的具体参数完成本次调用。
     private final TransactionTemplate template;
 
     ImportService(TransactionTemplate template) {
@@ -291,12 +298,14 @@ class BillingService {
 class OrderService {
     void refreshAll() {
         OrderService proxy = (OrderService) AopContext.currentProxy();
+// 输入：proxy 的初始值为 (OrderService) AopContext.currentProxy()。
         // 作用：通过 AopContext.currentProxy 显式穿过当前代理。
         proxy.refreshOne(42L);
     }
     @Transactional
     public void refreshOne(long id) {
         System.out.println("refresh " + id);
+// 输出：System.out 调用参数为 "refresh " + id。
     }
 }
 ```
@@ -312,6 +321,7 @@ class OrderService {
 @Configuration
 @EnableAspectJAutoProxy(exposeProxy = true)
 class AopConfiguration {
+// 输入：exposeProxy 的初始值为 true)。
 // 作用：@EnableAspectJAutoProxy 注册 Spring AOP 的自动代理能力；exposeProxy=true 增加隐式上下文，只在确有需要时开启。
 // 作用：通过 @EnableAspectJAutoProxy 开启基于代理的 AOP。
     @Bean

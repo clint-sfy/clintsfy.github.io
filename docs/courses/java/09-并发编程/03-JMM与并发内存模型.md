@@ -78,6 +78,8 @@ public class SynchronizedVisibilityDemo {
 
     public static void main(String[] args) {
         var box = new SynchronizedVisibilityDemo();
+// 关键变化：box 接收表达式 new SynchronizedVisibilityDemo() 的计算结果。
+// 初始状态：box 的初始值为 new SynchronizedVisibilityDemo()。
         box.set(42);
         System.out.println(box.get());
         // 输出：42
@@ -99,6 +101,8 @@ public class ThreadHappensBeforeDemo {
     public static void main(String[] args) throws InterruptedException {
         value = 41;
         Thread worker = new Thread(() -> value++);
+// 关键变化：worker 接收表达式 new Thread(() -> value++) 的计算结果。
+// 初始状态：worker 的初始值为 new Thread(() -> value++)。
         worker.start();
         worker.join();
         System.out.println(value);
@@ -120,6 +124,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicCasDemo {
     public static void main(String[] args) {
         AtomicInteger version = new AtomicInteger(1);
+// 输入：version 的初始值为 new AtomicInteger(1)。
         // 作用：CAS 会比较当前值，只有仍等于期望值才写入新值；失败时通常重试或走冲突路径。
         boolean updated = version.compareAndSet(1, 2);
         System.out.println(updated + ", version=" + version.get());
@@ -139,6 +144,8 @@ CAS 适合无锁更新独立状态，不代表任意多字段操作都能无锁�
 public class SafePublicationDemo {
     record Config(String host, int port) { }
     private static volatile Config config = new Config("localhost", 8080);
+// 关键变化：config 接收右侧表达式 new Config("localhost", 8080) 的计算结果。
+// 初始状态：config 的初始值为 new Config("localhost", 8080)。
 
     public static void main(String[] args) {
         Config snapshot = config;
@@ -193,7 +200,7 @@ public class FinalFieldDemo {
 
     public static void main(String[] args) {
         System.out.println(new User("Ann").name());
-        // 输出：Ann
+// 输出：Ann；System.out.println 的实参为 new User("Ann").name()。
     }
 }
 ```
@@ -215,6 +222,8 @@ public class VarHandleDemo {
         VarHandle handle = MethodHandles.lookup().findVarHandle(
                 VarHandleDemo.class, "value", int.class);
         var box = new VarHandleDemo();
+// 关键变化：box 接收表达式 new VarHandleDemo() 的计算结果。
+// 初始状态：box 的初始值为 new VarHandleDemo()。
         handle.set(box, 42);
         System.out.println(handle.get(box));
         // 输出：42
