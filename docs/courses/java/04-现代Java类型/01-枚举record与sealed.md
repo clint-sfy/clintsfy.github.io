@@ -52,7 +52,7 @@ enum OrderStatus {
 public class EnumOverviewDemo {
     public static void main(String[] args) {
         OrderStatus status = OrderStatus.PAID;
-        // 关键变化：OrderStatus status = OrderStatus.PAID; 将返回值写入 status；status 现在保存该具体结果。
+// 初始状态：status 保存枚举常量 PAID，name() 返回 "PAID"，ordinal() 返回 1。
         System.out.println(status.name() + ", " + status.ordinal());
         // 输出：PAID, 1
     }
@@ -67,15 +67,14 @@ public class EnumOverviewDemo {
 // 语义：需要校验、规范化或保护可变组件时，跳转到 record 数据载体页面查看完整写法。
 // 调用参数：代码依次使用 "CNY"、1999。
 record Money(String currency, long cents) {}
-// 关键变化：// 语义：需要校验、规范化或保护可变组件时，跳转到 record 数据载体页面查看完整写法。 // 调用参数：代码依次使用 "CNY"、1999。 record Money(String currency, long cents) {}；当前对象.该操作(String currency) 返回本次调用的具体结果，后续语句继续使用该值。
-
 
 public class RecordOverviewDemo {
     public static void main(String[] args) {
-        System.out.println(new Money("CNY", 1999).currency());
-// 输出：CNY；System.out.println 的实参为 new Money("CNY", 1999).currency()。
+        Money money = new Money("CNY", 1999);
+// 初始状态：money.currency() 为 "CNY"，money.cents() 为 1999。
+        System.out.println(money.currency());
+// 输出：CNY
     }
-// 输入：// 输出：CNY；System.out.println 的实参为 new Money("CNY", 1999).currency()。 } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 ```
 
@@ -87,7 +86,6 @@ sealed 让新增结果分支变成显式的类型变更，适合编译器帮助�
 // 语义：sealed 让新增结果分支变成显式的类型变更，适合编译器帮助检查有限状态模型。
 // 初始状态：result 初始为 new LoginSuccess("u-1")。
 sealed interface LoginResult permits LoginSuccess, LoginFailure {}
-// 输入：// 初始状态：result 初始为 new LoginSuccess("u-1")。 sealed interface LoginResult permits LoginSuccess, LoginFailure {} 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 record LoginSuccess(String userId) implements LoginResult {}
 record LoginFailure(String reason) implements LoginResult {}
 
@@ -113,18 +111,17 @@ record User(String name, int age) {}
 
 public class PatternOverviewDemo {
     static String label(Object value) {
-    // 关键变化：static String label(Object value) {；当前对象；该操作；当前对象.该操作(Object value) 返回本次调用的具体结果，后续语句继续使用该值。
-    // 输入：static String label(Object value) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         if (value instanceof User(String name, int age)) {
-        // 关键变化：if (value instanceof User(String name, int age)) {；当前对象；if；当前对象.if(value instanceof User(String name, int age)) 返回本次调用的具体结果，后续语句继续使用该值。
             return name + ":" + age;
         }
         return "unknown";
     }
 
     public static void main(String[] args) {
-        System.out.println(label(new User("Alice", 20)));
-// 输出：Alice:20；System.out.println 的实参为 label(new User("Alice", 20))。
+        User user = new User("Alice", 20);
+// 初始状态：user.name() 为 "Alice"，user.age() 为 20。
+        System.out.println(label(user));
+// 输出：Alice:20
     }
 }
 ```
@@ -143,26 +140,23 @@ java --enable-preview PatternOverviewDemo
 ```java
 enum Level {
     LOW(1), HIGH(2);
-    // 关键变化：LOW(1), HIGH(2);；当前对象；LOW；当前对象.LOW(1) 返回本次调用的具体结果，后续语句继续使用该值。
-    // 输入：LOW(1), HIGH(2); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 
     private final int code;
 
     Level(int code) {
-    // 关键变化：Level(int code) {；当前对象；Level；当前对象.Level(int code) 返回本次调用的具体结果，后续语句继续使用该值。
         this.code = code;
-        // 关键变化：this.code = code;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 
     int code() {
-    // 关键变化：int code() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return code;
     }
 }
 
 public class EnumFieldDemo {
     public static void main(String[] args) {
-        System.out.println(Level.HIGH.code());
+        Level level = Level.HIGH;
+// 初始状态：level 为 HIGH，level.code() 返回 2。
+        System.out.println(level.code());
         // 输出：2
     }
 }
@@ -174,17 +168,17 @@ non-sealed 会从该分支恢复开放继承；具体层次边界和模块规则
 
 ```java
 sealed interface Event permits BuiltInEvent, ExtensionEvent {}
-// 关键变化：sealed interface Event permits BuiltInEvent, ExtensionEvent {}；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 record BuiltInEvent() implements Event {}
 non-sealed class ExtensionEvent implements Event {}
 class VendorEvent extends ExtensionEvent {}
 
 public class SealedExtensionOverviewDemo {
     public static void main(String[] args) {
-        System.out.println(new VendorEvent() instanceof Event);
-// 输出：true；System.out.println 的实参为 new VendorEvent() instanceof Event。
+        VendorEvent event = new VendorEvent();
+// 初始状态：event 是 ExtensionEvent 的 VendorEvent 实例，因此兼容 Event。
+        System.out.println(event instanceof Event);
+// 输出：true
     }
-// 输入：// 输出：true；System.out.println 的实参为 new VendorEvent() instanceof Event。 } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 ```
 ## 简单案例
@@ -195,7 +189,9 @@ record Task(String id, Status status) {}
 
 public class ModernTypesOverviewDemo {
     public static void main(String[] args) {
-        System.out.println(new Task("t-1", Status.DONE));
+        Task task = new Task("t-1", Status.DONE);
+// 初始状态：task.id() 为 "t-1"，task.status() 为 DONE。
+        System.out.println(task);
         // 输出：Task[id=t-1, status=DONE]
     }
 }

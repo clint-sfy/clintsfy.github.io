@@ -59,9 +59,12 @@ import java.util.Map;
 Map<String, Object> user = new LinkedHashMap<>();
 // 初始状态：user 当前为 new LinkedHashMap<>()。
 user.put("name", "Ann");
+// 关键变化：user.put("name", "Ann") 写入 name=Ann，user 当前为 {name=Ann}。
 user.put("age", 18);
+// 关键变化：user.put("age", 18) 再写入 age=18，user 当前为 {name=Ann, age=18}。
 String json = JSONUtil.toJsonStr(user);
 // 初始状态：json 当前为 JSONUtil.toJsonStr(user)。
+// 返回：JSONUtil.toJsonStr(user) 将 {name=Ann, age=18} 序列化为 {"name":"Ann","age":18}。
 // 作用：需要把 JavaBean、集合或 Map 序列化为 JSON 字符串时使用该方法，同时要明确字段可见性、null 和日期配置等协议边界。
 System.out.println(json);
 // 输出：{"name":"Ann","age":18}
@@ -76,9 +79,11 @@ import cn.hutool.json.JSONUtil;
 
 var object = JSONUtil.parseObj("{\"name\":\"Ann\",\"age\":18}");
 // 初始状态：object 当前为 JSONUtil.parseObj("{\"name\":\"Ann\",\"age\":18}")。
+// 返回：parseObj 创建包含 name="Ann" 和 age=18 的动态 JSON 对象。
 // 初始状态：name 当前为 object.getStr("name")。
 // 作用：适合少量字段读取或先观察结构。
 String name = object.getStr("name");
+// 返回：object.getStr("name") 从 JSON 对象读取字符串 Ann，name 为 "Ann"。
 System.out.println(name + ", " + object.getInt("age"));
 // 输出：Ann, 18
 ```
@@ -92,6 +97,7 @@ import cn.hutool.json.JSONUtil;
 
 var array = JSONUtil.parseArray("[{\"name\":\"Ann\"},{\"name\":\"Bo\"}]");
 // 初始状态：array 当前为 JSONUtil.parseArray("[{\"name\":\"Ann\"},{\"name\":\"Bo\"}]")。
+// 返回：parseArray 创建 2 个对象元素的 JSONArray，索引 0 的 name 为 "Ann"。
 // 作用：输入根节点必须是数组。
 System.out.println(array.size() + ", " + array.getJSONObject(0).getStr("name"));
 // 输出：2, Ann
@@ -111,6 +117,7 @@ class User {
 
 User user = JSONUtil.toBean("{\"name\":\"Ann\",\"age\":18}", User.class);
 // 初始状态：user 当前为 JSONUtil.toBean("{\"name\":\"Ann\",\"age\":18}", User.class)。
+// 返回：toBean 按 User.class 映射出 user.name="Ann"、user.age=18。
 // 作用：把一个 JSON 对象映射为明确的 Bean，目标类应有可写属性或符合映射要求的构造方式。
 System.out.println(user.name + ", " + user.age);
 // 输出：Ann, 18
@@ -132,6 +139,7 @@ var array = JSONUtil.parseArray("[{\"name\":\"Ann\"}]");
 // 初始状态：array 当前为 JSONUtil.parseArray("[{\"name\":\"Ann\"}]")。
 List<User> users = JSONUtil.toList(array, User.class);
 // 初始状态：users 当前为 JSONUtil.toList(array, User.class)。
+// 返回：toList 把 JSONArray 的一个对象转换为 List<User>，users.get(0).name 为 "Ann"。
 // 作用：显式传入元素类型，避免只得到原始 List。
 System.out.println(users.get(0).name);
 // 输出：Ann
@@ -147,6 +155,7 @@ import cn.hutool.json.JSONUtil;
 
 JSON parsed = JSONUtil.parse("[1, 2]");
 // 初始状态：parsed 当前为 JSONUtil.parse("[1, 2]")。
+// 返回：JSONUtil.parse("[1, 2]") 根据数组根节点创建 JSONArray，parsed 的运行时类型为 JSONArray。
 // 作用：返回更宽的 JSON 抽象，适合根节点形状暂时不确定的场景。
 System.out.println(parsed.getClass().getSimpleName());
 // 输出：JSONArray
@@ -169,7 +178,7 @@ class User {
 TypeReference<Map<String, List<User>>> type =
     new TypeReference<Map<String, List<User>>>() {};
     // 初始状态：type 当前保存 new TypeReference<Map<String, List<User>>>() {}的计算结果。
-    // 关键变化：new TypeReference<Map<String, List<User>>>() {}; 创建并保留 Map<String, List<User>> 的完整泛型类型信息，type 现在可供后续转换读取。
+    // 作用：Class<T> 无法表达 Map<String, List<User>> 等嵌套参数时，使用 TypeReference 捕获完整泛型结构。
 System.out.println(type.getType().getTypeName().contains("java.util.List"));
 // 输出：true
 ```
@@ -193,7 +202,8 @@ String json = "{\"admins\":[{\"name\":\"Ann\"}]}";
 // 初始状态：json 当前为 "{\"admins\":[{\"name\":\"Ann\"}]}"。
 Map<String, List<User>> grouped = JSONUtil.toBean(
     json, new TypeReference<Map<String, List<User>>>() {}, false);
-// 关键变化：Map<String, List<User>> grouped = JSONUtil.toBean( json, new TypeReference<Map<String, List<User>>>() {}, false)；grouped 接收 toBean(json) 的返回值，当前值变为这次调用得到的具体结果。
+    // 返回：toBean 将 admins 数组转换为一项 List<User>，grouped.get("admins").get(0).name 为 "Ann"。
+    // 作用：目标类型包含多层泛型时，把 TypeReference 和 JSON 文本交给 toBean，并显式选择是否忽略转换错误。
 System.out.println(grouped.get("admins").get(0).name);
 // 输出：Ann
 ```
@@ -213,8 +223,10 @@ class User {
 User source = new User();
 // 初始状态：source 当前为 new User()。
 source.name = "Ann";
+// 关键变化：source.name = "Ann" 将待序列化字段设为 Ann。
 String json = JSONUtil.toJsonStr(source);
-// 关键变化：String json = JSONUtil.toJsonStr(source); 将返回值写入 json；json 现在保存该具体结果。
+// 返回：JSONUtil.toJsonStr(source) 把 source.name="Ann" 序列化为 {"name":"Ann"}。
+// 作用：需要按 JSON 字段语义复制对象时，先用 toJsonStr 生成中间文本；它可能丢失未序列化字段，因此不是通用深复制保证。
 System.out.println(json);
 // 输出：{"name":"Ann"}
 ```
@@ -234,9 +246,11 @@ class User {
 User source = new User();
 // 初始状态：source 当前为 new User()。
 source.name = "Ann";
+// 关键变化：source.name = "Ann" 将源对象的 name 设为 Ann。
 String json = "{\"name\":\"Ann\"}";
 User copy = JSONUtil.toBean(json, User.class);
-// 关键变化：User copy = JSONUtil.toBean(json, User.class); 将返回值写入 copy；copy 现在保存该具体结果。
+// 返回：JSONUtil.toBean(json, User.class) 创建独立 User，copy.name="Ann" 且 copy != source。
+// 作用：已有中间 JSON 时使用 toBean 创建新的目标实例；复制前要评估字段丢失、日期格式和嵌套引用语义。
 System.out.println(copy.name + ", same=" + (source == copy));
 // 输出：Ann, same=false
 ```
@@ -252,6 +266,7 @@ import java.util.Date;
 
 JSONConfig config = JSONConfig.create().setDateFormat("yyyy-MM-dd HH:mm:ss");
 // 初始状态：config 当前为 JSONConfig.create().setDateFormat("yyyy-MM-dd HH:mm:ss")。
+// 返回：setDateFormat 保存日期格式 "yyyy-MM-dd HH:mm:ss"，config.getDateFormat() 返回同一文本。
 // 作用：日期格式、时区和类型转换必须由项目协议明确约定。
 String json = JSONUtil.toJsonStr(java.util.Map.of("date", new Date(0)), config);
 // 初始状态：json 当前为 JSONUtil.toJsonStr(java.util.Map.of("date", new Date(0)), config)。
@@ -270,6 +285,7 @@ import java.util.Map;
 
 String pretty = JSONUtil.toJsonPrettyStr(Map.of("name", "Ann"));
 // 输入：pretty 的初始值为 JSONUtil.toJsonPrettyStr(Map.of("name", "Ann"))。
+// 返回：toJsonPrettyStr 生成带换行缩进的 JSON 文本，pretty.contains("\\n") 为 true。
 // 作用：通过 JSONUtil.toJsonPrettyStr 输出缩进 JSON。
 System.out.println(pretty.contains("\n"));
 // 输出：true
@@ -287,6 +303,7 @@ import java.nio.charset.StandardCharsets;
 
 JSON json = JSONUtil.readJSON(new File("user.json"), StandardCharsets.UTF_8);
 // 输入：json 的初始值为 JSONUtil.readJSON(new File("user.json"), StandardCharsets.UTF_8)。
+// 返回：readJSON 从 user.json 按 UTF-8 读取并构造 JSON 对象，文件存在时 json 非 null。
 // 作用：通过 JSONUtil.readJSON 从文件读取 JSON。
 System.out.println(json != null);
 // 输出：true
@@ -301,8 +318,10 @@ import cn.hutool.json.JSONUtil;
 
 var object = JSONUtil.parseObj("{\"profile\":{\"name\":\"Ann\"}}");
 // 输入：object 的初始值为 JSONUtil.parseObj("{\"profile\":{\"name\":\"Ann\"}}")。
+// 返回：parseObj 创建含 profile.name="Ann" 的动态对象。
 // 作用：通过 JSONUtil.parseObj 从动态对象读取嵌套结构。
 String name = object.getJSONObject("profile").getStr("name");
+// 返回：getJSONObject("profile").getStr("name") 读取嵌套字段，name 为 "Ann"。
 System.out.println(name);
 // 输出：Ann
 ```
@@ -317,6 +336,7 @@ import java.util.List;
 
 List<Integer> values = JSONUtil.toList(JSONUtil.parseArray("[1, 2, 3]"), Integer.class);
 // 输入：values 的初始值为 JSONUtil.toList(JSONUtil.parseArray("[1, 2, 3]"), Integer.class)。
+// 返回：toList 按 Integer.class 转换数组 [1, 2, 3]，values 为 [1, 2, 3]。
 // 作用：通过 JSONUtil.toList 读取标量列表。
 System.out.println(values);
 // 输出：[1, 2, 3]
@@ -344,9 +364,13 @@ public class JsonDemo {
 
     public static void main(String[] args) {
         String input = "[{\"name\":\"Ann\",\"age\":18}]";
+        // 初始状态：input 是包含一个用户对象的 JSON 数组文本。
         List<User> users = JSONUtil.toList(JSONUtil.parseArray(input), User.class);
+        // 返回：JSONUtil.parseArray(input) 得到数组，再由 toList(..., User.class) 转成含一名用户的 List。
         User first = users.get(0);
+        // 返回：users.get(0) 取出唯一用户，first.name 为 Ann、first.age 为 18。
         String output = JSONUtil.toJsonStr(first);
+        // 返回：JSONUtil.toJsonStr(first) 把 first 序列化为 {"name":"Ann","age":18}。
 
         System.out.println(first.name + ", " + first.age);
         // 输出：Ann, 18

@@ -50,25 +50,21 @@ record Declined(String reason) implements PaymentResult {}
 
 public class SealedInterfaceDemo {
     static String describe(PaymentResult result) {
-    // 关键变化：static String describe(PaymentResult result) {；当前对象；该操作；当前对象.该操作(PaymentResult result) 返回本次调用的具体结果，后续语句继续使用该值。
-    // 输入：static String describe(PaymentResult result) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         if (result instanceof Paid paid) {
-        // 关键变化：if (result instanceof Paid paid) {；当前对象；if；当前对象.if(result instanceof Paid paid) 返回本次调用的具体结果，后续语句继续使用该值。
             return "paid:" + paid.id();
-            // 关键变化：return "paid:" + paid.id()；paid.id() 完成本例中的具体调用，后续语句观察调用后的状态。
         }
         if (result instanceof Declined declined) {
-        // 关键变化：if (result instanceof Declined declined) {；当前对象；if；当前对象.if(result instanceof Declined declined) 返回本次调用的具体结果，后续语句继续使用该值。
             return "declined:" + declined.reason();
-            // 关键变化：return "declined:" + declined.reason()；declined.reason() 完成本例中的具体调用，后续语句观察调用后的状态。
         }
         throw new IllegalStateException("unreachable");
-        // 关键变化：throw new IllegalStateException("unreachable");；当前对象；该操作；当前对象.该操作("unreachable") 返回本次调用的具体结果，后续语句继续使用该值。
+// 异常：throw new IllegalStateException("unreachable") 立即进入异常路径。
 // 初始状态：表达式为 throw new IllegalStateException("unreachable")。
     }
 
     public static void main(String[] args) {
-        System.out.println(describe(new Paid("p-1")));
+        Paid paid = new Paid("p-1");
+// 初始状态：paid.id() 为 "p-1"，它是 PaymentResult 的合法分支。
+        System.out.println(describe(paid));
         // 输出：paid:p-1
     }
 }
@@ -83,14 +79,11 @@ sealed class 适合共享少量受保护行为或状态的有限层次；如果�
 // 调用参数：代码依次使用 "create"、"delete"。
 sealed abstract class Command permits CreateUser, DeleteUser {
     abstract String name();
-    // 关键变化：abstract String name();；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
-    // 输入：abstract String name(); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 
 final class CreateUser extends Command {
     @Override
     String name() {
-    // 关键变化：String name() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return "create";
     }
 }
@@ -98,15 +91,16 @@ final class CreateUser extends Command {
 final class DeleteUser extends Command {
     @Override
     String name() {
-    // 关键变化：String name() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return "delete";
     }
 }
 
 public class SealedClassDemo {
     public static void main(String[] args) {
-        System.out.println(new CreateUser().name());
-// 输出：create；System.out.println 的实参为 new CreateUser().name()。
+        CreateUser command = new CreateUser();
+// 初始状态：command 是 CreateUser 实例，name() 返回 "create"。
+        System.out.println(command.name());
+// 输出：create
     }
 }
 ```
@@ -122,16 +116,16 @@ sealed interface Result permits Success {}
 
 final class Success implements Result {
     String message() {
-    // 关键变化：String message() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
-    // 输入：String message() { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         return "ok";
     }
 }
 
 public class SealedFinalDemo {
     public static void main(String[] args) {
-        System.out.println(new Success().message());
-// 输出：ok；System.out.println 的实参为 new Success().message()。
+        Success success = new Success();
+// 初始状态：success 是 final 分支实例，message() 返回 "ok"。
+        System.out.println(success.message());
+// 输出：ok
     }
 }
 ```
@@ -144,8 +138,6 @@ public class SealedFinalDemo {
 // 语义：中间层声明 sealed 后，必须继续列出自己的直接子类。
 // 调用参数：代码依次使用 true。
 sealed interface FileNode permits File, Directory {}
-// 关键变化：// 语义：中间层声明 sealed 后，必须继续列出自己的直接子类。 // 调用参数：代码依次使用 true。 sealed interface FileNode permits File, Directory {}；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
-
 
 sealed class File implements FileNode permits TextFile, ImageFile {}
 final class TextFile extends File {}
@@ -155,10 +147,11 @@ final class Directory implements FileNode {}
 
 public class NestedSealedDemo {
     public static void main(String[] args) {
-        System.out.println(new TextFile() instanceof FileNode);
-// 输出：true；System.out.println 的实参为 new TextFile() instanceof FileNode。
+        TextFile file = new TextFile();
+// 初始状态：file 是 FileNode 的 TextFile 分支，因此 instanceof 判断为 true。
+        System.out.println(file instanceof FileNode);
+// 输出：true
     }
-// 输入：// 输出：true；System.out.println 的实参为 new TextFile() instanceof FileNode。 } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 ```
 
@@ -170,8 +163,6 @@ non-sealed 只放开这一支，不影响同一 sealed 层次的其他分支；�
 // 语义：non-sealed 只放开这一支，不影响同一 sealed 层次的其他分支。
 // 调用参数：代码依次使用 true。
 sealed interface Event permits OpenEvent, ExternalEvent {}
-// 关键变化：// 语义：non-sealed 只放开这一支，不影响同一 sealed 层次的其他分支。 // 调用参数：代码依次使用 true。 sealed interface Event permits OpenEvent, ExternalEvent {}；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
-
 
 record OpenEvent() implements Event {}
 
@@ -180,10 +171,11 @@ class VendorEvent extends ExternalEvent {}
 
 public class NonSealedDemo {
     public static void main(String[] args) {
-        System.out.println(new VendorEvent() instanceof Event);
-// 输出：true；System.out.println 的实参为 new VendorEvent() instanceof Event。
+        VendorEvent event = new VendorEvent();
+// 初始状态：event 通过 non-sealed ExternalEvent 继承 Event。
+        System.out.println(event instanceof Event);
+// 输出：true
     }
-// 输入：// 输出：true；System.out.println 的实参为 new VendorEvent() instanceof Event。 } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 ```
 
@@ -208,8 +200,10 @@ public class SealedPatternDemo {
     }
 
     public static void main(String[] args) {
-        System.out.println(area(new Rectangle(3, 4)));
-// 输出：12.0；System.out.println 的实参为 area(new Rectangle(3, 4))。
+        Rectangle rectangle = new Rectangle(3, 4);
+// 初始状态：rectangle.width() 为 3，rectangle.height() 为 4。
+        System.out.println(area(rectangle));
+// 输出：12.0
     }
 }
 ```
@@ -221,14 +215,15 @@ public class SealedPatternDemo {
 
 ```java
 sealed interface LocalState {}
-// 关键变化：sealed interface LocalState {}；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 
 final class Ready implements LocalState {}
 final class Closed implements LocalState {}
 
 public class InferredPermitsDemo {
     public static void main(String[] args) {
-        System.out.println(new Ready() instanceof LocalState);
+        Ready ready = new Ready();
+// 初始状态：ready 是 LocalState 在同一文件中的 Ready 分支。
+        System.out.println(ready instanceof LocalState);
 // 输出：true
     }
 }
@@ -240,15 +235,15 @@ public class InferredPermitsDemo {
 
 ```java
 sealed interface LocalCommand permits LocalCreate {}
-// 关键变化：sealed interface LocalCommand permits LocalCreate {}；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 final class LocalCreate implements LocalCommand {}
 
 public class SealedBoundaryDemo {
     public static void main(String[] args) {
-        System.out.println(new LocalCreate() instanceof LocalCommand);
-// 输出：true；System.out.println 的实参为 new LocalCreate() instanceof LocalCommand。
+        LocalCreate command = new LocalCreate();
+// 初始状态：command 是 permits 列出的 LocalCreate 分支。
+        System.out.println(command instanceof LocalCommand);
+// 输出：true
     }
-// 输入：// 输出：true；System.out.println 的实参为 new LocalCreate() instanceof LocalCommand。 } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 ```
 
@@ -258,17 +253,17 @@ sealed 负责限制结果种类，record 负责承载字段，enum 负责固定�
 
 ```java
 sealed interface ImportResult permits Imported, Skipped {}
-// 关键变化：sealed interface ImportResult permits Imported, Skipped {}；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 record Imported(String file, ImportStatus status) implements ImportResult {}
 record Skipped(String file, String reason) implements ImportResult {}
 enum ImportStatus { CREATED, UPDATED }
 
 public class SealedDomainDemo {
     public static void main(String[] args) {
-        System.out.println(new Imported("a.csv", ImportStatus.CREATED).status());
-// 输出：CREATED；System.out.println 的实参为 new Imported("a.csv", ImportStatus.CREATED).status()。
+        Imported imported = new Imported("a.csv", ImportStatus.CREATED);
+// 初始状态：imported.file() 为 "a.csv"，imported.status() 为 CREATED。
+        System.out.println(imported.status());
+// 输出：CREATED
     }
-// 输入：// 输出：CREATED；System.out.println 的实参为 new Imported("a.csv", ImportStatus.CREATED).status()。 } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 ```
 ## 简单案例
@@ -280,7 +275,9 @@ record Closed() implements State {}
 
 public class SealedSummaryDemo {
     public static void main(String[] args) {
-        System.out.println(new Ready() instanceof State);
+        Ready ready = new Ready();
+// 初始状态：ready 是 State 允许的 Ready 分支。
+        System.out.println(ready instanceof State);
         // 输出：true
     }
 }
