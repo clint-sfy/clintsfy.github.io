@@ -30,16 +30,15 @@ PreparedStatement 参数绑定可防止 SQL 注入，并帮助数据库复用执
 
 ```java
 // 说明：PreparedStatement：绑定查询参数 的具体调用为 String sql = "select name from account where id = ?";
-// 输入：// 说明：PreparedStatement：绑定查询参数 的具体调用为 String sql = "select name from account where id = ?"; 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 String sql = "select name from account where id = ?";
-// 关键变化：String sql = "select name from account where id = ?"；sql 取右侧具体表达式的值，当前状态变为 "select name from account where id = ?"。
-// 初始状态：sql 当前为 "select name from account where id = ?"。
+// 初始状态：sql = "select name from account where id = ?"。
+// 作用：String sql = "select name from account where id = ?";；绑定查询参数，返回调用结果。
 try (var ps = connection.prepareStatement(sql)) {
-// 关键变化：try (var ps = connection.prepareStatement(sql)) {；当前对象；try；当前对象.try(var ps = connection.prepareStatement(sql)) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：ps = connection.prepareStatement(sql))。
     ps.setLong(1, 42L);
-    // 关键变化：ps.setLong(1, 42L);；ps；setLong；ps.setLong(1) 返回本次调用的具体结果，后续语句继续使用该值。
+// 作用：ps.setLong(1, 42L);；绑定查询参数，调用后目标状态更新。
     try (var rs = ps.executeQuery()) {
-    // 关键变化：try (var rs = ps.executeQuery()) {；当前对象；try；当前对象.try(var rs = ps.executeQuery()) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：rs = ps.executeQuery())。
         if (rs.next()) System.out.println(rs.getString("name"));
 // 输出：存在 id=42 的账户时输出其 name；不存在时无输出。
     }
@@ -53,20 +52,20 @@ try (var ps = connection.prepareStatement(sql)) {
 ```java
 // 说明：JDBC 事务：提交或回滚一组更新 的具体调用为 connection.setAutoCommit(false);
 connection.setAutoCommit(false);
-// 关键变化：connection.setAutoCommit(false);；connection；setAutoCommit；connection.setAutoCommit(false) 返回本次调用的具体结果，后续语句继续使用该值。
-// 输入：connection.setAutoCommit(false) 接收 false，使后续 debit/credit 更新留在同一显式事务中。
+// 初始状态：connection.setAutoCommit(false)。
+// 作用：connection.setAutoCommit(false);；提交或回滚一组更新。
 try {
     debit(connection, 1L, 100);
-    // 关键变化：debit(connection, 1L, 100);；当前对象；debit；当前对象.debit(connection) 返回本次调用的具体结果，后续语句继续使用该值。
     credit(connection, 2L, 100);
-    // 关键变化：credit(connection, 2L, 100);；当前对象；credit；当前对象.credit(connection) 返回本次调用的具体结果，后续语句继续使用该值。
     connection.commit();
-    // 结果：commit 提交 debit 和 credit 两笔更新；失败路径由 catch 中的 rollback 撤销。
-    // 关键变化：connection.commit()；connection.commit() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：connection.commit()。
+// 作用：connection.commit();；提交或回滚一组更新。
+    // 输出：两条更新共同提交。
 } catch (Exception error) {
-// 关键变化：} catch (Exception error) {；当前对象；该操作；当前对象.该操作(Exception error) 返回本次调用的具体结果，后续语句继续使用该值。
     connection.rollback();
-    // 关键变化：connection.rollback()；connection.rollback() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：connection.rollback()。
+// 作用：connection.rollback();；提交或回滚一组更新。
+    // 输出：任一步失败时两条更新均不生效。
     throw error;
 }
 ```
@@ -77,16 +76,16 @@ try {
 
 ```java
 // 说明：try-with-resources：关闭 JDBC 资源 的具体调用为 try (var connection = dataSource.getConnection();
-// 输入：// 说明：try-with-resources：关闭 JDBC 资源 的具体调用为 try (var connection = dataSource.getConnection(); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 try (var connection = dataSource.getConnection();
-// 初始状态：connection 当前为 dataSource.getConnection()。
-// 作用：用 try-with-resources 按逆序关闭结果集、语句和连接，确保连接归还连接池。
+// 初始状态：connection = dataSource.getConnection()。
+// 作用：try (var connection = dataSource.getConnection();；关闭 JDBC 资源。
      var statement = connection.prepareStatement("select 1");
-     // 关键变化：var statement = connection.prepareStatement("select 1"); 将返回值写入 statement；statement 现在保存该具体结果。
+// 作用：var statement = connection.prepareStatement("select 1");；关闭 JDBC 资源。
+// 初始状态：statement = connection.prepareStatement("select 1")。
      var result = statement.executeQuery()) {
-     // 关键变化：var result = statement.executeQuery()) {；result 接收 executeQuery(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
+// 初始状态：result = statement.executeQuery())。
     result.next();
-    // 作用：result.next(); 读取括号中的具体参数对应的元素或文本并返回给后续逻辑。
+// 作用：result.next();；关闭 JDBC 资源。
     System.out.println(result.getInt(1));
 // 输出：1（前提：数据库支持 select 1）。
 }

@@ -46,10 +46,9 @@ MyBatis-Plus 减少简单 CRUD 的样板，但它仍然需要正确的表映射�
 import org.mybatis.spring.annotation.MapperScan;
 
 @MapperScan("example.persistence")
-// 关键变化：@MapperScan("example.persistence")；注解参数 "example.persistence" 绑定到声明位置，框架或反射按该配置处理声明。
-// 输入：@MapperScan("example.persistence") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
+// 初始状态：@MapperScan("example.persistence")。
+// 作用：@MapperScan("example.persistence")；批量注册 Mapper 接口。
 class PersistenceConfig {}
-// 输入：表达式为 @MapperScan("example.persistence")。
 // 输出：example.persistence 下的 Mapper 接口可被依赖注入。
 // 说明：@MapperScan("com.example.mapper") 为该包下的 Mapper 接口注册代理 Bean；接口无需实现类，直接 new 配置类不会创建 Mapper 代理。
 ```
@@ -63,8 +62,8 @@ import org.apache.ibatis.annotations.Param;
 
 interface UserMapper {
     User find(@Param("tenantId") long tenantId, @Param("userId") long userId);
-    // 关键变化：User find(@Param("tenantId") long tenantId, @Param("userId") long userId);；当前对象；该操作；当前对象.该操作(@Param("tenantId") long tenantId) 返回本次调用的具体结果，后续语句继续使用该值。
-// 输入：表达式为 User find(@Param("tenantId") long tenantId, @Param("userId") long userId)。
+// 初始状态：User find(@Param("tenantId") long tenantId, @Param("userId") long userId)。
+// 作用：User find(@Param("tenantId") long tenantId, @Param("userId") long userId);；命名 Mapper 方法参数，返回读取结果。
 }
 // 输出：XML 可分别使用 #{tenantId} 与 #{userId}。
 // 说明：@Param("status") 与 @Param("limit") 让 XML 用 #{status}、#{limit} 取值；二者作为 PreparedStatement 参数绑定，不是字符串拼接。
@@ -76,9 +75,11 @@ interface UserMapper {
 
 ```java
 PageHelper.startPage(2, 20);
-// 输入：表达式为 PageHelper.startPage(2, 20)。
-// 关键变化：PageHelper.startPage(2, 20);；PageHelper；startPage；PageHelper.startPage(2) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：PageHelper.startPage(2, 20)。
+// 作用：PageHelper.startPage(2, 20);；开启一次分页查询，调用后目标状态更新。
 List<User> users = userMapper.selectAll();
+// 作用：List<User> users = userMapper.selectAll();；开启一次分页查询，调用后目标状态更新。
+// 初始状态：users = userMapper.selectAll()。
 System.out.println(users.size() <= 20);
 // 输出：true
 // 说明：PageHelper.startPage(2, 20) 把当前线程随后第一条 SELECT 改写为第 2 页、每页 20 行并查询总数；它不会永久修改 Mapper。
@@ -90,12 +91,13 @@ System.out.println(users.size() <= 20);
 
 ```java
 String orderBy = switch (sortKey) {
-// 初始状态：orderBy 当前为 switch (sortKey) {。
+// 初始状态：orderBy = switch (sortKey)。
     case "createdAt" -> "created_at DESC";
     default -> "id ASC";
 };
 PageHelper.orderBy(orderBy);
-// 关键变化：PageHelper.orderBy(orderBy);；PageHelper；orderBy；PageHelper.orderBy(orderBy) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：PageHelper.orderBy(orderBy)。
+// 作用：PageHelper.orderBy(orderBy);；设置受控排序，返回调用结果。
 // 输出：排序字段只能来自代码白名单。
 // 说明：白名单把请求 sort=name 映射为数据库表达式 user_name asc，再交给 PageHelper.orderBy；原始请求参数不能直接拼入 ORDER BY。
 ```
@@ -107,11 +109,13 @@ PageHelper.orderBy(orderBy);
 ```java
 try {
     PageHelper.startPage(1, 10);
+// 作用：PageHelper.startPage(1, 10);；清理线程分页状态。
     userMapper.selectAll();
+// 作用：userMapper.selectAll();；清理线程分页状态。
 } finally {
     PageHelper.clearPage();
-// 输入：表达式为 PageHelper.clearPage()。
-    // 关键变化：PageHelper.clearPage()；PageHelper.clearPage() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：PageHelper.clearPage()。
+// 作用：PageHelper.clearPage();；清理线程分页状态。
 }
 // 输出：当前线程不再保留本次分页参数。
 // 说明：finally 中 PageHelper.clearPage() 删除尚未消费的分页参数，避免线程池复用时把后续 SELECT 误限制为旧页码。
@@ -123,8 +127,8 @@ try {
 
 ```java
 PageInfo<User> page = new PageInfo<>(users);
-// 输入：page 的初始值为 new PageInfo<>(users)。
-// 关键变化：page 接收右侧表达式 new PageInfo<>(users) 的计算结果。
+// 初始状态：page = new PageInfo<>(users)。
+// 作用：PageInfo<User> page = new PageInfo<>(users);；构造分页元数据，返回调用结果。
 System.out.println(page.getPageNum() + "/" + page.getTotal());
 // 输出：当前页码/符合条件的总记录数。
 // 说明：new PageInfo<>(users) 从 PageHelper 结果读取 pageNum、pageSize、total 和当前页列表；普通 List 本身没有总行数元数据。
@@ -241,33 +245,25 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 @TableName("app_user")
-// 关键变化：@TableName("app_user")；注解参数 "app_user" 绑定到声明位置，框架或反射按该配置处理声明。
-// 输入：@TableName("app_user") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 class User {
     @TableId(type = IdType.AUTO)
-    // 关键变化：@TableId(type = IdType.AUTO)；注解参数 type = IdType.AUTO 绑定到声明位置，框架或反射按该配置处理声明。
     private Long id;
     private String username;
     private String status;
     private java.time.Instant createdAt;
 
     public Long getId() { return id; }
-    // 关键变化：public Long getId() { return id; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     public void setId(Long id) { this.id = id; }
-    // 关键变化：public void setId(Long id) { this.id = id; }；当前对象；该操作；当前对象.该操作(Long id) 返回本次调用的具体结果，后续语句继续使用该值。
     public String getUsername() { return username; }
-    // 关键变化：public String getUsername() { return username; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     public void setUsername(String username) { this.username = username; }
-    // 关键变化：public void setUsername(String username) { this.username = username; }；当前对象；该操作；当前对象.该操作(String username) 返回本次调用的具体结果，后续语句继续使用该值。
-// 初始状态：username 的初始值为 username; }。
+// 初始状态：username = username; }。
+// 作用：public void setUsername(String username) { this.username = username; }；复用通用 CRUD，调用后目标状态更新。
     public String getStatus() { return status; }
-    // 关键变化：public String getStatus() { return status; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     public void setStatus(String status) { this.status = status; }
-    // 关键变化：public void setStatus(String status) { this.status = status; }；当前对象；该操作；当前对象.该操作(String status) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：status = status; }。
     public java.time.Instant getCreatedAt() { return createdAt; }
-    // 关键变化：public java.time.Instant getCreatedAt() { return createdAt; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     public void setCreatedAt(java.time.Instant createdAt) { this.createdAt = createdAt; }
-    // 关键变化：public void setCreatedAt(java.time.Instant createdAt) { this.createdAt = createdAt; }；当前对象；该操作；当前对象.该操作(java.time.Instant createdAt) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：createdAt = createdAt; }。
 }
 
 interface UserMapper extends BaseMapper<User> {}
@@ -276,17 +272,16 @@ class UserReader {
     private final UserMapper mapper;
 
     UserReader(UserMapper mapper) {
-    // 关键变化：UserReader(UserMapper mapper) {；当前对象；UserReader；当前对象.UserReader(UserMapper mapper) 返回本次调用的具体结果，后续语句继续使用该值。
         this.mapper = mapper;
-        // 关键变化：this.mapper = mapper;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：mapper = mapper。
     }
 
     void showName() {
-    // 关键变化：void showName() {；当前对象.BaseMapper() 完成本例中的具体调用，后续语句观察调用后的状态。
         User user = mapper.selectById(7L);
-        // 关键变化：User user = mapper.selectById(7L)；user 接收 selectById(7L) 的返回值，当前值变为这次调用得到的具体结果。
+// 作用：User user = mapper.selectById(7L);；复用通用 CRUD，调用后目标状态更新。
+// 初始状态：user = mapper.selectById(7L)。
         System.out.println(user.getUsername());
-        // 输出：ann
+// 输出：ann
     }
 }
 // 说明：UserMapper extends BaseMapper<User> 后，MyBatis-Plus 代理提供 selectById、insert、updateById、deleteById；接口本身不能直接 new。
@@ -307,25 +302,24 @@ class UserFacade {
     private final UserService service;
 
     UserFacade(UserService service) {
-    // 关键变化：UserFacade(UserService service) {；当前对象；UserFacade；当前对象.UserFacade(UserService service) 返回本次调用的具体结果，后续语句继续使用该值。
-    // 输入：UserFacade(UserService service) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         this.service = service;
-        // 关键变化：this.service = service;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：service = service。
+// 作用：this.service = service;；组织服务层 CRUD，返回调用结果。
     }
 
     boolean create() {
-    // 关键变化：boolean create() {；当前对象.IService() 完成本例中的具体调用，后续语句观察调用后的状态。
         User entity = new User();
-        // 关键变化：User entity = new User()；entity 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-// 初始状态：entity 的初始值为 new User()。
+// 初始状态：entity = new User()。
+// 作用：User entity = new User();；组织服务层 CRUD，调用后目标状态更新。
         entity.setUsername("ann");
-        // 关键变化：entity.setUsername("ann");；entity；setUsername；entity.setUsername("ann") 返回本次调用的具体结果，后续语句继续使用该值。
+// 作用：entity.setUsername("ann");；组织服务层 CRUD，调用后目标状态更新。
         entity.setStatus("ACTIVE");
-        // 关键变化：entity.setStatus("ACTIVE");；entity；setStatus；entity.setStatus("ACTIVE") 返回本次调用的具体结果，后续语句继续使用该值。
+// 作用：entity.setStatus("ACTIVE");；组织服务层 CRUD，调用后目标状态更新。
         boolean saved = service.save(entity);
-        // 关键变化：boolean saved = service.save(entity)；saved 接收 save(entity) 的返回值，当前值变为这次调用得到的具体结果。
+// 作用：boolean saved = service.save(entity);；组织服务层 CRUD，调用后目标状态更新。
+// 初始状态：saved = service.save(entity)。
         System.out.println(saved + "/" + entity.getId());
-        // 输出：true/42
+// 输出：true/42
         return saved;
     }
 }
@@ -344,8 +338,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 LambdaQueryWrapper<User> query = new LambdaQueryWrapper<User>()
     .eq(User::getStatus, "ACTIVE")
     .orderByDesc(User::getCreatedAt);
-// 输入：query 的初始值为 new LambdaQueryWrapper<User>()。
-// 关键变化：LambdaQueryWrapper<User> query = new LambdaQueryWrapper<User>() .eq(User::getStatus, "ACTIVE") .orderByDesc(User::getCreatedAt); 将返回值写入 query；query 现在保存该具体结果。
+// 初始状态：query = new LambdaQueryWrapper<User>()。
+// 作用：LambdaQueryWrapper<User> query = new LambdaQueryWrapper<User>()；表达类型安全的条件查询。
 System.out.println(query.getSqlSegment().contains("status"));
 // 输出：true
 // 说明：wrapper.eq(User::getStatus, "ACTIVE").ge(User::getAge, 18) 生成 status = ? AND age >= ?，绑定值为 ACTIVE 与 18。
@@ -367,15 +361,18 @@ class UserPager {
 
     UserPager(UserMapper mapper) {
         this.mapper = mapper;
+// 初始状态：mapper = mapper。
     }
 
     void show() {
         Page<User> page = new Page<>(2, 20);
-// 关键变化：page 接收表达式 new Page<>(2, 20) 的计算结果。
-// 初始状态：page 的初始值为 new Page<>(2, 20)。
+// 初始状态：page = new Page<>(2, 20)。
+// 作用：Page<User> page = new Page<>(2, 20);；配合拦截器控制结果集。
         IPage<User> result = mapper.selectPage(page, new QueryWrapper<>());
+// 初始状态：result = mapper.selectPage(page, new QueryWrapper<>())。
+// 作用：IPage<User> result = mapper.selectPage(page, new QueryWrapper<>());；配合拦截器控制结果集。
         System.out.println(result.getCurrent() + "/" + result.getSize());
-        // 输出：2/20
+// 输出：2/20
     }
 }
 // 作用：用于把页码、排序白名单和总数查询封装到分页请求中，避免一次读取不受控的大结果集。
@@ -425,19 +422,30 @@ class TransferService {
 
     TransferService(AccountMapper mapper) {
         this.mapper = mapper;
+// 初始状态：mapper = mapper。
     }
 
     @Transactional
     void transfer(long from, long to, int amount) {
         Account source = mapper.findForUpdate(from);
+// 初始状态：source = mapper.findForUpdate(from)。
+// 作用：Account source = mapper.findForUpdate(from);；在复杂 SQL 处保留显式查询。
         Account target = mapper.findForUpdate(to);
+// 初始状态：target = mapper.findForUpdate(to)。
+// 作用：Account target = mapper.findForUpdate(to);；在复杂 SQL 处保留显式查询。
         if (source.balance() < amount) {
             throw new IllegalStateException("insufficient balance");
+// 初始状态：throw new IllegalStateException("insufficient balance")。
+// 作用：throw new IllegalStateException("insufficient balance");；在复杂 SQL 处保留显式查询。
         }
         mapper.debit(from, amount);
+// 初始状态：mapper.debit(from, amount)。
+// 作用：mapper.debit(from, amount);；在复杂 SQL 处保留显式查询。
         mapper.credit(to, amount);
+// 初始状态：mapper.credit(to, amount)。
+// 作用：mapper.credit(to, amount);；在复杂 SQL 处保留显式查询。
         System.out.println("transfer=" + from + "->" + to);
-        // 输出：transfer=1->2
+// 输出：transfer=1->2
     }
 }
 ```

@@ -51,11 +51,12 @@ dependencies {
 import java.util.Properties;
 
 Properties config = new Properties();
-// 关键变化：config 接收表达式 new Properties() 的计算结果。
-// 初始状态：config 的初始值为 new Properties()。
+// 初始状态：config = new Properties()。
+// 作用：Properties config = new Properties();；创建引擎配置集。
 config.setProperty("resource.loader.file.path", "templates");
+// 初始状态：config.setProperty("resource.loader.file.path", "templates")。
+// 作用：config.setProperty("resource.loader.file.path", "templates");；创建引擎配置集。
 // config 中的 templates 是引擎随后查找 .vm 文件的受信任根目录。
-// 关键变化：config.setProperty("resource.loader.file.path", "templates")；config；setProperty；config.setProperty("resource.loader.file.path") 返回本次调用的具体结果，后续语句继续使用该值。
 System.out.println(config.getProperty("resource.loader.file.path"));
 // 输出：templates
 ```
@@ -72,20 +73,27 @@ import org.apache.velocity.app.VelocityEngine;
 public class VelocityInitDemo {
     public static void main(String[] args) {
         Properties config = new Properties();
-        // 初始状态：config 当前为 new Properties()。
+// 作用：Properties config = new Properties();；初始化文件资源加载器。
+// 初始状态：config = new Properties()。
         // config 限定 engine 只从 templates 目录按 UTF-8 解码模板。
         config.setProperty("resource.loaders", "file");
+// 作用：config.setProperty("resource.loaders", "file");；初始化文件资源加载器。
         config.setProperty("resource.loader.file.class",
                 "org.apache.velocity.runtime.resource.loader.FileResourceLoader");
+// 作用：config.setProperty("resource.loader.file.class",；初始化文件资源加载器。
         config.setProperty("resource.loader.file.path", "templates");
+// 作用：config.setProperty("resource.loader.file.path", "templates");；初始化文件资源加载器。
         config.setProperty("resource.default_encoding", "UTF-8");
+// 作用：config.setProperty("resource.default_encoding", "UTF-8");；初始化文件资源加载器。
         VelocityEngine engine = new VelocityEngine(config);
-        // 关键变化：VelocityEngine engine = new VelocityEngine(config)；engine 接收 该操作(config) 的返回值，当前值变为这次调用得到的具体结果。
+// 作用：VelocityEngine engine = new VelocityEngine(config);；初始化文件资源加载器。
+// 初始状态：engine = new VelocityEngine(config)。
         // init() 根据 config 创建文件资源加载器，之后 engine 才能查找模板。
         engine.init();
-        // 关键变化：engine.init()；engine.init() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：engine.init()。
+// 作用：engine.init();；初始化文件资源加载器。
         System.out.println("Velocity ready");
-        // 输出：Velocity ready
+// 输出：Velocity ready
     }
 }
 ```
@@ -102,19 +110,24 @@ import org.apache.velocity.VelocityContext;
 public class VelocityContextDemo {
     public static void main(String[] args) {
         List<String> fields = List.of("id", "name");
-        // 初始状态：fields 当前为 List.of("id", "name")。
+// 作用：List<String> fields = List.of("id", "name");；提供最小模板数据。
+// 初始状态：fields = List.of("id", "name")。
         // fields 保留字段顺序，模板中的 #foreach 会按 id、name 的顺序迭代。
         VelocityContext context = new VelocityContext();
-        // 关键变化：VelocityContext context = new VelocityContext()；context 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
+// 作用：VelocityContext context = new VelocityContext();；提供最小模板数据。
+// 初始状态：context = new VelocityContext()。
         context.put("packageName", "example.user");
-        // 关键变化：context.put("packageName", "example.user");；context 按具体键值参数 "packageName" 更新映射内容。
+// 初始状态：context.put("packageName", "example.user")。
+// 作用：context.put("packageName", "example.user");；提供最小模板数据。
         context.put("className", "UserView");
-        // 关键变化：context.put("className", "UserView");；context 按具体键值参数 "className" 更新映射内容。
+// 初始状态：context.put("className", "UserView")。
+// 作用：context.put("className", "UserView");；提供最小模板数据。
         context.put("fields", fields);
-        // 关键变化：context.put("fields", fields);；context 按具体键值参数 "fields" 更新映射内容。
+// 初始状态：context.put("fields", fields)。
+// 作用：context.put("fields", fields);；提供最小模板数据。
         // context 只暴露模板使用的三个键，不向模板传递文件系统或反射能力。
         System.out.println(context.get("className"));
-        // 输出：UserView
+// 输出：UserView
     }
 }
 ```
@@ -132,16 +145,23 @@ import org.apache.velocity.VelocityContext;
 public class VelocityMergeDemo {
     static String render(Template template) {
         VelocityContext context = new VelocityContext();
-        // 初始状态：context 当前为 new VelocityContext()。
+// 作用：VelocityContext context = new VelocityContext();；把上下文渲染为文本。
+// 初始状态：context = new VelocityContext()。
         context.put("className", "UserService");
+// 作用：context.put("className", "UserService");；把上下文渲染为文本。
         // 模板中的 $className 会从 context 取得 UserService。
         StringWriter writer = new StringWriter();
+// 作用：StringWriter writer = new StringWriter();；把上下文渲染为文本。
+// 初始状态：writer = new StringWriter()。
         // merge() 执行 template 并把结果写入内存 writer，此时还没有覆盖任何文件。
         template.merge(context, writer);
-        // 关键变化：template.merge(context, writer);；template 按具体键值参数 context 更新映射内容。
+// 初始状态：template.merge(context, writer)。
+// 作用：template.merge(context, writer);；把上下文渲染为文本。
         String source = writer.toString();
+// 作用：String source = writer.toString();；把上下文渲染为文本。
+// 初始状态：source = writer.toString()。
         System.out.println(source.contains("UserService"));
-        // 输出：模板使用 $className 时为 true
+// 输出：模板使用 $className 时为 true
         return source;
     }
 }
@@ -154,6 +174,7 @@ public class VelocityMergeDemo {
 用途：用于从初始化时配置的资源目录加载固定模板名，并返回可重复合并的模板对象。
 
 ```java
+// 作用：通过 VelocityEngine.getTemplate 按 UTF-8 加载受信任模板。
 import java.nio.charset.StandardCharsets;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.VelocityEngine;
@@ -161,15 +182,16 @@ import org.apache.velocity.app.VelocityEngine;
 public class VelocityLoadDemo {
     static Template load(VelocityEngine engine) {
         String templateName = "java/model.vm";
-        // 初始状态：templateName 当前为 "java/model.vm"。
+// 初始状态：templateName = "java/model.vm"。
         // templateName 是代码选定的相对路径，不接受请求参数拼接的 ../。
         Template template = engine.getTemplate(
                 templateName,
                 StandardCharsets.UTF_8.name());
+// 初始状态：template = engine.getTemplate(。
+// 作用：Template template = engine.getTemplate(；按 UTF-8 加载受信任模板，返回读取结果。
         // template 来自 engine 配置的 templates 根目录，并以 UTF-8 解码。
-        // 关键变化：Template template = engine.getTemplate( templateName, StandardCharsets.UTF_8.name()); 将返回值写入 template；template 现在保存该具体结果。
         System.out.println(template.getName());
-        // 输出：java/model.vm
+// 输出：java/model.vm
         return template;
     }
 }
@@ -198,22 +220,39 @@ import org.apache.velocity.app.VelocityEngine;
 public class GenerateModelDemo {
     public static void main(String[] args) {
         Properties config = new Properties();
+// 作用：Properties config = new Properties();；按 UTF-8 加载受信任模板，调用后目标状态更新。
+// 初始状态：config = new Properties()。
         // config 把 engine 的模板根目录固定为 templates。
         config.setProperty("resource.loaders", "file");
+// 作用：config.setProperty("resource.loaders", "file");；按 UTF-8 加载受信任模板，调用后目标状态更新。
         config.setProperty("resource.loader.file.path", "templates");
+// 作用：config.setProperty("resource.loader.file.path", "templates");；按 UTF-8 加载受信任模板，调用后目标状态更新。
         config.setProperty("resource.default_encoding", "UTF-8");
+// 作用：config.setProperty("resource.default_encoding", "UTF-8");；按 UTF-8 加载受信任模板，调用后目标状态更新。
         VelocityEngine engine = new VelocityEngine(config);
+// 作用：VelocityEngine engine = new VelocityEngine(config);；按 UTF-8 加载受信任模板，调用后目标状态更新。
+// 初始状态：engine = new VelocityEngine(config)。
         engine.init();
+// 作用：engine.init();；按 UTF-8 加载受信任模板，调用后目标状态更新。
         VelocityContext context = new VelocityContext();
+// 作用：VelocityContext context = new VelocityContext();；按 UTF-8 加载受信任模板，调用后目标状态更新。
+// 初始状态：context = new VelocityContext()。
         context.put("packageName", "example.user");
+// 作用：context.put("packageName", "example.user");；按 UTF-8 加载受信任模板，调用后目标状态更新。
         context.put("className", "UserView");
+// 作用：context.put("className", "UserView");；按 UTF-8 加载受信任模板，调用后目标状态更新。
         // context 为 model.vm 中的 $packageName 和 $className 提供确定值。
         Template template = engine.getTemplate("java/model.vm", StandardCharsets.UTF_8.name());
+// 初始状态：template = engine.getTemplate("java/model.vm", StandardCharsets.UTF_8.name())。
+// 作用：Template template = engine.getTemplate("java/model.vm", StandardCharsets.UTF_8.name());；按 UTF-8 加载受信任模板，返回读取结果。
         StringWriter writer = new StringWriter();
+// 作用：StringWriter writer = new StringWriter();；按 UTF-8 加载受信任模板，调用后目标状态更新。
+// 初始状态：writer = new StringWriter()。
         // template 从 engine 的受信任目录加载；merge 只把渲染结果写入 writer。
         template.merge(context, writer);
+// 作用：template.merge(context, writer);；按 UTF-8 加载受信任模板，调用后目标状态更新。
         System.out.println(writer.toString().replace(System.lineSeparator(), " ").trim());
-        // 输出：package example.user;  public record UserView(long id, String name) {}
+// 输出：package example.user; public record UserView(long id, String name) {}
     }
 }
 ```

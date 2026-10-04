@@ -49,10 +49,14 @@ MDC 通常是线程局部上下文；进入请求或任务时 `put`，在 `final
 import java.util.regex.Pattern;
 
 private static final Pattern CONTEXT_ID = Pattern.compile("[A-Za-z0-9._:-]{1,64}");
+// 初始状态：CONTEXT_ID = Pattern.compile("[A-Za-z0-9._:-]{1,64}")。
+// 作用：private static final Pattern CONTEXT_ID = Pattern.compile("[A-Za-z0-9._:-]{1,64}");；compile 返回本次调用的结果。
 
 static String safeContextId(String raw) {
     if (raw == null || raw.length() > 64 || raw.indexOf('\r') >= 0 || raw.indexOf('\n') >= 0
             || !CONTEXT_ID.matcher(raw).matches()) return "invalid";
+// 初始状态：|| !CONTEXT_ID.matcher(raw).matches()) return "invalid"。
+// 作用：|| !CONTEXT_ID.matcher(raw).matches()) return "invalid";；matcher 返回本次调用的结果。
     return raw;
 }
 // 结果：safeContextId("trace-01") 返回 "trace-01"，传入换行符或超过 64 个字符时返回 "invalid"
@@ -70,23 +74,22 @@ import org.slf4j.LoggerFactory;
 
 final class ImportService {
     private static final Logger log = LoggerFactory.getLogger(ImportService.class);
-    // 关键变化：private static final Logger log = LoggerFactory.getLogger(ImportService.class)；log 接收 getLogger(ImportService.class) 的返回值，当前值变为这次调用得到的具体结果。
-    // 输入：private static final Logger log = LoggerFactory.getLogger(ImportService.class); 使用语句中的具体实参或初始值，log 从这里进入后续操作。
+// 作用：private static final Logger log = LoggerFactory.getLogger(ImportService.class);；获取门面 Logger。
 
     void run(String jobId) {
-    // 关键变化：void run(String jobId) {；当前对象；该操作；当前对象.该操作(String jobId) 返回本次调用的具体结果，后续语句继续使用该值。
         String safeJobId = safeContextId(jobId);
-        // 关键变化：String safeJobId = safeContextId(jobId)；safeJobId 接收 该操作(jobId) 的返回值，当前值变为这次调用得到的具体结果。
-// 初始状态：safeJobId 的初始值为 safeContextId(jobId)。
+// 初始状态：safeJobId = safeContextId(jobId)。
+// 作用：String safeJobId = safeContextId(jobId);；获取门面 Logger。
         log.info("job={} started", safeJobId);
-        // 关键变化：log.info("job={} started", safeJobId);；log；info；log.info("job={} started") 返回本次调用的具体结果，后续语句继续使用该值。
+// 作用：log.info("job={} started", safeJobId);；获取门面 Logger。
         System.out.println("logged=" + safeJobId);
 // 输出：logged=job-1
     }
 }
 
 new ImportService().run("job-1");
-// 关键变化：new ImportService().run("job-1");；当前对象.run() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：new ImportService().run("job-1")。
+// 作用：用于按类获取 SLF4J `Logger`，让业务代码只依赖门面并保留统一级别和字段约定。
 ```
 
 同一个类只保留一个静态 logger 即可；日志级别由配置决定，不能把 `System.out` 当作生产日志通道。输出的事件名和字段名应稳定，便于检索和统计。
@@ -102,13 +105,13 @@ import org.slf4j.Logger;
 
 void process(Logger log, String taskId) {
     log.info("task={} state={}", taskId, "running");
-// 输入：task 的初始值为 {} state={}", taskId, "running")。
-    // 作用：用于在 info 级别开启时才用占位符格式化业务事件。
+// 初始状态：task = {} state={}", taskId, "running")。
+// 作用：log.info("task={} state={}", taskId, "running");；记录参数化事件，返回调用结果。
     System.out.println("logged=" + taskId);
 // 输出：logged=task-7
 }
 
-// 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
+// 作用：用于在 info 级别开启时才用占位符格式化业务事件。
 ```
 
 参数不应包含令牌、密码或未脱敏的个人数据。
@@ -120,15 +123,16 @@ void process(Logger log, String taskId) {
 ```java
 try {
     throw new IllegalStateException("temporary failure");
-    // 初始状态：本例的输入由 throw new IllegalStateException("temporary failure") 构造。
+// 作用：throw new IllegalStateException("temporary failure");；保留异常堆栈。
+// 初始状态：throw new IllegalStateException("temporary failure")。
 } catch (RuntimeException ex) {
     log.error("task={} failed", "task-7", ex);
-// 关键变化：task 接收右侧表达式 {} failed", "task-7", ex) 的计算结果。
+// 初始状态：task = {} failed", "task-7", ex)。
+// 作用：log.error("task={} failed", "task-7", ex);；保留异常堆栈。
     System.out.println("handled=" + ex.getClass().getSimpleName());
 // 输出：handled=IllegalStateException
 }
 // 说明：log.error("order {} failed", orderId, ex) 用 orderId 填充 {}，并把末尾 ex 作为 Throwable 输出完整堆栈；写成 ex.getMessage() 会丢失调用链。
-// 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
 ```
 
 只记录 `ex.getMessage()` 会丢失调用栈；异常应位于占位符参数之后。
@@ -139,12 +143,12 @@ try {
 
 ```java
 String appender = "RollingFileAppender";
-// 关键变化：appender 接收表达式 "RollingFileAppender" 的计算结果。
-// 初始状态：appender 当前为 "RollingFileAppender"。
+// 作用：String appender = "RollingFileAppender";；限制日志占用，调用后目标状态更新。
+// 初始状态：appender = "RollingFileAppender"。
 String policy = "SizeAndTimeBasedRollingPolicy";
-// 关键变化：String policy = "SizeAndTimeBasedRollingPolicy"; 将返回值写入 policy；policy 现在保存该具体结果。
+// 初始状态：policy = "SizeAndTimeBasedRollingPolicy"。
 String pattern = "%d %-5level [%X{traceId}] %logger - %msg%n";
-// 关键变化：String pattern = "%d %-5level [%X{traceId}] %logger - %msg%n"; 将返回值写入 pattern；pattern 现在保存该具体结果。
+// 初始状态：pattern = "%d %-5level [%X{traceId}] %logger - %msg%n"。
 System.out.println(appender + "/" + policy + ":" + pattern);
 // 输出：RollingFileAppender/SizeAndTimeBasedRollingPolicy:%d %-5level [%X{traceId}] %logger - %msg%n
 // 说明：appender=RollingFileAppender 配合 policy=SizeAndTimeBasedRollingPolicy；pattern 中的 %X{traceId} 从 MDC 读取请求标识。真实文件名、单卷大小和保留周期应在 logback-spring.xml 中配置。
@@ -160,19 +164,18 @@ Logback XML 中通常把 `RollingFileAppender` 配合 `SizeAndTimeBasedRollingPo
 import org.slf4j.MDC;
 
 void handle(String traceId) {
-// 关键变化：void handle(String traceId) {；当前对象；该操作；当前对象.该操作(String traceId) 返回本次调用的具体结果，后续语句继续使用该值。
-// 输入：void handle(String traceId) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     MDC.put("traceId", safeContextId(traceId));
-    // 关键变化：MDC.put("traceId", safeContextId(traceId));；MDC 按具体键值参数 "traceId" 更新映射内容。
+// 作用：MDC.put("traceId", safeContextId(traceId));；为请求附加 traceId。
+// 初始状态：MDC.put("traceId", safeContextId(traceId))。
     try {
         System.out.println("trace=" + MDC.get("traceId"));
-        // 输出：trace=req-7
+// 输出：trace=req-7
     } finally {
         MDC.remove("traceId");
-        // 关键变化：MDC.remove("traceId");；MDC 按具体参数 "traceId" 删除目标内容。
+// 作用：MDC.remove("traceId");；为请求附加 traceId。
     }
 }
-// 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
+// 作用：用于让同一请求的日志带上 `traceId`，并在复用线程返回池前清理上下文。
 ```
 
 Logback pattern 中用 `%X{traceId}` 读取 MDC；没有 `finally` 清理时，线程池中的后续请求可能继承旧值。跨线程执行应显式复制允许的键并在目标线程结束后清理，不能把 MDC 当作可靠的业务参数或授权依据。`safeContextId` 的返回值才允许进入 MDC 或日志模板，不能先记录原始 `traceId`/`jobId` 再“事后脱敏”。
@@ -187,6 +190,8 @@ Logback pattern 中用 `%X{traceId}` 读取 MDC；没有 `finally` 清理时，�
 String maskToken(String token) {
     if (token == null || token.length() < 8) return "***";
     return token.substring(0, 2) + "***" + token.substring(token.length() - 2);
+// 初始状态：return token.substring(0, 2) + "***" + token.substring(token.length() - 2)。
+// 作用：return token.substring(0, 2) + "***" + token.substring(token.length() - 2);；日志字段白名单与遮蔽。
 }
 
 System.out.println(maskToken("token-123456"));
@@ -209,18 +214,13 @@ import org.aspectj.lang.annotation.Pointcut;
 @Aspect
 class OperationLogAspect {
     @Pointcut("within(app.service..*) && execution(* *(..))")
-    // 关键变化：@Pointcut("within(app.service..*) && execution(* *(..))")；注解参数 "within(app.service..*) && execution(* *(..))" 绑定到声明位置，框架或反射按该配置处理声明。
-    // 输入：@Pointcut("within(app.service..*) && execution(* *(..))") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     void serviceBoundary() {}
-    // 关键变化：void serviceBoundary() {}；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 
     @Around("serviceBoundary()")
-    // 关键变化：@Around("serviceBoundary()")；注解参数 "serviceBoundary()" 绑定到声明位置，框架或反射按该配置处理声明。
     Object logOperation(ProceedingJoinPoint joinPoint) throws Throwable {
-    // 关键变化：Object logOperation(ProceedingJoinPoint joinPoint) throws Throwable {；当前对象；该操作；当前对象.该操作(ProceedingJoinPoint joinPoint) 返回本次调用的具体结果，后续语句继续使用该值。
         Object result = joinPoint.proceed();
-        // 关键变化：Object result = joinPoint.proceed(); 将返回值写入 result；result 现在保存该具体结果。
-        // 输入：joinPoint.proceed() 继续执行当前业务方法，result 接收该方法的具体返回值或异常。
+// 初始状态：result = joinPoint.proceed()。
+// 作用：Object result = joinPoint.proceed();；只记录业务边界，返回调用结果。
         System.out.println("audit=success:" + joinPoint.getSignature().getName());
 // 输出：audit=success:update
         return result;
@@ -228,7 +228,6 @@ class OperationLogAspect {
 }
 
 // 说明：@Around 匹配标注 @OperationLog 的业务方法，proceed() 前后记录操作名和耗时，异常路径保留 Throwable；目标对象直接 new 或自调用不会经过该 Spring AOP 通知。
-// 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
 ```
 
 切点只表示候选边界，代理必须真正创建且调用要经过代理；同类自调用、`private` 方法和某些异步切换可能绕过切面。真实审计需要区分业务提交成功、业务拒绝和异常失败，并只提取字段白名单；不要在切面中替代授权或吞掉异常。
@@ -248,7 +247,6 @@ void record(Logger log, boolean sampled, Throwable failure) {
 }
 
 // 作用：用于对高频成功事件采样，同时对异常保留堆栈，避免日志洪水掩盖真正的故障。
-// 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
 ```
 
 采样规则应按事件类型和关联 ID 可配置，并保留计数指标；不要采样掉支付、权限变更等必须审计的事件。异常堆栈应写入受控日志并设定保留期限，向客户端返回稳定错误码而不是把堆栈直接回显。
@@ -260,16 +258,20 @@ void record(Logger log, boolean sampled, Throwable failure) {
 `Logger.debug` 适合诊断路径和中间状态；使用 `{}` 参数化，避免级别关闭时仍构造字符串。
 
 ```java
+// 作用：通过 Logger.debug 记录可按需开启的调试细节。
 final class CacheReader {
     private static final Logger log =
         LoggerFactory.getLogger(CacheReader.class);
+// 作用：LoggerFactory.getLogger(CacheReader.class);；记录可按需开启的调试细节，返回读取结果。
     String read(String key) {
         log.debug("reading cache key={}", key);
-// 输入：key 的初始值为 {}", key)。
-        // 作用：通过 Logger.debug 记录可按需开启的调试细节。
+// 初始状态：key = {}", key)。
+// 作用：log.debug("reading cache key={}", key);；记录可按需开启的调试细节，返回调用结果。
         String value = "hit";
+// 初始状态：value = "hit"。
         log.debug("cache result key={} present={}", key, value != null);
-        // 关键变化：log.debug("cache result key={} present={}", key, value != null);；log；debug；log.debug("cache result key={} present={}") 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：key = {} present={}", key, value != null)。
+// 作用：log.debug("cache result key={} present={}", key, value != null);；记录可按需开启的调试细节，返回调用结果。
         return value;
     }
 }
@@ -283,16 +285,18 @@ final class CacheReader {
 `Logger.warn` 表示当前请求可继续但需关注；不要把每次正常分支或敏感数据记为警告。
 
 ```java
+// 作用：通过 Logger.warn 记录可恢复的异常状态。
 final class RemoteLookup {
     private static final Logger log =
         LoggerFactory.getLogger(RemoteLookup.class);
+// 作用：LoggerFactory.getLogger(RemoteLookup.class);；记录可恢复的异常状态。
     String lookup(String id) {
         try {
             return callRemote(id);
         } catch (TimeoutException ex) {
             log.warn("remote timeout id={}; using fallback", id, ex);
-// 输入：id 的初始值为 {}; using fallback", id, ex)。
-            // 作用：通过 Logger.warn 记录可恢复的异常状态。
+// 初始状态：id = {}; using fallback", id, ex)。
+// 作用：log.warn("remote timeout id={}; using fallback", id, ex);；记录可恢复的异常状态。
             return "fallback";
         }
     }
@@ -317,28 +321,37 @@ import org.slf4j.MDC;
 
 final class JobRunner {
     private static final Logger log = LoggerFactory.getLogger(JobRunner.class);
+// 作用：private static final Logger log = LoggerFactory.getLogger(JobRunner.class);；记录可恢复的异常状态。
 
     static String run(String traceId, String jobId) {
         String safeJobId = safeContextId(jobId);
+// 初始状态：safeJobId = safeContextId(jobId)。
+// 作用：String safeJobId = safeContextId(jobId);；记录可恢复的异常状态。
         MDC.put("traceId", safeContextId(traceId));
+// 作用：MDC.put("traceId", safeContextId(traceId));；记录可恢复的异常状态。
         try {
             log.info("job={} state={}", safeJobId, "started");
+// 作用：log.info("job={} state={}", safeJobId, "started");；记录可恢复的异常状态。
             if (safeJobId.equals("invalid")) throw new IllegalArgumentException("job id required");
+// 初始状态：if (safeJobId.equals("invalid")) throw new IllegalArgumentException("job id required")。
             log.info("job={} state={}", safeJobId, "done");
+// 作用：log.info("job={} state={}", safeJobId, "done");；记录可恢复的异常状态。
             return "success";
         } catch (RuntimeException ex) {
             log.error("job={} state={}", safeJobId, "failed", ex);
+// 作用：log.error("job={} state={}", safeJobId, "failed", ex);；记录可恢复的异常状态。
             return "failure";
         } finally {
             MDC.remove("traceId");
+// 作用：MDC.remove("traceId");；记录可恢复的异常状态。
         }
     }
 }
 
 System.out.println(JobRunner.run("req-7", "job-1"));
-// 输出：System.out.println 的实参为 JobRunner.run("req-7", "job-1")，实际写出该表达式的计算值。
-System.out.println(JobRunner.run("req-8", ""));
 // 输出：success
+System.out.println(JobRunner.run("req-8", ""));
+// 输出：failure
 ```
 
 案例中成功路径和失败路径都有稳定返回值，异常仍由日志保留完整堆栈；`MDC` 在两个调用结束后都会清理。框架片段需容器和日志绑定运行，具体输出格式由 Logback 配置决定；不要把这里的 `System.out` 当作生产日志配置。

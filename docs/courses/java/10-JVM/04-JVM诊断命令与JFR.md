@@ -44,11 +44,9 @@ description: 用 jps、jcmd、jstack、jmap、jstat 和 JFR 采集 JVM 现场证
 ```java
 // 说明：ProcessHandle：取得当前进程 PID。
 public class ProcessIdDemo {
-// 关键变化：// 说明：ProcessHandle：取得当前进程 PID。 public class ProcessIdDemo {；当前对象.ProcessHandle() 完成本例中的具体调用，后续语句观察调用后的状态。
-
     public static void main(String[] args) {
         System.out.println("pid=" + ProcessHandle.current().pid());
-        // 输出：pid=12345（进程号可能不同）
+// 输出：pid=12345（进程号可能不同）
     }
 }
 ```
@@ -60,11 +58,9 @@ public class ProcessIdDemo {
 ```java
 // 说明：jps -lv：列出 Java 进程。
 public class JpsHintDemo {
-// 关键变化：// 说明：jps -lv：列出 Java 进程。 public class JpsHintDemo {；当前对象.lv() 完成本例中的具体调用，后续语句观察调用后的状态。
-
     public static void main(String[] args) {
         System.out.println("jps -lv");
-        // 输出：jps -lv
+// 输出：jps -lv
     }
 }
 ```
@@ -76,11 +72,9 @@ public class JpsHintDemo {
 ```java
 // 说明：jcmd VM.version：确认目标 JVM。
 public class JcmdVersionHintDemo {
-// 关键变化：// 说明：jcmd VM.version：确认目标 JVM。 public class JcmdVersionHintDemo {；当前对象.version() 完成本例中的具体调用，后续语句观察调用后的状态。
-
     public static void main(String[] args) {
         System.out.println("jcmd <pid> VM.version");
-        // 输出：jcmd <pid> VM.version
+// 输出：jcmd <pid> VM.version
     }
 }
 ```
@@ -94,7 +88,7 @@ public class JcmdVersionHintDemo {
 public class ThreadPrintHintDemo {
     public static void main(String[] args) {
         System.out.println("jcmd <pid> Thread.print -l");
-        // 输出：jcmd <pid> Thread.print -l
+// 输出：jcmd <pid> Thread.print -l
     }
 }
 ```
@@ -108,11 +102,9 @@ public class ThreadPrintHintDemo {
 ```java
 // 说明：jstack -l：线程转储兼容入口。
 public class JstackHintDemo {
-// 关键变化：// 说明：jstack -l：线程转储兼容入口。 public class JstackHintDemo {；当前对象.l() 完成本例中的具体调用，后续语句观察调用后的状态。
-
     public static void main(String[] args) {
         System.out.println("jstack -l <pid>");
-        // 输出：jstack -l <pid>
+// 输出：jstack -l <pid>
     }
 }
 ```
@@ -126,11 +118,9 @@ public class JstackHintDemo {
 ```java
 // 说明：jmap -histo:live：类直方图。
 public class JmapHistogramHintDemo {
-// 关键变化：// 说明：jmap -histo:live：类直方图。 public class JmapHistogramHintDemo {；当前对象.histo() 完成本例中的具体调用，后续语句观察调用后的状态。
-
     public static void main(String[] args) {
         System.out.println("jmap -histo:live <pid>");
-        // 输出：jmap -histo:live <pid>
+// 输出：jmap -histo:live <pid>
     }
 }
 ```
@@ -142,11 +132,9 @@ public class JmapHistogramHintDemo {
 ```java
 // 说明：jmap -dump：生成堆转储。
 public class JmapDumpHintDemo {
-// 关键变化：// 说明：jmap -dump：生成堆转储。 public class JmapDumpHintDemo {；当前对象.dump() 完成本例中的具体调用，后续语句观察调用后的状态。
-
     public static void main(String[] args) {
         System.out.println("jmap -dump:live,format=b,file=app.hprof <pid>");
-        // 输出：jmap -dump:live,format=b,file=app.hprof <pid>
+// 输出：jmap -dump:live,format=b,file=app.hprof <pid>
     }
 }
 ```
@@ -160,11 +148,9 @@ OOM 自动转储与 jcmd GC.heap_dump 也是常见替代方案。
 ```java
 // 说明：jstat -gcutil：采样 GC 利用率。
 public class JstatGcHintDemo {
-// 关键变化：// 说明：jstat -gcutil：采样 GC 利用率。 public class JstatGcHintDemo {；当前对象.gcutil() 完成本例中的具体调用，后续语句观察调用后的状态。
-
     public static void main(String[] args) {
         System.out.println("jstat -gcutil <pid> 1000 10");
-        // 输出：jstat -gcutil <pid> 1000 10
+// 输出：jstat -gcutil <pid> 1000 10
     }
 }
 ```
@@ -176,15 +162,13 @@ JFR.start 可以用 default/profile 配置和 duration 限制范围；先短时�
 ```java
 // 说明：完成一次 JFR 记录：启动、导出并停止。
 public class JfrCommandHintDemo {
-// 关键变化：// 说明：完成一次 JFR 记录：启动、导出并停止。 public class JfrCommandHintDemo {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
-
     public static void main(String[] args) {
         System.out.println("jcmd <pid> JFR.start name=diag settings=profile duration=60s filename=diag.jfr");
-        // 输出：JFR.start 命令
+// 输出：JFR.start 命令
         System.out.println("jcmd <pid> JFR.dump name=diag filename=diag-now.jfr");
-        // 输出：JFR.dump 命令
+// 输出：JFR.dump 命令
         System.out.println("jcmd <pid> JFR.stop name=diag");
-        // 输出：JFR.stop 命令
+// 输出：JFR.stop 命令
     }
 }
 ```
@@ -203,13 +187,16 @@ import java.nio.file.Path;
 public class JfrApiDemo {
     public static void main(String[] args) throws Exception {
         try (Recording recording = new Recording()) {
-        // 关键变化：try (Recording recording = new Recording()) {；当前对象；try；当前对象.try(Recording recording = new Recording()) 返回本次调用的具体结果，后续语句继续使用该值。
-// 初始状态：recording 的初始值为 new Recording())。
+// 初始状态：recording = new Recording())。
+// 作用：try (Recording recording = new Recording()) {；在代码中控制 JFR，调用后目标状态更新。
             recording.start();
+// 作用：recording.start();；在代码中控制 JFR，调用后目标状态更新。
             System.out.println("recording");
-            // 输出：recording
+// 输出：recording
             recording.stop();
+// 作用：recording.stop();；在代码中控制 JFR，调用后目标状态更新。
             recording.dump(Path.of("diagnostic.jfr"));
+// 作用：recording.dump(Path.of("diagnostic.jfr"));；在代码中控制 JFR，调用后目标状态更新。
         }
     }
 }
@@ -226,7 +213,7 @@ JFR 记录结束后用 JDK Mission Control 等工具分析事件时间线。
 public class JcmdHistogramHintDemo {
     public static void main(String[] args) {
         System.out.println("jcmd <pid> GC.class_histogram");
-        // 输出：jcmd <pid> GC.class_histogram
+// 输出：jcmd <pid> GC.class_histogram
     }
 }
 ```
@@ -238,13 +225,11 @@ Native Memory Tracking 必须在启动时启用，不能事后补开；它有运
 ```java
 // 说明：先用 -XX:NativeMemoryTracking=summary 启动 app.jar，再将 <pid> 替换为该 JVM 进程号查询线程栈、元空间和代码缓存等本地内存分类。
 public class NativeMemoryHintDemo {
-// 关键变化：// 说明：先用 -XX:NativeMemoryTracking=summary 启动 app.jar，再将 <pid> 替换为该 JVM 进程号查询线程栈、元空间和代码缓存等本地内存分类。 public class NativeMemoryHintDemo {；当前对象.native_memory() 完成本例中的具体调用，后续语句观察调用后的状态。
-
     public static void main(String[] args) {
         System.out.println("java -XX:NativeMemoryTracking=summary -jar app.jar");
-        // 输出：NMT 启动参数
+// 输出：NMT 启动参数
         System.out.println("jcmd <pid> VM.native_memory summary");
-        // 输出：NMT 查询命令
+// 输出：NMT 查询命令
     }
 }
 ```
@@ -260,16 +245,16 @@ import jdk.jfr.Recording;
 public class JfrEventSettingDemo {
     public static void main(String[] args) throws Exception {
         try (Recording recording = new Recording()) {
-        // 关键变化：try (Recording recording = new Recording()) {；当前对象；try；当前对象.try(Recording recording = new Recording()) 返回本次调用的具体结果，后续语句继续使用该值。
-// 初始状态：recording 的初始值为 new Recording())。
+// 初始状态：recording = new Recording())。
+// 作用：try (Recording recording = new Recording()) {；按事件降低噪声，调用后目标状态更新。
             recording.enable("jdk.CPULoad").withPeriod(java.time.Duration.ofSeconds(1));
-            // 关键变化：recording.enable("jdk.CPULoad").withPeriod(java.time.Duration.ofSeconds(1));；recording；enable；recording.enable("jdk.CPULoad") 改变当前资源或任务状态，后续步骤观察这一变化。
+// 作用：recording.enable("jdk.CPULoad").withPeriod(java.time.Duration.ofSeconds(1));；按事件降低噪声，调用后目标状态更新。
             recording.start();
-            // 关键变化：recording.start()；recording.start(当前参数) 改变当前资源或任务状态，后续步骤观察这一变化。
+// 作用：recording.start();；按事件降低噪声，调用后目标状态更新。
             recording.stop();
-            // 关键变化：recording.stop()；recording.stop() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 作用：recording.stop();；按事件降低噪声，调用后目标状态更新。
             System.out.println("cpu event configured");
-            // 输出：cpu event configured
+// 输出：cpu event configured
         }
     }
 }
@@ -282,11 +267,9 @@ public class JfrEventSettingDemo {
 ```java
 // 说明：将 <pid> 替换为目标 JVM 进程号，Compiler.queue 输出当前等待 C1/C2 JIT 编译的方法，不会生成转储文件。
 public class CompilerQueueHintDemo {
-// 关键变化：// 说明：将 <pid> 替换为目标 JVM 进程号，Compiler.queue 输出当前等待 C1/C2 JIT 编译的方法，不会生成转储文件。 public class CompilerQueueHintDemo {；当前对象.queue() 完成本例中的具体调用，后续语句观察调用后的状态。
-
     public static void main(String[] args) {
         System.out.println("jcmd <pid> Compiler.queue");
-        // 输出：jcmd <pid> Compiler.queue
+// 输出：jcmd <pid> Compiler.queue
     }
 }
 ```
@@ -296,11 +279,11 @@ public class CompilerQueueHintDemo {
 public class DiagnosticOrderDemo {
     public static void main(String[] args) {
         System.out.println("1. confirm pid and JVM version");
-        // 输出：1. confirm pid and JVM version
+// 输出：1. confirm pid and JVM version
         System.out.println("2. capture thread/GC snapshot");
-        // 输出：2. capture thread/GC snapshot
+// 输出：2. capture thread/GC snapshot
         System.out.println("3. record short JFR window");
-        // 输出：3. record short JFR window
+// 输出：3. record short JFR window
     }
 }
 ```

@@ -50,12 +50,11 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 
 @Aspect
+// 初始状态：@Aspect。
+// 作用：@Aspect；声明切面类，返回调用结果。
 @Component
 class AuditAspect {
-// 输入：表达式为 @Aspect。
     String name() { return "audit"; }
-    // 关键变化：String name() { return "audit"; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
-    // 输入：String name() { return "audit"; } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 
 System.out.println(new AuditAspect().name());
@@ -76,10 +75,9 @@ import org.aspectj.lang.annotation.Pointcut;
 @Aspect
 class AuditPointcuts {
     @Pointcut("execution(* com.example.service..*(..))")
-    // 关键变化：@Pointcut("execution(* com.example.service..*(..))")；注解参数 "execution(* com.example.service..*(..))" 绑定到声明位置，框架或反射按该配置处理声明。
-    // 输入：@Pointcut("execution(* com.example.service..*(..))") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
+// 初始状态：@Pointcut("execution(* com.example.service..*(..))")。
+// 作用：@Pointcut("execution(* com.example.service..*(..))")；声明可复用切点，返回调用结果。
     void serviceOperation() {}
-// 输入：表达式为 @Pointcut("execution(* com.example.service..*(..))")。
 }
 
 System.out.println("pointcut=serviceOperation");
@@ -101,18 +99,21 @@ import org.aspectj.lang.annotation.Aspect;
 @Aspect
 class TimingAspect {
     @Around("execution(* com.example.service..*(..))")
-    // 关键变化：@Around("execution(* com.example.service..*(..))")；注解参数 "execution(* com.example.service..*(..))" 绑定到声明位置，框架或反射按该配置处理声明。
-    // 输入：@Around("execution(* com.example.service..*(..))") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
+// 初始状态：@Around("execution(* com.example.service..*(..))")。
+// 作用：@Around("execution(* com.example.service..*(..))")；包裹目标调用，返回调用结果。
     Object time(ProceedingJoinPoint joinPoint) throws Throwable {
-// 输入：表达式为 @Around("execution(* com.example.service..*(..))")。
         long start = System.nanoTime();
-        // 输入：long start = System.nanoTime(); 提供具体参数或初始值，start 从该语句开始参与后续操作。
+// 作用：long start = System.nanoTime();；包裹目标调用，调用后目标状态更新。
+// 初始状态：start = System.nanoTime()。
         Object result = joinPoint.proceed();
+// 作用：Object result = joinPoint.proceed();；包裹目标调用，调用后目标状态更新。
+// 初始状态：result = joinPoint.proceed()。
         System.out.println("elapsed=" + (System.nanoTime() - start >= 0));
-        // 输出：elapsed=true
+// 输出：elapsed=true
         return result;
     }
 }
+// 作用：用于在目标方法前后统一计时、记录结果或转换异常；正常路径必须调用 `proceed` 并保留返回值。
 ```
 
 不要在通知里吞掉目标异常或无条件改写返回类型；异步方法还要确认计时点是提交任务还是任务真正完成。通知中访问参数时注意敏感数据脱敏和大对象开销。
@@ -128,17 +129,15 @@ class Guard {
     Object invoke(ProceedingJoinPoint joinPoint, boolean allowed) throws Throwable {
         if (!allowed) {
             System.out.println("denied");
-            // 输出：denied
+// 输出：denied
             return null;
         }
         return joinPoint.proceed();
-// 输入：表达式为 return joinPoint.proceed()。
-// 返回：return joinPoint.proceed() 把该表达式交给调用方。
-        // 关键变化：return joinPoint.proceed()；joinPoint.proceed() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：return joinPoint.proceed()。
+// 作用：return joinPoint.proceed();；继续执行目标方法，返回调用结果。
     }
 }
 // 说明：joinPoint.proceed() 才把调用交给目标方法并返回其 Object 结果；省略它会让目标方法完全不执行，调用两次则会重复业务副作用。
-// 结果：allowed=false 时打印 denied 并返回 null；allowed=true 时返回目标方法的执行结果。
 ```
 
 短路必须有明确的返回契约；对写操作只因为缓存命中而跳过 `proceed` 可能造成状态不一致。重新抛出异常时要保留原始 cause，避免排障信息被覆盖。
@@ -154,11 +153,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 class TransferService {
     @Transactional
+// 初始状态：@Transactional。
+// 作用：@Transactional；声明事务边界，返回调用结果。
     public void transfer() {
-    // 关键变化：public void transfer() {；当前对象.Transactional() 完成本例中的具体调用，后续语句观察调用后的状态。
-// 输入：表达式为 @Transactional。
         System.out.println("debit then credit");
-        // 输出：debit then credit
+// 输出：debit then credit
     }
 }
 // 说明：经 Spring 代理调用 transfer 时开启事务，debit 与 credit 共用同一事务；默认 RuntimeException 回滚。直接 new TransferService(...) 调用不会得到声明式事务。
@@ -182,8 +181,12 @@ class ReportService {
         readOnly = true,
         rollbackFor = IllegalArgumentException.class)
     void loadSummary() {
+// 初始状态：propagation = Propagation.REQUIRED,。
+// 初始状态：isolation = Isolation.READ_COMMITTED,。
+// 初始状态：readOnly = true,。
+// 初始状态：rollbackFor = IllegalArgumentException.class)。
         System.out.println("read summary");
-        // 输出：read summary
+// 输出：read summary
     }
 }
 // 作用：用于把调用嵌套、并发可见性、异常回滚和读写意图写成可审查的事务配置，而不是依赖默认值。
@@ -201,14 +204,16 @@ import org.springframework.transaction.annotation.Transactional;
 class OrderService {
     void submit() {
         this.writeAudit();
+// 初始状态：this.writeAudit()。
+// 作用：this.writeAudit();；识别代理绕过，调用后目标状态更新。
         System.out.println("self call completed");
-        // 输出：self call completed
+// 输出：self call completed
     }
 
     @Transactional
     void writeAudit() {
         System.out.println("audit");
-// 输出：System.out 调用参数为 "audit"。
+// 输出：audit
     }
 }
 // 作用：用于定位“注解存在但事务/切面没生效”的问题；同一对象内的 `this` 调用不会重新经过 Spring 代理。
@@ -229,14 +234,13 @@ import org.springframework.core.annotation.Order;
 
 @Aspect
 @Order(1)
-// 关键变化：@Order(1)；注解参数 1 绑定到声明位置，框架或反射按该配置处理声明。
-// 输入：@Order(1) 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
+// 初始状态：@Order(1)。
+// 作用：@Order(1)；确定多个通知顺序，返回调用结果。
 class SecurityAspect {
-// 输入：表达式为 @Order(1)。
     @Before("execution(* com.example..service..*(..))")
     void check() {
         System.out.println("security-first");
-        // 输出：security-first
+// 输出：security-first
     }
 }
 // 说明：@Order(1) 的 SecurityAspect 通常包在 @Order(2) 的 LoggingAspect 外层，因此前置阶段先鉴权、后记录业务调用；只有二者都是容器 Bean 时才生效。
@@ -255,18 +259,17 @@ class ImportService {
     private final TransactionTemplate template;
 
     ImportService(TransactionTemplate template) {
-    // 关键变化：ImportService(TransactionTemplate template) {；当前对象；ImportService；当前对象.ImportService(TransactionTemplate template) 返回本次调用的具体结果，后续语句继续使用该值。
-    // 输入：ImportService(TransactionTemplate template) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         this.template = template;
-        // 关键变化：this.template = template;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：template = template。
+// 作用：this.template = template;；程序化事务，返回调用结果。
     }
 
     String importOne() {
-    // 关键变化：String importOne() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return template.execute(status -> {
-        // 关键变化：return template.execute(status -> {；template.execute(status -> {) 改变当前资源或任务状态，后续步骤观察这一变化。
+// 作用：return template.execute(status -> {；程序化事务，调用后目标状态更新。
+// 初始状态：return template.execute(status -> {。
             System.out.println("imported");
-            // 输出：imported
+// 输出：imported
             return "ok";
         });
     }
@@ -287,7 +290,7 @@ class BillingService {
     @Transactional(rollbackFor = Exception.class)
     void charge() throws Exception {
         System.out.println("charge in transaction");
-        // 输出：charge in transaction
+// 输出：charge in transaction
     }
 }
 // 作用：用于决定哪些异常触发数据库回滚；回滚只影响当前事务资源，不会自动撤销邮件、远程调用或文件写入。
@@ -302,19 +305,20 @@ class BillingService {
 `AopContext.currentProxy` 只在暴露代理且当前调用已进入 AOP 时可用；拆分 Bean 通常更清晰。
 
 ```java
-// 结果：`refreshAll()` 经代理调用事务方法，打印 `refresh 42`。
+// 作用：通过 AopContext.currentProxy 显式穿过当前代理。
 @Service
 class OrderService {
     void refreshAll() {
         OrderService proxy = (OrderService) AopContext.currentProxy();
-// 输入：proxy 的初始值为 (OrderService) AopContext.currentProxy()。
-        // 作用：通过 AopContext.currentProxy 显式穿过当前代理。
+// 初始状态：proxy = (OrderService) AopContext.currentProxy()。
+// 作用：OrderService proxy = (OrderService) AopContext.currentProxy();；显式穿过当前代理，返回调用结果。
         proxy.refreshOne(42L);
+// 作用：proxy.refreshOne(42L);；显式穿过当前代理，调用后目标状态更新。
     }
     @Transactional
     public void refreshOne(long id) {
         System.out.println("refresh " + id);
-// 输出：System.out 调用参数为 "refresh " + id。
+// 输出：`refreshAll()` 经代理调用事务方法，打印 `refresh 42`。
     }
 }
 ```
@@ -326,17 +330,18 @@ class OrderService {
 `@EnableAspectJAutoProxy` 注册 Spring AOP 的自动代理能力；`exposeProxy=true` 增加隐式上下文，只在确有需要时开启。
 
 ```java
+// 作用：通过 @EnableAspectJAutoProxy 开启基于代理的 AOP。
 // 结果：匹配切点的 Bean 被代理，`AopContext.currentProxy()` 可在代理调用内取值。
 @Configuration
 @EnableAspectJAutoProxy(exposeProxy = true)
-// 关键变化：@EnableAspectJAutoProxy(exposeProxy = true)；注解参数 exposeProxy = true 绑定到声明位置，框架或反射按该配置处理声明。
-// 输入：@EnableAspectJAutoProxy(exposeProxy = true) 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
+// 初始状态：exposeProxy = true)。
+// 作用：@EnableAspectJAutoProxy(exposeProxy = true)；开启基于代理的 AOP，返回调用结果。
 class AopConfiguration {
-// 输入：exposeProxy 的初始值为 true)。
     @Bean
     AuditAspect auditAspect() {
         return new AuditAspect();
-        // 输入：return new AuditAspect(); 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
+// 初始状态：return new AuditAspect()。
+// 作用：return new AuditAspect();；开启基于代理的 AOP，调用后目标状态更新。
     }
     String mode() { return "proxy"; }
 }
@@ -368,14 +373,19 @@ class PaymentService {
 
     PaymentService(Ledger ledger) {
         this.ledger = ledger;
+// 初始状态：ledger = ledger。
+// 作用：this.ledger = ledger;；开启基于代理的 AOP，返回调用结果。
     }
 
     @Transactional(rollbackFor = IllegalStateException.class)
     public void transfer(String from, String to, int amount) {
         ledger.debit(from, amount);
+// 作用：ledger.debit(from, amount);；开启基于代理的 AOP，调用后目标状态更新。
+// 初始状态：ledger.debit(from, amount)。
         ledger.credit(to, amount);
+// 作用：ledger.credit(to, amount);；开启基于代理的 AOP，调用后目标状态更新。
         System.out.println("transfer committed");
-        // 输出：transfer committed
+// 输出：transfer committed
     }
 }
 ```

@@ -42,12 +42,14 @@ description: 直接用 Java 案例速查 Class、构造器、方法、字段、�
 public class ClassGetDemo {
     public static void main(String[] args) throws Exception {
         Class<String> literal = String.class;
-// 关键变化：literal 接收表达式 String.class 的计算结果。
-// 初始状态：literal 的初始值为 String.class。
+// 初始状态：literal = String.class。
         Class<?> object = "java".getClass();
+// 初始状态：object = "java".getClass()。
         Class<?> loaded = Class.forName("java.lang.String");
+// 初始状态：loaded = Class.forName("java.lang.String")。
+// 作用：Class<?> loaded = Class.forName("java.lang.String");；按已知类型、对象或类名选择入口。
         System.out.println(literal == object && object == loaded);
-        // 输出：true
+// 输出：true
     }
 }
 ```
@@ -61,10 +63,10 @@ public class ClassGetDemo {
 public class ClassNameDemo {
     public static void main(String[] args) {
         Class<?> type = java.util.ArrayList.class;
-// 关键变化：type 接收表达式 java.util.ArrayList.class 的计算结果。
-// 初始状态：type 的初始值为 java.util.ArrayList.class。
+// 作用：Class<?> type = java.util.ArrayList.class;；选择完整名、简单名或包名。
+// 初始状态：type = java.util.ArrayList.class。
         System.out.println(type.getName() + " / " + type.getSimpleName() + " / " + type.getPackageName());
-        // 输出：java.util.ArrayList / ArrayList / java.util
+// 输出：java.util.ArrayList / ArrayList / java.util
     }
 }
 ```
@@ -80,12 +82,12 @@ import java.util.ArrayList;
 public class ClassHierarchyDemo {
     public static void main(String[] args) {
         Class<?> type = ArrayList.class;
-// 关键变化：type 接收表达式 ArrayList.class 的计算结果。
-// 初始状态：type 的初始值为 ArrayList.class。
+// 作用：Class<?> type = ArrayList.class;；读取父类与接口。
+// 初始状态：type = ArrayList.class。
         System.out.println(type.getSuperclass().getSimpleName());
-        // 输出：AbstractList
+// 输出：AbstractList
         System.out.println(type.getInterfaces()[0].getSimpleName());
-        // 输出：List
+// 输出：List
     }
 }
 ```
@@ -102,8 +104,7 @@ class User {
     private final String name;
 
     User(String name) { this.name = name; }
-// 关键变化：name 接收右侧表达式 name; } 的计算结果。
-// 初始状态：name 的初始值为 name; }。
+// 初始状态：name = name; }。
 
     String name() { return name; }
 }
@@ -111,9 +112,13 @@ class User {
 public class ConstructorReflectDemo {
     public static void main(String[] args) throws Exception {
         Constructor<User> constructor = User.class.getDeclaredConstructor(String.class);
+// 初始状态：constructor = User.class.getDeclaredConstructor(String.class)。
+// 作用：Constructor<User> constructor = User.class.getDeclaredConstructor(String.class);；取得构造器后实例化。
         User user = constructor.newInstance("Ann");
+// 初始状态：user = constructor.newInstance("Ann")。
+// 作用：User user = constructor.newInstance("Ann");；取得构造器后实例化。
         System.out.println(user.name());
-        // 输出：Ann
+// 输出：Ann
     }
 }
 ```
@@ -129,11 +134,13 @@ import java.lang.reflect.Method;
 public class MethodInvokeDemo {
     public static void main(String[] args) throws Exception {
         Method method = String.class.getMethod("substring", int.class, int.class);
-// 关键变化：method 接收表达式 String.class.getMethod("substring", int.class, int.class) 的计算结果。
-// 初始状态：method 的初始值为 String.class.getMethod("substring", int.class, int.class)。
+// 初始状态：method = String.class.getMethod("substring", int.class, int.class)。
+// 作用：Method method = String.class.getMethod("substring", int.class, int.class);；查找后执行。
         String result = (String) method.invoke("java", 1, 3);
+// 初始状态：result = (String) method.invoke("java", 1, 3)。
+// 作用：String result = (String) method.invoke("java", 1, 3);；查找后执行。
         System.out.println(result);
-        // 输出：av
+// 输出：av
     }
 }
 ```
@@ -154,11 +161,13 @@ class Commands {
 public class DeclaredMethodDemo {
     public static void main(String[] args) throws Exception {
         Method hidden = Commands.class.getDeclaredMethod("hidden");
-// 关键变化：hidden 接收表达式 Commands.class.getDeclaredMethod("hidden") 的计算结果。
-// 初始状态：hidden 的初始值为 Commands.class.getDeclaredMethod("hidden")。
+// 初始状态：hidden = Commands.class.getDeclaredMethod("hidden")。
+// 作用：Method hidden = Commands.class.getDeclaredMethod("hidden");；按签名或批量读取。
         long count = java.util.Arrays.stream(Commands.class.getDeclaredMethods()).count();
+// 初始状态：count = java.util.Arrays.stream(Commands.class.getDeclaredMethods()).count()。
+// 作用：long count = java.util.Arrays.stream(Commands.class.getDeclaredMethods()).count();；按签名或批量读取。
         System.out.println(hidden.getName() + " / " + count);
-        // 输出：hidden / 2
+// 输出：hidden / 2
     }
 }
 ```
@@ -173,20 +182,27 @@ import java.lang.reflect.Field;
 
 class Config {
     private String value = "old";
-// 关键变化：value 接收右侧表达式 "old" 的计算结果。
-// 初始状态：value 的初始值为 "old"。
+// 初始状态：value = "old"。
 }
 
 public class FieldReflectDemo {
     public static void main(String[] args) throws Exception {
         Config config = new Config();
+// 初始状态：config = new Config()。
+// 作用：Config config = new Config();；查找后读取或写入。
         Field field = Config.class.getDeclaredField("value");
+// 初始状态：field = Config.class.getDeclaredField("value")。
+// 作用：Field field = Config.class.getDeclaredField("value");；查找后读取或写入。
         field.setAccessible(true);
+// 初始状态：field.setAccessible(true)。
+// 作用：field.setAccessible(true);；查找后读取或写入。
         System.out.println(field.get(config));
-        // 输出：old
+// 输出：old
         field.set(config, "new");
+// 初始状态：field.set(config, "new")。
+// 作用：field.set(config, "new");；查找后读取或写入。
         System.out.println(field.get(config));
-        // 输出：new
+// 输出：new
     }
 }
 ```
@@ -203,9 +219,9 @@ class Child extends Parent { private int child; public int own; }
 public class FieldScopeDemo {
     public static void main(String[] args) {
         System.out.println(Child.class.getFields().length);
-        // 输出：2
+// 输出：2
         System.out.println(Child.class.getDeclaredFields().length);
-        // 输出：2
+// 输出：2（第2次输出）
     }
 }
 ```
@@ -217,16 +233,14 @@ public class FieldScopeDemo {
 ```java
 // 说明：isAssignableFrom：判断类型兼容。
 import java.util.ArrayList;
-// 关键变化：// 说明：isAssignableFrom：判断类型兼容。 import java.util.ArrayList;；当前对象.isAssignableFrom() 完成本例中的具体调用，后续语句观察调用后的状态。
-
 import java.util.List;
 
 public class AssignableDemo {
     public static void main(String[] args) {
         System.out.println(List.class.isAssignableFrom(ArrayList.class));
-// 输出：true；输入：System.out.println(List.class.isAssignableFrom(ArrayList.class));。
+// 输出：true
         System.out.println(ArrayList.class.isAssignableFrom(List.class));
-        // 输出：false
+// 输出：false
     }
 }
 ```
@@ -243,10 +257,10 @@ import java.util.List;
 public class InstanceReflectDemo {
     public static void main(String[] args) {
         List<String> list = new ArrayList<>();
-        // 关键变化：List<String> list = new ArrayList<>()；list 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：list 当前为 new ArrayList<>()。
+// 初始状态：list = new ArrayList<>()。
+// 作用：List<String> list = new ArrayList<>();；判断对象运行时类型。
         System.out.println(List.class.isInstance(list));
-        // 输出：true
+// 输出：true
     }
 }
 ```
@@ -262,12 +276,15 @@ import java.lang.reflect.Array;
 public class ArrayReflectDemo {
     public static void main(String[] args) {
         Class<?> type = String[].class;
-// 关键变化：type 接收表达式 String[].class 的计算结果。
-// 初始状态：type 的初始值为 String[].class。
+// 初始状态：type = String[].class。
         Object values = Array.newInstance(type.getComponentType(), 2);
+// 初始状态：values = Array.newInstance(type.getComponentType(), 2)。
+// 作用：Object values = Array.newInstance(type.getComponentType(), 2);；识别组件类型并读写元素。
         Array.set(values, 0, "java");
+// 初始状态：Array.set(values, 0, "java")。
+// 作用：Array.set(values, 0, "java");；识别组件类型并读写元素。
         System.out.println(type.isArray() + " / " + Array.get(values, 0));
-        // 输出：true / java
+// 输出：true / java
     }
 }
 ```
@@ -278,15 +295,17 @@ public class ArrayReflectDemo {
 相比直接 `setAccessible(true)`，`trySetAccessible` 可以把当前访问是否成功作为结果处理；强模块边界下仍可能返回 false。
 
 ```java
+// 作用：通过 trySetAccessible 探测访问是否可打开。
 import java.lang.reflect.Field;
 
 class PrivateValue { private int value = 1; }
-// 初始状态：value 当前为 1; }。
+// 初始状态：value = 1; }。
 
 public class TryAccessibleDemo {
     public static void main(String[] args) throws Exception {
         Field field = PrivateValue.class.getDeclaredField("value");
-        // 关键变化：Field field = PrivateValue.class.getDeclaredField("value")；field 接收 getDeclaredField("value") 的返回值，当前值变为这次调用得到的具体结果。
+// 初始状态：field = PrivateValue.class.getDeclaredField("value")。
+// 作用：Field field = PrivateValue.class.getDeclaredField("value");；探测访问是否可打开，返回读取结果。
         System.out.println(field.trySetAccessible());
 // 输出：true
     }
@@ -298,6 +317,7 @@ public class TryAccessibleDemo {
 只有声明位置的泛型签名可能保留在 class 文件中；普通 `new ArrayList<String>()` 的对象实例本身通常不知道 String。
 
 ```java
+// 作用：通过 getGenericSuperclass 读取部分泛型签名。
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 
@@ -306,10 +326,10 @@ class Names extends ArrayList<String> { }
 public class GenericSuperclassDemo {
     public static void main(String[] args) {
         var type = (ParameterizedType) Names.class.getGenericSuperclass();
-// 输入：type 的初始值为 (ParameterizedType) Names.class.getGenericSuperclass()。
-        // 作用：通过 getGenericSuperclass 读取部分泛型签名。
+// 初始状态：type = (ParameterizedType) Names.class.getGenericSuperclass()。
+// 作用：var type = (ParameterizedType) Names.class.getGenericSuperclass();；读取部分泛型签名。
         System.out.println(type.getActualTypeArguments()[0].getTypeName());
-        // 输出：java.lang.String
+// 输出：java.lang.String
     }
 }
 ```
@@ -319,15 +339,16 @@ public class GenericSuperclassDemo {
 record 组件提供名称、类型和访问器信息，但反射读取不改变 record 的浅不可变语义。
 
 ```java
+// 作用：通过 getRecordComponents 读取 record 组件。
 record Point(int x, int y) { }
 
 public class RecordComponentReflectDemo {
     public static void main(String[] args) {
         var components = Point.class.getRecordComponents();
-// 输入：components 的初始值为 Point.class.getRecordComponents()。
-        // 作用：通过 getRecordComponents 读取 record 组件。
+// 初始状态：components = Point.class.getRecordComponents()。
+// 作用：var components = Point.class.getRecordComponents();；读取 record 组件。
         System.out.println(components[0].getName() + " / " + components.length);
-        // 输出：x / 2
+// 输出：x / 2
     }
 }
 ```
@@ -342,7 +363,7 @@ public class NestReflectDemo {
 
     public static void main(String[] args) {
         System.out.println(Inner.class.getNestHost() == NestReflectDemo.class);
-        // 输出：true
+// 输出：true
     }
 }
 ```
@@ -352,24 +373,25 @@ public class NestReflectDemo {
 框架日志和异常转换应优先记录 `getCause()`；只打印 InvocationTargetException 会丢失真正业务根因。
 
 ```java
+// 作用：通过 InvocationTargetException 还原目标异常。
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class InvocationTargetDemo {
     static void fail() { throw new IllegalArgumentException("bad input"); }
-    // 关键变化：static void fail() { throw new IllegalArgumentException("bad input"); }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
-// 初始状态：表达式为 static void fail() { throw new IllegalArgumentException("bad input"); }。
+// 初始状态：static void fail() { throw new IllegalArgumentException("bad input"); 。
+// 作用：static void fail() { throw new IllegalArgumentException("bad input"); }；还原目标异常。
 
     public static void main(String[] args) throws Exception {
         Method method = InvocationTargetDemo.class.getDeclaredMethod("fail");
-        // 关键变化：Method method = InvocationTargetDemo.class.getDeclaredMethod("fail")；method 接收 getDeclaredMethod("fail") 的返回值，当前值变为这次调用得到的具体结果。
+// 初始状态：method = InvocationTargetDemo.class.getDeclaredMethod("fail")。
+// 作用：Method method = InvocationTargetDemo.class.getDeclaredMethod("fail");；还原目标异常。
         try {
             method.invoke(null);
-            // 关键变化：method.invoke(null);；method；invoke；method.invoke(null) 返回本次调用的具体结果，后续语句继续使用该值。
+// 作用：method.invoke(null);；还原目标异常。
         } catch (InvocationTargetException e) {
-        // 关键变化：} catch (InvocationTargetException e) {；当前对象；该操作；当前对象.该操作(InvocationTargetException e) 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println(e.getCause().getClass().getSimpleName());
-            // 输出：IllegalArgumentException
+// 输出：IllegalArgumentException
         }
     }
 }
@@ -380,28 +402,25 @@ public class InvocationTargetDemo {
 `AnnotatedType` 关注类型使用位置，而不是方法/字段声明本身；它通常服务于校验框架或静态/运行时类型工具。
 
 ```java
+// 作用：通过 getAnnotatedType 读取类型使用位置注解。
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-// 关键变化：@Retention(RetentionPolicy.RUNTIME)；注解参数 RetentionPolicy.RUNTIME 绑定到声明位置，框架或反射按该配置处理声明。
-// 输入：@Retention(RetentionPolicy.RUNTIME) 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 @Target(ElementType.TYPE_USE)
-// 关键变化：@Target(ElementType.TYPE_USE)；注解参数 ElementType.TYPE_USE 绑定到声明位置，框架或反射按该配置处理声明。
 @interface NonNull { }
 
 public class AnnotatedTypeDemo {
     static @NonNull String value() { return "java"; }
-    // 关键变化：static @NonNull String value() { return "java"; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 
     public static void main(String[] args) throws Exception {
         var type = AnnotatedTypeDemo.class.getDeclaredMethod("value").getAnnotatedReturnType();
-        // 关键变化：var type = AnnotatedTypeDemo.class.getDeclaredMethod("value").getAnnotatedReturnType()；type 接收 getDeclaredMethod("value") 的返回值，当前值变为这次调用得到的具体结果。
-// 初始状态：type 的初始值为 AnnotatedTypeDemo.class.getDeclaredMethod("value").getAnnotatedReturnType()。
+// 初始状态：type = AnnotatedTypeDemo.class.getDeclaredMethod("value").getAnnotatedReturnType()。
+// 作用：var type = AnnotatedTypeDemo.class.getDeclaredMethod("value").getAnnotatedReturnType();；读取类型使用位置注解。
         System.out.println(type.isAnnotationPresent(NonNull.class));
-        // 输出：true
+// 输出：true
     }
 }
 ```
@@ -415,16 +434,25 @@ class Message {
     private final String text;
 
     public Message(String text) { this.text = text; }
+// 初始状态：text = text; }。
+// 作用：public Message(String text) { this.text = text; }；读取类型使用位置注解。
     public String upper() { return text.toUpperCase(); }
+// 作用：public String upper() { return text.toUpperCase(); }；读取类型使用位置注解。
 }
 
 public class ClassReflectionDemo {
     public static void main(String[] args) throws Exception {
         Constructor<Message> constructor = Message.class.getDeclaredConstructor(String.class);
+// 作用：Constructor<Message> constructor = Message.class.getDeclaredConstructor(String.class);；读取类型使用位置注解。
+// 初始状态：constructor = Message.class.getDeclaredConstructor(String.class)。
         Message message = constructor.newInstance("java");
+// 作用：Message message = constructor.newInstance("java");；读取类型使用位置注解。
+// 初始状态：message = constructor.newInstance("java")。
         Method method = Message.class.getMethod("upper");
+// 作用：Method method = Message.class.getMethod("upper");；读取类型使用位置注解。
+// 初始状态：method = Message.class.getMethod("upper")。
         System.out.println(method.invoke(message));
-        // 输出：JAVA
+// 输出：JAVA
     }
 }
 ```

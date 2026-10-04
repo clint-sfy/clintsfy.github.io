@@ -43,28 +43,28 @@ synchronized 同时提供互斥和释放/获得锁之间的内存可见性。实
 // 说明：两次 increment() 都必须先持有私有 final lock，因此不同线程对 count++ 的读-改-写不会丢失更新。
 public class SynchronizedBlockDemo {
     private final Object lock = new Object();
-// 初始状态：lock 的初始值为 new Object()。
-    // 作用：使用私有 final 锁对象可以避免外部代码意外锁住或替换锁。
+// 初始状态：lock = new Object()。
+// 作用：private final Object lock = new Object();；锁住指定对象。
     private int count;
 
     void increment() {
-    // 关键变化：void increment() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         synchronized (lock) {
-        // 关键变化：synchronized (lock) {；当前对象；synchronized；当前对象.synchronized(lock) 返回本次调用的具体结果，后续语句继续使用该值。
             count++;
-            // 关键变化：count++; 使 count 在当前值基础上递增 1。
         }
     }
 
     public static void main(String[] args) {
         var counter = new SynchronizedBlockDemo();
-        // 关键变化：var counter = new SynchronizedBlockDemo(); 将返回值写入 counter；counter 现在保存该具体结果。
+// 初始状态：counter = new SynchronizedBlockDemo()。
+// 作用：var counter = new SynchronizedBlockDemo();；锁住指定对象。
         counter.increment();
-        // 关键变化：counter.increment()；counter.increment() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：counter.increment()。
+// 作用：counter.increment();；锁住指定对象。
         counter.increment();
-        // 关键变化：counter.increment()；counter.increment() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：counter.increment()。
+// 作用：counter.increment();；锁住指定对象。
         System.out.println(counter.count);
-        // 输出：2
+// 输出：2
     }
 }
 ```
@@ -79,30 +79,27 @@ public class SynchronizedBlockDemo {
 // 说明：withdraw() 和 balance() 共用 account 监视器，amount<=balance 的检查与扣减在同一临界区内完成。
 public class SynchronizedMethodDemo {
     private int balance = 100;
-// 关键变化：balance 接收右侧表达式 100 的计算结果。
-    // 初始状态：balance 当前为 100。
+// 初始状态：balance = 100。
 
     synchronized void withdraw(int amount) {
-    // 关键变化：synchronized void withdraw(int amount) {；当前对象；该操作；当前对象.该操作(int amount) 返回本次调用的具体结果，后续语句继续使用该值。
         if (amount <= balance) {
-        // 关键变化：if (amount <= balance) {；当前对象；if；当前对象.if(amount <= balance) 返回本次调用的具体结果，后续语句继续使用该值。
             balance -= amount;
-            // 关键变化：balance -= amount;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         }
     }
 
     synchronized int balance() {
-    // 关键变化：synchronized int balance() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return balance;
     }
 
     public static void main(String[] args) {
         var account = new SynchronizedMethodDemo();
-        // 关键变化：var account = new SynchronizedMethodDemo(); 将返回值写入 account；account 现在保存该具体结果。
+// 初始状态：account = new SynchronizedMethodDemo()。
+// 作用：var account = new SynchronizedMethodDemo();；保护对象状态。
         account.withdraw(30);
-        // 关键变化：account.withdraw(30);；account；withdraw；account.withdraw(30) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：account.withdraw(30)。
+// 作用：account.withdraw(30);；保护对象状态。
         System.out.println(account.balance());
-        // 输出：70
+// 输出：70
     }
 }
 ```
@@ -119,19 +116,14 @@ public class SynchronizedStaticDemo {
     private static int created;
 
     static synchronized void record() {
-    // 关键变化：static synchronized void record() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
-    // 输入：static synchronized void record() { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         created++;
-        // 关键变化：created++; 使 created 在当前值基础上递增 1。
     }
 
     public static void main(String[] args) {
         record();
-        // 关键变化：record();；当前对象.record() 完成本例中的具体调用，后续语句观察调用后的状态。
         record();
-        // 关键变化：record();；当前对象.record() 完成本例中的具体调用，后续语句观察调用后的状态。
         System.out.println(created);
-        // 输出：2
+// 输出：2
     }
 }
 ```
@@ -154,18 +146,20 @@ public class ClassAndObjectLockDemo {
     static void classPart() {
         synchronized (ClassAndObjectLockDemo.class) {
             System.out.println("class lock");
-            // 输出：class lock
+// 输出：class lock
         }
     }
 
     public static void main(String[] args) {
         var demo = new ClassAndObjectLockDemo();
-// 关键变化：demo 接收表达式 new ClassAndObjectLockDemo() 的计算结果。
-// 初始状态：demo 的初始值为 new ClassAndObjectLockDemo()。
+// 初始状态：demo = new ClassAndObjectLockDemo()。
+// 作用：var demo = new ClassAndObjectLockDemo();；明确锁的身份。
         demo.instancePart();
+// 初始状态：demo.instancePart()。
+// 作用：demo.instancePart();；明确锁的身份。
         classPart();
         System.out.println(demo.value);
-        // 输出：1
+// 输出：1
     }
 }
 ```
@@ -183,13 +177,13 @@ public class ReentrantMonitorDemo {
 
     synchronized void inner() {
         System.out.println("reentered");
-        // 输出：reentered
+// 输出：reentered
     }
 
     public static void main(String[] args) {
         new ReentrantMonitorDemo().outer();
-// // 返回：new ReentrantMonitorDemo().outer() 按构造参数创建新对象。
-// 初始状态：表达式为 new ReentrantMonitorDemo().outer()。
+// 初始状态：new ReentrantMonitorDemo().outer()。
+// 作用：new ReentrantMonitorDemo().outer();；同一线程可以再次获得同一把锁。
     }
 }
 ```
@@ -204,14 +198,16 @@ public class ReentrantMonitorDemo {
 // 说明：等待监视器条件：释放锁并广播唤醒。
 public class WaitNotifyDemo {
     private final Object lock = new Object();
-// 关键变化：lock 接收右侧表达式 new Object() 的计算结果。
-// 初始状态：lock 的初始值为 new Object()。
+// 初始状态：lock = new Object()。
+// 作用：private final Object lock = new Object();；释放锁并广播唤醒。
     private boolean ready;
 
     void awaitReady() throws InterruptedException {
         synchronized (lock) {
             while (!ready) {
                 lock.wait();
+// 初始状态：lock.wait()。
+// 作用：lock.wait();；释放锁并广播唤醒。
             }
         }
     }
@@ -219,16 +215,25 @@ public class WaitNotifyDemo {
     void markReady() {
         synchronized (lock) {
             ready = true;
+// 初始状态：ready = true。
             lock.notifyAll();
+// 初始状态：lock.notifyAll()。
+// 作用：lock.notifyAll();；释放锁并广播唤醒。
         }
     }
 
     public static void main(String[] args) throws InterruptedException {
         var state = new WaitNotifyDemo();
+// 初始状态：state = new WaitNotifyDemo()。
+// 作用：var state = new WaitNotifyDemo();；释放锁并广播唤醒。
         state.markReady();
+// 初始状态：state.markReady()。
+// 作用：state.markReady();；释放锁并广播唤醒。
         state.awaitReady();
+// 初始状态：state.awaitReady()。
+// 作用：state.awaitReady();；释放锁并广播唤醒。
         System.out.println("ready");
-        // 输出：ready
+// 输出：ready
     }
 }
 ```
@@ -244,12 +249,14 @@ public class WaitNotifyDemo {
 public class NotifyChoiceDemo {
     public static void main(String[] args) {
         Object lock = new Object();
-// 关键变化：lock 接收表达式 new Object() 的计算结果。
-// 初始状态：lock 的初始值为 new Object()。
+// 初始状态：lock = new Object()。
+// 作用：Object lock = new Object();；选择单个或全部通知。
         synchronized (lock) {
             lock.notifyAll();
+// 初始状态：lock.notifyAll()。
+// 作用：lock.notifyAll();；选择单个或全部通知。
             System.out.println("all waiters notified");
-            // 输出：all waiters notified
+// 输出：all waiters notified
         }
     }
 }
@@ -261,18 +268,21 @@ public class NotifyChoiceDemo {
 超时返回只说明等待结束，不说明条件已经满足；醒来后仍要在 while 中检查状态。纳秒级重载适合精细超时，但通常要把剩余时间重新计算。
 
 ```java
+// 作用：通过 wait(long) 带超时的条件等待。
 public class TimedWaitDemo {
     public static void main(String[] args) throws InterruptedException {
         Object lock = new Object();
-// 关键变化：lock 接收表达式 new Object() 的计算结果。
-// 初始状态：lock 的初始值为 new Object()。
+// 初始状态：lock = new Object()。
+// 作用：Object lock = new Object();；带超时的条件等待。
         synchronized (lock) {
             long start = System.nanoTime();
-            // 关键变化：long start = System.nanoTime(); 将返回值写入 start；start 现在保存该具体结果。
+// 初始状态：start = System.nanoTime()。
+// 作用：long start = System.nanoTime();；带超时的条件等待。
             lock.wait(1);
-            // 关键变化：lock.wait(1);；lock；wait；lock.wait(1) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：lock.wait(1)。
+// 作用：lock.wait(1);；带超时的条件等待。
             System.out.println("wait returned=" + (System.nanoTime() >= start));
-            // 输出：wait returned=true
+// 输出：wait returned=true
         }
     }
 }
@@ -287,12 +297,14 @@ public class TimedWaitDemo {
 public class NotifyOneDemo {
     public static void main(String[] args) {
         Object lock = new Object();
-        // 初始状态：lock 当前为 new Object()。
+// 作用：Object lock = new Object();；只唤醒一个等待者。
+// 初始状态：lock = new Object()。
         synchronized (lock) {
             lock.notify();
-            // 关键变化：lock.notify()；lock.notify() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：lock.notify()。
+// 作用：lock.notify();；只唤醒一个等待者。
             System.out.println("one waiter may wake");
-            // 输出：one waiter may wake
+// 输出：one waiter may wake
         }
     }
 }
@@ -307,17 +319,19 @@ public class NotifyOneDemo {
 public class WaitMonitorRuleDemo {
     public static void main(String[] args) {
         Object lock = new Object();
-// 关键变化：lock 接收表达式 new Object() 的计算结果。
-// 初始状态：lock 的初始值为 new Object()。
+// 初始状态：lock = new Object()。
+// 作用：Object lock = new Object();；Object 返回本次调用的结果。
         try {
             lock.wait();
-            // 关键变化：lock.wait()；lock.wait() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：lock.wait()。
+// 作用：lock.wait();；wait 返回本次调用的结果。
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            // 关键变化：Thread.currentThread().interrupt()；Thread.currentThread() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：Thread.currentThread().interrupt()。
+// 作用：Thread.currentThread().interrupt();；currentThread 返回本次调用的结果。
         } catch (IllegalMonitorStateException ex) {
             System.out.println(ex.getClass().getSimpleName());
-            // 输出：IllegalMonitorStateException
+// 输出：IllegalMonitorStateException
         }
     }
 }
@@ -331,17 +345,14 @@ public class WaitMonitorRuleDemo {
 // 说明：shortWork() 持有 this 监视器期间不做阻塞 I/O；这样虚拟线程能尽快释放监视器及载体。
 public class MonitorBlockingBoundaryDemo {
     synchronized void shortWork() {
-    // 关键变化：synchronized void shortWork() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
-    // 输入：synchronized void shortWork() { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         System.out.println("keep monitor work short");
-        // 输出：keep monitor work short
+// 输出：keep monitor work short
     }
 
     public static void main(String[] args) {
         new MonitorBlockingBoundaryDemo().shortWork();
-// // 返回：new MonitorBlockingBoundaryDemo().shortWork() 按构造参数创建新对象。
-        // 输入：new MonitorBlockingBoundaryDemo().shortWork(); 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
-        // 关键变化：new MonitorBlockingBoundaryDemo().shortWork();；当前对象.shortWork() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：new MonitorBlockingBoundaryDemo().shortWork()。
+// 作用：new MonitorBlockingBoundaryDemo().shortWork();；shortWork 返回本次调用的结果。
     }
 }
 ```
@@ -361,10 +372,16 @@ public class SynchronizedStateDemo {
 
     public static void main(String[] args) {
         var state = new SynchronizedStateDemo();
+// 初始状态：state = new SynchronizedStateDemo()。
+// 作用：var state = new SynchronizedStateDemo();；SynchronizedStateDemo 返回本次调用的结果。
         state.add(2);
+// 初始状态：state.add(2)。
+// 作用：state.add(2);；add 返回本次调用的结果。
         state.add(3);
+// 初始状态：state.add(3)。
+// 作用：state.add(3);；add 返回本次调用的结果。
         System.out.println(state.value());
-        // 输出：5
+// 输出：5
     }
 }
 ```

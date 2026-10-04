@@ -44,14 +44,14 @@ CAS 失败时通常重试，竞争激烈会消耗 CPU。LongAdder 的总和适�
 // 说明：main 线程将 volatile running 从 true 改为 false，读取该标志的工作线程不需额外锁即可看到停止请求。
 public class VolatileStopDemo {
     private static volatile boolean running = true;
-    // 关键变化：private static volatile boolean running = true；running 取右侧具体表达式的值，当前状态变为 true。
-// 初始状态：running 的初始值为 true。
+// 初始状态：running = true。
+// 作用：private static volatile boolean running = true;；可见的停止标志。
 
     public static void main(String[] args) {
         running = false;
-        // 关键变化：running = false；running 取右侧具体表达式的值，当前状态变为 false。
+// 初始状态：running = false。
         System.out.println("running=" + running);
-        // 输出：running=false
+// 输出：running=false
     }
 }
 ```
@@ -69,12 +69,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicIncrementDemo {
     public static void main(String[] args) {
         AtomicInteger count = new AtomicInteger(0);
-        // 关键变化：AtomicInteger count = new AtomicInteger(0)；count 接收 该操作(0) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：count 当前为 new AtomicInteger(0)。
+// 作用：AtomicInteger count = new AtomicInteger(0);；原子计数，调用后目标状态更新。
+// 初始状态：count = new AtomicInteger(0)。
         int current = count.incrementAndGet();
-        // 关键变化：int current = count.incrementAndGet(); 的返回值写入 current，调用后 current 保存该具体结果。
+// 初始状态：current = count.incrementAndGet()。
+// 作用：int current = count.incrementAndGet();；原子计数，返回调用结果。
         System.out.println(current + ", stored=" + count.get());
-        // 输出：1, stored=1
+// 输出：1, stored=1
     }
 }
 ```
@@ -92,15 +93,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicCompareDemo {
     public static void main(String[] args) {
         AtomicInteger state = new AtomicInteger(0);
-        // 关键变化：AtomicInteger state = new AtomicInteger(0)；state 接收 该操作(0) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：state 当前为 new AtomicInteger(0)。
+// 作用：AtomicInteger state = new AtomicInteger(0);；条件更新。
+// 初始状态：state = new AtomicInteger(0)。
         boolean first = state.compareAndSet(0, 1);
-        // 关键变化：boolean first = state.compareAndSet(0, 1); 的返回值写入 first，调用后 first 保存该具体结果。
+// 初始状态：first = state.compareAndSet(0, 1)。
+// 作用：boolean first = state.compareAndSet(0, 1);；条件更新。
         boolean second = state.compareAndSet(0, 2);
-// 返回：second 接收 state.compareAndSet(0, 2) 的返回值。
-        // 关键变化：boolean second = state.compareAndSet(0, 2); 的返回值写入 second，调用后 second 保存该具体结果。
+// 初始状态：second = state.compareAndSet(0, 2)。
+// 作用：boolean second = state.compareAndSet(0, 2);；条件更新。
         System.out.println(first + ", " + second + ", state=" + state.get());
-        // 输出：true, false, state=1
+// 输出：true, false, state=1
     }
 }
 ```
@@ -120,11 +122,12 @@ public class AtomicReferenceDemo {
 
     public static void main(String[] args) {
         AtomicReference<Config> ref = new AtomicReference<>(new Config("a", 80));
-// 输入：ref 的初始值为 new AtomicReference<>(new Config("a", 80))。
-        // 作用：用不可变对象整体替换引用，能避免读线程看到半更新状态。
+// 初始状态：ref = new AtomicReference<>(new Config("a", 80))。
+// 作用：AtomicReference<Config> ref = new AtomicReference<>(new Config("a", 80));；原子替换不可变快照。
         ref.updateAndGet(old -> new Config(old.host(), old.port() + 1));
+// 作用：ref.updateAndGet(old -> new Config(old.host(), old.port() + 1));；原子替换不可变快照。
         System.out.println(ref.get());
-        // 输出：Config[host=a, port=81]
+// 输出：Config[host=a, port=81]
     }
 }
 ```
@@ -142,12 +145,14 @@ import java.util.concurrent.atomic.AtomicLongArray;
 public class AtomicArrayDemo {
     public static void main(String[] args) {
         AtomicLongArray values = new AtomicLongArray(2);
-// 输入：values 的初始值为 new AtomicLongArray(2)。
-        // 作用：AtomicLongArray 保护每个索引的更新，不会把两个索引的组合关系变成一次原子事务。
+// 初始状态：values = new AtomicLongArray(2)。
+// 作用：AtomicLongArray values = new AtomicLongArray(2);；原子更新数组元素。
         values.incrementAndGet(1);
+// 作用：values.incrementAndGet(1);；原子更新数组元素。
         values.addAndGet(1, 4);
+// 作用：values.addAndGet(1, 4);；原子更新数组元素。
         System.out.println(values.get(1));
-        // 输出：5
+// 输出：5
     }
 }
 ```
@@ -165,12 +170,14 @@ import java.util.concurrent.atomic.LongAdder;
 public class LongAdderCounterDemo {
     public static void main(String[] args) {
         LongAdder hits = new LongAdder();
-// 输入：hits 的初始值为 new LongAdder()。
-        // 作用：LongAdder 把热点分散到多个槽，适合 QPS、命中次数等最终汇总；清零和读取期间如果还有并发更新，观察到的是近似时间点的统计。
+// 初始状态：hits = new LongAdder()。
+// 作用：LongAdder hits = new LongAdder();；并发统计总量，返回调用结果。
         hits.add(2);
+// 作用：hits.add(2);；并发统计总量，调用后目标状态更新。
         hits.increment();
+// 作用：hits.increment();；并发统计总量，调用后目标状态更新。
         System.out.println(hits.sum());
-        // 输出：3
+// 输出：3
     }
 }
 ```
@@ -186,12 +193,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class AtomicBooleanDemo {
     public static void main(String[] args) {
         AtomicBoolean started = new AtomicBoolean(false);
-// 输入：started 的初始值为 new AtomicBoolean(false)。
-        // 作用：CAS 可以表达“只有第一个线程成功初始化”的状态迁移；初始化失败时要定义是否允许回滚或重试。
+// 初始状态：started = new AtomicBoolean(false)。
+// 作用：AtomicBoolean started = new AtomicBoolean(false);；一次性状态转换。
         boolean first = started.compareAndSet(false, true);
+// 作用：boolean first = started.compareAndSet(false, true);；一次性状态转换。
+// 初始状态：first = started.compareAndSet(false, true)。
         boolean second = started.compareAndSet(false, true);
+// 作用：boolean second = started.compareAndSet(false, true);；一次性状态转换。
+// 初始状态：second = started.compareAndSet(false, true)。
         System.out.println(first + ", " + second);
-        // 输出：true, false
+// 输出：true, false
     }
 }
 ```
@@ -207,12 +218,13 @@ import java.util.concurrent.atomic.AtomicStampedReference;
 public class StampedReferenceDemo {
     public static void main(String[] args) {
         var ref = new AtomicStampedReference<>("A", 1);
-        // 关键变化：var ref = new AtomicStampedReference<>("A", 1)；ref 接收 该操作("A") 的返回值，当前值变为这次调用得到的具体结果。
-// 初始状态：ref 的初始值为 new AtomicStampedReference<>("A", 1)。
+// 初始状态：ref = new AtomicStampedReference<>("A", 1)。
+// 作用：var ref = new AtomicStampedReference<>("A", 1);；让引用与版本号共同更新。
         boolean changed = ref.compareAndSet("A", "B", 1, 2);
-        // 关键变化：boolean changed = ref.compareAndSet("A", "B", 1, 2)；changed 接收 compareAndSet("A") 的返回值，当前值变为这次调用得到的具体结果。
+// 作用：boolean changed = ref.compareAndSet("A", "B", 1, 2);；让引用与版本号共同更新。
+// 初始状态：changed = ref.compareAndSet("A", "B", 1, 2)。
         System.out.println(changed + ", value=" + ref.getReference() + ", stamp=" + ref.getStamp());
-        // 输出：true, value=B, stamp=2
+// 输出：true, value=B, stamp=2
     }
 }
 ```
@@ -228,14 +240,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class WeakCasDemo {
     public static void main(String[] args) {
         AtomicInteger value = new AtomicInteger();
-        // 初始状态：value 当前为 new AtomicInteger()。
+// 作用：AtomicInteger value = new AtomicInteger();；弱 CAS 边界，调用后目标状态更新。
+// 初始状态：value = new AtomicInteger()。
         boolean changed;
         do {
             changed = value.weakCompareAndSet(0, 1);
-            // 关键变化：changed = value.weakCompareAndSet(0, 1); 的返回值写入 changed，调用后 changed 保存该具体结果。
+// 初始状态：changed = value.weakCompareAndSet(0, 1)。
+// 作用：changed = value.weakCompareAndSet(0, 1);；弱 CAS 边界，返回调用结果。
         } while (!changed);
         System.out.println(changed + ", value=" + value.get());
-        // 输出：true, value=1
+// 输出：true, value=1
     }
 }
 ```
@@ -251,12 +265,14 @@ import java.util.concurrent.atomic.LongAccumulator;
 public class LongAccumulatorDemo {
     public static void main(String[] args) {
         LongAccumulator max = new LongAccumulator(Math::max, Long.MIN_VALUE);
-// 输入：max 的初始值为 new LongAccumulator(Math::max, Long.MIN_VALUE)。
-        // 作用：累积函数必须满足结合性，且初始值要合理；如果只统计加法，LongAdder 更直接。
+// 初始状态：max = new LongAccumulator(Math::max, Long.MIN_VALUE)。
+// 作用：LongAccumulator max = new LongAccumulator(Math::max, Long.MIN_VALUE);；自定义结合运算，返回调用结果。
         max.accumulate(7);
+// 作用：max.accumulate(7);；自定义结合运算，调用后目标状态更新。
         max.accumulate(3);
+// 作用：max.accumulate(3);；自定义结合运算，调用后目标状态更新。
         System.out.println(max.get());
-        // 输出：7
+// 输出：7
     }
 }
 ```
@@ -268,9 +284,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicStateDemo {
     public static void main(String[] args) {
         AtomicInteger state = new AtomicInteger(0);
+// 初始状态：state = new AtomicInteger(0)。
+// 作用：AtomicInteger state = new AtomicInteger(0);；自定义结合运算，返回调用结果。
         if (state.compareAndSet(0, 1)) {
             System.out.println("initialized=" + state.get());
-            // 输出：initialized=1
+// 输出：initialized=1
         }
     }
 }

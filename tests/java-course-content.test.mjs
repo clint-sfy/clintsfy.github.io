@@ -161,6 +161,12 @@ const EXPECTED_JAVA_PATHS = [
 
 const ARTICLE_PATHS = EXPECTED_JAVA_PATHS.filter((file) => file !== JAVA_INDEX_PATH)
 
+const COMMENT_CONTRACT_PATHS = ARTICLE_PATHS.filter((file) =>
+  /^docs\/courses\/java\/(?:08-|09-|10-|11-|12-|13-)/u.test(file),
+)
+
+const JAVA_COMMENT_CONTRACT_FORBIDDEN = /当前对象|具体参数|具体实参|当前值|具体结果|该操作|执行预期分支|后续代码可观察|示例输入固定|当前资源或任务状态|后续语句继续使用该值|本例中的具体调用|\/\/\s*\//u
+
 // Snapshot of the RuoYi external-call audit used for this course revision.
 // It deliberately lives in the test instead of depending on uncommitted audit reports:
 // every manifest entry with status=body, every missing entry with frequency >= 3,
@@ -955,6 +961,33 @@ function getJavaStatementEndIndex(code, statementIndex) {
     if (/^@[A-Za-z_$][\w$]*(?:\([^\n]*\))?\s*$/u.test(trimmed)) return index
   }
   return statementIndex
+}
+
+function inspectJavaOutputContract(code) {
+  const lines = code.split(/\r?\n/u)
+  const issues = []
+  const outputValues = new Map()
+  for (let index = 0; index < lines.length; index += 1) {
+    if (!JAVA_OUTPUT_CALL_PATTERN.test(lines[index])) continue
+    const end = getJavaStatementEndIndex(code, index)
+    const next = lines[end + 1]?.trim() ?? ''
+    const outputMatch = next.match(/^\/\/\s*输出\s*[:：]\s*(\S.*)$/u)
+    if (!outputMatch) {
+      issues.push(`output at line ${index + 1} is not followed by one standalone 输出 comment`)
+      continue
+    }
+    const comment = getJavaStatementComment(code, end)
+    if (/\/\/\s*输出\s*[:：]/u.test(comment)) {
+      issues.push(`output at line ${index + 1} contains recursive 输出 text`)
+    }
+    const value = outputMatch[1].trim()
+    if (outputValues.has(value)) {
+      issues.push(`output at line ${index + 1} reuses the comment for line ${outputValues.get(value)}`)
+    } else {
+      outputValues.set(value, index + 1)
+    }
+  }
+  return issues
 }
 
 function isJavaApiOperationLine(text) {
@@ -2794,6 +2827,94 @@ test('all 94 Java articles explain and report the first supported example under 
     }
   }
   assert.deepEqual(violations, [], `rule java-common-usage-example-comments${formatViolations(violations)}`)
+})
+
+test('08-13 Java blocks reject recursive, templated, reused, and detached output comments', () => {
+  const recursiveFixture = `
+### \`List.size\`：读取元素数
+\`\`\`java
+int size = 2;
+// 初始状态：size = 2
+System.out.println(size);
+// 输出：// 输出：2
+\`\`\`
+`
+  assert.match(
+    inspectJavaOutputContract(getJavaBlocks(recursiveFixture)[0]).join('\n'),
+    /recursive 输出/u,
+    'recursive output comments must remain a rejected fixture',
+  )
+
+  const reusedFixture = `
+### \`List.get\`：读取元素
+\`\`\`java
+int first = 1;
+System.out.println(first);
+// 输出：1
+int second = 1;
+System.out.println(second);
+// 输出：1
+\`\`\`
+`
+  assert.match(
+    inspectJavaOutputContract(getJavaBlocks(reusedFixture)[0]).join('\n'),
+    /reuses the comment/u,
+    'two println calls must not reuse one output description',
+  )
+
+  const missingOutputFixture = `
+### \`List.size\`：读取元素数
+\`\`\`java
+int size = 2;
+System.out.println(size);
+// 作用：size 已经计算完成
+\`\`\`
+`
+  assert.match(
+    inspectJavaOutputContract(getJavaBlocks(missingOutputFixture)[0]).join('\n'),
+    /not followed/u,
+    'a println without an adjacent output comment must remain a rejected fixture',
+  )
+
+  const missingActionFixture = `
+### \`List.add\`：追加元素
+\`\`\`java
+List<String> names = new ArrayList<>(List.of("Alice"));
+// 初始状态：names 包含 "Alice"
+names.add("Bob");
+// 输出：[Alice, Bob]
+\`\`\`
+`
+  assert.match(
+    inspectApiExampleComments(missingActionFixture).join('\n'),
+    /must explain the API call or state change/u,
+    'a key call without a concrete adjacent action must remain a rejected fixture',
+  )
+
+  const templateFixture = '// 作用：foo(具体参数)；后续代码继续使用该值。\n// // 输出：1'
+  assert.match(templateFixture, JAVA_COMMENT_CONTRACT_FORBIDDEN, 'generic and recursive comments must remain bad fixtures')
+
+  const violations = []
+  for (const relativePath of COMMENT_CONTRACT_PATHS) {
+    const { body } = readMarkdown(relativePath)
+    for (const code of getJavaBlocks(body)) {
+      for (const issue of inspectJavaOutputContract(code)) violations.push(`${relativePath} ${issue}`)
+      for (const [lineNumber, line] of code.split(/\r?\n/u).entries()) {
+        if (JAVA_COMMENT_CONTRACT_FORBIDDEN.test(line)) {
+          violations.push(`${relativePath}:java:${lineNumber + 1} contains forbidden comment template`)
+        }
+      }
+    }
+    for (const { heading, content } of getSupportedApiH3Subsections(body)) {
+      const javaBlocks = [...content.matchAll(/```java[^\r\n]*\r?\n([\s\S]*?)```/giu)]
+      for (const [, code] of javaBlocks) {
+        for (const issue of inspectJavaStatementAdjacentComments(heading, code)) {
+          violations.push(`${relativePath} ${issue}`)
+        }
+      }
+    }
+  }
+  assert.deepEqual(violations, [], `rule java-comment-contract${formatViolations(violations)}`)
 })
 
 test('all Java course prose stays free of known generated template filler', () => {

@@ -49,14 +49,15 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
+// 初始状态：@SpringBootApplication。
+// 作用：@SpringBootApplication；声明启动入口。
 public class BackendApplication {
-// 输入：表达式为 @SpringBootApplication。
     public static void main(String[] args) {
         var context = SpringApplication.run(BackendApplication.class, args);
-        // 关键变化：var context = SpringApplication.run(BackendApplication.class, args);；context 接收 run(BackendApplication.class) 的返回值，当前值变为这次调用得到的具体结果。
-        // 输入：var context = SpringApplication.run(BackendApplication.class, args); 提供具体参数或初始值，context 从该语句开始参与后续操作。
+// 作用：var context = SpringApplication.run(BackendApplication.class, args);；声明启动入口。
+// 初始状态：context = SpringApplication.run(BackendApplication.class, args)。
         System.out.println(context != null);
-        // 输出：true
+// 输出：true
     }
 }
 // 说明：SpringApplication.run 以 BackendApplication 为主配置源创建 ApplicationContext；打印 true。@SpringBootApplication 让容器从该类所在包向下扫描并导入自动配置，直接调用 main 之外的普通 new 不会产生这些容器行为。
@@ -69,21 +70,21 @@ public class BackendApplication {
 用途：用于把一组 Bean 定义交给 Spring 容器；下例注册名为 `systemClock` 的 UTC `Clock`，业务 Bean 可通过构造器按类型注入。
 
 ```java
+// 作用：通过 @Configuration 声明配置类。
 import java.time.Clock;
 import java.time.ZoneOffset;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+// 初始状态：@Configuration。
+// 作用：@Configuration；声明配置类。
 class TimeConfiguration {
-// 输入：表达式为 @Configuration。
     @Bean("systemClock")
-    // 关键变化：@Bean("systemClock")；注解参数 "systemClock" 绑定到声明位置，框架或反射按该配置处理声明。
-    // 输入：@Bean("systemClock") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     Clock systemClock() {
-    // 关键变化：Clock systemClock() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return Clock.system(ZoneOffset.UTC);
-        // 关键变化：return Clock.system(ZoneOffset.UTC);；Clock；system；Clock.system(ZoneOffset.UTC) 返回本次调用的具体结果，后续语句继续使用该值。
+// 作用：return Clock.system(ZoneOffset.UTC);；声明配置类。
+// 初始状态：return Clock.system(ZoneOffset.UTC)。
     }
 }
 // 结果：容器中存在名为 systemClock、时区为 Z 的 Clock Bean
@@ -97,10 +98,11 @@ class TimeConfiguration {
 
 ```java
 String yml = "server:\n  port: 8080\nclient:\n  timeout: 2s\n";
-// 关键变化：String yml = "server:\n port: 8080\nclient:\n timeout: 2s\n"；yml 取右侧具体表达式的值，当前状态变为 "server:\n port: 8080\nclient:\n timeout: 2s\n"。
-// 初始状态：yml 当前为 "server:\n  port: 8080\nclient:\n  timeout: 2s\n"。
+// 初始状态：yml = "server:\n port: 8080\nclient:\n timeout: 2s\n"。
+// 作用：String yml = "server:\n port: 8080\nclient:\n timeout: 2s\n";；声明外部配置。
 boolean hasPort = yml.contains("port: 8080");
-// 关键变化：boolean hasPort = yml.contains("port: 8080")；yml.contains("port: 8080") 检查当前内容与具体参数的关系，返回 true 或 false。
+// 作用：boolean hasPort = yml.contains("port: 8080");；声明外部配置。
+// 初始状态：hasPort = yml.contains("port: 8080")。
 System.out.println(hasPort);
 // 输出：true
 // 说明：这段 application.yml 文本声明 server.port=8080、client.timeout=2s；这里只用 contains 验证文本，未启动 Spring，因此没有加载 Environment 或绑定配置。
@@ -116,14 +118,14 @@ System.out.println(hasPort);
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "client")
-// 关键变化：@ConfigurationProperties(prefix = "client")；注解参数 prefix = "client" 绑定到声明位置，框架或反射按该配置处理声明。
-// 输入：@ConfigurationProperties(prefix = "client") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
+// 初始状态：prefix = "client")。
+// 作用：@ConfigurationProperties(prefix = "client")；实现类型安全绑定。
 public record ClientProperties(String baseUrl, int timeoutSeconds) {
-// 输入：prefix 的初始值为 "client")。
     public ClientProperties {
         if (timeoutSeconds <= 0) {
             throw new IllegalArgumentException("timeoutSeconds must be positive");
-            // 输入：throw new IllegalArgumentException("timeoutSeconds must be positive"); 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
+// 初始状态：throw new IllegalArgumentException("timeoutSeconds must be positive")。
+// 作用：throw new IllegalArgumentException("timeoutSeconds must be positive");；实现类型安全绑定。
         }
     }
 }
@@ -172,8 +174,9 @@ import org.springframework.boot.diagnostics.FailureAnalysis;
 
 FailureAnalysis analysis = new FailureAnalysis(
     "端口已被占用", "server.port", new IllegalStateException("bind failed"));
-// 关键变化：analysis 接收表达式 new FailureAnalysis( "端口已被占用", "server.port", new IllegalStateException("bind failed")) 的计算结果。
-// 初始状态：analysis 的初始值为 new FailureAnalysis(。
+// 初始状态：analysis = new FailureAnalysis(。
+// 作用：FailureAnalysis analysis = new FailureAnalysis(；先看根因与条件报告，返回调用结果。
+// 作用："端口已被占用", "server.port", new IllegalStateException("bind failed"));；先看根因与条件报告，返回调用结果。
 System.out.println(analysis.getDescription());
 // 输出：端口已被占用
 // 作用：用于把“启动失败”拆成配置解析、Bean 创建、端口占用和条件不匹配等可验证原因。
@@ -194,10 +197,8 @@ import org.springframework.stereotype.Component;
 class WarmupRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
-    // 关键变化：public void run(ApplicationArguments args) {；当前对象；该操作；当前对象.该操作(ApplicationArguments args) 返回本次调用的具体结果，后续语句继续使用该值。
-    // 输入：public void run(ApplicationArguments args) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         System.out.println("cache warmup");
-        // 输出：cache warmup
+// 输出：cache warmup
     }
 }
 // 说明：组件扫描注册 warmupRunner Bean，Spring Boot 在 ApplicationContext 刷新后调用 run，并打印 cache warmup；直接 new WarmupRunner().run(...) 只是普通调用，不验证 Runner 启动时序。
@@ -216,13 +217,11 @@ import org.springframework.stereotype.Component;
 @Component
 class PropertyProbe {
     PropertyProbe(Environment environment) {
-    // 关键变化：PropertyProbe(Environment environment) {；当前对象；PropertyProbe；当前对象.PropertyProbe(Environment environment) 返回本次调用的具体结果，后续语句继续使用该值。
-    // 输入：PropertyProbe(Environment environment) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         String port = environment.getProperty("server.port", "8080");
-        // 关键变化：String port = environment.getProperty("server.port", "8080")；port 接收 getProperty("server.port") 的返回值，当前值变为这次调用得到的具体结果。
-// 初始状态：port 的初始值为 environment.getProperty("server.port", "8080")。
+// 初始状态：port = environment.getProperty("server.port", "8080")。
+// 作用：String port = environment.getProperty("server.port", "8080");；读取最终属性视图。
         System.out.println(port);
-        // 输出：8080
+// 输出：8080
     }
 }
 // 说明：Spring 注入最终 Environment，读取键 server.port；键缺失时使用默认字符串 8080。PropertyProbe 必须由容器创建，直接 new 需要手工传入 Environment，不验证属性源合并。
@@ -249,6 +248,8 @@ record FeatureProperties(boolean enabled, int retryLimit) {
     FeatureProperties {
         if (retryLimit < 0 || retryLimit > 10) {
             throw new IllegalArgumentException("retryLimit must be 0..10");
+// 初始状态：throw new IllegalArgumentException("retryLimit must be 0..10")。
+// 作用：throw new IllegalArgumentException("retryLimit must be 0..10");；读取最终属性视图。
         }
     }
 }
@@ -258,10 +259,9 @@ record FeatureProperties(boolean enabled, int retryLimit) {
 class FeatureConfiguration {
     FeatureConfiguration(FeatureProperties properties) {
         System.out.println(properties.enabled() + "/" + properties.retryLimit());
-        // 输出：true/3
+// 输出：true/3
     }
 }
-// 结果：容器中注册名为 systemClock 的 UTC Clock Bean
 ```
 
 框架片段需容器运行：`application.yml` 可以提供 `feature.enabled: true` 和 `feature.retry-limit: 3`，绑定器负责把短横线键映射到 record 组件。生产部署应把 profile、环境变量和默认值写成可审计的配置清单；启动校验失败时让服务保持不可用，避免用错误默认值继续运行。

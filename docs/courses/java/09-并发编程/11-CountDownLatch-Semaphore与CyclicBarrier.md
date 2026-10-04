@@ -47,16 +47,19 @@ import java.util.concurrent.CountDownLatch;
 public class LatchInitDemo {
     public static void main(String[] args) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(2);
-// 关键变化：latch 接收表达式 new CountDownLatch(2) 的计算结果。
-// 初始状态：latch 的初始值为 new CountDownLatch(2)。
+// 初始状态：latch = new CountDownLatch(2)。
+// 作用：CountDownLatch latch = new CountDownLatch(2);；递减计数并放行等待者。
         latch.countDown();
-        // 关键变化：第一次 latch.countDown() 将计数从 2 减为 1，仍有一个事件未完成。
+// 初始状态：latch.countDown()。
+// 作用：latch.countDown();；递减计数并放行等待者。
         latch.countDown();
-        // 关键变化：第二次 latch.countDown() 将计数从 1 减为 0，等待中的 await 可以放行。
+// 初始状态：latch.countDown()。
+// 作用：latch.countDown();；递减计数并放行等待者。
         latch.await();
-        // 关键变化：latch.await() 等待计数归零；此处因两次 countDown 已完成而立即继续。
+// 初始状态：latch.await()。
+// 作用：latch.await();；递减计数并放行等待者。
         System.out.println("started");
-        // 输出：started
+// 输出：started
     }
 }
 ```
@@ -75,12 +78,13 @@ import java.util.concurrent.TimeUnit;
 public class LatchTimeoutDemo {
     public static void main(String[] args) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-// 关键变化：latch 接收表达式 new CountDownLatch(1) 的计算结果。
-// 初始状态：latch 的初始值为 new CountDownLatch(1)。
+// 初始状态：latch = new CountDownLatch(1)。
+// 作用：CountDownLatch latch = new CountDownLatch(1);；有界等待。
         boolean ready = latch.await(1, TimeUnit.MILLISECONDS);
-        // 关键变化：boolean ready = latch.await(1, TimeUnit.MILLISECONDS); 将返回值写入 ready；ready 现在保存该具体结果。
+// 初始状态：ready = latch.await(1, TimeUnit.MILLISECONDS)。
+// 作用：boolean ready = latch.await(1, TimeUnit.MILLISECONDS);；有界等待。
         System.out.println("ready=" + ready);
-        // 输出：ready=false
+// 输出：ready=false
     }
 }
 ```
@@ -96,16 +100,18 @@ import java.util.concurrent.Semaphore;
 public class SemaphoreDemo {
     public static void main(String[] args) throws InterruptedException {
         Semaphore semaphore = new Semaphore(1);
-// 关键变化：semaphore 接收表达式 new Semaphore(1) 的计算结果。
-// 初始状态：semaphore 的初始值为 new Semaphore(1)。
+// 初始状态：semaphore = new Semaphore(1)。
+// 作用：Semaphore semaphore = new Semaphore(1);；获取后归还许可证。
         semaphore.acquire();
-        // 关键变化：semaphore.acquire() 消耗唯一许可证，临界区内可用许可证数从 1 变为 0。
+// 初始状态：semaphore.acquire()。
+// 作用：semaphore.acquire();；获取后归还许可证。
         try {
             System.out.println("permit acquired");
-            // 输出：permit acquired
+// 输出：permit acquired
         } finally {
             semaphore.release();
-            // 关键变化：semaphore.release() 归还刚才占用的许可证，可用许可证数从 0 恢复为 1。
+// 初始状态：semaphore.release()。
+// 作用：semaphore.release();；获取后归还许可证。
         }
     }
 }
@@ -122,19 +128,20 @@ import java.util.concurrent.Semaphore;
 public class SemaphoreTryDemo {
     public static void main(String[] args) {
         Semaphore semaphore = new Semaphore(1);
-        // 关键变化：Semaphore semaphore = new Semaphore(1);；semaphore 按当前许可数量尝试获取一个许可证，成功时可用数减少 1。
-        // 初始状态：semaphore 当前为 new Semaphore(1)。
+// 初始状态：semaphore = new Semaphore(1)。
+// 作用：Semaphore semaphore = new Semaphore(1);；拒绝或降级，返回调用结果。
         if (semaphore.tryAcquire()) {
-        // 关键变化：if (semaphore.tryAcquire()) {；当前对象；if；当前对象.if(semaphore.tryAcquire()) 返回本次调用的具体结果，后续语句继续使用该值。
+// 作用：if (semaphore.tryAcquire()) {；拒绝或降级，调用后目标状态更新。
             try {
                 System.out.println("accepted");
-                // 输出：accepted
+// 输出：accepted
             } finally {
                 semaphore.release();
+// 作用：semaphore.release();；拒绝或降级，调用后目标状态更新。
             }
         } else {
             System.out.println("busy");
-            // 输出：可能是 busy（如果没有及时获得许可证）
+// 输出：可能是 busy（如果没有及时获得许可证）
         }
     }
 }
@@ -154,13 +161,14 @@ public class BarrierDemo {
     public static void main(String[] args) throws Exception {
         CyclicBarrier barrier = new CyclicBarrier(1,
                 () -> {
-        // 关键变化：CyclicBarrier barrier = new CyclicBarrier(1, () -> {；barrier 等待当前阶段或异步结果完成后再继续。
-                // 初始状态：barrier 当前保存 new CyclicBarrier(1, () -> {的计算结果。
+// 作用：CyclicBarrier barrier = new CyclicBarrier(1,；阶段汇合，调用后目标状态更新。
+// 初始状态：barrier = new CyclicBarrier(1,。
                     System.out.println("phase complete");
-                    // 输出：phase complete
+// 输出：phase complete
                 });
         barrier.await();
-        // 关键变化：barrier.await();；barrier 等待当前阶段或异步结果完成后再继续。
+// 初始状态：barrier.await()。
+// 作用：barrier.await();；阶段汇合，调用后目标状态更新。
     }
 }
 ```
@@ -178,12 +186,13 @@ import java.util.concurrent.CyclicBarrier;
 public class BarrierResetDemo {
     public static void main(String[] args) {
         CyclicBarrier barrier = new CyclicBarrier(2);
-        // 关键变化：CyclicBarrier barrier = new CyclicBarrier(2)；barrier 接收 该操作(2) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：barrier 当前为 new CyclicBarrier(2)。
+// 作用：CyclicBarrier barrier = new CyclicBarrier(2);；重置破坏的屏障，调用后目标状态更新。
+// 初始状态：barrier = new CyclicBarrier(2)。
         barrier.reset();
-        // 关键变化：barrier.reset()；barrier.reset() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：barrier.reset()。
+// 作用：barrier.reset();；重置破坏的屏障，返回调用结果。
         System.out.println("parties=" + barrier.getParties());
-        // 输出：parties=2
+// 输出：parties=2
     }
 }
 ```
@@ -201,12 +210,16 @@ import java.util.concurrent.Phaser;
 public class PhaserDemo {
     public static void main(String[] args) {
         Phaser phaser = new Phaser(1);
-// 关键变化：phaser 接收表达式 new Phaser(1) 的计算结果。
-// 初始状态：phaser 的初始值为 new Phaser(1)。
+// 初始状态：phaser = new Phaser(1)。
+// 作用：Phaser phaser = new Phaser(1);；注册参与者并推进阶段。
         int phase = phaser.arriveAndAwaitAdvance();
+// 初始状态：phase = phaser.arriveAndAwaitAdvance()。
+// 作用：int phase = phaser.arriveAndAwaitAdvance();；注册参与者并推进阶段。
         System.out.println("next phase=" + phase);
-        // 输出：next phase=1
+// 输出：next phase=1
         phaser.arriveAndDeregister();
+// 初始状态：phaser.arriveAndDeregister()。
+// 作用：phaser.arriveAndDeregister();；注册参与者并推进阶段。
     }
 }
 ```
@@ -221,13 +234,19 @@ import java.util.concurrent.Phaser;
 public class PhaserRegisterDemo {
     public static void main(String[] args) {
         Phaser phaser = new Phaser();
-// 关键变化：phaser 接收表达式 new Phaser() 的计算结果。
-// 初始状态：phaser 的初始值为 new Phaser()。
+// 初始状态：phaser = new Phaser()。
+// 作用：Phaser phaser = new Phaser();；添加单个或多个任务。
         phaser.bulkRegister(2);
+// 初始状态：phaser.bulkRegister(2)。
+// 作用：phaser.bulkRegister(2);；添加单个或多个任务。
         System.out.println(phaser.getRegisteredParties());
-        // 输出：2
+// 输出：2
         phaser.arriveAndDeregister();
+// 初始状态：phaser.arriveAndDeregister()。
+// 作用：phaser.arriveAndDeregister();；添加单个或多个任务。
         phaser.arriveAndDeregister();
+// 初始状态：phaser.arriveAndDeregister()。
+// 作用：phaser.arriveAndDeregister();；添加单个或多个任务。
     }
 }
 ```
@@ -243,20 +262,28 @@ import java.util.concurrent.Exchanger;
 public class ExchangerDemo {
     public static void main(String[] args) throws Exception {
         var exchanger = new Exchanger<String>();
-// 输入：exchanger 的初始值为 new Exchanger<String>()。
-        // 作用：Exchanger 只有两个参与方，适合成对交换缓冲区；一般生产/消费流程应使用 BlockingQueue。
+// 初始状态：exchanger = new Exchanger<String>()。
+// 作用：var exchanger = new Exchanger<String>();；交换两个线程的缓冲区。
         Thread peer = new Thread(() -> {
+// 作用：Thread peer = new Thread(() -> {；交换两个线程的缓冲区。
+// 初始状态：peer = new Thread(() ->。
             try {
                 exchanger.exchange("peer-data");
+// 作用：exchanger.exchange("peer-data");；交换两个线程的缓冲区。
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
+// 作用：Thread.currentThread().interrupt();；交换两个线程的缓冲区。
             }
         });
         peer.start();
+// 作用：peer.start();；交换两个线程的缓冲区。
         String received = exchanger.exchange("main-data");
+// 作用：String received = exchanger.exchange("main-data");；交换两个线程的缓冲区。
+// 初始状态：received = exchanger.exchange("main-data")。
         peer.join();
+// 作用：peer.join();；交换两个线程的缓冲区。
         System.out.println(received);
-        // 输出：peer-data
+// 输出：peer-data
     }
 }
 ```
@@ -266,21 +293,24 @@ public class ExchangerDemo {
 公平 Semaphore 按等待顺序倾向授予许可证，但会付出排队成本；它和公平 ReentrantLock 一样需要基准证明。
 
 ```java
+// 作用：通过 Semaphore(fair) 公平许可证队列。
 import java.util.concurrent.Semaphore;
 
 public class FairSemaphoreDemo {
     public static void main(String[] args) throws InterruptedException {
         Semaphore semaphore = new Semaphore(1, true);
-// 关键变化：semaphore 接收表达式 new Semaphore(1, true) 的计算结果。
-// 初始状态：semaphore 的初始值为 new Semaphore(1, true)。
+// 初始状态：semaphore = new Semaphore(1, true)。
+// 作用：Semaphore semaphore = new Semaphore(1, true);；公平许可证队列。
         semaphore.acquire();
-        // 关键变化：semaphore.acquire()；semaphore 按当前许可数量尝试获取一个许可证，成功时可用数减少 1。
+// 初始状态：semaphore.acquire()。
+// 作用：semaphore.acquire();；公平许可证队列。
         try {
             System.out.println("fair=" + semaphore.isFair());
 // 输出：fair=true
         } finally {
             semaphore.release();
-            // 关键变化：semaphore.release()；semaphore 归还一个许可证，可用数增加 1。
+// 初始状态：semaphore.release()。
+// 作用：semaphore.release();；公平许可证队列。
         }
     }
 }
@@ -294,15 +324,27 @@ import java.util.concurrent.Semaphore;
 public class SynchronizerChoiceDemo {
     public static void main(String[] args) throws InterruptedException {
         CountDownLatch ready = new CountDownLatch(1);
+// 初始状态：ready = new CountDownLatch(1)。
+// 作用：CountDownLatch ready = new CountDownLatch(1);；公平许可证队列。
         Semaphore permits = new Semaphore(1);
+// 初始状态：permits = new Semaphore(1)。
+// 作用：Semaphore permits = new Semaphore(1);；公平许可证队列。
         ready.countDown();
+// 初始状态：ready.countDown()。
+// 作用：ready.countDown();；公平许可证队列。
         ready.await();
+// 初始状态：ready.await()。
+// 作用：ready.await();；公平许可证队列。
         permits.acquire();
+// 初始状态：permits.acquire()。
+// 作用：permits.acquire();；公平许可证队列。
         try {
             System.out.println("ready and limited");
-            // 输出：ready and limited
+// 输出：ready and limited
         } finally {
             permits.release();
+// 初始状态：permits.release()。
+// 作用：permits.release();；公平许可证队列。
         }
     }
 }

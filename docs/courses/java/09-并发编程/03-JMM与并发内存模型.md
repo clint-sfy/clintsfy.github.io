@@ -46,14 +46,13 @@ public class VolatileFlagDemo {
 
     public static void main(String[] args) {
         stopped = false;
-        // 关键变化：stopped = false；stopped 取右侧具体表达式的值，当前状态变为 false。
-        // 输入：stopped = false; 使用语句中的具体实参或初始值，stopped 从这里进入后续操作。
+// 初始状态：stopped = false。
+// 作用：stopped = false;；发布状态标志。
         stopped = true;
-        // 关键变化：stopped = true；stopped 取右侧具体表达式的值，当前状态变为 true。
+// 初始状态：stopped = true。
         if (stopped) {
-        // 关键变化：if (stopped) {；当前对象；if；当前对象.if(stopped) 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println("stop requested");
-            // 输出：stop requested
+// 输出：stop requested
         }
     }
 }
@@ -71,25 +70,23 @@ public class SynchronizedVisibilityDemo {
     private int value;
 
     synchronized void set(int value) {
-    // 关键变化：synchronized void set(int value) {；当前对象；该操作；当前对象.该操作(int value) 返回本次调用的具体结果，后续语句继续使用该值。
-    // 输入：synchronized void set(int value) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         this.value = value;
-        // 关键变化：this.value = value;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：value = value。
+// 作用：this.value = value;；用锁建立可见性与互斥。
     }
 
     synchronized int get() {
-    // 关键变化：synchronized int get() {；当前对象.synchronized() 完成本例中的具体调用，后续语句观察调用后的状态。
         return value;
     }
 
     public static void main(String[] args) {
         var box = new SynchronizedVisibilityDemo();
-// 关键变化：box 接收表达式 new SynchronizedVisibilityDemo() 的计算结果。
-// 初始状态：box 的初始值为 new SynchronizedVisibilityDemo()。
+// 作用：var box = new SynchronizedVisibilityDemo();；用锁建立可见性与互斥。
+// 初始状态：box = new SynchronizedVisibilityDemo()。
         box.set(42);
-        // 关键变化：box.set(42);；box 写入具体参数 42，对象状态或输出内容随之改变。
+// 作用：box.set(42);；用锁建立可见性与互斥。
         System.out.println(box.get());
-        // 输出：42
+// 输出：42
     }
 }
 ```
@@ -107,13 +104,18 @@ public class ThreadHappensBeforeDemo {
 
     public static void main(String[] args) throws InterruptedException {
         value = 41;
+// 初始状态：value = 41。
         Thread worker = new Thread(() -> value++);
-// 关键变化：worker 接收表达式 new Thread(() -> value++) 的计算结果。
-// 初始状态：worker 的初始值为 new Thread(() -> value++)。
+// 初始状态：worker = new Thread(() -> value++)。
+// 作用：Thread worker = new Thread(() -> value++);；启动后等待完成。
         worker.start();
+// 初始状态：worker.start()。
+// 作用：worker.start();；启动后等待完成。
         worker.join();
+// 初始状态：worker.join()。
+// 作用：worker.join();；启动后等待完成。
         System.out.println(value);
-        // 输出：42
+// 输出：42
     }
 }
 ```
@@ -131,11 +133,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicCasDemo {
     public static void main(String[] args) {
         AtomicInteger version = new AtomicInteger(1);
-// 输入：version 的初始值为 new AtomicInteger(1)。
-        // 作用：CAS 会比较当前值，只有仍等于期望值才写入新值；失败时通常重试或走冲突路径。
+// 初始状态：version = new AtomicInteger(1)。
+// 作用：AtomicInteger version = new AtomicInteger(1);；CAS 保证单变量更新。
         boolean updated = version.compareAndSet(1, 2);
+// 作用：boolean updated = version.compareAndSet(1, 2);；CAS 保证单变量更新。
+// 初始状态：updated = version.compareAndSet(1, 2)。
         System.out.println(updated + ", version=" + version.get());
-        // 输出：true, version=2
+// 输出：true, version=2
     }
 }
 ```
@@ -151,13 +155,14 @@ CAS 适合无锁更新独立状态，不代表任意多字段操作都能无锁�
 public class SafePublicationDemo {
     record Config(String host, int port) { }
     private static volatile Config config = new Config("localhost", 8080);
-// 关键变化：config 接收右侧表达式 new Config("localhost", 8080) 的计算结果。
-// 初始状态：config 的初始值为 new Config("localhost", 8080)。
+// 初始状态：config = new Config("localhost", 8080)。
+// 作用：private static volatile Config config = new Config("localhost", 8080);；用不可变对象传递快照。
 
     public static void main(String[] args) {
         Config snapshot = config;
+// 初始状态：snapshot = config。
         System.out.println(snapshot.host() + ":" + snapshot.port());
-        // 输出：localhost:8080
+// 输出：localhost:8080
     }
 }
 ```
@@ -175,12 +180,13 @@ import java.util.concurrent.Executors;
 public class FutureHappensBeforeDemo {
     public static void main(String[] args) throws Exception {
         try (var executor = Executors.newSingleThreadExecutor()) {
-        // 关键变化：try (var executor = Executors.newSingleThreadExecutor()) {；当前对象；try；当前对象.try(var executor = Executors.newSingleThreadExecutor()) 返回本次调用的具体结果，后续语句继续使用该值。
-        // 初始状态：executor 当前为 Executors.newSingleThreadExecutor()) {。
+// 初始状态：executor = Executors.newSingleThreadExecutor())。
+// 作用：try (var executor = Executors.newSingleThreadExecutor()) {；等待完成并取得可见结果。
             var future = executor.submit(() -> "ready");
-            // 关键变化：var future = executor.submit(() -> "ready")；executor.submit(() -> "ready") 改变当前资源或任务状态，后续步骤观察这一变化。
+// 作用：var future = executor.submit(() -> "ready");；等待完成并取得可见结果。
+// 初始状态：future = executor.submit(() -> "ready")。
             System.out.println(future.get());
-            // 输出：ready
+// 输出：ready
         }
     }
 }
@@ -198,21 +204,18 @@ public class FinalFieldDemo {
         private final String name;
 
         User(String name) {
-        // 关键变化：User(String name) {；当前对象；User；当前对象.User(String name) 返回本次调用的具体结果，后续语句继续使用该值。
-        // 输入：User(String name) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
             this.name = name;
-            // 关键变化：this.name = name;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：name = name。
         }
 
         String name() {
-        // 关键变化：String name() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
             return name;
         }
     }
 
     public static void main(String[] args) {
         System.out.println(new User("Ann").name());
-// 输出：Ann；System.out.println 的实参为 new User("Ann").name()。
+// 输出：Ann
     }
 }
 ```
@@ -232,15 +235,15 @@ public class VarHandleDemo {
     public static void main(String[] args) throws Exception {
         VarHandle handle = MethodHandles.lookup().findVarHandle(
                 VarHandleDemo.class, "value", int.class);
-        // 关键变化：VarHandle handle = MethodHandles.lookup().findVarHandle( VarHandleDemo.class, "value", int.class)；handle 接收 lookup(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-        // 输入：VarHandle handle = MethodHandles.lookup().findVarHandle( VarHandleDemo.class, "value", int.class); 使用语句中的具体实参或初始值，handle 从这里进入后续操作。
+// 初始状态：handle = MethodHandles.lookup().findVarHandle(。
+// 作用：VarHandle handle = MethodHandles.lookup().findVarHandle(；低层次内存访问工具，返回读取结果。
         var box = new VarHandleDemo();
-        // 关键变化：var box = new VarHandleDemo()；box 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-// 初始状态：box 的初始值为 new VarHandleDemo()。
+// 初始状态：box = new VarHandleDemo()。
+// 作用：var box = new VarHandleDemo();；低层次内存访问工具，返回调用结果。
         handle.set(box, 42);
-        // 关键变化：handle.set(box, 42);；handle 写入具体参数 box，对象状态或输出内容随之改变。
+// 作用：handle.set(box, 42);；低层次内存访问工具，调用后目标状态更新。
         System.out.println(handle.get(box));
-        // 输出：42
+// 输出：42
     }
 }
 ```
@@ -256,11 +259,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class LazySetDemo {
     public static void main(String[] args) {
         AtomicInteger state = new AtomicInteger();
-        // 初始状态：state 当前为 new AtomicInteger()。
+// 作用：AtomicInteger state = new AtomicInteger();；较弱的最终发布。
+// 初始状态：state = new AtomicInteger()。
         state.lazySet(1);
-        // 关键变化：state.lazySet(1);；state；lazySet；state.lazySet(1) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：state.lazySet(1)。
+// 作用：state.lazySet(1);；较弱的最终发布。
         System.out.println(state.get());
-        // 输出：1
+// 输出：1
     }
 }
 ```
@@ -276,7 +281,7 @@ public class DataRaceDemo {
     public static void main(String[] args) {
         count++;
         System.out.println(count);
-        // 输出：1
+// 输出：1
     }
 }
 ```
@@ -288,9 +293,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class StopSignalDemo {
     public static void main(String[] args) {
         AtomicBoolean running = new AtomicBoolean(true);
+// 初始状态：running = new AtomicBoolean(true)。
+// 作用：AtomicBoolean running = new AtomicBoolean(true);；没有同步就没有可靠推理，返回调用结果。
         running.set(false);
+// 初始状态：running.set(false)。
+// 作用：running.set(false);；没有同步就没有可靠推理，调用后目标状态更新。
         System.out.println("running=" + running.get());
-        // 输出：running=false
+// 输出：running=false
     }
 }
 ```

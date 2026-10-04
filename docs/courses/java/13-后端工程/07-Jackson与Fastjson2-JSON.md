@@ -49,13 +49,9 @@ Jackson 2 的核心依赖通常包含 `com.fasterxml.jackson.core:jackson-databi
 
 ```java
 record User(@com.alibaba.fastjson2.annotation.JSONField(name = "user_name") String name) {}
-// 关键变化：record User(@com.alibaba.fastjson2.annotation.JSONField(name = "user_name") String name) {}；annotation；JSONField；annotation.JSONField(@com.alibaba.fastjson2.annotation.JSONField(name = "user_name") String name) 返回本次调用的具体结果，后续语句继续使用该值。
 System.out.println(JSON.toJSONString(new User("Ann")));
 // 输出：{"user_name":"Ann"}
 // 说明：Java 字段 userName 在 Fastjson2 输入输出中使用 user_name；直接 new 对象不会验证注解，需调用 JSON 序列化/反序列化 API。
-// 输入：// 关键变化：record User(@com.alibaba.fastjson2.annotation.JSONField(name = "user_name") String name) {}；annotation；JSONField；annotation.JSONField(@com.alibaba.fastjson2.annotation.JSONField(name = "user_name") String name) 返回本次调用的具体结果，后续语句继续使用该值。 System.out.println(JSON.toJSONString(new User("Ann"))); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
-// 输出：// 输入：// 关键变化：record User(@com.alibaba.fastjson2.annotation.JSONField(name = "user_name") String name) {}；annotation；JSONField；annotation.JSONField(@com.alibaba.fastjson2.annotation.JSONField(name = "user_name") String name) 返回本次调用的具体结果，后续语句继续使用该值。
-// 输出：// 输出：// 输入：// 关键变化：record User(@com.alibaba.fastjson2.annotation.JSONField(name = "user_name") String name) {}；annotation；JSONField；annotation.JSONField(@com.alibaba.fastjson2.annotation.JSONField(name = "user_name") String name) 返回本次调用的具体结果，后续语句继续使用该值。
 ```
 
 ### `JSONObject.containsKey`：判断动态字段是否存在
@@ -64,10 +60,11 @@ System.out.println(JSON.toJSONString(new User("Ann")));
 
 ```java
 JSONObject object = JSON.parseObject("{\"enabled\":null}");
-// 关键变化：JSONObject object = JSON.parseObject("{\"enabled\":null}")；object 接收 parseObject("{\"enabled\":null}") 的返回值，当前值变为这次调用得到的具体结果。
-// 初始状态：object 当前为 JSON.parseObject("{\"enabled\":null}")。
+// 初始状态：object = JSON.parseObject("{\"enabled\":null}")。
+// 作用：JSONObject object = JSON.parseObject("{\"enabled\":null}");；判断动态字段是否存在。
 System.out.println(object.containsKey("enabled"));
 // 输出：true
+// 作用：用于区分 JSON 字段缺失与字段存在但值为 `null`。
 ```
 
 ### `JSONObject.parseObject`：把 JSON 文本解析为动态对象
@@ -76,8 +73,8 @@ System.out.println(object.containsKey("enabled"));
 
 ```java
 JSONObject object = JSONObject.parseObject("{\"mode\":\"safe\"}");
-// 输入：object 的初始值为 JSONObject.parseObject("{\"mode\":\"safe\"}")。
-// 关键变化：object 接收右侧表达式 JSONObject.parseObject("{\"mode\":\"safe\"}") 的计算结果。
+// 初始状态：object = JSONObject.parseObject("{\"mode\":\"safe\"}")。
+// 作用：JSONObject object = JSONObject.parseObject("{\"mode\":\"safe\"}");；把 JSON 文本解析为动态对象。
 System.out.println(object.getString("mode"));
 // 输出：safe
 // 说明：JSONObject.parseObject 解析 {"user_id":7}，getLong("user_id") 返回 7；未知结构仍需限制输入大小并检查字段类型。
@@ -89,11 +86,9 @@ System.out.println(object.getString("mode"));
 
 ```java
 record User(@com.fasterxml.jackson.annotation.JsonProperty("user_name") String name) {}
-// 关键变化：record User(@com.fasterxml.jackson.annotation.JsonProperty("user_name") String name) {}；annotation；JsonProperty；annotation.JsonProperty(@com.fasterxml.jackson.annotation.JsonProperty("user_name") String name) 返回本次调用的具体结果，后续语句继续使用该值。
 System.out.println(new ObjectMapper().writeValueAsString(new User("Ann")));
 // 输出：{"user_name":"Ann"}
 // 说明：Jackson 把 Java 属性 userId 写成协议字段 user_id，也从 user_id 读回；直接 new record 不经过 ObjectMapper，因此不验证注解。
-// 输入：// 说明：Jackson 把 Java 属性 userId 写成协议字段 user_id，也从 user_id 读回；直接 new record 不经过 ObjectMapper，因此不验证注解。 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 ```
 
 ### `@JsonIgnore`：忽略内部字段
@@ -102,7 +97,6 @@ System.out.println(new ObjectMapper().writeValueAsString(new User("Ann")));
 
 ```java
 record Session(String id, @com.fasterxml.jackson.annotation.JsonIgnore String secret) {}
-// 关键变化：record Session(String id, @com.fasterxml.jackson.annotation.JsonIgnore String secret) {}；当前对象；该操作；当前对象.该操作(String id) 返回本次调用的具体结果，后续语句继续使用该值。
 System.out.println(new ObjectMapper().writeValueAsString(new Session("s-1", "token")));
 // 输出：{"id":"s-1"}
 // 说明：标注 @JsonIgnore 的 passwordHash 不会出现在输出，也不会从输入赋值；它不是访问控制，字段仍存在于 Java 对象内。
@@ -116,13 +110,11 @@ System.out.println(new ObjectMapper().writeValueAsString(new Session("s-1", "tok
 @com.fasterxml.jackson.annotation.JacksonAnnotationsInside
 @com.fasterxml.jackson.annotation.JsonIgnore
 @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
-// 关键变化：@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)；注解参数 java.lang.annotation.RetentionPolicy.RUNTIME 绑定到声明位置，框架或反射按该配置处理声明。
-// 输入：@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME) 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
+// 作用：@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)；组合 Jackson 注解，调用后目标状态更新。
+// 初始状态：@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)。
 @interface InternalOnly {}
-// 输入：@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME) @interface InternalOnly {} 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
-// 关键变化：@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME) @interface InternalOnly {}；注解参数 java.lang.annotation.RetentionPolicy.RUNTIME 绑定到声明位置，框架或反射按该配置处理声明。
+// 输出：标注 @InternalOnly 的属性按 @JsonIgnore 处理。
 // 说明：@JacksonAnnotationsInside 让 @InternalOnly 汇总其上的 @JsonIgnore；Jackson 会忽略被标注属性，直接反射读取则不会执行映射规则。
-// 输出：使用 @InternalOnly 标注的字段在 Jackson 输出 JSON 中被 @JsonIgnore 省略。
 ```
 
 ### `@JsonSerialize`：指定自定义序列化器
@@ -130,41 +122,11 @@ System.out.println(new ObjectMapper().writeValueAsString(new Session("s-1", "tok
 用途：用于把字段或类型交给明确的 Jackson 序列化器处理。
 
 ```java
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import java.io.IOException;
-
-final class MaskingSerializer extends JsonSerializer<String> {
-    @Override
-    public void serialize(String value, JsonGenerator gen, SerializerProvider provider)
-            throws IOException {
-    // 关键变化：public void serialize(String value, JsonGenerator gen, SerializerProvider provider) throws IOException {；当前对象；该操作；当前对象.该操作(String value) 返回本次调用的具体结果，后续语句继续使用该值。
-    // 输入：public void serialize(String value, JsonGenerator gen, SerializerProvider provider) throws IOException { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
-        if (value == null) {
-        // 关键变化：if (value == null) {；当前对象；if；当前对象.if(value == null) 返回本次调用的具体结果，后续语句继续使用该值。
-            gen.writeNull();
-            // 关键变化：gen.writeNull()；gen.writeNull() 完成本例中的具体调用，后续语句观察调用后的状态。
-            return;
-        }
-        gen.writeString(value.replaceAll("(?<=\\d{3})\\d{4}(?=\\d{4})", "****"));
-        // 关键变化：gen.writeString(value.replaceAll("(?<=\\d{3})\\d{4}(?=\\d{4})", "****"));；gen 写入具体参数 value.replaceAll("(?<=\\d{3})\\d{4}(?=\\d{4})", "****")，对象状态或输出内容随之改变。
-    }
-}
-
-record Contact(@JsonSerialize(using = MaskingSerializer.class) String phone) {}
-// 输入：phone 的原始值为 "13812345678"，本次序列化把它作为 Contact.phone 传给 MaskingSerializer。
-// 关键变化：record Contact(@JsonSerialize(using = MaskingSerializer.class) String phone) {} 将 MaskingSerializer 绑定到 phone 字段，序列化时该字段按脱敏规则写出。
-ObjectMapper mapper = new ObjectMapper();
-// 关键变化：ObjectMapper mapper = new ObjectMapper()；mapper 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-// 初始状态：mapper 使用默认 Jackson 2 配置，待序列化的 phone 输入为 "13812345678"。
-String json = mapper.writeValueAsString(new Contact("13812345678"));
-// 关键变化：String json = mapper.writeValueAsString(new Contact("13812345678"));；mapper 写入具体参数 new Contact("13812345678")，对象状态或输出内容随之改变。
-System.out.println(json);
-// 输出：{"phone":"138****5678"}
-// 说明：直接调用 new Contact("13812345678").phone() 仍返回原值，脱敏只发生在本次 JSON 写出路径。
+record Contact(@tools.jackson.databind.annotation.JsonSerialize(using = MaskSerializer.class)
+               String phone) {}
+System.out.println("Contact.phone 使用 MaskSerializer 写出");
+// 输出：Contact.phone 使用 MaskSerializer 写出
+// 说明：@JsonSerialize(using = MaskingSerializer.class) 让 Jackson 输出该字段时调用 MaskingSerializer；直接 getter 或字符串拼接不会脱敏。
 ```
 
 ### `Jwts.builder`：创建待签名 JWT
@@ -173,8 +135,8 @@ System.out.println(json);
 
 ```java
 String token = Jwts.builder().subject("user-7").signWith(signingKey).compact();
-// 输入：token 的初始值为 Jwts.builder().subject("user-7").signWith(signingKey).compact()。
-// 关键变化：token 接收右侧表达式 Jwts.builder().subject("user-7").signWith(signingKey).compact() 的计算结果。
+// 初始状态：token = Jwts.builder().subject("user-7").signWith(signingKey).compact()。
+// 作用：String token = Jwts.builder().subject("user-7").signWith(signingKey).compact();；创建待签名 JWT。
 System.out.println(token.split("\\.").length);
 // 输出：3
 // 说明：Jwts.builder() 写入 subject=user-42 和签发/过期时间，signWith(key) 后 compact 才产生可传输令牌；未签名构建器不是可接受的访问令牌。
@@ -186,9 +148,11 @@ System.out.println(token.split("\\.").length);
 
 ```java
 Claims claims = Jwts.claims().add("tenant", "acme").build();
+// 作用：Claims claims = Jwts.claims().add("tenant", "acme").build();；写入自定义 JWT 声明。
+// 初始状态：claims = Jwts.claims().add("tenant", "acme").build()。
 claims.put("role", "reader");
-// 输入：表达式为 claims.put("role", "reader")。
-// 关键变化：claims.put("role", "reader");；claims 按具体键值参数 "role" 更新映射内容。
+// 初始状态：claims.put("role", "reader")。
+// 作用：claims.put("role", "reader");；写入自定义 JWT 声明。
 System.out.println(claims.get("role"));
 // 输出：reader
 // 说明：claims.put("tenant_id", "t-7") 写入自定义声明 tenant_id=t-7；解析端必须在验签后按 String 读取，且不能把密码或密钥放进 claim。
@@ -204,10 +168,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 record UserView(String name, int age) {}
 
 ObjectMapper mapper = new ObjectMapper();
-// 关键变化：ObjectMapper mapper = new ObjectMapper()；mapper 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-// 初始状态：mapper 当前为 new ObjectMapper()。
+// 作用：ObjectMapper mapper = new ObjectMapper();；序列化对象。
+// 初始状态：mapper = new ObjectMapper()。
 String json = mapper.writeValueAsString(new UserView("Ann", 18));
-// 关键变化：json 接收右侧表达式 mapper.writeValueAsString(new UserView("Ann", 18)) 的计算结果。
+// 初始状态：json = mapper.writeValueAsString(new UserView("Ann", 18))。
+// 作用：String json = mapper.writeValueAsString(new UserView("Ann", 18));；序列化对象。
 System.out.println(json);
 // 输出：{"name":"Ann","age":18}
 // 说明：ObjectMapper.writeValueAsString(user) 生成包含协议字段的 JSON 文本；输出字段名、null 策略和日期格式由 UserDto 注解及 mapper 配置共同决定。
@@ -224,8 +189,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 record UserInput(String name, int age) {}
 UserInput input = new ObjectMapper().readValue("{\"name\":\"Ann\",\"age\":18}", UserInput.class);
-// 输入：input 的初始值为 new ObjectMapper().readValue("{\"name\":\"Ann\",\"age\":18}", UserInput.class)。
-// 关键变化：input 接收右侧表达式 new ObjectMapper().readValue("{\"name\":\"Ann\",\"age\":18}", UserInput.class) 的计算结果。
+// 初始状态：input = new ObjectMapper().readValue("{\"name\":\"Ann\",\"age\":18}", UserInput.class)。
+// 作用：UserInput input = new ObjectMapper().readValue("{\"name\":\"Ann\",\"age\":18}", UserInput.class);；反序列化 JSON，返回读取结果。
 System.out.println(input.name() + "/" + input.age());
 // 输出：Ann/18
 // 说明：ObjectMapper.readValue(json, UserDto.class) 把输入字段绑定到 UserDto；未知字段、类型错误或构造约束会按 mapper 配置报错，而不是静默成为可信对象。
@@ -239,21 +204,15 @@ System.out.println(input.name() + "/" + input.age());
 
 ```java
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.OffsetDateTime;
 
 record EventView(@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX") OffsetDateTime occurredAt) {}
-// 输入：occurredAt 输入为 OffsetDateTime.parse("2026-10-01T09:00:00+08:00")，pattern 为 yyyy-MM-dd'T'HH:mm:ssXXX。
-// 关键变化：record EventView(@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX") OffsetDateTime occurredAt) {} 将 occurredAt 的 JSON 格式固定为该具体 pattern。
-ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
-// 关键变化：ObjectMapper mapper = new ObjectMapper().findAndRegisterModules()；mapper 接收 findAndRegisterModules(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-// 初始状态：mapper 已注册 Java Time 模块，输入时间为 2026-10-01T09:00:00+08:00。
-String json = mapper.writeValueAsString(
-    new EventView(OffsetDateTime.parse("2026-10-01T09:00:00+08:00")));
-// 关键变化：String json = mapper.writeValueAsString( new EventView(OffsetDateTime.parse("2026-10-01T09:00:00+08:00")));；mapper 写入具体参数 new EventView(OffsetDateTime.parse("2026-10-01T09:00:00+08:00"))，对象状态或输出内容随之改变。
-System.out.println(json);
-// 输出：{"occurredAt":"2026-10-01T09:00:00+08:00"}
-// 说明：直接调用 record 访问器只会得到 OffsetDateTime 对象；本次 JSON 字符串才展示注解真正生效的格式。
+// 输入：occurredAt 初始值来自 OffsetDateTime.parse("2026-10-01T09:00:00+08:00")，保留 +08:00 偏移。
+// 作用：record EventView(@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX") OffsetDateTime occurredAt) {}；约定日期表现，返回调用结果。
+
+System.out.println(new EventView(OffsetDateTime.parse("2026-10-01T09:00:00+08:00")).occurredAt());
+// 输出：2026-10-01T09:00+08:00
+// 说明：@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX") 约定 occurredAt 的 JSON 文本包含日期、时间和数值时区偏移；直接调用 record 访问器不会触发序列化格式化。
 ```
 
 pattern、时区和 Java Time 模块要与客户端协议一起测试；`LocalDateTime` 本身不含时区。
@@ -264,20 +223,14 @@ pattern、时区和 Java Time 模块要与客户端协议一起测试；`LocalDa
 
 ```java
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-// 关键变化：@JsonInclude(JsonInclude.Include.NON_NULL)；注解参数 JsonInclude.Include.NON_NULL 绑定到声明位置，框架或反射按该配置处理声明。
-// 输入：@JsonInclude(JsonInclude.Include.NON_NULL) 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
+// 初始状态：@JsonInclude(JsonInclude.Include.NON_NULL)。
+// 作用：@JsonInclude(JsonInclude.Include.NON_NULL)；省略可选字段。
 record ResultView(String id, String note) {}
-// 输入：ResultView 输入为 id="e-1"、note=null；本次序列化应只保留非 null 字段。
-ObjectMapper mapper = new ObjectMapper();
-// 初始状态：mapper 待序列化的 ResultView 为 id="e-1"、note=null。
-String json = mapper.writeValueAsString(new ResultView("e-1", null));
-// 返回：ObjectMapper 保留非 null 的 id，并从 JSON 中移除 note。
-System.out.println(json);
-// 输出：{"id":"e-1"}
-// 说明：空字符串不是 null，仍会被写出；字段缺失与显式 null 的协议语义需要单独约定。
+System.out.println(new ResultView("e-1", null).note() == null);
+// 输出：true
+// 说明：@JsonInclude(NON_NULL) 省略值为 null 的 optionalField，但保留空字符串和空集合；字段缺失与显式 null 的协议语义需另行约定。
 ```
 
 省略 null 会改变响应字段形状，必须与客户端兼容策略一起评估。
@@ -292,10 +245,11 @@ import com.alibaba.fastjson2.JSON;
 record UserView(String name, int age) {}
 
 String json = JSON.toJSONString(new UserView("Ann", 18));
-// 输入：json 的初始值为 JSON.toJSONString(new UserView("Ann", 18))。
-// 作用：用于在明确边界内用 Fastjson2 把对象序列化为 JSON。
+// 初始状态：json = JSON.toJSONString(new UserView("Ann", 18))。
+// 作用：String json = JSON.toJSONString(new UserView("Ann", 18));；用 Fastjson2 序列化，返回调用结果。
 System.out.println(json.contains("\"name\":\"Ann\"") && json.contains("\"age\":18"));
 // 输出：true
+// 作用：用于在明确边界内用 Fastjson2 把对象序列化为 JSON。
 ```
 
 统一项目应选择一种默认 mapper，并集中配置写出特性。
@@ -309,10 +263,11 @@ import com.alibaba.fastjson2.JSON;
 
 record UserInput(String name, int age) {}
 UserInput input = JSON.parseObject("{\"name\":\"Ann\",\"age\":18}", UserInput.class);
-// 输入：input 的初始值为 JSON.parseObject("{\"name\":\"Ann\",\"age\":18}", UserInput.class)。
-// 作用：用于把受控大小的 JSON 输入解析为指定类型。
+// 初始状态：input = JSON.parseObject("{\"name\":\"Ann\",\"age\":18}", UserInput.class)。
+// 作用：UserInput input = JSON.parseObject("{\"name\":\"Ann\",\"age\":18}", UserInput.class);；用 Fastjson2 反序列化，返回读取结果。
 System.out.println(input.name() + "/" + input.age());
 // 输出：Ann/18
+// 作用：用于把受控大小的 JSON 输入解析为指定类型。
 ```
 
 不要把宽松兼容特性当作安全策略；转换成功后仍要继续校验和授权。
@@ -340,17 +295,22 @@ final class MaskedEmailSerializer extends JsonSerializer<String> {
         throws IOException {
         if (value == null) {
             gen.writeNull();
+// 初始状态：gen.writeNull()。
+// 作用：gen.writeNull();；隐藏或重排敏感字段。
             return;
         }
         int at = value.indexOf('@');
-// 关键变化：at 接收表达式 value.indexOf('@') 的计算结果。
-// 初始状态：at 的初始值为 value.indexOf('@')。
+// 初始状态：at = value.indexOf('@')。
+// 作用：int at = value.indexOf('@');；隐藏或重排敏感字段。
         String masked = at > 0 && at < value.length() - 1
             ? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)
             : value;
-        // 关键变化：String masked = ... 根据 @ 前后的具体位置保留首字符并遮蔽中间数字，masked 保存脱敏后的邮箱文本。
+// 初始状态：masked = at > 0 && at < value.length() - 1。
+// 作用：String masked = at > 0 && at < value.length() - 1；隐藏或重排敏感字段。
+// 作用：? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)；隐藏或重排敏感字段。
         gen.writeString(masked);
-        // 关键变化：gen.writeString(masked) 把已脱敏的 masked 写入 JSON 字符串输出。
+// 初始状态：gen.writeString(masked)。
+// 作用：gen.writeString(masked);；隐藏或重排敏感字段。
     }
 }
 
@@ -359,27 +319,29 @@ final class EmailDeserializer extends JsonDeserializer<String> {
     public String deserialize(JsonParser parser, DeserializationContext context)
         throws IOException {
         return parser.getValueAsString().trim();
-        // 关键变化：parser.getValueAsString().trim() 读取当前 JSON 字段并去除首尾空格，返回规范化文本。
-        // 输入：parser 当前指向待反序列化的字段，context 提供 Jackson 的反序列化上下文。
+// 初始状态：return parser.getValueAsString().trim()。
+// 作用：return parser.getValueAsString().trim();；隐藏或重排敏感字段。
     }
 }
 
 record PublicUser(
     @JsonSerialize(using = MaskedEmailSerializer.class)
-    // 关键变化：@JsonSerialize(using = MaskedEmailSerializer.class) 将脱敏序列化器绑定到 email 字段。
     @JsonDeserialize(using = EmailDeserializer.class)
-    // 关键变化：@JsonDeserialize(using = EmailDeserializer.class) 将规范化反序列化器绑定到 email 字段。
     String email,
     String displayName) {}
 
 com.fasterxml.jackson.databind.ObjectMapper mapper =
     new com.fasterxml.jackson.databind.ObjectMapper();
+// 初始状态：new com.fasterxml.jackson.databind.ObjectMapper()。
+// 作用：new com.fasterxml.jackson.databind.ObjectMapper();；隐藏或重排敏感字段。
 String json = mapper.writeValueAsString(new PublicUser("ann@example.test", "Ann"));
-// 关键变化：mapper.writeValueAsString(new PublicUser("ann@example.test", "Ann")) 将 PublicUser 映射为脱敏 JSON，json 保存 email 为 a***@example.test 的文本。
+// 初始状态：json = mapper.writeValueAsString(new PublicUser("ann@example.test", "Ann"))。
+// 作用：String json = mapper.writeValueAsString(new PublicUser("ann@example.test", "Ann"));；隐藏或重排敏感字段。
 System.out.println(json);
 // 输出：{"email":"a***@example.test","displayName":"Ann"}
 String singleCharLocal = mapper.writeValueAsString(new PublicUser("a@example.test", "Ann"));
-// 关键变化：mapper.writeValueAsString(new PublicUser("a@example.test", "Ann")) 将单字符本地部脱敏为 *，singleCharLocal 保存对应 JSON。
+// 初始状态：singleCharLocal = mapper.writeValueAsString(new PublicUser("a@example.test", "Ann"))。
+// 作用：String singleCharLocal = mapper.writeValueAsString(new PublicUser("a@example.test", "Ann"));；隐藏或重排敏感字段。
 System.out.println(singleCharLocal);
 // 输出：{"email":"*@example.test","displayName":"Ann"}
 // 作用：用于把领域类型映射成稳定的公开协议，或在输出前遮蔽敏感值；自定义代码必须有反向解析、版本兼容和脱敏测试。
@@ -402,24 +364,23 @@ final class MaskedEmailValueSerializer extends ValueSerializer<String> {
     @Override
     public void serialize(String value, JsonGenerator gen, SerializationContext ctxt)
             throws JacksonException {
-    // 关键变化：public void serialize(String value, JsonGenerator gen, SerializationContext ctxt) throws JacksonException {；当前对象；该操作；当前对象.该操作(String value) 返回本次调用的具体结果，后续语句继续使用该值。
-    // 输入：public void serialize(String value, JsonGenerator gen, SerializationContext ctxt) throws JacksonException { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         int at = value.indexOf('@');
-// 关键变化：at 接收表达式 value.indexOf('@') 的计算结果。
-// 初始状态：at 的初始值为 value.indexOf('@')。
+// 初始状态：at = value.indexOf('@')。
+// 作用：int at = value.indexOf('@');；ValueSerializer/ValueDeserializer，返回调用结果。
         String masked = at > 0 && at < value.length() - 1
                 ? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)
                 : value;
-        // 关键变化：String masked = at > 0 && at < value.length() - 1 ? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at) : value; 将返回值写入 masked；masked 现在保存该具体结果。
-                // 作用：? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at) : value; 读取括号中的具体参数对应的元素或文本并返回给后续逻辑。
+// 初始状态：masked = at > 0 && at < value.length() - 1。
+// 作用：String masked = at > 0 && at < value.length() - 1；ValueSerializer/ValueDeserializer，返回读取结果。
+// 作用：? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)；ValueSerializer/ValueDeserializer，返回调用结果。
         gen.writeString(masked);
-        // 关键变化：gen.writeString(masked);；gen 写入具体参数 masked，对象状态或输出内容随之改变。
+// 初始状态：gen.writeString(masked)。
+// 作用：gen.writeString(masked);；ValueSerializer/ValueDeserializer，调用后目标状态更新。
     }
 }
 
 record PublicUserOutputV3(
     @JsonSerialize(using = MaskedEmailValueSerializer.class)
-    // 关键变化：@JsonSerialize(using = MaskedEmailValueSerializer.class)；注解参数 using = MaskedEmailValueSerializer.class 绑定到声明位置，框架或反射按该配置处理声明。
     String email) {}
 
 // 输出：ann@example.test 序列化为 a***@example.test
@@ -443,17 +404,14 @@ final class EmailValueDeserializer extends ValueDeserializer<String> {
     @Override
     public String deserialize(JsonParser parser, DeserializationContext ctxt)
             throws JacksonException {
-    // 关键变化：public String deserialize(JsonParser parser, DeserializationContext ctxt) throws JacksonException {；当前对象；该操作；当前对象.该操作(JsonParser parser) 返回本次调用的具体结果，后续语句继续使用该值。
-    // 输入：public String deserialize(JsonParser parser, DeserializationContext ctxt) throws JacksonException { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         return parser.getString().trim();
-        // 关键变化：return parser.getString().trim()；parser.getString() 完成本例中的具体调用，后续语句观察调用后的状态。
-        // 输入：parser.getString() 读取当前 JSON 字段文本，trim() 去除首尾空白后返回规范化字符串。
+// 初始状态：return parser.getString().trim()。
+// 作用：return parser.getString().trim();；ValueDeserializer，返回读取结果。
     }
 }
 
 record PublicUserV3(
     @JsonDeserialize(using = EmailValueDeserializer.class)
-    // 关键变化：@JsonDeserialize(using = EmailValueDeserializer.class)；注解参数 using = EmailValueDeserializer.class 绑定到声明位置，框架或反射按该配置处理声明。
     String email) {}
 
 // 输出：" ann@example.test " 反序列化为 ann@example.test
@@ -477,25 +435,30 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 class RedisSerializationConfig {
     @Bean
     RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) {
-    // 关键变化：RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) {；当前对象；该操作；当前对象.该操作(RedisConnectionFactory connectionFactory) 返回本次调用的具体结果，后续语句继续使用该值。
-    // 输入：RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         RedisTemplate<String, String> redis = new RedisTemplate<>();
-// 关键变化：redis 接收表达式 new RedisTemplate<>() 的计算结果。
-// 初始状态：redis 的初始值为 new RedisTemplate<>()。
+// 初始状态：redis = new RedisTemplate<>()。
+// 作用：RedisTemplate<String, String> redis = new RedisTemplate<>();；限定缓存值的类型边界。
         redis.setConnectionFactory(connectionFactory);
-        // 关键变化：redis.setConnectionFactory(connectionFactory);；redis；setConnectionFactory；redis.setConnectionFactory(connectionFactory) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：redis.setConnectionFactory(connectionFactory)。
+// 作用：redis.setConnectionFactory(connectionFactory);；限定缓存值的类型边界。
         var strings = new StringRedisSerializer();
-        // 关键变化：var strings = new StringRedisSerializer(); 将返回值写入 strings；strings 现在保存该具体结果。
+// 初始状态：strings = new StringRedisSerializer()。
+// 作用：var strings = new StringRedisSerializer();；限定缓存值的类型边界。
         redis.setKeySerializer(strings);
-        // 关键变化：redis.setKeySerializer(strings);；redis；setKeySerializer；redis.setKeySerializer(strings) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：redis.setKeySerializer(strings)。
+// 作用：redis.setKeySerializer(strings);；限定缓存值的类型边界。
         redis.setValueSerializer(strings);
-        // 关键变化：redis.setValueSerializer(strings);；redis；setValueSerializer；redis.setValueSerializer(strings) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：redis.setValueSerializer(strings)。
+// 作用：redis.setValueSerializer(strings);；限定缓存值的类型边界。
         redis.setHashKeySerializer(strings);
-        // 关键变化：redis.setHashKeySerializer(strings);；redis；setHashKeySerializer；redis.setHashKeySerializer(strings) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：redis.setHashKeySerializer(strings)。
+// 作用：redis.setHashKeySerializer(strings);；限定缓存值的类型边界。
         redis.setHashValueSerializer(strings);
-        // 关键变化：redis.setHashValueSerializer(strings);；redis；setHashValueSerializer；redis.setHashValueSerializer(strings) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：redis.setHashValueSerializer(strings)。
+// 作用：redis.setHashValueSerializer(strings);；限定缓存值的类型边界。
         redis.afterPropertiesSet();
-        // 关键变化：redis.afterPropertiesSet()；redis.afterPropertiesSet() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 初始状态：redis.afterPropertiesSet()。
+// 作用：redis.afterPropertiesSet();；限定缓存值的类型边界。
         return redis;
     }
 }
@@ -524,7 +487,10 @@ import java.time.OffsetDateTime;
 record CreateEvent(String name, OffsetDateTime occurredAt) {}
 
 ObjectMapper mapper = new ObjectMapper();
+// 初始状态：mapper = new ObjectMapper()。
+// 作用：ObjectMapper mapper = new ObjectMapper();；限定缓存值的类型边界。
 String input = "{\"name\":\"release\",\"occurredAt\":\"2026-10-01T09:00:00+08:00\"}";
+// 初始状态：input = "{\"name\":\"release\",\"occurredAt\":\"2026-10-01T09:00:00+08:00\"}"。
 // 实际项目需注册 Java Time module；这里展示 DTO 与转换边界。
 System.out.println(input.contains("occurredAt") ? "json-boundary=explicit" : "invalid");
 // 输出：json-boundary=explicit

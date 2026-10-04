@@ -174,17 +174,20 @@ import java.sql.PreparedStatement;
 import java.time.Instant;
 
 try (Connection connection = dataSource.getConnection();
-// 输入：try (Connection connection = dataSource.getConnection(); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
-// 关键变化：try (Connection connection = dataSource.getConnection()；try-with-resources 打开具体资源并在代码块结束时关闭它。
+// 初始状态：connection = dataSource.getConnection()。
+// 作用：try (Connection connection = dataSource.getConnection();；区分时刻和本地时间。
      PreparedStatement statement = connection.prepareStatement(
          "UPDATE account SET created_at = ? WHERE id = ?")) {
-     // 关键变化：PreparedStatement statement = connection.prepareStatement( "UPDATE account SET created_at = ? WHERE id = ?")) { 将返回值写入 statement；statement 现在保存该具体结果。
+// 初始状态：statement = connection.prepareStatement(。
+// 作用：PreparedStatement statement = connection.prepareStatement(；区分时刻和本地时间。
     statement.setObject(1, Instant.parse("2026-10-01T00:00:00Z"));
-    // 关键变化：statement.setObject(1, Instant.parse("2026-10-01T00:00:00Z"));；statement；setObject；statement.setObject(1) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：statement.setObject(1, Instant.parse("2026-10-01T00:00:00Z"))。
+// 作用：statement.setObject(1, Instant.parse("2026-10-01T00:00:00Z"));；区分时刻和本地时间。
     statement.setLong(2, 1L);
-    // 关键变化：statement.setLong(2, 1L);；statement；setLong；statement.setLong(2) 返回本次调用的具体结果，后续语句继续使用该值。
+// 初始状态：statement.setLong(2, 1L)。
+// 作用：statement.setLong(2, 1L);；区分时刻和本地时间。
     System.out.println(statement.getParameterMetaData().getParameterCount());
-    // 输出：2
+// 输出：2
 }
 // 作用：用于让数据库列、Java 类型、JDBC 驱动和时区约定保持一致，避免跨机器出现偏移。
 ```
