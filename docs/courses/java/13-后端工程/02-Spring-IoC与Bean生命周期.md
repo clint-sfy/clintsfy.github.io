@@ -50,9 +50,9 @@ import org.springframework.stereotype.Component;
 @Component
 class ClockSource {
 // 输入：表达式为 @Component。
-// // 关键变化：class ClockSource { 使用表达式中的具体参数完成本次调用。
-// 作用：@Component 将 ClockSource 标记为组件扫描候选
     String zone() {
+    // 关键变化：String zone() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：String zone() { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         return "UTC";
     }
 }
@@ -73,9 +73,9 @@ import org.springframework.stereotype.Service;
 @Service
 class GreetingService {
 // 输入：表达式为 @Service。
-// // 关键变化：class GreetingService { 使用表达式中的具体参数完成本次调用。
-// 作用：@Service 将 GreetingService 标记为业务服务候选
     String greet() {
+    // 关键变化：String greet() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：String greet() { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         return "hello";
     }
 }
@@ -100,9 +100,8 @@ import org.springframework.context.annotation.Configuration;
 class ClientConfiguration {
     @Bean
     String endpoint() {
+    // 关键变化：String endpoint() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 输入：表达式为 @Bean。
-// // 关键变化：String endpoint() { 使用表达式中的具体参数完成本次调用。
-    // 作用：用于注册第三方类型、需要组装参数或需要显式生命周期控制的对象；方法返回值就是容器中的 Bean。
         return "https://api.example.test";
     }
 }
@@ -158,10 +157,10 @@ class TokenRules {
 
     @PostConstruct
     void initialize() {
+    // 关键变化：void initialize() {；当前对象.PostConstruct() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 输入：表达式为 @PostConstruct。
-// // 关键变化：void initialize() { 使用表达式中的具体参数完成本次调用。
-    // 作用：@PostConstruct 调用 initialize，把 prefix 初始化为 "Bearer "
         prefix = "Bearer ";
+        // 关键变化：prefix = "Bearer "；prefix 取右侧具体表达式的值，当前状态变为 "Bearer "。
         System.out.println(prefix.strip());
         // 输出：Bearer
     }
@@ -240,12 +239,13 @@ System.out.println(AopUtils.isAopProxy(proxy) + "/" + proxy.text());
 import org.springframework.beans.factory.ObjectProvider;
 
 class OptionalReporter {
-// // 关键变化：class OptionalReporter { 使用表达式中的具体参数完成本次调用。
     OptionalReporter(ObjectProvider<Runnable> provider) {
-    // 作用：ObjectProvider.getIfAvailable 在 provider 缺少 Runnable 时返回 fallback
+    // 关键变化：OptionalReporter(ObjectProvider<Runnable> provider) {；当前对象；OptionalReporter；当前对象.OptionalReporter(ObjectProvider<Runnable> provider) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：OptionalReporter(ObjectProvider<Runnable> provider) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         Runnable task = provider.getIfAvailable(() -> () -> System.out.println("fallback"));
 // 输出：fallback
         task.run();
+        // 关键变化：task.run()；task.run() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 }
 ```
@@ -264,11 +264,14 @@ import org.springframework.context.annotation.Lazy;
 
 class ExpensiveCatalog {
     ExpensiveCatalog() {
+    // 关键变化：ExpensiveCatalog() {；当前对象.ExpensiveCatalog() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：ExpensiveCatalog() { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         System.out.println("constructed-on-getBean");
         // 输出：constructed-on-getBean
     }
 
     String name() {
+    // 关键变化：String name() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return "catalog";
     }
 }
@@ -278,16 +281,20 @@ class LazyConfiguration {
     @Bean
     @Lazy
     ExpensiveCatalog catalog() {
+    // 关键变化：ExpensiveCatalog catalog() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 输入：表达式为 @Lazy。
-// // 关键变化：ExpensiveCatalog catalog() { 使用表达式中的具体参数完成本次调用。
-    // 作用：用于推迟昂贵 Bean 的实例化或打破经过评估的初始化时序，但不能把它当成循环依赖的通用修复。
         return new ExpensiveCatalog();
+        // 关键变化：return new ExpensiveCatalog();；当前对象.Lazy() 完成本例中的具体调用，后续语句观察调用后的状态。
+        // 输入：return new ExpensiveCatalog(); 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
     }
 }
 
 try (var context = new AnnotationConfigApplicationContext()) {
+// 关键变化：try (var context = new AnnotationConfigApplicationContext()) {；当前对象；try；当前对象.try(var context = new AnnotationConfigApplicationContext()) 返回本次调用的具体结果，后续语句继续使用该值。
     context.register(LazyConfiguration.class);
+    // 关键变化：context.register(LazyConfiguration.class);；context；register；context.register(LazyConfiguration.class) 改变当前资源或任务状态，后续步骤观察这一变化。
     context.refresh();
+    // 关键变化：context.refresh()；context.refresh() 完成本例中的具体调用，后续语句观察调用后的状态。
     System.out.println("refreshed");
     // 输出：refreshed
     System.out.println("lazy=" + context.getBean(ExpensiveCatalog.class).name());
@@ -310,17 +317,23 @@ import org.springframework.context.annotation.Primary;
 interface Notifier {
 // 初始状态：@Primary 标记 systemClockNotifier，容器中另有 backupClockNotifier。
     String channel();
+    // 关键变化：String channel();；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：String channel(); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 
 class AlertService {
     private final Notifier notifier;
 
     AlertService(Notifier notifier) {
+    // 关键变化：AlertService(Notifier notifier) {；当前对象；AlertService；当前对象.AlertService(Notifier notifier) 返回本次调用的具体结果，后续语句继续使用该值。
         this.notifier = notifier;
+        // 关键变化：this.notifier = notifier;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 
     String selectedChannel() {
+    // 关键变化：String selectedChannel() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return notifier.channel();
+        // 关键变化：return notifier.channel()；notifier.channel() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 }
 
@@ -329,23 +342,30 @@ class PrimaryConfiguration {
     @Bean
     @Primary
     Notifier systemClockNotifier() {
+    // 关键变化：Notifier systemClockNotifier() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 输入：表达式为 @Primary。
-// // 关键变化：Notifier systemClockNotifier() { 使用表达式中的具体参数完成本次调用。
         return () -> "system-clock";
+        // 关键变化：return () -> "system-clock";；当前对象.return() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 
     @Bean
     Notifier backupClockNotifier() {
+    // 关键变化：Notifier backupClockNotifier() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return () -> "backup-clock";
+        // 关键变化：return () -> "backup-clock";；当前对象.return() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 
     @Bean
     AlertService alertService(Notifier notifier) {
+    // 关键变化：AlertService alertService(Notifier notifier) {；当前对象；该操作；当前对象.该操作(Notifier notifier) 返回本次调用的具体结果，后续语句继续使用该值。
         return new AlertService(notifier);
+        // 关键变化：return new AlertService(notifier);；当前对象.Primary(notifier) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：return new AlertService(notifier); 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
     }
 }
 
 try (var context = new AnnotationConfigApplicationContext(PrimaryConfiguration.class)) {
+// 关键变化：try (var context = new AnnotationConfigApplicationContext(PrimaryConfiguration.class)) {；当前对象；try；当前对象.try(var context = new AnnotationConfigApplicationContext(PrimaryConfiguration.class)) 返回本次调用的具体结果，后续语句继续使用该值。
     System.out.println(context.getBean(Notifier.class).channel());
     // 输出：system-clock
     System.out.println(context.getBean(AlertService.class).selectedChannel());
@@ -368,12 +388,13 @@ class BillingService {
     private final Clock clock;
     @Autowired
     BillingService(Clock clock) {
+    // 关键变化：BillingService(Clock clock) {；当前对象；BillingService；当前对象.BillingService(Clock clock) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 @Autowired。
-    // 作用：@Autowired 按类型解析依赖；新代码优先用单构造器注入，避免隐藏必需依赖。
-    // 作用：通过 @Autowired 旧代码的按类型注入。
         this.clock = clock;
+        // 关键变化：this.clock = clock;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
     Instant now() { return clock.instant(); }
+    // 关键变化：Instant now() { return clock.instant(); }；clock.instant() 完成本例中的具体调用，后续语句观察调用后的状态。
 }
 ```
 
@@ -389,8 +410,8 @@ class BillingService {
 class UploadLimits {
     private final long maxBytes;
     UploadLimits(@Value("${app.upload.max-bytes:10485760}") long maxBytes) {
+    // 关键变化：UploadLimits(@Value("${app.upload.max-bytes:10485760}") long maxBytes) {；当前对象；UploadLimits；当前对象.UploadLimits(@Value("${app.upload.max-bytes:10485760}") long maxBytes) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 UploadLimits(@Value("${app.upload.max-bytes:10485760}") long maxBytes) {。
-    // 作用：通过 @Value 注入单个配置值。
         this.maxBytes = maxBytes;
     }
     boolean accepts(long size) {
@@ -411,10 +432,10 @@ class UploadLimits {
 class AuditConfiguration {
     @Bean
     @ConditionalOnProperty(name = "app.audit.enabled", havingValue = "true")
+    // 关键变化：@ConditionalOnProperty(name = "app.audit.enabled", havingValue = "true")；注解参数 name = "app.audit.enabled" 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@ConditionalOnProperty(name = "app.audit.enabled", havingValue = "true") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     AuditSink auditSink() {
 // 输入：name 的初始值为 "app.audit.enabled", havingValue = "true")。
-    // 作用：@ConditionalOnProperty 只决定 Bean 是否注册；不要把它当成运行期功能开关。
-    // 作用：通过 @ConditionalOnProperty 按开关装配 Bean。
         return event -> System.out.println(event);
 // 输出：System.out 调用参数为 event。
     }
@@ -435,8 +456,8 @@ public class DemoApplication {
     public static void main(String[] args) {
         ConfigurableApplicationContext context =
             SpringApplication.run(DemoApplication.class, args);
+            // 关键变化：SpringApplication.run(DemoApplication.class, args);；SpringApplication；run；SpringApplication.run(DemoApplication.class) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 SpringApplication.run(DemoApplication.class, args)。
-            // 作用：通过 SpringApplication.run 启动并取得容器。
         String id = context.getId();
         System.out.println(id);
 // 输出：System.out 调用参数为 id。
@@ -456,11 +477,10 @@ public class DemoApplication {
 class FilterConfiguration {
     @Bean
     FilterRegistrationBean<RequestIdFilter> requestIdFilter() {
-    // 作用：通过 FilterRegistrationBean 以 Bean 方式注册 Servlet Filter。
         FilterRegistrationBean<RequestIdFilter> bean =
             new FilterRegistrationBean<>(new RequestIdFilter());
 // 输入：表达式为 new FilterRegistrationBean<>(new RequestIdFilter())。
-            // 作用：FilterRegistrationBean 用于非 Spring Security 的 Servlet Filter；安全链内的过滤器应由 SecurityFilterChain 排序。
+            // 关键变化：new FilterRegistrationBean<>(new RequestIdFilter());；当前对象；该操作；当前对象.该操作(new RequestIdFilter()) 返回本次调用的具体结果，后续语句继续使用该值。
         bean.setOrder(10);
         return bean;
     }
@@ -479,10 +499,11 @@ class FilterConfiguration {
 FilterRegistrationBean<RequestIdFilter> apiFilter() {
     FilterRegistrationBean<RequestIdFilter> bean =
         new FilterRegistrationBean<>();
+        // 关键变化：new FilterRegistrationBean<>();；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         // 初始状态：bean 当前保存 new FilterRegistrationBean<>()的计算结果。
     bean.setFilter(new RequestIdFilter());
     bean.addUrlPatterns("/api/*");
-    // 作用：通过 FilterRegistrationBean.addUrlPatterns 限制 Filter 映射。
+    // 关键变化：bean.addUrlPatterns("/api/*");；bean；addUrlPatterns；bean.addUrlPatterns("/api/*") 返回本次调用的具体结果，后续语句继续使用该值。
     bean.setName("requestIdFilter");
     return bean;
 }
@@ -500,13 +521,16 @@ FilterRegistrationBean<RequestIdFilter> apiFilter() {
 @EnableCaching
 class CacheConfiguration {
 // 输入：表达式为 @EnableCaching。
-// 作用：@EnableCaching 启用 @Cacheable 等注解的代理处理；同类自调用仍会绕过代理。
-// 作用：通过 @EnableCaching 开启 Spring 缓存代理。
     @Bean
     CacheManager cacheManager() {
+    // 关键变化：CacheManager cacheManager() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：CacheManager cacheManager() { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         return new ConcurrentMapCacheManager("users");
+        // 关键变化：return new ConcurrentMapCacheManager("users");；当前对象.EnableCaching("users") 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：return new ConcurrentMapCacheManager("users"); 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
     }
     String configuredCache() { return "users"; }
+    // 关键变化：String configuredCache() { return "users"; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 }
 ```
 
@@ -520,10 +544,10 @@ class CacheConfiguration {
 // 结果：未配置 `gen.author` 时，`author()` 返回 `team`。
 @Configuration
 @PropertySource("classpath:generator.properties")
+// 关键变化：@PropertySource("classpath:generator.properties")；注解参数 "classpath:generator.properties" 绑定到声明位置，框架或反射按该配置处理声明。
+// 输入：@PropertySource("classpath:generator.properties") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 class GeneratorConfiguration {
 // 输入：表达式为 @PropertySource("classpath:generator.properties")。
-// 作用：@PropertySource 适合补充 .properties 文件；它不直接支持 YAML，也不应覆盖 Boot 的常规配置约定。
-// 作用：通过 @PropertySource 引入额外 properties 资源。
     private final Environment environment;
     GeneratorConfiguration(Environment environment) {
         this.environment = environment;
@@ -543,14 +567,15 @@ class GeneratorConfiguration {
 @Component
 class CaptchaFacade {
     @Resource(name = "stringRedisTemplate")
+    // 关键变化：@Resource(name = "stringRedisTemplate")；注解参数 name = "stringRedisTemplate" 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@Resource(name = "stringRedisTemplate") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     private StringRedisTemplate redis;
 // 输入：name 的初始值为 "stringRedisTemplate")。
-    // 作用：@Resource 默认先按名称匹配，适合需要明确 Bean 名的旧代码；必需依赖仍优先构造器注入。
-    // 作用：通过 @Resource 按名称优先注入。
     void save(String key, String value) {
         redis.opsForValue().set(key, value);
     }
     boolean ready() { return redis != null; }
+    // 输入：boolean ready() { return redis != null; } 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
 }
 ```
 

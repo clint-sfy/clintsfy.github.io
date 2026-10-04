@@ -62,6 +62,7 @@ System.out.println(fromMillis);
 Instant epoch = Instant.ofEpochMilli(0);
 // 初始状态：Instant.ofEpochMilli 把 0 按 Unix 纪元后的毫秒数解释，并将对应时刻写入 epoch。
 // 结果：epoch 为 1970-01-01T00:00:00Z
+// 关键变化：Instant epoch = Instant.ofEpochMilli(0); 的返回值写入 epoch，调用后 epoch 保存该具体结果。
 ```
 
 ### `Instant.atZone`：按区域显示 Instant
@@ -138,12 +139,13 @@ import java.time.Duration;
 import java.time.Instant;
 
 Instant start = Instant.parse("2026-09-27T01:30:00Z");
+// 关键变化：Instant start = Instant.parse("2026-09-27T01:30:00Z")；Instant.parse("2026-09-27T01:30:00Z") 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：start 当前为 Instant.parse("2026-09-27T01:30:00Z")。
 Instant end = start.plusSeconds(90);
+// 关键变化：Instant end = start.plusSeconds(90)；end 接收 plusSeconds(90) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：end 当前为 start.plusSeconds(90)。
 System.out.println(Duration.between(start, end).toSeconds());
 // 输出：90
-// 作用：Duration 适合超时、耗时和倒计时。
 ```
 
 ### `Period.between`：计算日历周期
@@ -155,12 +157,13 @@ import java.time.LocalDate;
 import java.time.Period;
 
 var birth = LocalDate.of(2000, 9, 27);
+// 关键变化：var birth = LocalDate.of(2000, 9, 27)；LocalDate.of(2000) 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：birth 当前为 LocalDate.of(2000, 9, 27)。
 var date = LocalDate.of(2026, 9, 27);
+// 关键变化：var date = LocalDate.of(2026, 9, 27)；LocalDate.of(2026) 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：date 当前为 LocalDate.of(2026, 9, 27)。
 System.out.println(Period.between(birth, date).getYears());
 // 输出：26
-// 作用：Period 按年、月、日计算生日、账期等日历语义。
 ```
 
 ### `Clock.fixed`：在测试中固定当前时间
@@ -204,9 +207,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 LocalDateTime input = LocalDateTime.of(2026, 9, 27, 9, 30);
-// 关键变化：input 接收表达式 LocalDateTime.of(2026, 9, 27, 9, 30) 的计算结果。
+// 关键变化：LocalDateTime input = LocalDateTime.of(2026, 9, 27, 9, 30)；LocalDateTime.of(2026) 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：input 的初始值为 LocalDateTime.of(2026, 9, 27, 9, 30)。
 var instant = input.atZone(ZoneId.of("Asia/Shanghai")).toInstant();
+// 关键变化：var instant = input.atZone(ZoneId.of("Asia/Shanghai")).toInstant()；instant 接收 atZone(ZoneId.of("Asia/Shanghai")) 的返回值，当前值变为这次调用得到的具体结果。
 System.out.println(instant);
 // 输出：2026-09-27T01:30:00Z
 ```
@@ -220,8 +224,8 @@ System.out.println(instant);
 import java.time.OffsetDateTime;
 
 var value = OffsetDateTime.parse("2026-09-27T09:30:00+08:00");
+// 关键变化：var value = OffsetDateTime.parse("2026-09-27T09:30:00+08:00")；OffsetDateTime.parse("2026-09-27T09:30:00+08:00") 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：value 当前为 OffsetDateTime.parse("2026-09-27T09:30:00+08:00")。
-// 作用：通过 ZoneOffset 解析固定偏移。
 System.out.println(value.toInstant());
 // 输出：2026-09-27T01:30:00Z
 ```
@@ -235,10 +239,10 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 var value = ZonedDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneId.of("Asia/Shanghai"));
+// 关键变化：var value = ZonedDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneId.of("Asia/Shanghai"))；ZonedDateTime.of(2026) 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：value 当前为 ZonedDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneId.of("Asia/Shanghai"))。
 System.out.println(value.withFixedOffsetZone());
 // 输出：2026-09-27T09:30+08:00
-// 作用：通过 withFixedOffsetZone 保留当前偏移而去掉区域规则。
 ```
 
 ### `Clock.offset`：在基准时钟上增加固定偏移
@@ -267,6 +271,7 @@ System.out.println(Instant.now(shifted));
 Clock minuteClock = Clock.tick(Clock.systemUTC(), Duration.ofMinutes(1));
 // 初始状态：Clock.tick 包装 Clock.systemUTC() 并使用 Duration.ofMinutes(1)，minuteClock 的读数因此以整分钟为节拍变化。
 // 结果：minuteClock.instant() 只在整分钟边界变化
+// 关键变化：Clock minuteClock = Clock.tick(Clock.systemUTC(), Duration.ofMinutes(1)); 的返回值写入 minuteClock，调用后 minuteClock 保存该具体结果。
 ```
 
 ### `ZoneRules`：观察夏令时规则
@@ -278,7 +283,8 @@ import java.time.ZoneId;
 import java.time.zone.ZoneRules;
 
 ZoneRules rules = ZoneId.of("Europe/Paris").getRules();
-// 作用：通过 ZoneRules 观察夏令时规则。
+// 关键变化：ZoneRules rules = ZoneId.of("Europe/Paris").getRules()；ZoneId.of("Europe/Paris") 返回转换后的具体值，赋给当前示例中的接收变量。
+// 输入：ZoneRules rules = ZoneId.of("Europe/Paris").getRules(); 使用语句中的具体实参或初始值，rules 从这里进入后续操作。
 System.out.println(rules.isFixedOffset());
 // 输出：false
 ```
@@ -296,6 +302,7 @@ var local = LocalDateTime.of(2026, 10, 25, 2, 30);
 // 初始状态：local 的初始值为 LocalDateTime.of(2026, 10, 25, 2, 30)。
 // 作用：夏令时回拨时同一墙上时间可能对应两个偏移；预约系统应明确选择早/晚偏移或直接要求用户输入偏移。
 var value = local.atZone(ZoneId.of("Europe/Paris"));
+// 关键变化：var value = local.atZone(ZoneId.of("Europe/Paris")); 将返回值写入 value；value 现在保存该具体结果。
 System.out.println(value.getOffset());
 // 输出：+02:00 或 +01:00（取决于时区规则）
 ```

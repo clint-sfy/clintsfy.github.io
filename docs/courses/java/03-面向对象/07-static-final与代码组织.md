@@ -51,8 +51,9 @@ class Sequence {
     // 初始状态：next 当前为 1。
 
     static int nextValue() {
-    // 作用：静态字段只有一份，所有实例共享；并发计数器要使用合适的同步或原子类型，不能把普通 ++ 当成线程安全操作。
+    // 关键变化：static int nextValue() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return next++;
+        // 关键变化：return next++; 使 return next 在当前值基础上递增 1。
     }
 }
 
@@ -68,7 +69,8 @@ System.out.println(Sequence.nextValue() + ", " + Sequence.nextValue());
 // 输入：Texts.quote("Java") 通过类名调用 static 方法，将 value 包在 "[" 和 "]" 之间。
 class Texts {
     static String quote(String value) {
-    // 作用：静态方法通过类名调用，不能直接访问实例字段；如果行为要替换或依赖对象状态，应考虑实例方法和接口。
+    // 关键变化：static String quote(String value) {；当前对象；该操作；当前对象.该操作(String value) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：static String quote(String value) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         return "[" + value + "]";
     }
 }
@@ -85,9 +87,8 @@ System.out.println(Texts.quote("Java"));
 // 语义：常量名通常使用大写下划线。
 // 初始状态：MAX_RETRY 初始为 3。
 class Limits {
-// 作用：常量名通常使用大写下划线；值应稳定且不依赖可变运行时状态，配置项不要伪装成编译期常量。
     static final int MAX_RETRY = 3;
-// 关键变化：MAX_RETRY 接收右侧表达式 3 的计算结果。
+    // 关键变化：static final int MAX_RETRY = 3；MAX_RETRY 取右侧具体表达式的值，当前状态变为 3。
 // 初始状态：MAX_RETRY 的初始值为 3。
 }
 
@@ -119,11 +120,14 @@ class User {
     private final String id;
 
     User(String id) {
-    // 作用：final 字段必须在声明处、初始化块或每个构造器路径赋值；它能固定引用，但引用指向的对象仍可能可变。
+    // 关键变化：User(String id) {；当前对象；User；当前对象.User(String id) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：User(String id) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         this.id = id;
+        // 关键变化：this.id = id;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 
     String id() {
+    // 关键变化：String id() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return id;
     }
 }
@@ -140,12 +144,14 @@ System.out.println(new User("U-1").id());
 // 语义：引用不能重新指向另一个列表，但列表内容仍可修改。
 // 初始状态：names 初始为 new ArrayList<>()。
 import java.util.ArrayList;
+// 输入：// 初始状态：names 初始为 new ArrayList<>()。 import java.util.ArrayList; 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 import java.util.List;
 
 final List<String> names = new ArrayList<>();
 // 初始状态：names 的初始值为 new ArrayList<>()。
 // 作用：引用不能重新指向另一个列表，但列表内容仍可修改；需要不可变结果时用 List.copyOf 或防御性复制。
 names.add("Ann");
+// 关键变化：names.add("Ann");；names 追加具体参数 "Ann"，容器内容随之增长。
 System.out.println(names);
 // 输出：[Ann]
 ```
@@ -158,7 +164,8 @@ System.out.println(names);
 // 说明：Template.run 被声明为 final，子类不能重写这个返回 "fixed" 的方法。
 class Template {
     final String run() {
-    // 作用：final 方法适合固定算法骨架或安全不变式；可变步骤可以委托给受控的私有/抽象方法。
+    // 关键变化：final String run() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：final String run() { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         return "fixed";
     }
 }
@@ -177,11 +184,14 @@ final class Token {
     private final String value;
 
     Token(String value) {
-    // 作用：final 类可避免被扩展破坏不变式，但不自动保证字段对象深层不可变；设计时仍要处理可变引用和公开 API。
+    // 关键变化：Token(String value) {；当前对象；Token；当前对象.Token(String value) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：Token(String value) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         this.value = value;
+        // 关键变化：this.value = value;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 
     String value() {
+    // 关键变化：String value() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return value;
     }
 }
@@ -239,6 +249,8 @@ System.out.println(Registry.name);
 ```java
 // 说明：import static java.lang.Math.max 后，max(3, 5) 无需 Math. 前缀即可返回较大值 5。
 import static java.lang.Math.max;
+// 关键变化：// 说明：import static java.lang.Math.max 后，max(3, 5) 无需 Math. 前缀即可返回较大值 5。 import static java.lang.Math.max;；当前对象.static(3) 返回本次调用的具体结果，后续语句继续使用该值。
+
 
 System.out.println(max(3, 5));
 // 输出：5
@@ -251,7 +263,8 @@ System.out.println(max(3, 5));
 ```java
 // 输入：doubleValue 收到 final 参数 value=21，方法内不能将 value 重新赋值。
 static int doubleValue(final int value) {
-// 作用：参数 final 只限制方法体内重新赋值，不改变调用者传入对象的可变性；团队可按代码风格选择是否广泛使用。
+// 关键变化：static int doubleValue(final int value) {；当前对象；该操作；当前对象.该操作(final int value) 返回本次调用的具体结果，后续语句继续使用该值。
+// 输入：static int doubleValue(final int value) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     return value * 2;
 }
 
@@ -273,6 +286,7 @@ static final List<String> ROLES = new ArrayList<>(List.of("reader"));
 // 作用：常量引用指向可变集合时仍能修改内容；公开共享集合应使用 List.of、Set.of 或不可变视图，并在文档中说明线程安全。
 
 ROLES.add("writer");
+// 关键变化：ROLES.add("writer");；ROLES 追加具体参数 "writer"，容器内容随之增长。
 System.out.println(ROLES);
 // 输出：[reader, writer]
 ```
@@ -290,6 +304,7 @@ final List<String> values = new ArrayList<>();
 // 初始状态：values 的初始值为 new ArrayList<>()。
 // 作用：final 不阻止引用指向的具体实现执行可变操作；若要限制替换实现、扩展和状态变化，需要分别使用 final 类、接口契约和不可变数据结构。
 values.add("ok");
+// 关键变化：values.add("ok");；values 追加具体参数 "ok"，容器内容随之增长。
 System.out.println(values.get(0));
 // 输出：ok
 ```

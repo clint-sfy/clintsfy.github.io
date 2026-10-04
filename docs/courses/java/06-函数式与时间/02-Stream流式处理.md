@@ -60,7 +60,8 @@ System.out.println(fromCollection + ", " + fromValues);
 ```java
 long fromValues = Stream.of("Java", "SQL").count();
 // 初始状态：Stream.of 把显式字符串 "Java" 和 "SQL" 作为两个流元素，count() 将它们计入 fromValues。
-// 结果：fromValues 为 2
+// 关键变化：long fromValues = Stream.of("Java", "SQL").count(); 将返回值写入 fromValues；fromValues 现在保存该具体结果。
+// 结果：fromValues 保存两个显式元素的计数 2。
 ```
 
 ### `filter`：保留满足条件的元素
@@ -75,9 +76,8 @@ import java.util.List;
 List<Integer> result = List.of(1, 2, 3, 4).stream()
         .filter(number -> number % 2 == 0)
         .toList();
+        // 关键变化：.filter(number -> number % 2 == 0) .toList();；当前对象；filter；当前对象.filter(number -> number % 2 == 0) 处理当前元素流并得到对应结果。
         // 初始状态：result 当前保存 List.of(1, 2, 3, 4).stream() .filter(number -> number % 2 == 0) .toList()的计算结果。
-        // 作用：filter 不改变源集合，多个条件可以串联；谓词应尽量无副作用。
-        // 作用：通过 filter 保留满足条件的元素。
 System.out.println(result);
 // 输出：[2, 4]
 ```
@@ -94,9 +94,8 @@ import java.util.List;
 List<String> labels = List.of("java", "sql").stream()
         .map(String::toUpperCase)
         .toList();
+        // 关键变化：.map(String::toUpperCase) .toList();；当前对象；map；当前对象.map(String::toUpperCase) 处理当前元素流并得到对应结果。
         // 初始状态：labels 当前保存 List.of("java", "sql").stream() .map(String::toUpperCase) .toList()的计算结果。
-        // 作用：每个输入对应一个输出，适合字段提取和类型转换；一对多转换不要硬塞进 map。
-        // 作用：通过 map 一进一出的转换。
 System.out.println(labels);
 // 输出：[JAVA, SQL]
 ```
@@ -144,9 +143,8 @@ import java.util.List;
 List<String> sorted = List.of("Java", "C", "Go").stream()
         .sorted(Comparator.comparingInt(String::length).thenComparing(String::compareTo))
         .toList();
+        // 关键变化：.sorted(Comparator.comparingInt(String::length).thenComparing(String::compareTo)) .toList();；当前对象；sorted；当前对象.sorted(Comparator.comparingInt(String::length).thenComparing(String::compareTo)) 处理当前元素流并得到对应结果。
         // 初始状态：sorted 当前保存 List.of("Java", "C", "Go").stream() .sorted(Comparator.comparingInt(String::length).thenComparing(String::compareTo)) .toList()的计算结果。
-        // 作用：排序是有状态操作，可能需要缓存全部元素；比较器必须与业务排序规则一致。
-        // 作用：通过 sorted 排序流元素。
 System.out.println(sorted);
 // 输出：[C, Go, Java]
 ```
@@ -163,9 +161,8 @@ import java.util.List;
 List<Integer> firstThree = List.of(1, 2, 3, 4, 5).stream()
         .limit(3)
         .toList();
+        // 关键变化：.limit(3) .toList();；当前对象；limit；当前对象.limit(3) 处理当前元素流并得到对应结果。
         // 初始状态：firstThree 当前保存 List.of(1, 2, 3, 4, 5).stream() .limit(3) .toList()的计算结果。
-        // 作用：limit 截断流并保留最多 N 个元素，依赖“前几个”语义时要先确定稳定顺序。
-        // 作用：通过 limit 只取前 N 个元素。
 
 System.out.println(firstThree);
 // 输出：[1, 2, 3]
@@ -183,9 +180,8 @@ import java.util.List;
 List<Integer> remaining = List.of(1, 2, 3, 4, 5).stream()
         .skip(2)
         .toList();
+        // 关键变化：.skip(2) .toList();；当前对象；skip；当前对象.skip(2) 处理当前元素流并得到对应结果。
         // 初始状态：remaining 当前保存 List.of(1, 2, 3, 4, 5).stream() .skip(2) .toList()的计算结果。
-        // 作用：skip 丢弃前 N 个元素，常用于偏移读取；用于分页时仍需先建立稳定排序。
-        // 作用：通过 skip 跳过前 N 个元素。
 
 System.out.println(remaining);
 // 输出：[3, 4, 5]
@@ -205,8 +201,7 @@ List<Integer> result = List.of(1, 2, 3).stream()
         .peek(number -> trace.add("read=" + number))
         .map(number -> number * 2)
         .toList();
-        // 作用：peek 仍然是惰性的，只有终止操作触发才会执行；生产逻辑不要依赖它完成关键副作用。
-        // 作用：peek 仍然是惰性的，只有终止操作触发才会执行。
+        // 关键变化：.peek(number -> trace.add("read=" + number)) .map(number -> number * 2) .toList();；对经过的元素执行观察动作 number -> trace.add("read=" + number)，元素本身保持不变。
 System.out.println(trace);
 // 输出：[read=1, read=2, read=3]
 System.out.println(result);
@@ -238,7 +233,7 @@ List<Integer> numbers = List.of(2, 4, 6);
 // 初始状态：numbers 当前为 List.of(2, 4, 6)。
 boolean allEven = numbers.stream()
         .allMatch(number -> number % 2 == 0);
-        // 作用：allMatch 遇到第一个不匹配元素就短路，空流会返回 true。
+        // 关键变化：.allMatch(number -> number % 2 == 0);；当前对象；allMatch；当前对象.allMatch(number -> number % 2 == 0) 处理当前元素流并得到对应结果。
 
 System.out.println(allEven);
 // 输出：true
@@ -255,7 +250,7 @@ List<Integer> numbers = List.of(2, 4, 6);
 // 初始状态：numbers 当前为 List.of(2, 4, 6)。
 boolean hasLargeValue = numbers.stream()
         .anyMatch(number -> number > 5);
-        // 作用：anyMatch 遇到第一个匹配元素就短路，适合存在性检查。
+        // 关键变化：.anyMatch(number -> number > 5);；当前对象；anyMatch；当前对象.anyMatch(number -> number > 5) 处理当前元素流并得到对应结果。
 
 System.out.println(hasLargeValue);
 // 输出：true
@@ -272,7 +267,7 @@ List<Integer> numbers = List.of(2, 4, 6);
 // 初始状态：numbers 当前为 List.of(2, 4, 6)。
 boolean hasNoNegative = numbers.stream()
         .noneMatch(number -> number < 0);
-        // 作用：noneMatch 遇到第一个匹配元素就返回 false，空流会返回 true。
+        // 关键变化：.noneMatch(number -> number < 0);；当前对象；noneMatch；当前对象.noneMatch(number -> number < 0) 处理当前元素流并得到对应结果。
 
 System.out.println(hasNoNegative);
 // 输出：true
@@ -292,8 +287,7 @@ String first = List.of("a", "b", "c").stream()
         .findFirst()
         .orElse("none");
         // 初始状态：first 当前保存 List.of("a", "b", "c").stream() .filter(text -> !text.isBlank()) .findFirst() .orElse("none")的计算结果。
-        // 作用：findFirst 保留流的遇到顺序，并用 Optional 表达空流没有结果。
-        // 作用：通过 findFirst 查找遇到顺序中的首个元素。
+        // 关键变化：.findFirst() .orElse("none");；当前对象.findFirst(当前参数) 处理当前元素流并得到对应结果。
 System.out.println(first);
 // 输出：a
 ```
@@ -312,8 +306,7 @@ String any = List.of("a", "b", "c").parallelStream()
         .findAny()
         .orElse("none");
         // 初始状态：any 当前保存 List.of("a", "b", "c").parallelStream() .filter(text -> !text.isBlank()) .findAny() .orElse("none")的计算结果。
-        // 作用：findAny 不承诺返回哪个匹配元素，更适合不关心顺序的并行查询。
-        // 作用：通过 findAny 查找任意一个元素。
+        // 关键变化：.findAny() .orElse("none");；当前对象.findAny(当前参数) 处理当前元素流并得到对应结果。
 System.out.println(List.of("a", "b", "c").contains(any));
 // 输出：true
 ```
@@ -330,9 +323,8 @@ List<String> names = List.of("Ann", "Bob");
 names.stream()
         .map(String::toUpperCase)
         .forEach(System.out::println);
-        // 作用：forEach 适合末端通知或打印。
-// 输出：ANN
-// 输出：BOB
+        // 关键变化：.forEach(System.out::println);；当前对象；forEach；当前对象.forEach(System.out::println) 处理当前元素流并得到对应结果。
+// 结果：forEach 依次输出转换后的 "ANN" 和 "BOB"。
 ```
 
 ### `forEachOrdered`：按遇到顺序执行动作
@@ -347,10 +339,8 @@ List<Integer> numbers = List.of(1, 2, 3);
 numbers.parallelStream()
         .map(number -> number * 10)
         .forEachOrdered(System.out::println);
-        // 作用：forEachOrdered 在并行流中仍保留遇到顺序，但顺序约束可能降低并行收益。
-// 输出：10
-// 输出：20
-// 输出：30
+        // 关键变化：.forEachOrdered(System.out::println);；当前对象；forEachOrdered；当前对象.forEachOrdered(System.out::println) 处理当前元素流并得到对应结果。
+// 结果：forEachOrdered 按遇到顺序输出 10、20、30。
 ```
 
 ### `toList`：得到不可变结果列表
@@ -378,8 +368,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 var values = List.of("a", "b").stream()
         .collect(Collectors.toList());
+        // 关键变化：.collect(Collectors.toList());；当前对象；collect；当前对象.collect(Collectors.toList()) 处理当前元素流并得到对应结果。
         // 初始状态：values 当前保存 List.of("a", "b").stream() .collect(Collectors.toList())的计算结果。
-        // 作用：通过 Collectors.toList 收集为可变列表。
 values.add("c");
 System.out.println(values);
 // 输出：[a, b, c]
@@ -396,8 +386,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 var values = List.of("a", "a", "b").stream()
         .collect(Collectors.toSet());
+        // 关键变化：.collect(Collectors.toSet());；当前对象；collect；当前对象.collect(Collectors.toSet()) 处理当前元素流并得到对应结果。
         // 初始状态：values 当前保存 List.of("a", "a", "b").stream() .collect(Collectors.toSet())的计算结果。
-        // 作用：通过 Collectors.toSet 收集并去重。
 System.out.println(values.size());
 // 输出：2、true
 System.out.println(values.containsAll(List.of("a", "b")));
@@ -416,9 +406,8 @@ import java.util.stream.Collectors;
 var lengths = List.of("aa", "ab", "b").stream()
         .collect(Collectors.toMap(String::length, s -> s,
                 (left, right) -> left + "," + right));
+        // 关键变化：.collect(Collectors.toMap(String::length, s -> s, (left, right) -> left + "," + right));；当前对象；collect；当前对象.collect(Collectors.toMap(String::length, s -> s, (left, right) -> left + "," + right)) 处理当前元素流并得到对应结果。
                 // 初始状态：lengths 当前保存 List.of("aa", "ab", "b").stream() .collect(Collectors.toMap(String::length, s -> s, (left, right) -> left + "," + right))的计算结果。
-                // 作用：键可能重复时必须提供合并函数，否则收集会抛出异常。
-                // 作用：通过 Collectors.toMap 按键和值构造映射。
 System.out.println(lengths);
 // 输出：{1=b, 2=aa,ab}
 ```
@@ -434,8 +423,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 String text = List.of("java", "sql").stream()
         .collect(Collectors.joining(", ", "[", "]"));
+        // 关键变化：.collect(Collectors.joining(", ", "[", "]"));；当前对象；collect；当前对象.collect(Collectors.joining(", ", "[", "]")) 处理当前元素流并得到对应结果。
         // 初始状态：text 当前保存 List.of("java", "sql").stream() .collect(Collectors.joining(", ", "[", "]"))的计算结果。
-        // 作用：通过 Collectors.joining 拼接文本。
 System.out.println(text);
 // 输出：[java, sql]
 ```
@@ -451,8 +440,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 var groups = List.of("a", "bb", "c").stream()
         .collect(Collectors.groupingBy(String::length));
+        // 关键变化：.collect(Collectors.groupingBy(String::length));；当前对象；collect；当前对象.collect(Collectors.groupingBy(String::length)) 处理当前元素流并得到对应结果。
         // 初始状态：groups 当前保存 List.of("a", "bb", "c").stream() .collect(Collectors.groupingBy(String::length))的计算结果。
-        // 作用：通过 Collectors.groupingBy 按分类键分组。
 System.out.println(groups.get(1));
 // 输出：[a, c]、[bb]
 System.out.println(groups.get(2));
@@ -494,7 +483,7 @@ import java.util.List;
 List<Integer> target = new ArrayList<>();
 // 初始状态：target 的初始值为 new ArrayList<>()。
 List.of(1, 2, 3).stream().forEach(target::add);
-// // 关键变化：List.of(1, 2, 3).stream().forEach(target::add) 使用表达式中的具体参数完成本次调用。
+// 关键变化：List.of(1, 2, 3).stream().forEach(target::add);；List；of；List.of(1) 返回转换后的具体值，赋给当前示例中的接收变量。
 System.out.println(target.size());
 // 输出：3
 ```
@@ -509,9 +498,8 @@ import java.util.List;
 long count = List.of(1, 2, 3, 4).parallelStream()
         .filter(number -> number % 2 == 0)
         .count();
+// 关键变化：long count = List.of(1, 2, 3, 4).parallelStream() .filter(number -> number % 2 == 0) .count()；List.of(1) 返回转换后的具体值，赋给当前示例中的接收变量。
 // 输入：count 的初始值为 List.of(1, 2, 3, 4).parallelStream()。
-        // 作用：并行不等于更快；小数据、阻塞 I/O、顺序敏感和共享状态场景通常应保持串行，并用基准测试验证收益。
-        // 作用：通过 Collection.parallelStream 从集合创建并行流。
 System.out.println(count);
 // 输出：2
 ```
@@ -523,7 +511,7 @@ System.out.println(count);
 ```java
 // 关键变化：Stream.of(1, 2, 3) 初始为顺序流，parallel() 把管道标记为并行，所以 isParallel() 写入 true。
 boolean parallel = Stream.of(1, 2, 3).parallel().isParallel();
-// 返回：parallel 接收 Stream.of(1, 2, 3).parallel().isParallel() 的返回值。
+// 关键变化：boolean parallel = Stream.of(1, 2, 3).parallel().isParallel(); 将返回值写入 parallel；parallel 现在保存该具体结果。
 // 输入：parallel 的初始值为 Stream.of(1, 2, 3).parallel().isParallel()。
 // 结果：parallel 为 true
 ```
@@ -554,7 +542,7 @@ import java.util.stream.Stream;
 List<String> events = new ArrayList<>();
 // 初始状态：events 当前为 new ArrayList<>()。
 try (Stream<String> stream = Stream.of("a").onClose(() -> events.add("closed"))) {
-// 作用：通过 BaseStream.onClose 注册流关闭处理器。
+// 关键变化：try (Stream<String> stream = Stream.of("a").onClose(() -> events.add("closed"))) {；当前对象；try；当前对象.try(Stream<String> stream = Stream.of("a").onClose(() -> events.add("closed"))) 返回本次调用的具体结果，后续语句继续使用该值。
     System.out.println(stream.count());
     // 输出：1
 }
@@ -568,9 +556,10 @@ try-with-resources 在代码块结束时调用 `close()`，因此上例注册的
 
 ```java
 try (Stream<String> lines = Files.lines(Path.of("data.txt"))) {
-// 关键变化：lines 接收表达式 Files.lines(Path.of("data.txt"))) { 的计算结果。
+// 关键变化：try (Stream<String> lines = Files.lines(Path.of("data.txt"))) {；当前对象；try；当前对象.try(Stream<String> lines = Files.lines(Path.of("data.txt"))) 返回本次调用的具体结果，后续语句继续使用该值。
 // 初始状态：Files.lines(Path.of("data.txt")) 打开文件并返回 lines，try-with-resources 在离开块时调用 lines.close()。
     lines.findFirst();
+    // 关键变化：lines.findFirst()；lines.findFirst(当前参数) 处理当前元素流并得到对应结果。
 }
 // 结果：离开 try 块时流已关闭
 ```

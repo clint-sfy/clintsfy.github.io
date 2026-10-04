@@ -65,9 +65,10 @@ Runtime 的数值受启动参数和容器限制影响，适合做运行时观测
 ```java
 // 说明：Runtime：观察当前进程的内存上限。
 public class RuntimeMemoryDemo {
-// 作用：Runtime 的数值受启动参数和容器限制影响，适合做运行时观测，不能直接当成“应用实际可用内存”或据此盲目调大堆。
     public static void main(String[] args) {
         Runtime runtime = Runtime.getRuntime();
+        // 关键变化：Runtime runtime = Runtime.getRuntime()；runtime 接收 getRuntime(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
+        // 输入：Runtime runtime = Runtime.getRuntime(); 使用语句中的具体实参或初始值，runtime 从这里进入后续操作。
         System.out.println("processors>0=" + (runtime.availableProcessors() > 0));
         // 输出：processors>0=true
         System.out.println("max>0=" + (runtime.maxMemory() > 0));
@@ -117,7 +118,7 @@ public class ClassForNameDemo {
     public static void main(String[] args) throws ClassNotFoundException {
         Class.forName(Plugin.class.getName(), false, Plugin.class.getClassLoader());
 // 输入：表达式为 Class.forName(Plugin.class.getName(), false, Plugin.class.getClassLoader())。
-        // 作用：Class.forName(name, false, loader) 只加载并链接，不主动初始化；传 true 或直接使用需要初始化的静态成员时才可能执行 <clinit>。
+        // 关键变化：Class.forName(Plugin.class.getName(), false, Plugin.class.getClassLoader());；Class；forName；Class.forName(Plugin.class.getName()) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println("loaded only");
         // 输出：loaded only
     }
@@ -133,9 +134,10 @@ public class ClassForNameDemo {
 ```java
 // 说明：ClassLoader：查看类的定义加载器。
 public class ClassLoaderDemo {
-// 作用：核心类通常由 bootstrap loader 定义，因此 getClassLoader() 返回 null；应用类通常由应用类加载器定义。
     public static void main(String[] args) {
         ClassLoader loader = String.class.getClassLoader();
+        // 关键变化：ClassLoader loader = String.class.getClassLoader()；loader 接收 getClassLoader(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
+        // 输入：ClassLoader loader = String.class.getClassLoader(); 使用语句中的具体实参或初始值，loader 从这里进入后续操作。
         System.out.println(loader == null ? "bootstrap" : loader.getClass().getSimpleName());
         // 输出：bootstrap
     }
@@ -178,10 +180,12 @@ public class ClassInitializationDemo {
 import java.nio.ByteBuffer;
 
 public class DirectMemoryDemo {
-// 作用：直接缓冲区的内容不在普通 Java 堆中，适合与本地 I/O 交互；它仍受本地内存和 MaxDirectMemorySize 等边界影响，忘记释放引用也会造成压力。
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(4);
+        // 关键变化：ByteBuffer buffer = ByteBuffer.allocateDirect(4)；buffer 接收 allocateDirect(4) 的返回值，当前值变为这次调用得到的具体结果。
+        // 输入：ByteBuffer buffer = ByteBuffer.allocateDirect(4); 使用语句中的具体实参或初始值，buffer 从这里进入后续操作。
         buffer.putInt(42).flip();
+        // 关键变化：buffer.putInt(42).flip();；buffer；putInt；buffer.putInt(42) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println(buffer.getInt());
         // 输出：42
     }

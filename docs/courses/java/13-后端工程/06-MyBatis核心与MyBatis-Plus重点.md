@@ -46,9 +46,10 @@ MyBatis-Plus 减少简单 CRUD 的样板，但它仍然需要正确的表映射�
 import org.mybatis.spring.annotation.MapperScan;
 
 @MapperScan("example.persistence")
+// 关键变化：@MapperScan("example.persistence")；注解参数 "example.persistence" 绑定到声明位置，框架或反射按该配置处理声明。
+// 输入：@MapperScan("example.persistence") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 class PersistenceConfig {}
 // 输入：表达式为 @MapperScan("example.persistence")。
-// // 关键变化：class PersistenceConfig {} 使用表达式中的具体参数完成本次调用。
 // 输出：example.persistence 下的 Mapper 接口可被依赖注入。
 // 说明：@MapperScan("com.example.mapper") 为该包下的 Mapper 接口注册代理 Bean；接口无需实现类，直接 new 配置类不会创建 Mapper 代理。
 ```
@@ -62,8 +63,8 @@ import org.apache.ibatis.annotations.Param;
 
 interface UserMapper {
     User find(@Param("tenantId") long tenantId, @Param("userId") long userId);
+    // 关键变化：User find(@Param("tenantId") long tenantId, @Param("userId") long userId);；当前对象；该操作；当前对象.该操作(@Param("tenantId") long tenantId) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 User find(@Param("tenantId") long tenantId, @Param("userId") long userId)。
-// // 关键变化：User find(@Param("tenantId") long tenantId, @Param("userId") long userId) 使用表达式中的具体参数完成本次调用。
 }
 // 输出：XML 可分别使用 #{tenantId} 与 #{userId}。
 // 说明：@Param("status") 与 @Param("limit") 让 XML 用 #{status}、#{limit} 取值；二者作为 PreparedStatement 参数绑定，不是字符串拼接。
@@ -76,7 +77,7 @@ interface UserMapper {
 ```java
 PageHelper.startPage(2, 20);
 // 输入：表达式为 PageHelper.startPage(2, 20)。
-// // 关键变化：PageHelper.startPage(2, 20) 使用表达式中的具体参数完成本次调用。
+// 关键变化：PageHelper.startPage(2, 20);；PageHelper；startPage；PageHelper.startPage(2) 返回本次调用的具体结果，后续语句继续使用该值。
 List<User> users = userMapper.selectAll();
 System.out.println(users.size() <= 20);
 // 输出：true
@@ -94,7 +95,7 @@ String orderBy = switch (sortKey) {
     default -> "id ASC";
 };
 PageHelper.orderBy(orderBy);
-// // 关键变化：PageHelper.orderBy(orderBy) 使用表达式中的具体参数完成本次调用。
+// 关键变化：PageHelper.orderBy(orderBy);；PageHelper；orderBy；PageHelper.orderBy(orderBy) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输出：排序字段只能来自代码白名单。
 // 说明：白名单把请求 sort=name 映射为数据库表达式 user_name asc，再交给 PageHelper.orderBy；原始请求参数不能直接拼入 ORDER BY。
 ```
@@ -110,7 +111,7 @@ try {
 } finally {
     PageHelper.clearPage();
 // 输入：表达式为 PageHelper.clearPage()。
-// // 关键变化：PageHelper.clearPage() 使用表达式中的具体参数完成本次调用。
+    // 关键变化：PageHelper.clearPage()；PageHelper.clearPage() 完成本例中的具体调用，后续语句观察调用后的状态。
 }
 // 输出：当前线程不再保留本次分页参数。
 // 说明：finally 中 PageHelper.clearPage() 删除尚未消费的分页参数，避免线程池复用时把后续 SELECT 误限制为旧页码。
@@ -240,24 +241,33 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 @TableName("app_user")
+// 关键变化：@TableName("app_user")；注解参数 "app_user" 绑定到声明位置，框架或反射按该配置处理声明。
+// 输入：@TableName("app_user") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 class User {
-// // 关键变化：class User { 使用表达式中的具体参数完成本次调用。
     @TableId(type = IdType.AUTO)
+    // 关键变化：@TableId(type = IdType.AUTO)；注解参数 type = IdType.AUTO 绑定到声明位置，框架或反射按该配置处理声明。
     private Long id;
     private String username;
     private String status;
     private java.time.Instant createdAt;
 
     public Long getId() { return id; }
+    // 关键变化：public Long getId() { return id; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     public void setId(Long id) { this.id = id; }
+    // 关键变化：public void setId(Long id) { this.id = id; }；当前对象；该操作；当前对象.该操作(Long id) 返回本次调用的具体结果，后续语句继续使用该值。
     public String getUsername() { return username; }
+    // 关键变化：public String getUsername() { return username; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     public void setUsername(String username) { this.username = username; }
-// 关键变化：username 接收右侧表达式 username; } 的计算结果。
+    // 关键变化：public void setUsername(String username) { this.username = username; }；当前对象；该操作；当前对象.该操作(String username) 返回本次调用的具体结果，后续语句继续使用该值。
 // 初始状态：username 的初始值为 username; }。
     public String getStatus() { return status; }
+    // 关键变化：public String getStatus() { return status; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     public void setStatus(String status) { this.status = status; }
+    // 关键变化：public void setStatus(String status) { this.status = status; }；当前对象；该操作；当前对象.该操作(String status) 返回本次调用的具体结果，后续语句继续使用该值。
     public java.time.Instant getCreatedAt() { return createdAt; }
+    // 关键变化：public java.time.Instant getCreatedAt() { return createdAt; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     public void setCreatedAt(java.time.Instant createdAt) { this.createdAt = createdAt; }
+    // 关键变化：public void setCreatedAt(java.time.Instant createdAt) { this.createdAt = createdAt; }；当前对象；该操作；当前对象.该操作(java.time.Instant createdAt) 返回本次调用的具体结果，后续语句继续使用该值。
 }
 
 interface UserMapper extends BaseMapper<User> {}
@@ -266,11 +276,15 @@ class UserReader {
     private final UserMapper mapper;
 
     UserReader(UserMapper mapper) {
+    // 关键变化：UserReader(UserMapper mapper) {；当前对象；UserReader；当前对象.UserReader(UserMapper mapper) 返回本次调用的具体结果，后续语句继续使用该值。
         this.mapper = mapper;
+        // 关键变化：this.mapper = mapper;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 
     void showName() {
+    // 关键变化：void showName() {；当前对象.BaseMapper() 完成本例中的具体调用，后续语句观察调用后的状态。
         User user = mapper.selectById(7L);
+        // 关键变化：User user = mapper.selectById(7L)；user 接收 selectById(7L) 的返回值，当前值变为这次调用得到的具体结果。
         System.out.println(user.getUsername());
         // 输出：ann
     }
@@ -288,22 +302,28 @@ class UserReader {
 import com.baomidou.mybatisplus.extension.service.IService;
 
 interface UserService extends IService<User> {}
-// // 关键变化：interface UserService extends IService<User> {} 使用表达式中的具体参数完成本次调用。
 
 class UserFacade {
     private final UserService service;
 
     UserFacade(UserService service) {
+    // 关键变化：UserFacade(UserService service) {；当前对象；UserFacade；当前对象.UserFacade(UserService service) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：UserFacade(UserService service) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         this.service = service;
+        // 关键变化：this.service = service;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 
     boolean create() {
+    // 关键变化：boolean create() {；当前对象.IService() 完成本例中的具体调用，后续语句观察调用后的状态。
         User entity = new User();
-// 关键变化：entity 接收表达式 new User() 的计算结果。
+        // 关键变化：User entity = new User()；entity 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：entity 的初始值为 new User()。
         entity.setUsername("ann");
+        // 关键变化：entity.setUsername("ann");；entity；setUsername；entity.setUsername("ann") 返回本次调用的具体结果，后续语句继续使用该值。
         entity.setStatus("ACTIVE");
+        // 关键变化：entity.setStatus("ACTIVE");；entity；setStatus；entity.setStatus("ACTIVE") 返回本次调用的具体结果，后续语句继续使用该值。
         boolean saved = service.save(entity);
+        // 关键变化：boolean saved = service.save(entity)；saved 接收 save(entity) 的返回值，当前值变为这次调用得到的具体结果。
         System.out.println(saved + "/" + entity.getId());
         // 输出：true/42
         return saved;
@@ -325,7 +345,7 @@ LambdaQueryWrapper<User> query = new LambdaQueryWrapper<User>()
     .eq(User::getStatus, "ACTIVE")
     .orderByDesc(User::getCreatedAt);
 // 输入：query 的初始值为 new LambdaQueryWrapper<User>()。
-// // 关键变化：.orderByDesc(User::getCreatedAt) 使用表达式中的具体参数完成本次调用。
+// 关键变化：LambdaQueryWrapper<User> query = new LambdaQueryWrapper<User>() .eq(User::getStatus, "ACTIVE") .orderByDesc(User::getCreatedAt); 将返回值写入 query；query 现在保存该具体结果。
 System.out.println(query.getSqlSegment().contains("status"));
 // 输出：true
 // 说明：wrapper.eq(User::getStatus, "ACTIVE").ge(User::getAge, 18) 生成 status = ? AND age >= ?，绑定值为 ACTIVE 与 18。

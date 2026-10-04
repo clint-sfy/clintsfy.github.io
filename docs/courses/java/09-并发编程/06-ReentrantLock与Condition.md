@@ -75,7 +75,7 @@ public class TryLockDemo {
         ReentrantLock lock = new ReentrantLock();
         // 初始状态：lock 当前为 new ReentrantLock()。
         if (lock.tryLock(10, TimeUnit.MILLISECONDS)) {
-        // 作用：tryLock 能避免无限等待，适合降级、重试或按锁顺序获取；超时分支必须有业务策略，不能静默丢请求。
+        // 关键变化：if (lock.tryLock(10, TimeUnit.MILLISECONDS)) {；当前对象；if；当前对象.if(lock.tryLock(10, TimeUnit.MILLISECONDS)) 返回本次调用的具体结果，后续语句继续使用该值。
             try {
                 System.out.println("acquired");
                 // 输出：acquired
@@ -177,11 +177,13 @@ public class FairLockDemo {
 // 关键变化：fair 接收表达式 new ReentrantLock(true) 的计算结果。
 // 初始状态：fair 的初始值为 new ReentrantLock(true)。
         fair.lock();
+        // 关键变化：fair.lock()；fair.lock(当前参数) 改变当前资源或任务状态，后续步骤观察这一变化。
         try {
             System.out.println("fair lock configured=" + fair.isFair());
             // 输出：fair lock configured=true
         } finally {
             fair.unlock();
+            // 关键变化：fair.unlock()；fair.unlock(当前参数) 改变当前资源或任务状态，后续步骤观察这一变化。
         }
     }
 }
@@ -198,18 +200,23 @@ import java.util.concurrent.locks.ReentrantLock;
 public class HoldCountDemo {
     public static void main(String[] args) {
         ReentrantLock lock = new ReentrantLock();
+        // 关键变化：ReentrantLock lock = new ReentrantLock()；lock 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：lock 当前为 new ReentrantLock()。
         lock.lock();
+        // 关键变化：lock.lock();；lock.lock(当前参数) 改变当前资源或任务状态，后续步骤观察这一变化。
         try {
             lock.lock();
+            // 关键变化：lock.lock();；lock.lock(当前参数) 改变当前资源或任务状态，后续步骤观察这一变化。
             try {
                 System.out.println(lock.getHoldCount());
                 // 输出：2
             } finally {
                 lock.unlock();
+                // 关键变化：lock.unlock()；lock.unlock(当前参数) 改变当前资源或任务状态，后续步骤观察这一变化。
             }
         } finally {
             lock.unlock();
+            // 关键变化：lock.unlock()；lock.unlock(当前参数) 改变当前资源或任务状态，后续步骤观察这一变化。
         }
     }
 }
@@ -234,7 +241,7 @@ public class ConditionTimeoutDemo {
         lock.lock();
         try {
             long remaining = condition.awaitNanos(TimeUnit.MILLISECONDS.toNanos(1));
-            // 作用：通过 Condition.awaitNanos 带剩余时间的等待。
+            // 关键变化：long remaining = condition.awaitNanos(TimeUnit.MILLISECONDS.toNanos(1)); 的返回值写入 remaining，调用后 remaining 保存该具体结果。
             System.out.println("timed wait finished=" + (remaining <= 0));
             // 输出：通常是 timed wait finished=true；也可能是 false（提前唤醒）
         } finally {

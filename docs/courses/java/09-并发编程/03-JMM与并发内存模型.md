@@ -42,13 +42,16 @@ volatile 读写具有可见性和有序性，适合停止标志、配置快照�
 ```java
 // 说明：main 线程对 volatile stopped 写入 true，其他线程后续读取该字段时能看到这个停止状态。
 public class VolatileFlagDemo {
-// 作用：volatile 读写具有可见性和有序性，适合停止标志、配置快照引用等单变量发布。
     private static volatile boolean stopped;
 
     public static void main(String[] args) {
         stopped = false;
+        // 关键变化：stopped = false；stopped 取右侧具体表达式的值，当前状态变为 false。
+        // 输入：stopped = false; 使用语句中的具体实参或初始值，stopped 从这里进入后续操作。
         stopped = true;
+        // 关键变化：stopped = true；stopped 取右侧具体表达式的值，当前状态变为 true。
         if (stopped) {
+        // 关键变化：if (stopped) {；当前对象；if；当前对象.if(stopped) 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println("stop requested");
             // 输出：stop requested
         }
@@ -65,14 +68,17 @@ public class VolatileFlagDemo {
 ```java
 // 说明：set() 退出 box 监视器先于 get() 再次获取它，所以 value=42 既互斥更新又对读线程可见。
 public class SynchronizedVisibilityDemo {
-// 作用：synchronized 用于让同一个监视器的 unlock→lock 建立 happens-before，并保证临界区互斥。
     private int value;
 
     synchronized void set(int value) {
+    // 关键变化：synchronized void set(int value) {；当前对象；该操作；当前对象.该操作(int value) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：synchronized void set(int value) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         this.value = value;
+        // 关键变化：this.value = value;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 
     synchronized int get() {
+    // 关键变化：synchronized int get() {；当前对象.synchronized() 完成本例中的具体调用，后续语句观察调用后的状态。
         return value;
     }
 
@@ -81,6 +87,7 @@ public class SynchronizedVisibilityDemo {
 // 关键变化：box 接收表达式 new SynchronizedVisibilityDemo() 的计算结果。
 // 初始状态：box 的初始值为 new SynchronizedVisibilityDemo()。
         box.set(42);
+        // 关键变化：box.set(42);；box 写入具体参数 42，对象状态或输出内容随之改变。
         System.out.println(box.get());
         // 输出：42
     }
@@ -168,8 +175,10 @@ import java.util.concurrent.Executors;
 public class FutureHappensBeforeDemo {
     public static void main(String[] args) throws Exception {
         try (var executor = Executors.newSingleThreadExecutor()) {
+        // 关键变化：try (var executor = Executors.newSingleThreadExecutor()) {；当前对象；try；当前对象.try(var executor = Executors.newSingleThreadExecutor()) 返回本次调用的具体结果，后续语句继续使用该值。
         // 初始状态：executor 当前为 Executors.newSingleThreadExecutor()) {。
             var future = executor.submit(() -> "ready");
+            // 关键变化：var future = executor.submit(() -> "ready")；executor.submit(() -> "ready") 改变当前资源或任务状态，后续步骤观察这一变化。
             System.out.println(future.get());
             // 输出：ready
         }
@@ -189,11 +198,14 @@ public class FinalFieldDemo {
         private final String name;
 
         User(String name) {
-        // 作用：final 字段在构造器正常完成后有额外的初始化安全保证，但不等于整个对象天然线程安全；可变字段和 this 逃逸仍需同步。
+        // 关键变化：User(String name) {；当前对象；User；当前对象.User(String name) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：User(String name) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
             this.name = name;
+            // 关键变化：this.name = name;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         }
 
         String name() {
+        // 关键变化：String name() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
             return name;
         }
     }
@@ -215,16 +227,18 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 
 public class VarHandleDemo {
-// 作用：VarHandle 可以精细选择普通、opaque、acquire/release 或 volatile 访问语义，常用于并发库和高性能底层组件。业务代码优先用 Atomic、Lock 和并发集合，避免自己组合错误的内存语义。
     private int value;
 
     public static void main(String[] args) throws Exception {
         VarHandle handle = MethodHandles.lookup().findVarHandle(
                 VarHandleDemo.class, "value", int.class);
+        // 关键变化：VarHandle handle = MethodHandles.lookup().findVarHandle( VarHandleDemo.class, "value", int.class)；handle 接收 lookup(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
+        // 输入：VarHandle handle = MethodHandles.lookup().findVarHandle( VarHandleDemo.class, "value", int.class); 使用语句中的具体实参或初始值，handle 从这里进入后续操作。
         var box = new VarHandleDemo();
-// 关键变化：box 接收表达式 new VarHandleDemo() 的计算结果。
+        // 关键变化：var box = new VarHandleDemo()；box 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：box 的初始值为 new VarHandleDemo()。
         handle.set(box, 42);
+        // 关键变化：handle.set(box, 42);；handle 写入具体参数 box，对象状态或输出内容随之改变。
         System.out.println(handle.get(box));
         // 输出：42
     }
@@ -244,7 +258,7 @@ public class LazySetDemo {
         AtomicInteger state = new AtomicInteger();
         // 初始状态：state 当前为 new AtomicInteger()。
         state.lazySet(1);
-        // 作用：lazySet 允许延迟传播，适合不需要立即同步观察的状态清理；若后续代码依赖写入马上对其他线程可见，使用普通 set 更直白。
+        // 关键变化：state.lazySet(1);；state；lazySet；state.lazySet(1) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println(state.get());
         // 输出：1
     }

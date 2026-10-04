@@ -47,7 +47,9 @@ Set<String> tags = new HashSet<>();
 // 初始状态：tags 由 new HashSet<>() 构造，size 为 0。
 // 作用：HashSet 初始为空；加入 "java" 和 "sql" 后保留两个不同元素。
 tags.add("java");
+// 关键变化：tags.add("java")；tags 追加具体参数 "java"，容器内容随之增长。
 tags.add("sql");
+// 关键变化：tags.add("sql")；tags 追加具体参数 "sql"，容器内容随之增长。
 System.out.println(tags.size());
 // 输出：2
 ```
@@ -63,10 +65,10 @@ import java.util.Set;
 public class SetAddDemo {
     public static void main(String[] args) {
         Set<String> set = new HashSet<>();
+        // 关键变化：Set<String> set = new HashSet<>()；set 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：set 当前为 new HashSet<>()。
         System.out.println(set.add("java"));
 // 输出：true
-        // 作用：add 在元素尚不存在时写入并返回 true，重复元素不会再次加入。
         System.out.println(set.add("java"));
         // 输出：false
     }
@@ -152,7 +154,7 @@ public class SetUnionDemo {
         Set<String> all = new LinkedHashSet<>(Set.of("java", "sql"));
         // 初始状态：all 当前为 new LinkedHashSet<>(Set.of("java", "sql"))。
         all.addAll(Set.of("sql", "web"));
-        // 作用：addAll 把另一个集合的元素加入当前集合，重复元素自动忽略。
+        // 关键变化：all.addAll(Set.of("sql", "web"));；all；addAll；all.addAll(Set.of("sql", "web")) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println(all);
         // 输出：[java, sql, web]
     }
@@ -172,7 +174,7 @@ public class SetIntersectionDemo {
         Set<String> common = new LinkedHashSet<>(Set.of("java", "sql", "web"));
         // 初始状态：common 当前为 new LinkedHashSet<>(Set.of("java", "sql", "web"))。
         common.retainAll(Set.of("java", "web"));
-        // 作用：retainAll 只保留当前集合和参数集合共有的元素，属于原地修改。
+        // 关键变化：common.retainAll(Set.of("java", "web"));；common；retainAll；common.retainAll(Set.of("java", "web")) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println(common);
         // 输出：[java, web]
     }
@@ -192,7 +194,7 @@ public class SetDifferenceDemo {
         Set<String> onlyLeft = new LinkedHashSet<>(Set.of("java", "sql", "web"));
         // 初始状态：onlyLeft 当前为 new LinkedHashSet<>(Set.of("java", "sql", "web"))。
         onlyLeft.removeAll(Set.of("sql"));
-        // 作用：removeAll 删除当前集合中出现在参数集合里的元素。
+        // 关键变化：onlyLeft.removeAll(Set.of("sql"));；onlyLeft；removeAll；onlyLeft.removeAll(Set.of("sql")) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println(onlyLeft);
         // 输出：[java, web]
     }
@@ -210,12 +212,14 @@ import java.util.Set;
 public class SetSizeDemo {
     public static void main(String[] args) {
         Set<Integer> set = new HashSet<>();
+        // 关键变化：Set<Integer> set = new HashSet<>()；set 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：set 当前为 new HashSet<>()。
         set.add(1);
+        // 关键变化：set.add(1);；set 追加具体参数 1，容器内容随之增长。
         set.add(1);
+        // 关键变化：set.add(1);；set 追加具体参数 1，容器内容随之增长。
         System.out.println(set.size());
 // 输出：1
-        // 作用：size 返回去重后的元素个数，而不是 add 的调用次数。
     }
 }
 ```
@@ -231,11 +235,12 @@ import java.util.Set;
 public class SetIsEmptyDemo {
     public static void main(String[] args) {
         Set<Integer> set = new HashSet<>();
+        // 关键变化：Set<Integer> set = new HashSet<>()；set 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：set 当前为 new HashSet<>()。
         System.out.println(set.isEmpty());
 // 输出：true
-        // 作用：isEmpty 直接表达“没有元素”，比比较 size 是否为 0 更清晰。
         set.add(1);
+        // 关键变化：set.add(1);；set 追加具体参数 1，容器内容随之增长。
         System.out.println(set.isEmpty());
         // 输出：false
     }
@@ -255,7 +260,7 @@ public class SetClearDemo {
         Set<Integer> set = new HashSet<>(Set.of(1, 2));
         // 初始状态：set 当前为 new HashSet<>(Set.of(1, 2))。
         set.clear();
-        // 作用：clear 删除当前集合的全部元素，但其他指向同一集合的引用仍指向它。
+        // 关键变化：set.clear()；set.clear() 完成本例中的具体调用，后续语句观察调用后的状态。
         System.out.println(set);
         // 输出：[]
     }
@@ -315,12 +320,12 @@ import java.util.TreeSet;
 public class TreeSetFirstDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>();
+        // 关键变化：TreeSet<Integer> set = new TreeSet<>()；set 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：set 当前为 new TreeSet<>()。
         set.add(30);
         set.add(10);
         System.out.println(set.first());
 // 输出：10
-        // 作用：first 返回排序后的第一个元素，空集合调用会抛 NoSuchElementException。
     }
 }
 ```
@@ -335,12 +340,12 @@ import java.util.TreeSet;
 public class TreeSetLastDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>();
+        // 关键变化：TreeSet<Integer> set = new TreeSet<>()；set 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：set 当前为 new TreeSet<>()。
         set.add(10);
         set.add(30);
         System.out.println(set.last());
 // 输出：30
-        // 作用：last 返回排序后的最后一个元素，调用前要确认集合不为空。
     }
 }
 ```
@@ -355,10 +360,10 @@ import java.util.TreeSet;
 public class TreeSetCeilingDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
+        // 关键变化：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30))；Set.of(java.util.Set.of(10, 20, 30)) 返回转换后的具体值，赋给当前示例中的接收变量。
         // 初始状态：set 当前为 new TreeSet<>(java.util.Set.of(10, 20, 30))。
         System.out.println(set.ceiling(15));
 // 输出：20
-        // 作用：ceiling 返回不小于目标的最近元素，不存在时返回 null。
         System.out.println(set.ceiling(31));
         // 输出：null
     }
@@ -375,10 +380,10 @@ import java.util.TreeSet;
 public class TreeSetFloorDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
+        // 关键变化：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30))；Set.of(java.util.Set.of(10, 20, 30)) 返回转换后的具体值，赋给当前示例中的接收变量。
         // 初始状态：set 当前为 new TreeSet<>(java.util.Set.of(10, 20, 30))。
         System.out.println(set.floor(15));
 // 输出：10
-        // 作用：floor 返回不大于目标的最近元素，不存在时返回 null。
         System.out.println(set.floor(9));
         // 输出：null
     }
@@ -396,10 +401,10 @@ import java.util.TreeSet;
 public class TreeSetLowerDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
+        // 关键变化：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30))；Set.of(java.util.Set.of(10, 20, 30)) 返回转换后的具体值，赋给当前示例中的接收变量。
         // 初始状态：set 当前为 new TreeSet<>(java.util.Set.of(10, 20, 30))。
         System.out.println(set.lower(20));
 // 输出：10
-        // 作用：通过 TreeSet.lower 查询严格小于目标的最大元素。
     }
 }
 ```
@@ -414,10 +419,10 @@ import java.util.TreeSet;
 public class TreeSetHigherDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
+        // 关键变化：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30))；Set.of(java.util.Set.of(10, 20, 30)) 返回转换后的具体值，赋给当前示例中的接收变量。
         // 初始状态：set 当前为 new TreeSet<>(java.util.Set.of(10, 20, 30))。
         System.out.println(set.higher(20));
 // 输出：30
-        // 作用：通过 TreeSet.higher 查询严格大于目标的最小元素。
     }
 }
 ```
@@ -432,10 +437,10 @@ import java.util.TreeSet;
 public class TreeSetRangeDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));
+        // 关键变化：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4))；Set.of(java.util.Set.of(1, 2, 3, 4)) 返回转换后的具体值，赋给当前示例中的接收变量。
         // 初始状态：set 当前为 new TreeSet<>(java.util.Set.of(1, 2, 3, 4))。
         System.out.println(set.subSet(2, true, 4, false));
 // 输出：[2, 3]
-        // 作用：通过 TreeSet.subSet 查询区间视图。
     }
 }
 ```
@@ -450,10 +455,10 @@ import java.util.TreeSet;
 public class TreeSetHeadSetDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));
+        // 关键变化：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4))；Set.of(java.util.Set.of(1, 2, 3, 4)) 返回转换后的具体值，赋给当前示例中的接收变量。
         // 初始状态：set 当前为 new TreeSet<>(java.util.Set.of(1, 2, 3, 4))。
         System.out.println(set.headSet(3, true));
 // 输出：[1, 2, 3]
-        // 作用：通过 TreeSet.headSet 查询小于上界的视图。
     }
 }
 ```
@@ -468,10 +473,10 @@ import java.util.TreeSet;
 public class TreeSetTailSetDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));
+        // 关键变化：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4))；Set.of(java.util.Set.of(1, 2, 3, 4)) 返回转换后的具体值，赋给当前示例中的接收变量。
         // 初始状态：set 当前为 new TreeSet<>(java.util.Set.of(1, 2, 3, 4))。
         System.out.println(set.tailSet(3, false));
 // 输出：[4]
-        // 作用：通过 TreeSet.tailSet 查询大于下界的视图。
     }
 }
 ```
@@ -510,7 +515,7 @@ public class EnumSetComplementDemo {
         EnumSet<Permission> missing =
             EnumSet.complementOf(EnumSet.of(Permission.READ));
 // 输入：表达式为 EnumSet.complementOf(EnumSet.of(Permission.READ))。
-            // 作用：通过 EnumSet.complementOf 枚举补集。
+            // 关键变化：EnumSet.complementOf(EnumSet.of(Permission.READ));；EnumSet；complementOf；EnumSet.complementOf(EnumSet.of(Permission.READ)) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println(missing);
         // 输出：[WRITE, DELETE]
     }
@@ -547,7 +552,7 @@ import java.util.TreeSet;
 public class TreeSetComparatorDemo {
     public static void main(String[] args) {
         TreeSet<String> set = new TreeSet<>(Comparator.comparingInt(String::length));
-// 返回：set 接收 new TreeSet<>(Comparator.comparingInt(String::length)) 的返回值。
+        // 关键变化：TreeSet<String> set = new TreeSet<>(Comparator.comparingInt(String::length)); 将返回值写入 set；set 现在保存该具体结果。
 // 输入：set 的初始值为 new TreeSet<>(Comparator.comparingInt(String::length))。
         set.add("a");
         set.add("bb");

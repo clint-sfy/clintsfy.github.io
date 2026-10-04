@@ -43,13 +43,13 @@ CAS 失败时通常重试，竞争激烈会消耗 CPU。LongAdder 的总和适�
 ```java
 // 说明：main 线程将 volatile running 从 true 改为 false，读取该标志的工作线程不需额外锁即可看到停止请求。
 public class VolatileStopDemo {
-// 作用：普通字段可能被编译器或处理器重排、缓存观察；volatile 读写建立跨线程可见性。
     private static volatile boolean running = true;
-// 关键变化：running 接收右侧表达式 true 的计算结果。
+    // 关键变化：private static volatile boolean running = true；running 取右侧具体表达式的值，当前状态变为 true。
 // 初始状态：running 的初始值为 true。
 
     public static void main(String[] args) {
         running = false;
+        // 关键变化：running = false；running 取右侧具体表达式的值，当前状态变为 false。
         System.out.println("running=" + running);
         // 输出：running=false
     }
@@ -69,9 +69,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicIncrementDemo {
     public static void main(String[] args) {
         AtomicInteger count = new AtomicInteger(0);
+        // 关键变化：AtomicInteger count = new AtomicInteger(0)；count 接收 该操作(0) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：count 当前为 new AtomicInteger(0)。
         int current = count.incrementAndGet();
-        // 作用：incrementAndGet 用于把读、加一、写回封装为一个原子更新。
+        // 关键变化：int current = count.incrementAndGet(); 的返回值写入 current，调用后 current 保存该具体结果。
         System.out.println(current + ", stored=" + count.get());
         // 输出：1, stored=1
     }
@@ -91,11 +92,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicCompareDemo {
     public static void main(String[] args) {
         AtomicInteger state = new AtomicInteger(0);
+        // 关键变化：AtomicInteger state = new AtomicInteger(0)；state 接收 该操作(0) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：state 当前为 new AtomicInteger(0)。
         boolean first = state.compareAndSet(0, 1);
-        // 作用：CAS 失败说明当前值已经被其他路径改变，调用方可以重试、放弃或走冲突处理。
+        // 关键变化：boolean first = state.compareAndSet(0, 1); 的返回值写入 first，调用后 first 保存该具体结果。
         boolean second = state.compareAndSet(0, 2);
 // 返回：second 接收 state.compareAndSet(0, 2) 的返回值。
+        // 关键变化：boolean second = state.compareAndSet(0, 2); 的返回值写入 second，调用后 second 保存该具体结果。
         System.out.println(first + ", " + second + ", state=" + state.get());
         // 输出：true, false, state=1
     }
@@ -204,9 +207,10 @@ import java.util.concurrent.atomic.AtomicStampedReference;
 public class StampedReferenceDemo {
     public static void main(String[] args) {
         var ref = new AtomicStampedReference<>("A", 1);
-// 关键变化：ref 接收表达式 new AtomicStampedReference<>("A", 1) 的计算结果。
+        // 关键变化：var ref = new AtomicStampedReference<>("A", 1)；ref 接收 该操作("A") 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：ref 的初始值为 new AtomicStampedReference<>("A", 1)。
         boolean changed = ref.compareAndSet("A", "B", 1, 2);
+        // 关键变化：boolean changed = ref.compareAndSet("A", "B", 1, 2)；changed 接收 compareAndSet("A") 的返回值，当前值变为这次调用得到的具体结果。
         System.out.println(changed + ", value=" + ref.getReference() + ", stamp=" + ref.getStamp());
         // 输出：true, value=B, stamp=2
     }
@@ -228,7 +232,7 @@ public class WeakCasDemo {
         boolean changed;
         do {
             changed = value.weakCompareAndSet(0, 1);
-            // 作用：弱 CAS 允许无理由失败，必须放在循环算法里；简单业务代码优先使用 compareAndSet，语义更容易读懂。特定 JDK 文档对内存语义的说明优先于经验。
+            // 关键变化：changed = value.weakCompareAndSet(0, 1); 的返回值写入 changed，调用后 changed 保存该具体结果。
         } while (!changed);
         System.out.println(changed + ", value=" + value.get());
         // 输出：true, value=1

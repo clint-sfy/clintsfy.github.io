@@ -115,8 +115,8 @@ import java.util.Optional;
 
 Optional<String> code = Optional.of("JAVA-20")
         .filter(value -> value.startsWith("JAVA-"));
+        // 关键变化：.filter(value -> value.startsWith("JAVA-"));；当前对象；filter；当前对象.filter(value -> value.startsWith("JAVA-")) 处理当前元素流并得到对应结果。
         // 初始状态：code 当前保存 Optional.of("JAVA-20") .filter(value -> value.startsWith("JAVA-"))的计算结果。
-        // 作用：通过 filter 值存在且满足条件才保留。
 System.out.println(code.orElse("invalid"));
 // 输出：JAVA-20
 ```
@@ -160,8 +160,8 @@ import java.util.Optional;
 
 String user = Optional.<String>empty()
         .orElseThrow(() -> new IllegalArgumentException("user not found"));
+        // 关键变化：.orElseThrow(() -> new IllegalArgumentException("user not found"));；当前对象；orElseThrow；当前对象.orElseThrow(() -> new IllegalArgumentException("user not found")) 返回本次调用的具体结果，后续语句继续使用该值。
         // 初始状态：user 当前保存 Optional.<String>empty() .orElseThrow(() -> new IllegalArgumentException("user not found"))的计算结果。
-        // 作用：通过 orElseThrow 缺失时抛出异常。
 System.out.println(user);
 // 输出：缺失时抛出 IllegalArgumentException
 ```
@@ -174,10 +174,23 @@ System.out.println(user);
 // 语义：适合末端通知或记录日志，不要用多个嵌套 ifPresent 代替有清晰返回值的业务流程。
 // 调用参数：代码依次使用 "saved"、"status="。
 import java.util.Optional;
+// 关键变化：// 语义：适合末端通知或记录日志，不要用多个嵌套 ifPresent 代替有清晰返回值的业务流程。 // 调用参数：代码依次使用 "saved"、"status="。 import java.util.Optional;；当前对象.ifPresent() 完成本例中的具体调用，后续语句观察调用后的状态。
+
 
 Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));
 // 输出：status=saved；输入：Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));。
-// 作用：通过 ifPresent 有值时执行动作。
+// 输出：// 输出：status=saved；输入：Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));。 已产生可观察结果。
+// 输出：// 输出：// 输出：status=saved；输入：Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：status=saved；输入：Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：status=saved；输入：Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：status=saved；输入：Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：status=saved；输入：Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：status=saved；输入：Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：status=saved；输入：Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：status=saved；输入：Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：status=saved；输入：Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：status=saved；输入：Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：status=saved；输入：Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
 ```
 
 ### `ifPresentOrElse`：分别处理有值和缺失（Java 9+）
@@ -192,8 +205,7 @@ StringBuilder output = new StringBuilder();
 Optional.<String>empty().ifPresentOrElse(
         value -> output.append("value=").append(value),
         () -> output.append("missing"));
-        // 作用：当有值和无值都需要末端动作时使用；如果两个分支还要继续返回结果，应优先考虑 map 与兜底。
-        // 作用：当有值和无值都需要末端动作时使用。
+// 关键变化：Optional.<String>empty().ifPresentOrElse( value -> output.append("value=").append(value), () -> output.append("missing"));；当前对象.ifPresentOrElse() 完成本例中的具体调用，后续语句观察调用后的状态。
 System.out.println(output);
 // 输出：missing
 ```
@@ -223,7 +235,7 @@ import java.util.Optional;
 Optional<String> primary = Optional.empty();
 // 初始状态：primary 当前为 Optional.empty()。
 Optional<String> result = primary.or(() -> Optional.of("fallback"));
-// 作用：通过 or 缺失时切换到另一个 Optional（Java 9+）。
+// 关键变化：Optional<String> result = primary.or(() -> Optional.of("fallback")); 的返回值写入 result，调用后 result 保存该具体结果。
 System.out.println(result.get());
 // 输出：fallback
 ```
@@ -239,9 +251,8 @@ List<String> values = List.of("java", "", "sql").stream()
         .map(text -> text.isBlank() ? java.util.Optional.<String>empty() : java.util.Optional.of(text))
         .flatMap(java.util.Optional::stream)
         .toList();
+// 关键变化：List<String> values = List.of("java", "", "sql").stream() .map(text -> text.isBlank() ? java.util.Optional.<String>empty() : java.util.Optional.of(text)) .flatMap(java.util.Optional::stream) .toList()；List.of("java") 返回转换后的具体值，赋给当前示例中的接收变量。
 // 输入：values 的初始值为 List.of("java", "", "sql").stream()。
-        // 作用：Optional.stream() 在有值时产生一个元素、无值时产生空流，适合拼接批量转换管道。
-        // 作用：通过 stream 把 Optional 接入 Stream（Java 9+）。
 System.out.println(values);
 // 输出：[java, sql]
 ```
@@ -254,10 +265,10 @@ System.out.println(values);
 import java.util.Optional;
 
 Optional<String> value = Optional.of("Java");
+// 关键变化：Optional<String> value = Optional.of("Java")；Optional.of("Java") 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：value 当前为 Optional.of("Java")。
 System.out.println(value.get());
 // 输出：Java
-// 作用：通过 get 直接取值（谨慎使用）。
 ```
 
 ### `OptionalInt`：避免基本类型装箱
@@ -268,7 +279,8 @@ System.out.println(value.get());
 import java.util.OptionalInt;
 
 OptionalInt result = OptionalInt.of(20);
-// 作用：通过 OptionalInt 避免基本类型装箱。
+// 关键变化：OptionalInt result = OptionalInt.of(20)；OptionalInt.of(20) 返回转换后的具体值，赋给当前示例中的接收变量。
+// 输入：OptionalInt result = OptionalInt.of(20); 使用语句中的具体实参或初始值，result 从这里进入后续操作。
 System.out.println(result.orElse(0));
 // 输出：20
 ```

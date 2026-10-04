@@ -43,13 +43,15 @@ record 不能继承普通类，只能隐式继承 java.lang.Record，但可以�
 // 语义：需要声明小型值对象时使用 record 组件，编译器会生成同名访问器、规范构造器以及 equals、hashCode 和 toString。
 // 初始状态：left 初始为 new Point(3, 4)；right 初始为 new Point(3, 4)。
 record Point(int x, int y) {}
+// 输入：// 初始状态：left 初始为 new Point(3, 4)；right 初始为 new Point(3, 4)。 record Point(int x, int y) {} 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 
 public class RecordBasicDemo {
     public static void main(String[] args) {
         Point left = new Point(3, 4);
-// 关键变化：left 接收表达式 new Point(3, 4) 的计算结果。
+        // 关键变化：Point left = new Point(3, 4)；left 接收 该操作(3) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：left 的初始值为 new Point(3, 4)。
         Point right = new Point(3, 4);
+        // 关键变化：Point right = new Point(3, 4)；right 接收 该操作(3) 的返回值，当前值变为这次调用得到的具体结果。
         System.out.println(left.x() + ", " + left.y());
         // 输出：3, 4
         System.out.println(left.equals(right) + ", " + left);
@@ -139,11 +141,13 @@ public class RecordAccessorDemo {
 // 语义：需要隔离 record 的可变列表组件时使用 List.copyOf，它会复制列表结构并拒绝 null，但不会复制可变元素本身。
 // 初始状态：source 初始为 new ArrayList<>(List.of("book"))；order 初始为 new Order(source)。
 import java.util.ArrayList;
+// 输入：// 初始状态：source 初始为 new ArrayList<>(List.of("book"))；order 初始为 new Order(source)。 import java.util.ArrayList; 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 import java.util.List;
 
 record Order(List<String> items) {
     public Order {
         items = List.copyOf(items);
+        // 关键变化：items = List.copyOf(items); 将返回值写入 items；items 现在保存该具体结果。
     }
 }
 
@@ -153,7 +157,9 @@ public class RecordShallowImmutableDemo {
 // 关键变化：source 接收表达式 new ArrayList<>(List.of("book")) 的计算结果。
 // 初始状态：source 的初始值为 new ArrayList<>(List.of("book"))。
         Order order = new Order(source);
+        // 关键变化：Order order = new Order(source); 将返回值写入 order；order 现在保存该具体结果。
         source.add("pen");
+        // 关键变化：source.add("pen")；source 追加具体参数 "pen"，容器内容随之增长。
         System.out.println(order.items());
         // 输出：[book]
     }
@@ -169,13 +175,17 @@ record 可以实现一个或多个接口，适合让不同数据载体遵守同�
 // 调用参数：代码依次使用 "p-1"、"Book"、-1。
 interface Identified {
     String id();
+    // 关键变化：String id();；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：String id(); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 
 record Product(String id, String name) implements Identified {}
 
 public class RecordInterfaceDemo {
     static String show(Identified value) {
+    // 关键变化：static String show(Identified value) {；当前对象；该操作；当前对象.该操作(Identified value) 返回本次调用的具体结果，后续语句继续使用该值。
         return value.id();
+        // 关键变化：return value.id()；value.id() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 
     public static void main(String[] args) {
@@ -196,8 +206,12 @@ record Point(int x, int y) {}
 
 public class RecordPatternDemo {
     static String locate(Object value) {
+    // 关键变化：static String locate(Object value) {；当前对象；该操作；当前对象.该操作(Object value) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：static String locate(Object value) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         if (value instanceof Point(int x, int y)) {
+        // 关键变化：if (value instanceof Point(int x, int y)) {；当前对象；if；当前对象.if(value instanceof Point(int x, int y)) 返回本次调用的具体结果，后续语句继续使用该值。
             return "x=" + x + ", y=" + y;
+            // 关键变化：return "x=" + x + ", y=" + y;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         }
         return "unknown";
     }
@@ -226,7 +240,10 @@ record User(String name, Address address) {}
 
 public class NestedRecordPatternDemo {
     static String cityOf(Object value) {
+    // 关键变化：static String cityOf(Object value) {；当前对象；该操作；当前对象.该操作(Object value) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：static String cityOf(Object value) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         if (value instanceof User(String name, Address(String city))) {
+        // 关键变化：if (value instanceof User(String name, Address(String city))) {；当前对象；if；当前对象.if(value instanceof User(String name, Address(String city))) 返回本次调用的具体结果，后续语句继续使用该值。
             return name + "@" + city;
         }
         return "unknown";
@@ -250,7 +267,7 @@ record Pair<L, R>(L left, R right) {}
 public class GenericRecordDemo {
     public static void main(String[] args) {
         Pair<String, Integer> pair = new Pair<>("age", 20);
-// 关键变化：pair 接收表达式 new Pair<>("age", 20) 的计算结果。
+        // 关键变化：Pair<String, Integer> pair = new Pair<>("age", 20)；pair 接收 该操作("age") 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：pair 的初始值为 new Pair<>("age", 20)。
         System.out.println(pair.left() + "=" + pair.right());
         // 输出：age=20
@@ -265,13 +282,17 @@ record 不是只能放字段的哑数据结构，可以声明静态工厂和派�
 ```java
 record Celsius(double value) {
     static Celsius ofFahrenheit(double fahrenheit) {
+    // 关键变化：static Celsius ofFahrenheit(double fahrenheit) {；当前对象；该操作；当前对象.该操作(double fahrenheit) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：static Celsius ofFahrenheit(double fahrenheit) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         return new Celsius((fahrenheit - 32) * 5 / 9);
-// 返回：return new Celsius((fahrenheit - 32) * 5 / 9) 把该表达式交给调用方。
+        // 关键变化：return new Celsius((fahrenheit - 32) * 5 / 9);；当前对象；该操作；当前对象.该操作((fahrenheit - 32) * 5 / 9) 返回本次调用的具体结果，后续语句继续使用该值。
 // 初始状态：表达式为 return new Celsius((fahrenheit - 32) * 5 / 9)。
     }
 
     double rounded() {
+    // 关键变化：double rounded() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return Math.round(value * 10) / 10.0;
+        // 关键变化：return Math.round(value * 10) / 10.0;；Math；round；Math.round(value * 10) 返回本次调用的具体结果，后续语句继续使用该值。
     }
 }
 
@@ -291,16 +312,18 @@ public class RecordMethodDemo {
 record CaseInsensitiveName(String value) {
     @Override
     public boolean equals(Object other) {
+    // 关键变化：public boolean equals(Object other) {；当前对象；该操作；当前对象.该操作(Object other) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：public boolean equals(Object other) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         return other instanceof CaseInsensitiveName that
             && value.equalsIgnoreCase(that.value);
     }
 
     @Override
     public int hashCode() {
-// // 关键变化：public int hashCode() { 使用表达式中的具体参数完成本次调用。
+    // 关键变化：public int hashCode() {；当前对象.hashCode() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 输入：表达式为 public int hashCode() {。
         return value.toLowerCase(java.util.Locale.ROOT).hashCode();
-// 返回：return value.toLowerCase(java.util.Locale.ROOT).hashCode() 把该表达式交给调用方。
+        // 关键变化：return value.toLowerCase(java.util.Locale.ROOT).hashCode();；value；toLowerCase；value.toLowerCase(java.util.Locale.ROOT) 返回本次调用的具体结果，后续语句继续使用该值。
     }
 }
 
@@ -308,6 +331,7 @@ public class RecordEqualityDemo {
     public static void main(String[] args) {
         boolean same = new CaseInsensitiveName("JAVA")
             .equals(new CaseInsensitiveName("java"));
+            // 关键变化：.equals(new CaseInsensitiveName("java"))；当前对象.equals(new CaseInsensitiveName("java")) 检查当前状态是否满足条件，返回 true 或 false。
         System.out.println(same);
         // 输出：true
     }
@@ -322,12 +346,14 @@ record 可以声明实现 Serializable，但序列化兼容策略、组件版本
 import java.io.Serializable;
 
 record UserSnapshot(String id) implements Serializable {}
+// 关键变化：record UserSnapshot(String id) implements Serializable {}；当前对象；该操作；当前对象.该操作(String id) 返回本次调用的具体结果，后续语句继续使用该值。
 
 public class RecordSerializableDemo {
     public static void main(String[] args) {
         System.out.println(new UserSnapshot("u-1") instanceof Serializable);
 // 输出：true；System.out.println 的实参为 new UserSnapshot("u-1") instanceof Serializable。
     }
+// 输入：// 输出：true；System.out.println 的实参为 new UserSnapshot("u-1") instanceof Serializable。 } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 ```
 ## 简单案例

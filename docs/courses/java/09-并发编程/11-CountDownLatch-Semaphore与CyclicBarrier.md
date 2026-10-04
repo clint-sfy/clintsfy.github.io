@@ -50,8 +50,11 @@ public class LatchInitDemo {
 // 关键变化：latch 接收表达式 new CountDownLatch(2) 的计算结果。
 // 初始状态：latch 的初始值为 new CountDownLatch(2)。
         latch.countDown();
+        // 关键变化：第一次 latch.countDown() 将计数从 2 减为 1，仍有一个事件未完成。
         latch.countDown();
+        // 关键变化：第二次 latch.countDown() 将计数从 1 减为 0，等待中的 await 可以放行。
         latch.await();
+        // 关键变化：latch.await() 等待计数归零；此处因两次 countDown 已完成而立即继续。
         System.out.println("started");
         // 输出：started
     }
@@ -75,6 +78,7 @@ public class LatchTimeoutDemo {
 // 关键变化：latch 接收表达式 new CountDownLatch(1) 的计算结果。
 // 初始状态：latch 的初始值为 new CountDownLatch(1)。
         boolean ready = latch.await(1, TimeUnit.MILLISECONDS);
+        // 关键变化：boolean ready = latch.await(1, TimeUnit.MILLISECONDS); 将返回值写入 ready；ready 现在保存该具体结果。
         System.out.println("ready=" + ready);
         // 输出：ready=false
     }
@@ -95,11 +99,13 @@ public class SemaphoreDemo {
 // 关键变化：semaphore 接收表达式 new Semaphore(1) 的计算结果。
 // 初始状态：semaphore 的初始值为 new Semaphore(1)。
         semaphore.acquire();
+        // 关键变化：semaphore.acquire() 消耗唯一许可证，临界区内可用许可证数从 1 变为 0。
         try {
             System.out.println("permit acquired");
             // 输出：permit acquired
         } finally {
             semaphore.release();
+            // 关键变化：semaphore.release() 归还刚才占用的许可证，可用许可证数从 0 恢复为 1。
         }
     }
 }
@@ -116,9 +122,10 @@ import java.util.concurrent.Semaphore;
 public class SemaphoreTryDemo {
     public static void main(String[] args) {
         Semaphore semaphore = new Semaphore(1);
+        // 关键变化：Semaphore semaphore = new Semaphore(1);；semaphore 按当前许可数量尝试获取一个许可证，成功时可用数减少 1。
         // 初始状态：semaphore 当前为 new Semaphore(1)。
         if (semaphore.tryAcquire()) {
-        // 作用：tryAcquire 不等待，适合快速失败；带超时版本允许有限等待。
+        // 关键变化：if (semaphore.tryAcquire()) {；当前对象；if；当前对象.if(semaphore.tryAcquire()) 返回本次调用的具体结果，后续语句继续使用该值。
             try {
                 System.out.println("accepted");
                 // 输出：accepted
@@ -147,12 +154,13 @@ public class BarrierDemo {
     public static void main(String[] args) throws Exception {
         CyclicBarrier barrier = new CyclicBarrier(1,
                 () -> {
+        // 关键变化：CyclicBarrier barrier = new CyclicBarrier(1, () -> {；barrier 等待当前阶段或异步结果完成后再继续。
                 // 初始状态：barrier 当前保存 new CyclicBarrier(1, () -> {的计算结果。
                     System.out.println("phase complete");
                     // 输出：phase complete
                 });
         barrier.await();
-        // 作用：参与者全部 await 后屏障动作执行一次并放行；通过后 barrier 可以再次使用。
+        // 关键变化：barrier.await();；barrier 等待当前阶段或异步结果完成后再继续。
     }
 }
 ```
@@ -170,9 +178,10 @@ import java.util.concurrent.CyclicBarrier;
 public class BarrierResetDemo {
     public static void main(String[] args) {
         CyclicBarrier barrier = new CyclicBarrier(2);
+        // 关键变化：CyclicBarrier barrier = new CyclicBarrier(2)；barrier 接收 该操作(2) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：barrier 当前为 new CyclicBarrier(2)。
         barrier.reset();
-        // 作用：reset 会让当前 generation 失效，正在等待的线程可能收到 BrokenBarrierException。
+        // 关键变化：barrier.reset()；barrier.reset() 完成本例中的具体调用，后续语句观察调用后的状态。
         System.out.println("parties=" + barrier.getParties());
         // 输出：parties=2
     }
@@ -265,12 +274,13 @@ public class FairSemaphoreDemo {
 // 关键变化：semaphore 接收表达式 new Semaphore(1, true) 的计算结果。
 // 初始状态：semaphore 的初始值为 new Semaphore(1, true)。
         semaphore.acquire();
+        // 关键变化：semaphore.acquire()；semaphore 按当前许可数量尝试获取一个许可证，成功时可用数减少 1。
         try {
             System.out.println("fair=" + semaphore.isFair());
 // 输出：fair=true
-            // 作用：通过 Semaphore(fair) 公平许可证队列。
         } finally {
             semaphore.release();
+            // 关键变化：semaphore.release()；semaphore 归还一个许可证，可用数增加 1。
         }
     }
 }

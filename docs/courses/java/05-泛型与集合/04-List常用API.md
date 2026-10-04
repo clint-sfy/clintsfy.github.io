@@ -41,14 +41,16 @@ description: 按增删改查、遍历、排序和视图边界速查 List 与 Arr
 // 语义：需要增删改时使用 ArrayList。
 // 初始状态：names 初始为 new ArrayList<>(List.of("Alice", "Bob"))。
 import java.util.ArrayList;
+// 输入：// 初始状态：names 初始为 new ArrayList<>(List.of("Alice", "Bob"))。 import java.util.ArrayList; 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 import java.util.List;
 
 public class ListCreateDemo {
     public static void main(String[] args) {
         List<String> names = new ArrayList<>(List.of("Alice", "Bob"));
-// 关键变化：names 接收表达式 new ArrayList<>(List.of("Alice", "Bob")) 的计算结果。
+        // 关键变化：List<String> names = new ArrayList<>(List.of("Alice", "Bob"))；List.of(List.of("Alice", "Bob")) 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：names 的初始值为 new ArrayList<>(List.of("Alice", "Bob"))。
         names.add("Carol");
+        // 关键变化：names.add("Carol");；names 追加具体参数 "Carol"，容器内容随之增长。
         System.out.println(names);
         // 输出：[Alice, Bob, Carol]
     }
@@ -68,9 +70,9 @@ public class ListAddDemo {
         List<String> list = new ArrayList<>(List.of("a", "c"));
         // 初始状态：list 当前为 new ArrayList<>(List.of("a", "c"))。
         list.add("d");
-        // 作用：add(value) 追加到末尾，add(index, value) 会移动后续元素。
+        // 关键变化：list.add("d") 将 "d" 追加到末尾，list 变为 [a, c, d]。
         list.add(1, "b");
-// // 关键变化：list.add(1, "b") 使用括号内的具体实参更新接收对象状态。
+        // 关键变化：list.add(1, "b") 在索引 1 插入 "b"，list 变为 [a, b, c, d]。
         System.out.println(list);
         // 输出：[a, b, c, d]
     }
@@ -90,9 +92,9 @@ public class ListAddAllDemo {
         List<String> list = new ArrayList<>(List.of("a"));
         // 初始状态：list 当前为 new ArrayList<>(List.of("a"))。
         list.addAll(List.of("b", "c"));
-        // 作用：addAll 返回是否发生变化。
+        // 关键变化：list.addAll(List.of("b", "c")) 将 "b"、"c" 追加后 list 变为 [a, b, c]。
         list.addAll(1, List.of("x", "y"));
-// // 关键变化：list.addAll(1, List.of("x", "y")) 使用括号内的具体实参更新接收对象状态。
+        // 关键变化：list.addAll(1, List.of("x", "y")) 在索引 1 插入 "x"、"y"，list 变为 [a, x, y, b, c]。
         System.out.println(list);
         // 输出：[a, x, y, b, c]
     }
@@ -107,10 +109,10 @@ public class ListAddAllDemo {
 import java.util.List;
 
 List<String> list = List.of("a", "b");
+// 关键变化：List<String> list = List.of("a", "b")；List.of("a") 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：list 当前为 List.of("a", "b")。
 System.out.println(list.get(1));
 // 输出：b
-// 作用：需要读取指定位置的元素时使用 get，索引必须在 0 到 size - 1 之间。
 ```
 
 ### `List.set`：按索引替换
@@ -151,7 +153,7 @@ public class ListRemoveDemo {
         // 作用：需要从 List<Integer> 删除元素时应区分按索引的 remove(1) 和按值的 remove(Integer.valueOf(1))，后者找不到时返回 false。
         // numbers：[10, 30]
         numbers.remove(Integer.valueOf(30));
-// // 关键变化：numbers.remove(Integer.valueOf(30)) 使用括号内的具体实参更新接收对象状态。
+        // 关键变化：numbers.remove(Integer.valueOf(30));；numbers 按具体参数 Integer.valueOf(30) 删除目标内容。
         System.out.println(numbers);
         // 输出：[10]
     }
@@ -166,10 +168,10 @@ public class ListRemoveDemo {
 import java.util.List;
 
 List<String> list = List.of("java", "sql", "java");
+// 关键变化：List<String> list = List.of("java", "sql", "java")；List.of("java") 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：list 当前为 List.of("java", "sql", "java")。
 System.out.println(list.contains("sql"));
 // 输出：true
-// 作用：只需要知道列表是否含有某元素时使用 contains，比较依赖元素的 equals。
 ```
 
 ### `List.indexOf`：查找首次位置
@@ -182,10 +184,10 @@ import java.util.List;
 public class ListSearchDemo {
     public static void main(String[] args) {
         List<String> list = List.of("java", "sql", "java");
+        // 关键变化：List<String> list = List.of("java", "sql", "java")；List.of("java") 返回转换后的具体值，赋给当前示例中的接收变量。
         // 初始状态：list 当前为 List.of("java", "sql", "java")。
         System.out.println(list.indexOf("java"));
 // 输出：0
-        // 作用：需要元素第一次出现的索引时使用 indexOf，找不到返回 -1。
     }
 }
 ```
@@ -198,10 +200,10 @@ public class ListSearchDemo {
 import java.util.List;
 
 List<String> list = List.of("java", "sql", "java");
+// 关键变化：List<String> list = List.of("java", "sql", "java")；List.of("java") 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：list 当前为 List.of("java", "sql", "java")。
 System.out.println(list.lastIndexOf("java"));
 // 输出：2
-// 作用：需要元素最后一次出现的索引时使用 lastIndexOf，找不到返回 -1。
 ```
 
 ### `List.iterator`：创建显式迭代器
@@ -253,7 +255,7 @@ public class ListIterationDemo {
         for (Iterator<String> it = list.iterator(); it.hasNext();) {
             if (it.next().isBlank()) {
                 it.remove();
-                // 作用：需要在遍历过程中安全删除当前元素时使用 Iterator.remove，不要直接结构性修改列表。
+                // 关键变化：it.remove();；it 按具体参数 当前键或路径 删除目标内容。
             }
         }
         System.out.println(list);
@@ -275,7 +277,7 @@ public class ListRemoveIfDemo {
         List<Integer> numbers = new ArrayList<>(List.of(1, 2, 3, 4));
         // 初始状态：numbers 当前为 new ArrayList<>(List.of(1, 2, 3, 4))。
         numbers.removeIf(number -> number % 2 == 0);
-        // 作用：removeIf 直接表达按条件删除，返回是否有元素被删除。
+        // 关键变化：numbers.removeIf(number -> number % 2 == 0);；numbers；removeIf；numbers.removeIf(number -> number % 2 == 0) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println(numbers);
         // 输出：[1, 3]
     }
@@ -296,7 +298,7 @@ public class ListSortDemo {
         List<String> list = new ArrayList<>(List.of("Java", "C", "Python"));
         // 初始状态：list 当前为 new ArrayList<>(List.of("Java", "C", "Python"))。
         list.sort(Comparator.comparingInt(String::length));
-        // 作用：sort 会修改当前列表。
+        // 关键变化：list.sort(Comparator.comparingInt(String::length));；list；sort；list.sort(Comparator.comparingInt(String::length)) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println(list);
         // 输出：[C, Java, Python]
     }
@@ -416,7 +418,7 @@ public class UnmodifiableListDemo {
         List<String> source = new ArrayList<>(List.of("a"));
         // 初始状态：source 当前为 new ArrayList<>(List.of("a"))。
         List<String> view = Collections.unmodifiableList(source);
-        // 作用：通过 Collections.unmodifiableList 只读包装视图。
+        // 关键变化：List<String> view = Collections.unmodifiableList(source); 的返回值写入 view，调用后 view 保存该具体结果。
         source.add("b");
         System.out.println(view);
         // 输出：[a, b]
@@ -481,7 +483,7 @@ import java.util.List;
 List<String> list = new ArrayList<>(List.of("a", "b", "c"));
 // 初始状态：Collections.rotate 将 [a, b, c] 向右移动 1 位。；具体值：list = new ArrayList<>(List.of("a", "b", "c"))
 Collections.rotate(list, 1);
-// 作用：需要按固定距离循环调整列表顺序时使用，正数向右移动，且会直接修改可变列表。
+// 关键变化：Collections.rotate(list, 1);；Collections；rotate；Collections.rotate(list) 返回本次调用的具体结果，后续语句继续使用该值。
 System.out.println(list);
 // 输出：[c, a, b]
 ```
@@ -498,7 +500,7 @@ import java.util.List;
 List<String> list = new ArrayList<>(List.of("a", "b", "c"));
 // 初始状态：Collections.swap 交换 list 的索引 0 和 2。
 Collections.swap(list, 0, 2);
-// 作用：需要原地交换列表中的两个元素时使用；两个索引都必须位于列表范围内。
+// 关键变化：Collections.swap(list, 0, 2);；Collections；swap；Collections.swap(list) 返回本次调用的具体结果，后续语句继续使用该值。
 System.out.println(list);
 // 输出：[c, b, a]
 ```
@@ -514,7 +516,7 @@ import java.util.List;
 List<String> list = List.of("a", "b", "a");
 // 初始状态：Collections.frequency 在 list 中统计字符串 "a"。
 int count = Collections.frequency(list, "a");
-// 作用：需要按 equals 语义统计目标元素出现次数时使用，该方法只读取集合而不改变顺序。
+// 关键变化：int count = Collections.frequency(list, "a"); 的返回值写入 count，调用后 count 保存该具体结果。
 System.out.println(count);
 // 输出：2
 ```
@@ -527,11 +529,12 @@ System.out.println(count);
 ```java
 import java.util.ArrayList;
 var names = new ArrayList<String>();
+// 关键变化：var names = new ArrayList<String>()；names 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：names 当前为 new ArrayList<String>()。
 boolean changed = names.add("Ann");
-// 作用：通过 ArrayList.add 向可变数组列表追加元素。
+// 关键变化：boolean changed = names.add("Ann"); 的返回值写入 changed，调用后 changed 保存该具体结果。
 names.add("Bob");
-// // 关键变化：names.add("Bob") 使用括号内的具体实参更新接收对象状态。
+// 关键变化：names.add("Bob");；names 追加具体参数 "Bob"，容器内容随之增长。
 System.out.println(changed);
 // 输出：true、[Ann, Bob]
 System.out.println(names);
@@ -545,15 +548,14 @@ System.out.println(names);
 ```java
 import java.util.List;
 var iterator = List.of("A").iterator();
+// 关键变化：var iterator = List.of("A").iterator()；List.of("A") 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：iterator 当前为 List.of("A").iterator()。
 System.out.println(iterator.hasNext());
 // 输出：true、A、false
-// 作用：通过 Iterator.hasNext 判断是否还有元素。
 System.out.println(iterator.next());
 // 输出：System.out 调用参数为 iterator.next()。
 System.out.println(iterator.hasNext());
 // 输出：System.out 调用参数为 iterator.hasNext()。
-// 作用：System.out.println 使用实参 iterator.hasNext() 写出结果。
 ```
 
 ### `Iterator.next`：取得下一个元素
@@ -565,9 +567,10 @@ import java.util.List;
 var iterator = List.of("A", "B").iterator();
 // 初始状态：iterator 当前为 List.of("A", "B").iterator()。
 String first = iterator.next();
-// 作用：通过 Iterator.next 取得下一个元素。
+// 关键变化：String first = iterator.next(); 的返回值写入 first，调用后 first 保存该具体结果。
 String second = iterator.next();
 // 返回：second 接收 iterator.next() 的返回值。
+// 关键变化：String second = iterator.next(); 的返回值写入 second，调用后 second 保存该具体结果。
 System.out.println(first);
 // 输出：A、B
 System.out.println(second);
@@ -581,10 +584,10 @@ System.out.println(second);
 ```java
 import java.util.List;
 List<String> names = List.of("A", "B", "C");
+// 关键变化：List<String> names = List.of("A", "B", "C")；List.of("A") 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：names 当前为 List.of("A", "B", "C")。
 System.out.println(names.size());
 // 输出：3
-// 作用：通过 List.size 读取列表元素数量。
 System.out.println(names.get(names.size() - 1));
 // 输出：C
 ```
@@ -598,10 +601,10 @@ import java.util.Collection;
 import java.util.Set;
 
 Collection<String> tags = Set.of("java", "sql");
+// 关键变化：Collection<String> tags = Set.of("java", "sql")；Set.of("java") 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：tags 包含 "java" 和 "sql"，因此 size() 返回 2。
 System.out.println(tags.size());
 // 输出：2
-// 作用：Collection.size 根据当前集合内容返回元素数量。
 ```
 
 ### `List.stream`：把列表接入流式处理
@@ -615,8 +618,7 @@ List<String> names = List.of("ann", "bob");
 long count = names.stream()
         .filter(name -> name.length() == 3)
         .count();
-        // 作用：它创建顺序流而不修改原列表，结果由终止操作产生。
-        // 作用：通过 List.stream 把列表接入流式处理。
+// 关键变化：long count = names.stream() .filter(name -> name.length() == 3) .count()；count 接收 stream(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
 System.out.println(count);
 // 输出：2
 ```
@@ -633,7 +635,7 @@ List<String> names = new ArrayList<>(List.of("A", "B"));
 // 初始状态：names 当前为 [A, B]，本次 set 使用索引 1 和新值 "C"。
 // 作用：put 属于 Map；列表按位置覆盖必须使用 set，索引也必须已存在。
 String old = names.set(1, "C");
-// 返回：List.set 返回被替换的旧值 "B"，names 变为 [A, C]。
+// 关键变化：String old = names.set(1, "C"); 将返回值写入 old；old 现在保存该具体结果。
 System.out.println(old);
 // 输出：B
 System.out.println(names);

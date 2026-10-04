@@ -159,7 +159,7 @@ public class FileChannelReadDemo {
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
             ByteBuffer buffer = ByteBuffer.allocate(8);
             int count = channel.read(buffer);
-            // 作用：read 返回实际读到的字节数，-1 表示 EOF；不能假设一次 read 会填满 Buffer 或读完文件。
+            // 关键变化：int count = channel.read(buffer); 的返回值写入 count，调用后 count 保存该具体结果。
             System.out.println(count);
             // 输出：4
         }
@@ -188,7 +188,7 @@ public class FileChannelWriteDemo {
             ByteBuffer buffer = ByteBuffer.wrap("java".getBytes());
             while (buffer.hasRemaining()) {
                 channel.write(buffer);
-                // 作用：write 也可能只消费部分 Buffer；循环 hasRemaining 是可靠写出模式。
+                // 关键变化：channel.write(buffer);；channel 写入具体参数 buffer，对象状态或输出内容随之改变。
             }
         }
         System.out.println(Files.size(file));
@@ -214,20 +214,25 @@ import java.nio.file.StandardOpenOption;
 
 public class FileChannelPositionDemo {
     public static void main(String[] args) throws Exception {
-    // 作用：随机访问适合固定格式文件和分块任务；多个线程共享同一 Channel 时要明确 position 是否共享，必要时使用带 position 参数的读写方法。
         Path file = Files.createTempFile("channel-position-", ".bin");
 // 关键变化：file 接收表达式 Files.createTempFile("channel-position-", ".bin") 的计算结果。
 // 初始状态：file 的初始值为 Files.createTempFile("channel-position-", ".bin")。
         Files.write(file, new byte[]{10, 20, 30});
+        // 关键变化：Files.write(file, new byte[]{10, 20, 30})；Files 写入具体参数 file，对象状态或输出内容随之改变。
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
             channel.position(1);
+            // 关键变化：channel.position(1);；channel；position；channel.position(1) 返回本次调用的具体结果，后续语句继续使用该值。
             ByteBuffer buffer = ByteBuffer.allocate(1);
+            // 关键变化：ByteBuffer buffer = ByteBuffer.allocate(1); 将返回值写入 buffer；buffer 现在保存该具体结果。
             channel.read(buffer);
+            // 作用：channel.read(buffer); 读取括号中的具体参数对应的元素或文本并返回给后续逻辑。
             buffer.flip();
+            // 关键变化：buffer.flip()；buffer.flip() 完成本例中的具体调用，后续语句观察调用后的状态。
             System.out.println(buffer.get());
             // 输出：20
         }
         Files.deleteIfExists(file);
+        // 关键变化：Files.deleteIfExists(file)；Files 按具体参数 file 删除目标内容。
     }
 }
 ```
@@ -280,7 +285,7 @@ public class MappedByteBufferDemo {
         Files.write(file, new byte[]{7});
         try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {
             var mapped = channel.map(FileChannel.MapMode.READ_ONLY, 0, 1);
-            // 作用：映射适合随机访问大文件，但会占用虚拟地址空间，生命周期和刷盘语义也更复杂；不要把它当成所有文件读取的默认方案。
+            // 关键变化：var mapped = channel.map(FileChannel.MapMode.READ_ONLY, 0, 1); 的返回值写入 mapped，调用后 mapped 保存该具体结果。
             System.out.println(mapped.get(0));
             // 输出：7
         }
@@ -300,11 +305,14 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
 public class SelectorRegisterDemo {
-// 作用：Selector 只对支持非阻塞模式的网络 Channel 有意义；事件循环必须处理 key 失效、异常、读写部分完成和唤醒。
     public static void main(String[] args) throws Exception {
         try (Selector selector = Selector.open(); SocketChannel channel = SocketChannel.open()) {
+        // 关键变化：try (Selector selector = Selector.open(); SocketChannel channel = SocketChannel.open()) {；当前对象；try；当前对象.try(Selector selector = Selector.open(); SocketChannel channel = SocketChannel.open()) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：try (Selector selector = Selector.open(); SocketChannel channel = SocketChannel.open()) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
             channel.configureBlocking(false);
+            // 关键变化：channel.configureBlocking(false);；channel；configureBlocking；channel.configureBlocking(false) 返回本次调用的具体结果，后续语句继续使用该值。
             channel.register(selector, SelectionKey.OP_CONNECT);
+            // 关键变化：channel.register(selector, SelectionKey.OP_CONNECT);；channel；register；channel.register(selector) 改变当前资源或任务状态，后续步骤观察这一变化。
             System.out.println(selector.keys().size());
             // 输出：1
         }
@@ -385,14 +393,17 @@ import java.nio.file.StandardOpenOption;
 public class ScatterGatherDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("scatter-gather-", ".bin");
-// 关键变化：file 接收表达式 Files.createTempFile("scatter-gather-", ".bin") 的计算结果。
+        // 关键变化：Path file = Files.createTempFile("scatter-gather-", ".bin")；file 接收 createTempFile("scatter-gather-") 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：file 的初始值为 Files.createTempFile("scatter-gather-", ".bin")。
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {
+        // 关键变化：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {；当前对象；try；当前对象.try(FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) 返回本次调用的具体结果，后续语句继续使用该值。
             long count = channel.write(new ByteBuffer[]{ByteBuffer.wrap(new byte[]{1}), ByteBuffer.wrap(new byte[]{2})});
+            // 关键变化：long count = channel.write(new ByteBuffer[]{ByteBuffer.wrap(new byte[]{1}), ByteBuffer.wrap(new byte[]{2})});；channel 写入具体参数 new ByteBuffer[]{ByteBuffer.wrap(new byte[]{1})，对象状态或输出内容随之改变。
             System.out.println(count);
             // 输出：2
         }
         Files.deleteIfExists(file);
+        // 关键变化：Files.deleteIfExists(file);；Files 按具体参数 file 删除目标内容。
     }
 }
 ```
@@ -409,19 +420,21 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 public class AsyncFileChannelDemo {
-// 作用：异步 Channel 的 completion handler/future 让等待方式不同，但不代表磁盘本身一定并行；需要结合线程池、队列和取消策略测量。
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("async-channel-", ".txt");
-// 关键变化：file 接收表达式 Files.createTempFile("async-channel-", ".txt") 的计算结果。
+        // 关键变化：Path file = Files.createTempFile("async-channel-", ".txt")；file 接收 createTempFile("async-channel-") 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：file 的初始值为 Files.createTempFile("async-channel-", ".txt")。
         Files.writeString(file, "java");
+        // 关键变化：Files.writeString(file, "java");；Files 写入具体参数 file，对象状态或输出内容随之改变。
         try (var channel = AsynchronousFileChannel.open(file, StandardOpenOption.READ)) {
-        // 作用：通过 AsynchronousFileChannel 异步文件操作。
+        // 关键变化：try (var channel = AsynchronousFileChannel.open(file, StandardOpenOption.READ)) {；当前对象；try；当前对象.try(var channel = AsynchronousFileChannel.open(file, StandardOpenOption.READ)) 返回本次调用的具体结果，后续语句继续使用该值。
             var result = channel.read(ByteBuffer.allocate(4), 0).get();
+            // 关键变化：var result = channel.read(ByteBuffer.allocate(4), 0).get();；channel 按具体参数 ByteBuffer.allocate(4) 读取并返回结果。
             System.out.println(result);
             // 输出：4
         }
         Files.deleteIfExists(file);
+        // 关键变化：Files.deleteIfExists(file);；Files 按具体参数 file 删除目标内容。
     }
 }
 ```

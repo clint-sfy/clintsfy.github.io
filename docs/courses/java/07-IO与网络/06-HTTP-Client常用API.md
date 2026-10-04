@@ -47,8 +47,8 @@ public class HttpClientTimeoutDemo {
         HttpClient client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(3))
                 .build();
+        // 关键变化：HttpClient client = HttpClient.newBuilder() .connectTimeout(Duration.ofSeconds(3)) .build()；HttpClient.newBuilder(当前参数) 创建或取得具体资源，后续语句使用该对象。
 // 输入：client 的初始值为 HttpClient.newBuilder()。
-                // 作用：连接超时覆盖建立连接阶段，DNS、TLS、服务器处理和响应读取仍可能耗时；不要把它当成完整请求超时。
         System.out.println(client.connectTimeout().orElseThrow().toSeconds());
         // 输出：3
     }
@@ -64,12 +64,13 @@ public class HttpClientTimeoutDemo {
 import java.net.http.HttpClient;
 
 public class HttpRedirectDemo {
-// 作用：NORMAL 遵循常见浏览器式重定向规则，ALWAYS 更激进，NEVER 交给业务处理；跨域重定向还要重新审视凭证和敏感请求头。
     public static void main(String[] args) {
         var client = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
-// 关键变化：client 接收表达式 HttpClient.newBuilder() .followRedirects(HttpClient.Redirect.NORMAL) .build() 的计算结果。
+                // 关键变化：.build();；当前对象.build(当前参数) 创建或取得具体资源，后续语句使用该对象。
+                // 关键变化：.followRedirects(HttpClient.Redirect.NORMAL) .build();；当前对象；followRedirects；当前对象.followRedirects(HttpClient.Redirect.NORMAL) 返回本次调用的具体结果，后续语句继续使用该值。
+                // 关键变化：.build();；当前对象.build(当前参数) 创建或取得具体资源，后续语句使用该对象。
 // 初始状态：client 的初始值为 HttpClient.newBuilder()。
         System.out.println(client.followRedirects());
         // 输出：NORMAL
@@ -92,8 +93,8 @@ public class HttpGetRequestDemo {
                 .header("Accept", "application/json")
                 .GET()
                 .build();
-// 关键变化：request 接收表达式 HttpRequest.newBuilder(URI.create("https: 的计算结果。
 // 初始状态：request 的初始值为 HttpRequest.newBuilder(URI.create("https:。
+                // 关键变化：.GET() .build();；当前对象.GET() 完成本例中的具体调用，后续语句观察调用后的状态。
         System.out.println(request.method() + " " + request.uri());
         // 输出：GET https://example.com/items
     }
@@ -115,8 +116,8 @@ public class HttpPostRequestDemo {
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"java\"}"))
                 .build();
-// 关键变化：request 接收表达式 HttpRequest.newBuilder(URI.create("https: 的计算结果。
 // 初始状态：request 的初始值为 HttpRequest.newBuilder(URI.create("https:。
+                // 关键变化：.POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"java\"}")) .build();；当前对象；POST；当前对象.POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"java\"}")) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println(request.method());
         // 输出：POST
     }
@@ -165,9 +166,10 @@ public class HttpResponseDemo {
     public static void main(String[] args) throws Exception {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
-// 关键变化：request 接收表达式 HttpRequest.newBuilder(URI.create("https: 的计算结果。
 // 初始状态：request 的初始值为 HttpRequest.newBuilder(URI.create("https:。
+                // 关键变化：.GET().build();；当前对象.GET() 完成本例中的具体调用，后续语句观察调用后的状态。
         var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        // 关键变化：var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString()); 将返回值写入 response；response 现在保存该具体结果。
         System.out.println(response.statusCode() + ", " + response.headers().firstValue("content-type").isPresent());
         // 输出：200, true
         System.out.println(response.body().isEmpty());
@@ -191,8 +193,8 @@ public class HttpRequestTimeoutDemo {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .timeout(Duration.ofSeconds(5))
                 .GET().build();
+                // 关键变化：.timeout(Duration.ofSeconds(5)) .GET().build();；当前对象；timeout；当前对象.timeout(Duration.ofSeconds(5)) 返回本次调用的具体结果，后续语句继续使用该值。
                 // 初始状态：request 当前保存 HttpRequest.newBuilder(URI.create("https://example.com")) .timeout(Duration.ofSeconds(5)) .GET().build()的计算结果。
-                // 作用：请求超时是一次 Request 的等待边界，触发时通常以 HttpTimeoutException 表示；重试前仍要判断操作是否幂等。
         System.out.println(request.timeout().orElseThrow().toSeconds());
         // 输出：5
     }
@@ -217,7 +219,7 @@ public class HttpAsyncDemo {
                 // 初始状态：request 当前保存 HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build()的计算结果。
         var future = HttpClient.newHttpClient().sendAsync(
                 request, HttpResponse.BodyHandlers.ofString());
-                // 作用：sendAsync 返回 CompletableFuture，join 会重新抛出包装后的异常；生产代码要在链上使用 exceptionally/handle，不要无条件阻塞等待所有 Future。
+        // 关键变化：var future = HttpClient.newHttpClient().sendAsync( request, HttpResponse.BodyHandlers.ofString())；future 接收 newHttpClient(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         int status = future.thenApply(HttpResponse::statusCode).join();
         System.out.println(status);
         // 输出：200
@@ -242,7 +244,7 @@ public class HttpBytesResponseDemo {
                 .GET().build();
                 // 初始状态：request 当前保存 HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build()的计算结果。
         var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofByteArray());
-        // 作用：二进制响应不要强行转 String；图片、压缩数据和协议字节应使用 byte[] 或文件 BodyHandler，并设置大小保护。
+        // 关键变化：var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofByteArray()); 的返回值写入 response，调用后 response 保存该具体结果。
         System.out.println(response.body().length > 0);
         // 输出：true
     }
@@ -269,7 +271,7 @@ public class HttpFileResponseDemo {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
         var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofFile(target));
-        // 作用：ofFile 适合下载大响应，目标文件的覆盖、权限、磁盘空间和失败清理仍由调用方负责。
+        // 关键变化：var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofFile(target)); 的返回值写入 response，调用后 response 保存该具体结果。
         System.out.println(response.statusCode() + ", " + (Files.size(target) > 0));
         // 输出：200, true
         Files.deleteIfExists(target);
@@ -294,7 +296,7 @@ public class HttpLinesResponseDemo {
                 .GET().build();
                 // 初始状态：request 当前保存 HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build()的计算结果。
         var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofLines());
-        // 作用：响应行 Stream 也要关闭；它适合边读边处理，但不应在没有协议限制时无限累积到集合。
+        // 关键变化：var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofLines()); 的返回值写入 response，调用后 response 保存该具体结果。
         try (var lines = response.body()) {
             System.out.println(lines.findFirst().isPresent());
             // 输出：true
@@ -318,8 +320,8 @@ public class HttpHeadersDemo {
                 .header("Accept", "application/json")
                 .header("X-Request-Id", "demo-1")
                 .GET().build();
-// 关键变化：request 接收表达式 HttpRequest.newBuilder(URI.create("https: 的计算结果。
 // 初始状态：request 的初始值为 HttpRequest.newBuilder(URI.create("https:。
+                // 关键变化：.GET().build();；当前对象.GET() 完成本例中的具体调用，后续语句观察调用后的状态。
         System.out.println(request.headers().firstValue("accept").orElse("missing"));
         // 输出：application/json
     }
@@ -335,11 +337,10 @@ public class HttpHeadersDemo {
 import java.net.http.HttpClient;
 
 public class HttpVersionDemo {
-// 作用：这是偏好而不是对端强制结果；HTTP/2 需要服务端、TLS 和代理链路共同支持。
     public static void main(String[] args) {
         var client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
+        // 关键变化：var client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()；HttpClient.newBuilder(当前参数) 创建或取得具体资源，后续语句使用该对象。
 // 初始状态：client 的初始值为 HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()。
-        // 作用：通过 HttpClient.Version 偏好 HTTP/2 或 HTTP/1.1。
         System.out.println(client.version());
         // 输出：HTTP_1_1
     }
@@ -359,12 +360,15 @@ public class HttpCancelDemo {
     public static void main(String[] args) {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
+                // 关键变化：.GET().build();；当前对象.GET() 完成本例中的具体调用，后续语句观察调用后的状态。
+                // 关键变化：.GET().build();；当前对象.GET() 完成本例中的具体调用，后续语句观察调用后的状态。
                 // 初始状态：request 当前保存 HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build()的计算结果。
         var future = HttpClient.newHttpClient().sendAsync(request,
                 java.net.http.HttpResponse.BodyHandlers.ofString());
+        // 关键变化：var future = HttpClient.newHttpClient().sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString())；future 接收 newHttpClient(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
+                // 关键变化：java.net.http.HttpResponse.BodyHandlers.ofString())；BodyHandlers.ofString() 完成本例中的具体调用，后续语句观察调用后的状态。
         System.out.println(future.cancel(true));
 // 输出：true
-        // 作用：通过 CompletableFuture.cancel 取消异步请求。
     }
 }
 ```
@@ -387,8 +391,7 @@ public class HttpFileUploadDemo {
                 .header("Content-Type", "text/plain")
                 .POST(HttpRequest.BodyPublishers.ofFile(file))
                 .build();
-                // 作用：上传要设置大小上限、内容类型和重试策略；文件变更、权限和删除时机都属于调用方责任。
-                // 作用：通过 BodyPublishers.ofFile 从文件上传请求体。
+                // 关键变化：.POST(HttpRequest.BodyPublishers.ofFile(file)) .build();；当前对象；POST；当前对象.POST(HttpRequest.BodyPublishers.ofFile(file)) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println(request.method() + ", " + Files.size(file));
         // 输出：POST, 7
         Files.deleteIfExists(file);
@@ -432,9 +435,11 @@ public class HttpBodyHandlerBoundaryDemo {
         HttpResponse.BodyHandler<byte[]> handler = info ->
                 HttpResponse.BodySubscribers.mapping(
                         HttpResponse.BodySubscribers.ofByteArray(), bytes -> {
-// 关键变化：handler 接收右侧表达式 info -> 的计算结果。
+                        // 关键变化：HttpResponse.BodySubscribers.ofByteArray(), bytes -> {；BodySubscribers.ofByteArray() 完成本例中的具体调用，后续语句观察调用后的状态。
+                        // 关键变化：HttpResponse.BodySubscribers.ofByteArray(), bytes -> {；BodySubscribers.ofByteArray() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 初始状态：handler 的初始值为 info ->。
                             if (bytes.length > 1024) throw new IllegalStateException("too large");
+                            // 关键变化：if (bytes.length > 1024) throw new IllegalStateException("too large");；当前对象；if；当前对象.if(bytes.length > 1024) 返回本次调用的具体结果，后续语句继续使用该值。
                             return bytes;
                         });
         System.out.println(handler != null);
@@ -483,6 +488,7 @@ System.out.println(endpoint.getHost() + ":" + endpoint.getPort());
 ```java
 import java.net.URL;
 URL endpoint = new URL("https://example.test/api");
+// 关键变化：URL endpoint = new URL("https://example.test/api")；endpoint 接收 该操作("https://example.test/api") 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：endpoint 当前为 new URL("https://example.test/api")。
 var connection = endpoint.openConnection();
 // 作用：通过 URL.openConnection 创建底层 URLConnection。

@@ -52,7 +52,7 @@ Cron 表达式通常包含秒、分、时、日、月、星期（可选年），
 JobDetail detail = JobBuilder.newJob(CleanupJob.class)
     .withIdentity("cleanup", "maintenance").build();
 // 输入：detail 的初始值为 JobBuilder.newJob(CleanupJob.class)。
-// // 关键变化：.withIdentity("cleanup", "maintenance").build() 使用表达式中的具体参数完成本次调用。
+// 关键变化：JobDetail detail = JobBuilder.newJob(CleanupJob.class) .withIdentity("cleanup", "maintenance").build(); 将返回值写入 detail；detail 现在保存该具体结果。
 System.out.println(detail.getKey());
 // 输出：maintenance.cleanup
 // 说明：以 CleanupJob.class 构建 JobDetail，任务键固定为组 maintenance、名称 cleanup，打印 maintenance.cleanup；这里只构造定义，尚未注册 Scheduler。
@@ -66,7 +66,7 @@ System.out.println(detail.getKey());
 Trigger trigger = TriggerBuilder.newTrigger()
     .withIdentity("cleanup-trigger", "maintenance").forJob(detail).startNow().build();
 // 输入：trigger 的初始值为 TriggerBuilder.newTrigger()。
-// // 关键变化：.withIdentity("cleanup-trigger", "maintenance").forJob(detail).startNow().build() 使用表达式中的具体参数完成本次调用。
+// 关键变化：Trigger trigger = TriggerBuilder.newTrigger() .withIdentity("cleanup-trigger", "maintenance").forJob(detail).startNow().build(); 将返回值写入 trigger；trigger 现在保存该具体结果。
 System.out.println(trigger.getJobKey());
 // 输出：maintenance.cleanup
 // 说明：TriggerKey 为 maintenance.cleanup-trigger，forJob(detail) 绑定 JobKey maintenance.cleanup，startNow 表示注册后尽快首次触发。
@@ -118,9 +118,10 @@ System.out.println(data.getInt("batchSize"));
 
 ```java
 JobDataMap data = new JobDataMap();
+// 关键变化：JobDataMap data = new JobDataMap()；data 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：data 当前为 new JobDataMap()。
 data.put("tenantId", "acme");
-// // 关键变化：data.put("tenantId", "acme") 使用括号内的具体实参更新接收对象状态。
+// 关键变化：data.put("tenantId", "acme");；data 按具体键值参数 "tenantId" 更新映射内容。
 System.out.println(data.getString("tenantId"));
 // 输出：acme
 // 说明：put("tenantId", "acme") 写入任务参数 tenantId=acme，执行端用同一键 getString 读取；键名是任务数据契约的一部分。
@@ -184,7 +185,7 @@ System.out.println(firstFireTime != null);
 ```java
 scheduler.pauseJob(JobKey.jobKey("cleanup", "maintenance"));
 // 输入：表达式为 scheduler.pauseJob(JobKey.jobKey("cleanup", "maintenance"))。
-// // 关键变化：scheduler.pauseJob(JobKey.jobKey("cleanup", "maintenance")) 使用表达式中的具体参数完成本次调用。
+// 关键变化：scheduler.pauseJob(JobKey.jobKey("cleanup", "maintenance"));；scheduler；pauseJob；scheduler.pauseJob(JobKey.jobKey("cleanup", "maintenance")) 返回本次调用的具体结果，后续语句继续使用该值。
 System.out.println("paused");
 // 输出：paused
 // 说明：pauseJob(maintenance.cleanup) 阻止该 JobKey 后续触发，但不会中断正在运行的 CleanupJob；恢复时如何处理错过时间由 Trigger 的 misfire 策略决定。
@@ -197,7 +198,7 @@ System.out.println("paused");
 ```java
 scheduler.resumeJob(JobKey.jobKey("cleanup", "maintenance"));
 // 输入：表达式为 scheduler.resumeJob(JobKey.jobKey("cleanup", "maintenance"))。
-// // 关键变化：scheduler.resumeJob(JobKey.jobKey("cleanup", "maintenance")) 使用表达式中的具体参数完成本次调用。
+// 关键变化：scheduler.resumeJob(JobKey.jobKey("cleanup", "maintenance"));；scheduler；resumeJob；scheduler.resumeJob(JobKey.jobKey("cleanup", "maintenance")) 返回本次调用的具体结果，后续语句继续使用该值。
 System.out.println("resumed");
 // 输出：resumed
 // 说明：resumeJob(maintenance.cleanup) 重新允许后续触发；暂停期间错过的运行不会无条件全部补跑，而按绑定 Trigger 的 misfire 策略处理。
@@ -212,11 +213,12 @@ import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 
 final class CleanupJob implements Job {
-// 作用：用于实现一段可被 Quartz 调度的工作，并从 `JobExecutionContext` 读取受控参数、输出稳定结果。
     @Override
     public void execute(JobExecutionContext context) {
+    // 关键变化：public void execute(JobExecutionContext context) {；当前对象；该操作；当前对象.该操作(JobExecutionContext context) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：public void execute(JobExecutionContext context) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         String name = context.getJobDetail().getKey().getName();
-// 关键变化：name 接收表达式 context.getJobDetail().getKey().getName() 的计算结果。
+        // 关键变化：String name = context.getJobDetail().getKey().getName()；name 接收 getJobDetail(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：name 的初始值为 context.getJobDetail().getKey().getName()。
         System.out.println("job=" + name + ":done");
 // 输出：job=cleanup:done
@@ -240,7 +242,12 @@ JobDetail detail = JobBuilder.newJob(CleanupJob.class)
     .usingJobData("batch", "nightly")
     .storeDurably()
     .build();
-// // 关键变化：.build() 使用表达式中的具体参数完成本次调用。
+    // 关键变化：.build();；当前对象.build(当前参数) 创建或取得具体资源，后续语句使用该对象。
+// 输入：JobDetail detail = JobBuilder.newJob(CleanupJob.class) .withIdentity("cleanup", "maintenance") .usingJobData("batch", "nightly") .storeDurably() .build(); 使用语句中的具体实参或初始值，detail 从这里进入后续操作。
+    // 关键变化：.withIdentity("cleanup", "maintenance") .usingJobData("batch", "nightly") .storeDurably() .build();；当前对象；withIdentity；当前对象.withIdentity("cleanup") 返回本次调用的具体结果，后续语句继续使用该值。
+    // 关键变化：.usingJobData("batch", "nightly") .storeDurably() .build();；当前对象；usingJobData；当前对象.usingJobData("batch") 返回本次调用的具体结果，后续语句继续使用该值。
+    // 关键变化：.storeDurably() .build();；当前对象.storeDurably() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 关键变化：.build();；当前对象.build(当前参数) 创建或取得具体资源，后续语句使用该对象。
 
 System.out.println(detail.getKey());
 // 输出：maintenance.cleanup
@@ -265,7 +272,13 @@ CronTrigger trigger = TriggerBuilder.newTrigger()
         .inTimeZone(java.util.TimeZone.getTimeZone(ZoneId.of("Asia/Shanghai"))))
     .forJob("cleanup", "maintenance")
     .build();
-// // 关键变化：.build() 使用表达式中的具体参数完成本次调用。
+    // 关键变化：.build();；当前对象.build(当前参数) 创建或取得具体资源，后续语句使用该对象。
+// 输入：CronTrigger trigger = TriggerBuilder.newTrigger() .withIdentity("cleanup-trigger", "maintenance") .withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?") .inTimeZone(java.util.TimeZone.getTimeZone(ZoneId.of("Asia/Shanghai")))) .forJob("cleanup", "maintenance") .build(); 使用语句中的具体实参或初始值，trigger 从这里进入后续操作。
+    // 关键变化：.withIdentity("cleanup-trigger", "maintenance") .withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?") .inTimeZone(java.util.TimeZone.getTimeZone(ZoneId.of("Asia/Shanghai")))) .forJob("cleanup", "maintenance") .build();；当前对象；withIdentity；当前对象.withIdentity("cleanup-trigger") 返回本次调用的具体结果，后续语句继续使用该值。
+    // 关键变化：.withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?") .inTimeZone(java.util.TimeZone.getTimeZone(ZoneId.of("Asia/Shanghai")))) .forJob("cleanup", "maintenance") .build();；当前对象；withSchedule；当前对象.withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?") .inTimeZone(java.util.TimeZone.getTimeZone(ZoneId.of("Asia/Shanghai")))) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 关键变化：.inTimeZone(java.util.TimeZone.getTimeZone(ZoneId.of("Asia/Shanghai")))) .forJob("cleanup", "maintenance") .build();；当前对象；inTimeZone；当前对象.inTimeZone(java.util.TimeZone.getTimeZone(ZoneId.of("Asia/Shanghai"))) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 关键变化：.forJob("cleanup", "maintenance") .build();；当前对象；forJob；当前对象.forJob("cleanup") 返回本次调用的具体结果，后续语句继续使用该值。
+    // 关键变化：.build();；当前对象.build(当前参数) 创建或取得具体资源，后续语句使用该对象。
 
 System.out.println(trigger.getCronExpression());
 // 输出：0 0/5 * * * ?
@@ -301,8 +314,9 @@ import org.quartz.CronScheduleBuilder;
 
 var schedule = CronScheduleBuilder.cronSchedule("0 0/5 * * * ?")
     .withMisfireHandlingInstructionDoNothing();
+    // 关键变化：.withMisfireHandlingInstructionDoNothing();；当前对象.withMisfireHandlingInstructionDoNothing() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 关键变化：.withMisfireHandlingInstructionDoNothing();；当前对象.withMisfireHandlingInstructionDoNothing() 完成本例中的具体调用，后续语句观察调用后的状态。
     // 初始状态：schedule 当前保存 CronScheduleBuilder.cronSchedule("0 0/5 * * * ?") .withMisfireHandlingInstructionDoNothing()的计算结果。
-// // 关键变化：.withMisfireHandlingInstructionDoNothing() 使用表达式中的具体参数完成本次调用。
 System.out.println("misfire=skip-old-run");
 // 输出：misfire=skip-old-run
 ```
@@ -346,9 +360,9 @@ import org.quartz.JobExecutionContext;
 @DisallowConcurrentExecution
 final class RebuildJob implements Job {
 // 输入：表达式为 @DisallowConcurrentExecution。
-// // 关键变化：final class RebuildJob implements Job { 使用表达式中的具体参数完成本次调用。
-// 作用：用于禁止同一 `JobKey` 的多个实例并发执行，适合非幂等或会竞争同一资源的任务。
     @Override public void execute(JobExecutionContext context) {
+    // 关键变化：@Override public void execute(JobExecutionContext context) {；注解参数 JobExecutionContext context 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@Override public void execute(JobExecutionContext context) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         System.out.println("overlap=blocked");
         // 输出：overlap=blocked
     }
@@ -464,16 +478,33 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-// 关键变化：scheduler 接收右侧表达式 Executors.newScheduledThreadPool(1) 的计算结果。
+// 关键变化：ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)；scheduler 接收 newScheduledThreadPool(1) 的返回值，当前值变为这次调用得到的具体结果。
+// 输入：ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1); 使用语句中的具体实参或初始值，scheduler 从这里进入后续操作。
 try {
     var done = scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS);
 // 输出：memory=once
 // 输出：定时任务写出字符串 memory=once；done.get() 等待该任务结束。
 // 初始状态：done 的初始值为 scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS)。
     done.get();
+    // 关键变化：done.get()；done.get(当前索引或键) 读取具体内容并返回该值。
+// 输出：// 初始状态：done 的初始值为 scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS)。 已产生可观察结果。
 } finally {
+// 输出：// 输出：// 初始状态：done 的初始值为 scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS)。 已产生可观察结果。 已产生可观察结果。
     scheduler.shutdown();
+// 输出：// 输出：// 输出：// 初始状态：done 的初始值为 scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS)。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+    // 关键变化：scheduler.shutdown()；scheduler.shutdown(当前参数) 改变当前资源或任务状态，后续步骤观察这一变化。
 }
+// 输出：// 输出：// 输出：// 输出：// 初始状态：done 的初始值为 scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS)。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 初始状态：done 的初始值为 scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS)。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 初始状态：done 的初始值为 scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS)。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 初始状态：done 的初始值为 scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS)。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 初始状态：done 的初始值为 scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS)。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 初始状态：done 的初始值为 scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS)。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 初始状态：done 的初始值为 scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS)。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 初始状态：done 的初始值为 scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS)。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 初始状态：done 的初始值为 scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS)。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 初始状态：done 的初始值为 scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS)。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 初始状态：done 的初始值为 scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS)。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
 // 说明：ScheduledExecutorService 以进程内存保存任务，示例 initialDelay 与 period 只在当前 JVM 存活时有效；重启后不会恢复 task key、历史触发或 misfire 状态。
 ```
 

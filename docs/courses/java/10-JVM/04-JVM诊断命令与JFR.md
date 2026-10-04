@@ -44,7 +44,8 @@ description: 用 jps、jcmd、jstack、jmap、jstat 和 JFR 采集 JVM 现场证
 ```java
 // 说明：ProcessHandle：取得当前进程 PID。
 public class ProcessIdDemo {
-// 作用：拿到 PID 后，jcmd、jstack、jmap、jstat 和 JFR 命令才能定位到目标 JVM；PID 会变化，复制命令前再次确认进程名和启动时间。
+// 关键变化：// 说明：ProcessHandle：取得当前进程 PID。 public class ProcessIdDemo {；当前对象.ProcessHandle() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     public static void main(String[] args) {
         System.out.println("pid=" + ProcessHandle.current().pid());
         // 输出：pid=12345（进程号可能不同）
@@ -59,7 +60,8 @@ public class ProcessIdDemo {
 ```java
 // 说明：jps -lv：列出 Java 进程。
 public class JpsHintDemo {
-// 作用：jps -lv 适合快速发现 PID、主类和 JVM 参数；容器、远程或权限隔离场景可能看不到全部进程，应配合操作系统进程工具。
+// 关键变化：// 说明：jps -lv：列出 Java 进程。 public class JpsHintDemo {；当前对象.lv() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     public static void main(String[] args) {
         System.out.println("jps -lv");
         // 输出：jps -lv
@@ -74,7 +76,8 @@ public class JpsHintDemo {
 ```java
 // 说明：jcmd VM.version：确认目标 JVM。
 public class JcmdVersionHintDemo {
-// 作用：先确认目标确实是预期 JDK 版本，再解释 GC 参数或 API 行为；不同发行版的诊断输出字段可能不同。
+// 关键变化：// 说明：jcmd VM.version：确认目标 JVM。 public class JcmdVersionHintDemo {；当前对象.version() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     public static void main(String[] args) {
         System.out.println("jcmd <pid> VM.version");
         // 输出：jcmd <pid> VM.version
@@ -105,7 +108,8 @@ public class ThreadPrintHintDemo {
 ```java
 // 说明：jstack -l：线程转储兼容入口。
 public class JstackHintDemo {
-// 作用：-l 请求更详细的锁信息；如果目标 JVM 被阻塞、权限不够或平台限制，命令可能失败。
+// 关键变化：// 说明：jstack -l：线程转储兼容入口。 public class JstackHintDemo {；当前对象.l() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     public static void main(String[] args) {
         System.out.println("jstack -l <pid>");
         // 输出：jstack -l <pid>
@@ -122,7 +126,8 @@ public class JstackHintDemo {
 ```java
 // 说明：jmap -histo:live：类直方图。
 public class JmapHistogramHintDemo {
-// 作用：类直方图能帮助定位数量异常的 String、数组、集合和业务对象；live 选项可能触发 GC 或停顿，线上应先评估成本。
+// 关键变化：// 说明：jmap -histo:live：类直方图。 public class JmapHistogramHintDemo {；当前对象.histo() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     public static void main(String[] args) {
         System.out.println("jmap -histo:live <pid>");
         // 输出：jmap -histo:live <pid>
@@ -137,7 +142,8 @@ public class JmapHistogramHintDemo {
 ```java
 // 说明：jmap -dump：生成堆转储。
 public class JmapDumpHintDemo {
-// 作用：堆转储通常很大且可能包含业务数据，目录、权限、加密和保留周期要提前规划。
+// 关键变化：// 说明：jmap -dump：生成堆转储。 public class JmapDumpHintDemo {；当前对象.dump() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     public static void main(String[] args) {
         System.out.println("jmap -dump:live,format=b,file=app.hprof <pid>");
         // 输出：jmap -dump:live,format=b,file=app.hprof <pid>
@@ -154,7 +160,8 @@ OOM 自动转储与 jcmd GC.heap_dump 也是常见替代方案。
 ```java
 // 说明：jstat -gcutil：采样 GC 利用率。
 public class JstatGcHintDemo {
-// 作用：这个命令每秒采样一次、共十次；结果适合快速看趋势，不替代统一 GC 日志，也不应只根据某一列百分比调整参数。
+// 关键变化：// 说明：jstat -gcutil：采样 GC 利用率。 public class JstatGcHintDemo {；当前对象.gcutil() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     public static void main(String[] args) {
         System.out.println("jstat -gcutil <pid> 1000 10");
         // 输出：jstat -gcutil <pid> 1000 10
@@ -169,6 +176,8 @@ JFR.start 可以用 default/profile 配置和 duration 限制范围；先短时�
 ```java
 // 说明：完成一次 JFR 记录：启动、导出并停止。
 public class JfrCommandHintDemo {
+// 关键变化：// 说明：完成一次 JFR 记录：启动、导出并停止。 public class JfrCommandHintDemo {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     public static void main(String[] args) {
         System.out.println("jcmd <pid> JFR.start name=diag settings=profile duration=60s filename=diag.jfr");
         // 输出：JFR.start 命令
@@ -192,10 +201,9 @@ import jdk.jfr.Recording;
 import java.nio.file.Path;
 
 public class JfrApiDemo {
-// 作用：Recording API 适合应用自己围绕一次请求或测试控制记录，但必须设置时长、事件和文件目录，避免无界记录。
     public static void main(String[] args) throws Exception {
         try (Recording recording = new Recording()) {
-// 关键变化：recording 接收表达式 new Recording()) { 的计算结果。
+        // 关键变化：try (Recording recording = new Recording()) {；当前对象；try；当前对象.try(Recording recording = new Recording()) 返回本次调用的具体结果，后续语句继续使用该值。
 // 初始状态：recording 的初始值为 new Recording())。
             recording.start();
             System.out.println("recording");
@@ -230,7 +238,8 @@ Native Memory Tracking 必须在启动时启用，不能事后补开；它有运
 ```java
 // 说明：先用 -XX:NativeMemoryTracking=summary 启动 app.jar，再将 <pid> 替换为该 JVM 进程号查询线程栈、元空间和代码缓存等本地内存分类。
 public class NativeMemoryHintDemo {
-// 作用：Native Memory Tracking 必须在启动时启用，不能事后补开；它有运行时开销，适合专门诊断元空间、线程栈、代码缓存和本地分配的异常。
+// 关键变化：// 说明：先用 -XX:NativeMemoryTracking=summary 启动 app.jar，再将 <pid> 替换为该 JVM 进程号查询线程栈、元空间和代码缓存等本地内存分类。 public class NativeMemoryHintDemo {；当前对象.native_memory() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     public static void main(String[] args) {
         System.out.println("java -XX:NativeMemoryTracking=summary -jar app.jar");
         // 输出：NMT 启动参数
@@ -249,14 +258,16 @@ public class NativeMemoryHintDemo {
 import jdk.jfr.Recording;
 
 public class JfrEventSettingDemo {
-// 作用：按需开启事件、设置阈值和采样周期可以减少文件大小；事件名称和字段以目标 JDK 文档为准，不能把某一版本的事件集合当成永久稳定清单。
     public static void main(String[] args) throws Exception {
         try (Recording recording = new Recording()) {
-// 关键变化：recording 接收表达式 new Recording()) { 的计算结果。
+        // 关键变化：try (Recording recording = new Recording()) {；当前对象；try；当前对象.try(Recording recording = new Recording()) 返回本次调用的具体结果，后续语句继续使用该值。
 // 初始状态：recording 的初始值为 new Recording())。
             recording.enable("jdk.CPULoad").withPeriod(java.time.Duration.ofSeconds(1));
+            // 关键变化：recording.enable("jdk.CPULoad").withPeriod(java.time.Duration.ofSeconds(1));；recording；enable；recording.enable("jdk.CPULoad") 改变当前资源或任务状态，后续步骤观察这一变化。
             recording.start();
+            // 关键变化：recording.start()；recording.start(当前参数) 改变当前资源或任务状态，后续步骤观察这一变化。
             recording.stop();
+            // 关键变化：recording.stop()；recording.stop() 完成本例中的具体调用，后续语句观察调用后的状态。
             System.out.println("cpu event configured");
             // 输出：cpu event configured
         }
@@ -271,7 +282,8 @@ public class JfrEventSettingDemo {
 ```java
 // 说明：将 <pid> 替换为目标 JVM 进程号，Compiler.queue 输出当前等待 C1/C2 JIT 编译的方法，不会生成转储文件。
 public class CompilerQueueHintDemo {
-// 作用：编译队列适合调查热方法迟迟未优化或启动抖动，但解释 JIT 问题还要结合 JFR ExecutionSample、编译日志和实际 CPU。
+// 关键变化：// 说明：将 <pid> 替换为目标 JVM 进程号，Compiler.queue 输出当前等待 C1/C2 JIT 编译的方法，不会生成转储文件。 public class CompilerQueueHintDemo {；当前对象.queue() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     public static void main(String[] args) {
         System.out.println("jcmd <pid> Compiler.queue");
         // 输出：jcmd <pid> Compiler.queue

@@ -217,6 +217,8 @@ public class FieldScopeDemo {
 ```java
 // 说明：isAssignableFrom：判断类型兼容。
 import java.util.ArrayList;
+// 关键变化：// 说明：isAssignableFrom：判断类型兼容。 import java.util.ArrayList;；当前对象.isAssignableFrom() 完成本例中的具体调用，后续语句观察调用后的状态。
+
 import java.util.List;
 
 public class AssignableDemo {
@@ -241,6 +243,7 @@ import java.util.List;
 public class InstanceReflectDemo {
     public static void main(String[] args) {
         List<String> list = new ArrayList<>();
+        // 关键变化：List<String> list = new ArrayList<>()；list 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：list 当前为 new ArrayList<>()。
         System.out.println(List.class.isInstance(list));
         // 输出：true
@@ -283,9 +286,9 @@ class PrivateValue { private int value = 1; }
 public class TryAccessibleDemo {
     public static void main(String[] args) throws Exception {
         Field field = PrivateValue.class.getDeclaredField("value");
+        // 关键变化：Field field = PrivateValue.class.getDeclaredField("value")；field 接收 getDeclaredField("value") 的返回值，当前值变为这次调用得到的具体结果。
         System.out.println(field.trySetAccessible());
 // 输出：true
-        // 作用：通过 trySetAccessible 探测访问是否可打开。
     }
 }
 ```
@@ -353,17 +356,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class InvocationTargetDemo {
-// 作用：框架日志和异常转换应优先记录 getCause()；只打印 InvocationTargetException 会丢失真正业务根因。
     static void fail() { throw new IllegalArgumentException("bad input"); }
-// // 关键变化：static void fail() { throw new IllegalArgumentException("bad input"); } 使用表达式中的具体参数完成本次调用。
+    // 关键变化：static void fail() { throw new IllegalArgumentException("bad input"); }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 初始状态：表达式为 static void fail() { throw new IllegalArgumentException("bad input"); }。
 
     public static void main(String[] args) throws Exception {
         Method method = InvocationTargetDemo.class.getDeclaredMethod("fail");
+        // 关键变化：Method method = InvocationTargetDemo.class.getDeclaredMethod("fail")；method 接收 getDeclaredMethod("fail") 的返回值，当前值变为这次调用得到的具体结果。
         try {
             method.invoke(null);
+            // 关键变化：method.invoke(null);；method；invoke；method.invoke(null) 返回本次调用的具体结果，后续语句继续使用该值。
         } catch (InvocationTargetException e) {
-        // 作用：通过 InvocationTargetException 还原目标异常。
+        // 关键变化：} catch (InvocationTargetException e) {；当前对象；该操作；当前对象.该操作(InvocationTargetException e) 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println(e.getCause().getClass().getSimpleName());
             // 输出：IllegalArgumentException
         }
@@ -382,17 +386,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
+// 关键变化：@Retention(RetentionPolicy.RUNTIME)；注解参数 RetentionPolicy.RUNTIME 绑定到声明位置，框架或反射按该配置处理声明。
+// 输入：@Retention(RetentionPolicy.RUNTIME) 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 @Target(ElementType.TYPE_USE)
+// 关键变化：@Target(ElementType.TYPE_USE)；注解参数 ElementType.TYPE_USE 绑定到声明位置，框架或反射按该配置处理声明。
 @interface NonNull { }
-// 作用：AnnotatedType 关注类型使用位置，而不是方法/字段声明本身；它通常服务于校验框架或静态/运行时类型工具。
-// 作用：通过 getAnnotatedType 读取类型使用位置注解。
 
 public class AnnotatedTypeDemo {
     static @NonNull String value() { return "java"; }
+    // 关键变化：static @NonNull String value() { return "java"; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 
     public static void main(String[] args) throws Exception {
         var type = AnnotatedTypeDemo.class.getDeclaredMethod("value").getAnnotatedReturnType();
-// 关键变化：type 接收表达式 AnnotatedTypeDemo.class.getDeclaredMethod("value").getAnnotatedReturnType() 的计算结果。
+        // 关键变化：var type = AnnotatedTypeDemo.class.getDeclaredMethod("value").getAnnotatedReturnType()；type 接收 getDeclaredMethod("value") 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：type 的初始值为 AnnotatedTypeDemo.class.getDeclaredMethod("value").getAnnotatedReturnType()。
         System.out.println(type.isAnnotationPresent(NonNull.class));
         // 输出：true

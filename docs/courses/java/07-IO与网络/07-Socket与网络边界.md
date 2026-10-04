@@ -69,16 +69,23 @@ public class SocketAcceptDemo {
 // 关键变化：server 接收表达式 new ServerSocket(0) 的计算结果。
 // 初始状态：server 的初始值为 new ServerSocket(0)。
              var executor = Executors.newSingleThreadExecutor()) {
+             // 关键变化：var executor = Executors.newSingleThreadExecutor()) {；executor 接收 newSingleThreadExecutor(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
             executor.submit(() -> {
+            // 关键变化：executor.submit(() -> {；executor.submit(() -> {) 改变当前资源或任务状态，后续步骤观察这一变化。
                 try (Socket socket = server.accept()) {
+                // 关键变化：try (Socket socket = server.accept()) {；当前对象；try；当前对象.try(Socket socket = server.accept()) 返回本次调用的具体结果，后续语句继续使用该值。
                     System.out.println(socket.getInetAddress().isLoopbackAddress());
                     // 输出：true
                 } catch (Exception e) {
+                // 关键变化：} catch (Exception e) {；当前对象；该操作；当前对象.该操作(Exception e) 返回本次调用的具体结果，后续语句继续使用该值。
                     throw new RuntimeException(e);
+                    // 关键变化：throw new RuntimeException(e);；当前对象.该操作(e) 返回本次调用的具体结果，后续语句继续使用该值。
                 }
             });
             try (Socket client = new Socket("127.0.0.1", server.getLocalPort())) {
+            // 关键变化：try (Socket client = new Socket("127.0.0.1", server.getLocalPort())) {；当前对象；try；当前对象.try(Socket client = new Socket("127.0.0.1", server.getLocalPort())) 返回本次调用的具体结果，后续语句继续使用该值。
                 client.getOutputStream().close();
+                // 关键变化：client.getOutputStream().close()；client.getOutputStream() 完成本例中的具体调用，后续语句观察调用后的状态。
             }
         }
     }
@@ -104,23 +111,36 @@ public class SocketTextDemo {
 // 关键变化：server 接收表达式 new ServerSocket(0)) { 的计算结果。
 // 初始状态：server 的初始值为 new ServerSocket(0))。
             Thread service = new Thread(() -> {
+            // 关键变化：Thread service = new Thread(() -> { 将返回值写入 service；service 现在保存该具体结果。
                 try (Socket socket = server.accept();
+                // 关键变化：try (Socket socket = server.accept()；try-with-resources 打开具体资源并在代码块结束时关闭它。
                      var reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+                     // 关键变化：var reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8)); 将返回值写入 reader；reader 现在保存该具体结果。
                      var writer = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8)) {
+                     // 关键变化：var writer = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8)) { 将返回值写入 writer；writer 现在保存该具体结果。
                     writer.println(reader.readLine().toUpperCase());
+                    // 关键变化：writer.println(reader.readLine().toUpperCase());；标准输出写入具体参数 reader.readLine().toUpperCase()。
                 } catch (Exception e) {
+                // 关键变化：} catch (Exception e) {；当前对象；该操作；当前对象.该操作(Exception e) 返回本次调用的具体结果，后续语句继续使用该值。
                     throw new RuntimeException(e);
+                    // 关键变化：throw new RuntimeException(e);；当前对象.该操作(e) 返回本次调用的具体结果，后续语句继续使用该值。
                 }
             }, "socket-text-service");
             service.start();
+            // 作用：service.start(); 读取当前对象并返回具体数量或位置。
             try (Socket client = new Socket("127.0.0.1", server.getLocalPort());
+            // 关键变化：try (Socket client = new Socket("127.0.0.1", server.getLocalPort())；try-with-resources 打开具体资源并在代码块结束时关闭它。
                  var reader = new BufferedReader(new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
+                 // 关键变化：var reader = new BufferedReader(new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8)); 将返回值写入 reader；reader 现在保存该具体结果。
                  var writer = new PrintWriter(client.getOutputStream(), true, StandardCharsets.UTF_8)) {
+                 // 关键变化：var writer = new PrintWriter(client.getOutputStream(), true, StandardCharsets.UTF_8)) { 将返回值写入 writer；writer 现在保存该具体结果。
                 writer.println("java");
+                // 关键变化：writer.println("java");；标准输出写入具体参数 "java"。
                 System.out.println(reader.readLine());
                 // 输出：JAVA
             }
             service.join();
+            // 关键变化：service.join();；service 等待当前阶段或异步结果完成后再继续。
         }
     }
 }
@@ -146,7 +166,7 @@ public class SocketTimeoutDemo {
             }, "socket-timeout-service").start();
             try (Socket socket = new Socket("127.0.0.1", server.getLocalPort())) {
                 socket.setSoTimeout(50);
-                // 作用：SoTimeout 限制一次阻塞读取，不会自动关闭 Socket，也不等于连接超时；捕获后要决定重试、断开还是继续读取。
+                // 关键变化：socket.setSoTimeout(50);；socket；setSoTimeout；socket.setSoTimeout(50) 返回本次调用的具体结果，后续语句继续使用该值。
                 try {
                     socket.getInputStream().read();
                 } catch (SocketTimeoutException e) {
@@ -195,12 +215,19 @@ public class UdpLoopbackDemo {
 // 关键变化：receiver 接收表达式 new DatagramSocket(0) 的计算结果。
 // 初始状态：receiver 的初始值为 new DatagramSocket(0)。
              DatagramSocket sender = new DatagramSocket()) {
+             // 关键变化：DatagramSocket sender = new DatagramSocket()) { 将返回值写入 sender；sender 现在保存该具体结果。
             byte[] bytes = "ping".getBytes(StandardCharsets.UTF_8);
+            // 关键变化：byte[] bytes = "ping".getBytes(StandardCharsets.UTF_8); 将返回值写入 bytes；bytes 现在保存该具体结果。
             sender.send(new DatagramPacket(bytes, bytes.length,
                     InetAddress.getLoopbackAddress(), receiver.getLocalPort()));
+            // 关键变化：sender.send(new DatagramPacket(bytes, bytes.length, InetAddress.getLoopbackAddress(), receiver.getLocalPort()));；send；sender.send(new DatagramPacket(bytes, bytes.length, InetAddress.getLoopbackAddress(), receiver.getLocalPort())) 返回本次调用的具体结果，后续语句继续使用该值。
+                    // 关键变化：InetAddress.getLoopbackAddress(), receiver.getLocalPort()))；InetAddress.getLoopbackAddress() 完成本例中的具体调用，后续语句观察调用后的状态。
             byte[] received = new byte[16];
+            // 关键变化：byte[] received = new byte[16]; 将返回值写入 received；received 现在保存该具体结果。
             DatagramPacket packet = new DatagramPacket(received, received.length);
+            // 关键变化：DatagramPacket packet = new DatagramPacket(received, received.length); 将返回值写入 packet；packet 现在保存该具体结果。
             receiver.receive(packet);
+            // 关键变化：receiver.receive(packet);；receiver；receive；receiver.receive(packet) 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println(new String(packet.getData(), packet.getOffset(), packet.getLength(), StandardCharsets.UTF_8));
             // 输出：ping
         }
@@ -231,7 +258,7 @@ public class SocketHalfCloseDemo {
             }, "socket-half-close-service").start();
             try (Socket client = new Socket("127.0.0.1", server.getLocalPort())) {
                 client.shutdownOutput();
-                // 作用：客户端关闭输出后，服务端读到 EOF，但连接的另一方向仍可能可用；只有协议定义了结束方向时才使用半关闭。
+                // 关键变化：client.shutdownOutput()；client.shutdownOutput() 完成本例中的具体调用，后续语句观察调用后的状态。
             }
         }
     }
@@ -251,7 +278,7 @@ public class SocketOptionDemo {
         try (ServerSocket server = new ServerSocket()) {
         // 初始状态：server 当前为 new ServerSocket()) {。
             server.setReuseAddress(true);
-            // 作用：通过 setReuseAddress 端口重用选项。
+            // 关键变化：server.setReuseAddress(true);；server；setReuseAddress；server.setReuseAddress(true) 返回本次调用的具体结果，后续语句继续使用该值。
             server.bind(new java.net.InetSocketAddress("127.0.0.1", 0));
             System.out.println(server.getReuseAddress());
             // 输出：true
@@ -272,7 +299,7 @@ public class TcpNoDelayDemo {
         try (Socket socket = new Socket()) {
         // 初始状态：socket 当前为 new Socket()) {。
             socket.setTcpNoDelay(true);
-            // 作用：通过 setTcpNoDelay 禁用 Nagle 合并。
+            // 关键变化：socket.setTcpNoDelay(true);；socket；setTcpNoDelay；socket.setTcpNoDelay(true) 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println(socket.getTcpNoDelay());
             // 输出：true
         }
@@ -292,7 +319,7 @@ public class TcpKeepAliveDemo {
         try (Socket socket = new Socket()) {
         // 初始状态：socket 当前为 new Socket()) {。
             socket.setKeepAlive(true);
-            // 作用：通过 setKeepAlive 内核级保活。
+            // 关键变化：socket.setKeepAlive(true);；socket；setKeepAlive；socket.setKeepAlive(true) 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println(socket.getKeepAlive());
             // 输出：true
         }
@@ -309,10 +336,9 @@ backlog 是内核等待队列的建议值，不等于应用能同时处理的连
 import java.net.ServerSocket;
 
 public class BacklogDemo {
-// 作用：backlog 是内核等待队列的建议值，不等于应用能同时处理的连接数；服务端仍需线程池、连接上限和过载策略。
     public static void main(String[] args) throws Exception {
         try (ServerSocket server = new ServerSocket(0, 32)) {
-// 关键变化：server 接收表达式 new ServerSocket(0, 32)) { 的计算结果。
+        // 关键变化：try (ServerSocket server = new ServerSocket(0, 32)) {；当前对象；try；当前对象.try(ServerSocket server = new ServerSocket(0, 32)) 返回本次调用的具体结果，后续语句继续使用该值。
 // 初始状态：server 的初始值为 new ServerSocket(0, 32))。
             System.out.println(server.getLocalPort() > 0);
             // 输出：true
@@ -329,11 +355,12 @@ public class BacklogDemo {
 import java.nio.channels.SocketChannel;
 
 public class SocketChannelDemo {
-// 作用：非阻塞 Channel 必须配合 Selector 或连接状态机处理 finishConnect、部分读写和 OP_* 事件；不能只把 blocking 改成 false 就得到高性能服务。
     public static void main(String[] args) throws Exception {
         try (SocketChannel channel = SocketChannel.open()) {
-        // 作用：通过 SocketChannel 从阻塞 Socket 迁移到 NIO。
+        // 关键变化：try (SocketChannel channel = SocketChannel.open()) {；当前对象；try；当前对象.try(SocketChannel channel = SocketChannel.open()) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：try (SocketChannel channel = SocketChannel.open()) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
             channel.configureBlocking(false);
+            // 关键变化：channel.configureBlocking(false);；channel；configureBlocking；channel.configureBlocking(false) 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println(channel.isBlocking());
             // 输出：false
         }

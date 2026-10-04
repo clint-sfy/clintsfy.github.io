@@ -53,8 +53,9 @@ import org.springframework.stereotype.Component;
 @Component
 class AuditAspect {
 // 输入：表达式为 @Aspect。
-// // 关键变化：class AuditAspect { 使用表达式中的具体参数完成本次调用。
     String name() { return "audit"; }
+    // 关键变化：String name() { return "audit"; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：String name() { return "audit"; } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 
 System.out.println(new AuditAspect().name());
@@ -75,9 +76,10 @@ import org.aspectj.lang.annotation.Pointcut;
 @Aspect
 class AuditPointcuts {
     @Pointcut("execution(* com.example.service..*(..))")
+    // 关键变化：@Pointcut("execution(* com.example.service..*(..))")；注解参数 "execution(* com.example.service..*(..))" 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@Pointcut("execution(* com.example.service..*(..))") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     void serviceOperation() {}
 // 输入：表达式为 @Pointcut("execution(* com.example.service..*(..))")。
-// // 关键变化：void serviceOperation() {} 使用表达式中的具体参数完成本次调用。
 }
 
 System.out.println("pointcut=serviceOperation");
@@ -99,11 +101,12 @@ import org.aspectj.lang.annotation.Aspect;
 @Aspect
 class TimingAspect {
     @Around("execution(* com.example.service..*(..))")
+    // 关键变化：@Around("execution(* com.example.service..*(..))")；注解参数 "execution(* com.example.service..*(..))" 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@Around("execution(* com.example.service..*(..))") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     Object time(ProceedingJoinPoint joinPoint) throws Throwable {
 // 输入：表达式为 @Around("execution(* com.example.service..*(..))")。
-// // 关键变化：Object time(ProceedingJoinPoint joinPoint) throws Throwable { 使用表达式中的具体参数完成本次调用。
-    // 作用：用于在目标方法前后统一计时、记录结果或转换异常；正常路径必须调用 `proceed` 并保留返回值。
         long start = System.nanoTime();
+        // 输入：long start = System.nanoTime(); 提供具体参数或初始值，start 从该语句开始参与后续操作。
         Object result = joinPoint.proceed();
         System.out.println("elapsed=" + (System.nanoTime() - start >= 0));
         // 输出：elapsed=true
@@ -131,6 +134,7 @@ class Guard {
         return joinPoint.proceed();
 // 输入：表达式为 return joinPoint.proceed()。
 // 返回：return joinPoint.proceed() 把该表达式交给调用方。
+        // 关键变化：return joinPoint.proceed()；joinPoint.proceed() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 }
 // 说明：joinPoint.proceed() 才把调用交给目标方法并返回其 Object 结果；省略它会让目标方法完全不执行，调用两次则会重复业务副作用。
@@ -151,8 +155,8 @@ import org.springframework.transaction.annotation.Transactional;
 class TransferService {
     @Transactional
     public void transfer() {
+    // 关键变化：public void transfer() {；当前对象.Transactional() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 输入：表达式为 @Transactional。
-// // 关键变化：public void transfer() { 使用表达式中的具体参数完成本次调用。
         System.out.println("debit then credit");
         // 输出：debit then credit
     }
@@ -225,9 +229,10 @@ import org.springframework.core.annotation.Order;
 
 @Aspect
 @Order(1)
+// 关键变化：@Order(1)；注解参数 1 绑定到声明位置，框架或反射按该配置处理声明。
+// 输入：@Order(1) 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 class SecurityAspect {
 // 输入：表达式为 @Order(1)。
-// // 关键变化：class SecurityAspect { 使用表达式中的具体参数完成本次调用。
     @Before("execution(* com.example..service..*(..))")
     void check() {
         System.out.println("security-first");
@@ -247,15 +252,19 @@ class SecurityAspect {
 import org.springframework.transaction.support.TransactionTemplate;
 
 class ImportService {
-// // 关键变化：class ImportService { 使用表达式中的具体参数完成本次调用。
     private final TransactionTemplate template;
 
     ImportService(TransactionTemplate template) {
+    // 关键变化：ImportService(TransactionTemplate template) {；当前对象；ImportService；当前对象.ImportService(TransactionTemplate template) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：ImportService(TransactionTemplate template) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         this.template = template;
+        // 关键变化：this.template = template;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 
     String importOne() {
+    // 关键变化：String importOne() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return template.execute(status -> {
+        // 关键变化：return template.execute(status -> {；template.execute(status -> {) 改变当前资源或任务状态，后续步骤观察这一变化。
             System.out.println("imported");
             // 输出：imported
             return "ok";
@@ -320,13 +329,14 @@ class OrderService {
 // 结果：匹配切点的 Bean 被代理，`AopContext.currentProxy()` 可在代理调用内取值。
 @Configuration
 @EnableAspectJAutoProxy(exposeProxy = true)
+// 关键变化：@EnableAspectJAutoProxy(exposeProxy = true)；注解参数 exposeProxy = true 绑定到声明位置，框架或反射按该配置处理声明。
+// 输入：@EnableAspectJAutoProxy(exposeProxy = true) 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 class AopConfiguration {
 // 输入：exposeProxy 的初始值为 true)。
-// 作用：@EnableAspectJAutoProxy 注册 Spring AOP 的自动代理能力；exposeProxy=true 增加隐式上下文，只在确有需要时开启。
-// 作用：通过 @EnableAspectJAutoProxy 开启基于代理的 AOP。
     @Bean
     AuditAspect auditAspect() {
         return new AuditAspect();
+        // 输入：return new AuditAspect(); 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
     }
     String mode() { return "proxy"; }
 }

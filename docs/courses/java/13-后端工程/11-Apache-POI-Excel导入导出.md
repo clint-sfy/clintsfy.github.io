@@ -49,8 +49,8 @@ Excel 日期没有独立的“日期对象”存储，常见实现是数字加�
 
 ```java
 try (InputStream in = Files.newInputStream(path); Workbook workbook = WorkbookFactory.create(in)) {
+// 关键变化：try (InputStream in = Files.newInputStream(path); Workbook workbook = WorkbookFactory.create(in)) {；当前对象；try；当前对象.try(InputStream in = Files.newInputStream(path); Workbook workbook = WorkbookFactory.create(in)) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：in 的初始值为 Files.newInputStream(path); Workbook workbook = WorkbookFactory.create(in))。
-// 关键变化：in 接收右侧表达式 Files.newInputStream(path); Workbook workbook = WorkbookFactory.create(in)) { 的计算结果。
     System.out.println(workbook.getNumberOfSheets());
 // 输出：工作簿中的工作表数量。
 }
@@ -148,7 +148,7 @@ System.out.println(format >= 0);
 CellStyle copy = workbook.createCellStyle();
 // 初始状态：copy 当前为 workbook.createCellStyle()。
 copy.cloneStyleFrom(style);
-// // 关键变化：copy.cloneStyleFrom(style) 使用表达式中的具体参数完成本次调用。
+// 关键变化：copy.cloneStyleFrom(style);；copy；cloneStyleFrom；copy.cloneStyleFrom(style) 返回本次调用的具体结果，后续语句继续使用该值。
 System.out.println(copy.getDataFormat() == style.getDataFormat());
 // 输出：true
 // 说明：target.cloneStyleFrom(source) 复制同一 Workbook 中 source 的字体、边框、填充和格式；跨 Workbook 复制会引用不兼容的样式表。
@@ -202,7 +202,7 @@ DataValidationHelper helper = sheet.getDataValidationHelper();
 DataValidation validation = helper.createValidation(
     helper.createExplicitListConstraint(new String[] {"启用", "停用"}), ranges);
 // 输入：validation 的初始值为 helper.createValidation(。
-// // 关键变化：helper.createExplicitListConstraint(new String[] {"启用", "停用"}), ranges) 使用表达式中的具体参数完成本次调用。
+// 关键变化：DataValidation validation = helper.createValidation( helper.createExplicitListConstraint(new String[] {"启用", "停用"}), ranges); 将返回值写入 validation；validation 现在保存该具体结果。
 System.out.println(validation != null);
 // 输出：true
 // 说明：helper.createValidation(constraint, regions) 把下拉约束与 C2:C101 范围组合；尚未 addValidationData 前不会写入工作表。
@@ -215,7 +215,7 @@ System.out.println(validation != null);
 ```java
 validation.createPromptBox("状态", "请选择启用或停用");
 // 输入：表达式为 validation.createPromptBox("状态", "请选择启用或停用")。
-// // 关键变化：validation.createPromptBox("状态", "请选择启用或停用") 使用表达式中的具体参数完成本次调用。
+// 关键变化：validation.createPromptBox("状态", "请选择启用或停用");；validation；createPromptBox；validation.createPromptBox("状态") 返回本次调用的具体结果，后续语句继续使用该值。
 validation.setShowPromptBox(true);
 System.out.println(validation.getShowPromptBox());
 // 输出：true
@@ -229,7 +229,7 @@ System.out.println(validation.getShowPromptBox());
 ```java
 sheet.addValidationData(validation);
 // 输入：表达式为 sheet.addValidationData(validation)。
-// // 关键变化：sheet.addValidationData(validation) 使用表达式中的具体参数完成本次调用。
+// 关键变化：sheet.addValidationData(validation);；sheet；addValidationData；sheet.addValidationData(validation) 返回本次调用的具体结果，后续语句继续使用该值。
 System.out.println("validation added");
 // 输出：validation added
 // 说明：sheet.addValidationData(validation) 才把针对 C2:C101 的规则写入 sheet；Excel 客户端提示不能替代导入端白名单校验。
@@ -256,7 +256,7 @@ System.out.println(bytes.length);
 InputStream in = new ByteArrayInputStream(new byte[0]);
 // 初始状态：in 当前为 new ByteArrayInputStream(new byte[0])。
 IOUtils.closeQuietly(in);
-// // 关键变化：IOUtils.closeQuietly(in) 使用表达式中的具体参数完成本次调用。
+// 关键变化：IOUtils.closeQuietly(in);；IOUtils；closeQuietly；IOUtils.closeQuietly(in) 返回本次调用的具体结果，后续语句继续使用该值。
 System.out.println("closed");
 // 输出：closed
 // 说明：IOUtils.closeQuietly(workbook) 尝试关闭旧式 Workbook 并吞掉 IOException；因此它只能用于兼容清理，不能让关闭失败覆盖主要异常或变得不可观测。
@@ -282,11 +282,12 @@ System.out.println(tail);
 
 ```java
 try (SXSSFWorkbook book = new SXSSFWorkbook(100);
+// 关键变化：try (SXSSFWorkbook book = new SXSSFWorkbook(100)；try-with-resources 打开具体资源并在代码块结束时关闭它。
 // 初始状态：book 当前为 new SXSSFWorkbook(100)。
      OutputStream out = Files.newOutputStream(path)) {
     book.createSheet("data").createRow(0).createCell(0).setCellValue("ok");
     book.write(out);
-// // 关键变化：book.write(out) 使用括号内的具体实参更新接收对象状态。
+    // 关键变化：book.write(out);；book 写入具体参数 out，对象状态或输出内容随之改变。
 }
 // 输出：path 指向可打开的 xlsx 文件。
 // 说明：workbook.write(output) 将 SXSSFWorkbook 当前内容写入目标流；它不关闭 output，写完仍需 close 并调用 dispose 清理 SXSSF 临时文件。
@@ -307,16 +308,21 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 
 String firstCell(InputStream input) throws Exception {
-// // 关键变化：String firstCell(InputStream input) throws Exception { 使用表达式中的具体参数完成本次调用。
+// 关键变化：String firstCell(InputStream input) throws Exception {；当前对象；该操作；当前对象.该操作(InputStream input) 返回本次调用的具体结果，后续语句继续使用该值。
+// 输入：String firstCell(InputStream input) throws Exception { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     if (input == null) return "cell=missing";
+    // 关键变化：if (input == null) return "cell=missing";；当前对象；if；当前对象.if(input == null) 返回本次调用的具体结果，后续语句继续使用该值。
     try (InputStream in = new BufferedInputStream(input);
-// 关键变化：in 接收表达式 new BufferedInputStream(input) 的计算结果。
+    // 关键变化：try (InputStream in = new BufferedInputStream(input)；try-with-resources 打开具体资源并在代码块结束时关闭它。
 // 初始状态：in 的初始值为 new BufferedInputStream(input)。
             Workbook workbook = WorkbookFactory.create(in)) {
-            // 作用：用于按输入格式创建 `Workbook`，统一读取 `.xls` 和 `.xlsx`，并让输入流与工作簿在同一资源边界内关闭。
+            // 关键变化：Workbook workbook = WorkbookFactory.create(in)) {；WorkbookFactory.create(in) 创建或取得具体资源，后续语句使用该对象。
         Row row = workbook.getNumberOfSheets() == 0 ? null : workbook.getSheetAt(0).getRow(0);
+        // 关键变化：Row row = workbook.getNumberOfSheets() == 0 ? null : workbook.getSheetAt(0).getRow(0)；row 接收 getNumberOfSheets(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         Cell cell = row == null ? null : row.getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+        // 关键变化：Cell cell = row == null ? null : row.getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL)；cell 接收 getCell(0) 的返回值，当前值变为这次调用得到的具体结果。
         String value = cell == null ? "" : new DataFormatter().formatCellValue(cell);
+        // 关键变化：String value = cell == null ? "" : new DataFormatter().formatCellValue(cell)；value 接收 formatCellValue(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         System.out.println("cell=" + value);
 // 输出：cell=header
         return value;
@@ -390,9 +396,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 List<String> importExcel(InputStream input) throws Exception {
+// 关键变化：List<String> importExcel(InputStream input) throws Exception {；当前对象；该操作；当前对象.该操作(InputStream input) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 List<String> importExcel(InputStream input) throws Exception {。
-// // 关键变化：List<String> importExcel(InputStream input) throws Exception { 使用表达式中的具体参数完成本次调用。
     List<String> rows = new ArrayList<>();
+    // 输入：List<String> rows = new ArrayList<>(); 提供具体参数或初始值，rows 从该语句开始参与后续操作。
     if (input == null) throw new IllegalArgumentException("input required");
     try (InputStream in = new BufferedInputStream(input);
             var workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create(in)) {
@@ -424,9 +431,10 @@ import java.util.List;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 byte[] exportExcel(List<String> values) throws Exception {
+// 关键变化：byte[] exportExcel(List<String> values) throws Exception {；当前对象；该操作；当前对象.该操作(List<String> values) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 byte[] exportExcel(List<String> values) throws Exception {。
-// // 关键变化：byte[] exportExcel(List<String> values) throws Exception { 使用表达式中的具体参数完成本次调用。
     try (var output = new ByteArrayOutputStream()) {
+    // 输入：try (var output = new ByteArrayOutputStream()) { 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
         SXSSFWorkbook workbook = new SXSSFWorkbook(100);
         try (workbook) {
             var sheet = workbook.createSheet("data");

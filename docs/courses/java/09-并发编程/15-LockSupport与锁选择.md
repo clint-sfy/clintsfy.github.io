@@ -78,7 +78,10 @@ import java.util.concurrent.locks.LockSupport;
 public class PermitBeforeParkDemo {
     public static void main(String[] args) {
         LockSupport.unpark(Thread.currentThread());
+        // 输入：LockSupport.unpark(Thread.currentThread()); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
+        // 关键变化：LockSupport.unpark(Thread.currentThread());；LockSupport；unpark；LockSupport.unpark(Thread.currentThread()) 返回本次调用的具体结果，后续语句继续使用该值。
         LockSupport.park();
+        // 关键变化：LockSupport.park()；LockSupport.park() 完成本例中的具体调用，后续语句观察调用后的状态。
         System.out.println("passed without blocking");
         // 输出：passed without blocking
     }
@@ -99,6 +102,8 @@ import java.util.concurrent.locks.LockSupport;
 public class ParkNanosDemo {
     public static void main(String[] args) {
         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1));
+        // 输入：LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1)); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
+        // 关键变化：LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1));；LockSupport；parkNanos；LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1)) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println("park returned");
         // 输出：park returned（可能因超时、unpark 或中断返回）
     }
@@ -118,10 +123,14 @@ import java.util.concurrent.locks.LockSupport;
 public class ParkInterruptDemo {
     public static void main(String[] args) {
         Thread.currentThread().interrupt();
+        // 关键变化：Thread.currentThread().interrupt()；Thread.currentThread() 完成本例中的具体调用，后续语句观察调用后的状态。
         LockSupport.park();
+        // 输入：LockSupport.park(); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
+        // 关键变化：LockSupport.park()；LockSupport.park() 完成本例中的具体调用，后续语句观察调用后的状态。
         System.out.println("interrupted=" + Thread.currentThread().isInterrupted());
         // 输出：interrupted=true
         Thread.interrupted();
+        // 关键变化：Thread.interrupted()；Thread.interrupted() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 }
 ```
@@ -139,15 +148,19 @@ import java.util.concurrent.locks.LockSupport;
 
 public class ParkConditionLoopDemo {
     public static void main(String[] args) throws InterruptedException {
-    // 作用：条件可能虚假返回或被多个线程竞争时必须在 while 中重查；先更新条件，再调用 unpark 唤醒等待者。
         var ready = new AtomicBoolean(false);
 // 关键变化：ready 接收表达式 new AtomicBoolean(false) 的计算结果。
 // 初始状态：ready 的初始值为 new AtomicBoolean(false)。
         Thread worker = new Thread(() -> {
+        // 关键变化：Thread worker = new Thread(() -> { 将返回值写入 worker；worker 现在保存该具体结果。
             while (!ready.get()) {
+            // 关键变化：while (!ready.get()) {；当前对象；while；当前对象.while(!ready.get()) 返回本次调用的具体结果，后续语句继续使用该值。
                 LockSupport.park();
+                // 关键变化：LockSupport.park()；LockSupport.park() 完成本例中的具体调用，后续语句观察调用后的状态。
                 if (Thread.currentThread().isInterrupted()) {
+                // 关键变化：if (Thread.currentThread().isInterrupted()) {；当前对象；if；当前对象.if(Thread.currentThread().isInterrupted()) 返回本次调用的具体结果，后续语句继续使用该值。
                     Thread.currentThread().interrupt();
+                    // 关键变化：Thread.currentThread().interrupt()；Thread.currentThread() 完成本例中的具体调用，后续语句观察调用后的状态。
                     return;
                 }
             }
@@ -155,9 +168,13 @@ public class ParkConditionLoopDemo {
             // 输出：condition met
         });
         worker.start();
+        // 作用：worker.start(); 读取当前对象并返回具体数量或位置。
         ready.set(true);
+        // 关键变化：ready.set(true);；ready 写入具体参数 true，对象状态或输出内容随之改变。
         LockSupport.unpark(worker);
+        // 关键变化：LockSupport.unpark(worker);；LockSupport；unpark；LockSupport.unpark(worker) 返回本次调用的具体结果，后续语句继续使用该值。
         worker.join();
+        // 关键变化：worker.join();；worker 等待当前阶段或异步结果完成后再继续。
     }
 }
 ```
@@ -204,9 +221,10 @@ import java.util.concurrent.locks.LockSupport;
 public class ParkUntilDemo {
     public static void main(String[] args) {
         LockSupport.parkUntil(System.currentTimeMillis() + 1);
+        // 输入：LockSupport.parkUntil(System.currentTimeMillis() + 1); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
+        // 关键变化：LockSupport.parkUntil(System.currentTimeMillis() + 1);；LockSupport；parkUntil；LockSupport.parkUntil(System.currentTimeMillis() + 1) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println("deadline reached or signal received");
 // 输出：deadline reached or signal received
-        // 作用：通过 parkUntil(deadline) 按绝对时间等待。
     }
 }
 ```
@@ -220,11 +238,13 @@ public class ParkUntilDemo {
 ```java
 // 说明：synchronized increment() 在 counter 监视器下完成 count++，方法正常或异常退出都由 JVM 自动释放锁。
 public class SynchronizedChoiceDemo {
-// 作用：临界区简单且只需互斥与可见性时适合优先使用 synchronized；它由语言自动管理释放，通常比手写锁更不易出错。
     private int count;
 
     synchronized void increment() {
+    // 关键变化：synchronized void increment() {；当前对象.synchronized() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：synchronized void increment() { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         count++;
+        // 关键变化：count++; 使 count 在当前值基础上递增 1。
     }
 
     public static void main(String[] args) {
@@ -232,6 +252,7 @@ public class SynchronizedChoiceDemo {
 // 关键变化：counter 接收表达式 new SynchronizedChoiceDemo() 的计算结果。
 // 初始状态：counter 的初始值为 new SynchronizedChoiceDemo()。
         counter.increment();
+        // 关键变化：counter.increment()；counter.increment() 完成本例中的具体调用，后续语句观察调用后的状态。
         System.out.println(counter.count);
         // 输出：1
     }
@@ -280,17 +301,18 @@ public class ReentrantLockChoiceDemo {
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ReadWriteChoiceDemo {
-// 作用：读操作明显多于写操作且临界区值得并行时适合评估 ReadWriteLock；读写协议必须覆盖所有访问路径。
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
-// 关键变化：lock 接收表达式 new ReentrantReadWriteLock() 的计算结果。
+        // 关键变化：var lock = new ReentrantReadWriteLock()；lock 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
         lock.readLock().lock();
+        // 关键变化：lock.readLock().lock();；lock.readLock() 完成本例中的具体调用，后续语句观察调用后的状态。
         try {
             System.out.println("shared read");
             // 输出：shared read
         } finally {
             lock.readLock().unlock();
+            // 关键变化：lock.readLock().unlock()；lock.readLock() 完成本例中的具体调用，后续语句观察调用后的状态。
         }
     }
 }
@@ -330,12 +352,12 @@ public class StampedChoiceDemo {
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CasChoiceDemo {
-// 作用：只有一个独立变量需要比较更新时使用 CAS；它没有持有与释放生命周期，不能保护多字段复合不变式。
     public static void main(String[] args) {
         var count = new AtomicInteger(0);
-// 关键变化：count 接收表达式 new AtomicInteger(0) 的计算结果。
+        // 关键变化：var count = new AtomicInteger(0)；count 接收 该操作(0) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：count 的初始值为 new AtomicInteger(0)。
         boolean updated = count.compareAndSet(0, 1);
+        // 关键变化：boolean updated = count.compareAndSet(0, 1)；updated 接收 compareAndSet(0) 的返回值，当前值变为这次调用得到的具体结果。
         System.out.println("updated=" + updated + ", value=" + count.get());
         // 输出：updated=true, value=1
     }
@@ -481,21 +503,29 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class LockChoiceCaseDemo {
     private final ReentrantLock lock = new ReentrantLock();
+    // 输入：private final ReentrantLock lock = new ReentrantLock(); 提供具体参数或初始值，lock 从该语句开始参与后续操作。
+    // 关键变化：private final ReentrantLock lock = new ReentrantLock();；lock 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
     private int count;
 
     void increment() {
         lock.lock();
+        // 关键变化：lock.lock()；lock.lock(当前参数) 改变当前资源或任务状态，后续步骤观察这一变化。
         try {
             count++;
+            // 关键变化：count++; 使 count 在当前值基础上递增 1。
         } finally {
             lock.unlock();
+            // 关键变化：lock.unlock()；lock.unlock(当前参数) 改变当前资源或任务状态，后续步骤观察这一变化。
         }
     }
 
     public static void main(String[] args) {
         var counter = new LockChoiceCaseDemo();
+        // 关键变化：var counter = new LockChoiceCaseDemo(); 将返回值写入 counter；counter 现在保存该具体结果。
         counter.increment();
+        // 关键变化：counter.increment()；counter.increment() 完成本例中的具体调用，后续语句观察调用后的状态。
         counter.increment();
+        // 关键变化：counter.increment()；counter.increment() 完成本例中的具体调用，后续语句观察调用后的状态。
         System.out.println(counter.count);
         // 输出：2
     }

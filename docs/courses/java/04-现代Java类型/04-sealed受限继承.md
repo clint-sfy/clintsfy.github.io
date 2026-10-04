@@ -50,14 +50,20 @@ record Declined(String reason) implements PaymentResult {}
 
 public class SealedInterfaceDemo {
     static String describe(PaymentResult result) {
+    // 关键变化：static String describe(PaymentResult result) {；当前对象；该操作；当前对象.该操作(PaymentResult result) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：static String describe(PaymentResult result) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         if (result instanceof Paid paid) {
+        // 关键变化：if (result instanceof Paid paid) {；当前对象；if；当前对象.if(result instanceof Paid paid) 返回本次调用的具体结果，后续语句继续使用该值。
             return "paid:" + paid.id();
+            // 关键变化：return "paid:" + paid.id()；paid.id() 完成本例中的具体调用，后续语句观察调用后的状态。
         }
         if (result instanceof Declined declined) {
+        // 关键变化：if (result instanceof Declined declined) {；当前对象；if；当前对象.if(result instanceof Declined declined) 返回本次调用的具体结果，后续语句继续使用该值。
             return "declined:" + declined.reason();
+            // 关键变化：return "declined:" + declined.reason()；declined.reason() 完成本例中的具体调用，后续语句观察调用后的状态。
         }
         throw new IllegalStateException("unreachable");
-// 异常：throw new IllegalStateException("unreachable") 立即进入异常路径。
+        // 关键变化：throw new IllegalStateException("unreachable");；当前对象；该操作；当前对象.该操作("unreachable") 返回本次调用的具体结果，后续语句继续使用该值。
 // 初始状态：表达式为 throw new IllegalStateException("unreachable")。
     }
 
@@ -77,11 +83,14 @@ sealed class 适合共享少量受保护行为或状态的有限层次；如果�
 // 调用参数：代码依次使用 "create"、"delete"。
 sealed abstract class Command permits CreateUser, DeleteUser {
     abstract String name();
+    // 关键变化：abstract String name();；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：abstract String name(); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 
 final class CreateUser extends Command {
     @Override
     String name() {
+    // 关键变化：String name() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return "create";
     }
 }
@@ -89,6 +98,7 @@ final class CreateUser extends Command {
 final class DeleteUser extends Command {
     @Override
     String name() {
+    // 关键变化：String name() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return "delete";
     }
 }
@@ -112,6 +122,8 @@ sealed interface Result permits Success {}
 
 final class Success implements Result {
     String message() {
+    // 关键变化：String message() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：String message() { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         return "ok";
     }
 }
@@ -132,6 +144,8 @@ public class SealedFinalDemo {
 // 语义：中间层声明 sealed 后，必须继续列出自己的直接子类。
 // 调用参数：代码依次使用 true。
 sealed interface FileNode permits File, Directory {}
+// 关键变化：// 语义：中间层声明 sealed 后，必须继续列出自己的直接子类。 // 调用参数：代码依次使用 true。 sealed interface FileNode permits File, Directory {}；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+
 
 sealed class File implements FileNode permits TextFile, ImageFile {}
 final class TextFile extends File {}
@@ -144,6 +158,7 @@ public class NestedSealedDemo {
         System.out.println(new TextFile() instanceof FileNode);
 // 输出：true；System.out.println 的实参为 new TextFile() instanceof FileNode。
     }
+// 输入：// 输出：true；System.out.println 的实参为 new TextFile() instanceof FileNode。 } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 ```
 
@@ -155,6 +170,8 @@ non-sealed 只放开这一支，不影响同一 sealed 层次的其他分支；�
 // 语义：non-sealed 只放开这一支，不影响同一 sealed 层次的其他分支。
 // 调用参数：代码依次使用 true。
 sealed interface Event permits OpenEvent, ExternalEvent {}
+// 关键变化：// 语义：non-sealed 只放开这一支，不影响同一 sealed 层次的其他分支。 // 调用参数：代码依次使用 true。 sealed interface Event permits OpenEvent, ExternalEvent {}；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+
 
 record OpenEvent() implements Event {}
 
@@ -166,6 +183,7 @@ public class NonSealedDemo {
         System.out.println(new VendorEvent() instanceof Event);
 // 输出：true；System.out.println 的实参为 new VendorEvent() instanceof Event。
     }
+// 输入：// 输出：true；System.out.println 的实参为 new VendorEvent() instanceof Event。 } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 ```
 
@@ -203,6 +221,7 @@ public class SealedPatternDemo {
 
 ```java
 sealed interface LocalState {}
+// 关键变化：sealed interface LocalState {}；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 
 final class Ready implements LocalState {}
 final class Closed implements LocalState {}
@@ -221,6 +240,7 @@ public class InferredPermitsDemo {
 
 ```java
 sealed interface LocalCommand permits LocalCreate {}
+// 关键变化：sealed interface LocalCommand permits LocalCreate {}；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 final class LocalCreate implements LocalCommand {}
 
 public class SealedBoundaryDemo {
@@ -228,6 +248,7 @@ public class SealedBoundaryDemo {
         System.out.println(new LocalCreate() instanceof LocalCommand);
 // 输出：true；System.out.println 的实参为 new LocalCreate() instanceof LocalCommand。
     }
+// 输入：// 输出：true；System.out.println 的实参为 new LocalCreate() instanceof LocalCommand。 } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 ```
 
@@ -237,6 +258,7 @@ sealed 负责限制结果种类，record 负责承载字段，enum 负责固定�
 
 ```java
 sealed interface ImportResult permits Imported, Skipped {}
+// 关键变化：sealed interface ImportResult permits Imported, Skipped {}；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 record Imported(String file, ImportStatus status) implements ImportResult {}
 record Skipped(String file, String reason) implements ImportResult {}
 enum ImportStatus { CREATED, UPDATED }
@@ -246,6 +268,7 @@ public class SealedDomainDemo {
         System.out.println(new Imported("a.csv", ImportStatus.CREATED).status());
 // 输出：CREATED；System.out.println 的实参为 new Imported("a.csv", ImportStatus.CREATED).status()。
     }
+// 输入：// 输出：CREATED；System.out.println 的实参为 new Imported("a.csv", ImportStatus.CREATED).status()。 } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 ```
 ## 简单案例

@@ -41,7 +41,8 @@ description: 直接用 Java module-info.java 案例速查 module、requires、ex
 // 说明：module：声明模块。
 // 文件：src/com.example.app/module-info.java
 module com.example.app {
-// 作用：模块名是依赖和运行命令使用的标识；建议使用稳定、唯一且可读的反向域名形式。
+// 关键变化：// 说明：module：声明模块。 // 文件：src/com.example.app/module-info.java module com.example.app {；当前对象.module() 完成本例中的具体调用，后续语句观察调用后的状态。
+
 }
 // 输出：声明名为 com.example.app 的模块。
 ```
@@ -54,7 +55,8 @@ module com.example.app {
 // 说明：requires：读取另一个模块。
 // 文件：src/com.example.app/module-info.java
 module com.example.app {
-// 作用：requires 只声明可读性和编译依赖，不会把 com.example.core 的包自动暴露给 com.example.app 的下游。
+// 关键变化：// 说明：requires：读取另一个模块。 // 文件：src/com.example.app/module-info.java module com.example.app {；当前对象.requires() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     requires java.net.http;
     requires com.example.core;
 }
@@ -69,7 +71,8 @@ module com.example.app {
 // 说明：exports：导出公共 API 包。
 // 文件：src/com.example.core/module-info.java
 module com.example.core {
-// 作用：只有导出的包才能被其他模块正常 import；实现包可留在模块内部，避免把内部类和可变细节变成公共契约。
+// 关键变化：// 说明：exports：导出公共 API 包。 // 文件：src/com.example.core/module-info.java module com.example.core {；当前对象.exports() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     exports com.example.core.api;
 }
 // 输出：其他模块可编译访问 com.example.core.api 包。
@@ -83,7 +86,8 @@ module com.example.core {
 // 说明：exports ... to：限定导出对象。
 // 文件：src/com.example.core/module-info.java
 module com.example.core {
-// 作用：限定导出适合只给指定模块的 SPI 或兼容层；新增授权模块时要同步检查依赖图，避免出现隐含耦合。
+// 关键变化：// 说明：exports ... to：限定导出对象。 // 文件：src/com.example.core/module-info.java module com.example.core {；当前对象.to() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     exports com.example.core.spi to com.example.plugin;
 }
 // 输出：只有 com.example.plugin 获得该包的编译访问权。
@@ -97,7 +101,8 @@ module com.example.core {
 // 说明：opens：开放深度反射。
 // 文件：src/com.example.model/module-info.java
 module com.example.model {
-// 作用：开放包允许运行时反射访问非公开成员，但不允许其他模块直接编译调用其中的公共类型；开放范围应尽量小。
+// 关键变化：// 说明：opens：开放深度反射。 // 文件：src/com.example.model/module-info.java module com.example.model {；当前对象.opens() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     opens com.example.model.entity;
 }
 // 输出：所有可读取该模块的运行时模块均可深度反射此包。
@@ -111,7 +116,8 @@ module com.example.model {
 // 说明：opens ... to：只给指定框架开放。
 // 文件：src/com.example.model/module-info.java
 module com.example.model {
-// 作用：限定 opens 比整体开放更能保留封装，适合序列化或依赖注入框架；框架模块名必须真实存在并可解析。
+// 关键变化：// 说明：opens ... to：只给指定框架开放。 // 文件：src/com.example.model/module-info.java module com.example.model {；当前对象.to() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     opens com.example.model.entity to framework.runtime;
 }
 // 输出：只有 framework.runtime 可深度反射此包。
@@ -125,7 +131,8 @@ module com.example.model {
 // 说明：requires transitive：向下游传递可读性。
 // 文件：src/com.example.api/module-info.java
 module com.example.api {
-// 作用：只有公共 API 的签名暴露 java.logging 类型时才考虑传递依赖；实现细节普通 requires 即可。
+// 关键变化：// 说明：requires transitive：向下游传递可读性。 // 文件：src/com.example.api/module-info.java module com.example.api {；当前对象.transitive() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     requires transitive java.logging;
 }
 // 输出：读取 com.example.api 的下游模块也自动读取 java.logging。
@@ -141,7 +148,8 @@ module com.example.api {
 // 结果：com.example.core 编译时可读取 com.example.annotations，运行时未使用其中类型便可省略该模块。
 // 文件：src/com.example.core/module-info.java
 module com.example.core {
-// 作用：requires static 让编译时可见而运行时可以缺席，适合注解和编译辅助库；实际执行路径使用的库仍必须在运行时提供。
+// 关键变化：// 作用：通过 requires static 编译时可选依赖。 // 结果：com.example.core 编译时可读取 com.example.annotations，运行时未使用其中类型便可省略该模块。 // 文件：src/com.example.core/module-info.java module com.example.core {；当前对象.static() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     requires static com.example.annotations;
 }
 ```
@@ -151,12 +159,13 @@ module com.example.core {
 声明 uses 后，模块中的 `ServiceLoader.load(Formatter.class)` 才能按模块服务配置发现实现；它不会自动创建任何实现实例。
 
 ```java
+// 作用：uses 声明模块需要的 Formatter 服务类型，ServiceLoader 才能按模块配置查询实现。
 // 结果：com.example.app 可用 ServiceLoader.load(Formatter.class) 查询模块路径中的 Formatter 提供者。
 // 文件：src/com.example.app/module-info.java
 module com.example.app {
-// 作用：声明 uses 后，模块中的 ServiceLoader.load(Formatter.class) 才能按模块服务配置发现实现；它不会自动创建任何实现实例。
+// 关键变化：// 作用：uses 声明模块需要的 Formatter 服务类型，ServiceLoader 才能按模块配置查询实现。 // 结果：com.example.app 可用 ServiceLoader.load(Formatter.class) 查询模块路径中的 Formatter 提供者。 // 文件：src/com.example.app/module-info.java module com.example.app {；ServiceLoader.load(Formatter.class) 创建或取得具体资源，后续语句使用该对象。
+
     uses com.example.spi.Formatter;
-    // 作用：通过 uses 声明服务使用方。
 }
 ```
 
@@ -169,7 +178,8 @@ module com.example.app {
 // 结果：ServiceLoader 查询 Formatter 时可发现并实例化 JsonFormatter。
 // 文件：src/com.example.json/module-info.java
 module com.example.json {
-// 作用：实现类必须实现服务接口，通常需要 public 无参构造器或符合服务提供者约定的 provider 方法；具体组合见 [ServiceLoader 服务发现](/courses/java/08-反射与模块/07-ServiceLoader服务发现)。
+// 关键变化：// 作用：通过 provides ... with 声明服务提供方。 // 结果：ServiceLoader 查询 Formatter 时可发现并实例化 JsonFormatter。 // 文件：src/com.example.json/module-info.java module com.example.json {；当前对象.with() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     requires com.example.spi;
     provides com.example.spi.Formatter
             with com.example.json.JsonFormatter;
@@ -185,7 +195,8 @@ open module 允许所有包被深度反射，但仍不等于 exports；它适合
 // 结果：运行时模块可深度反射 com.example.legacy 的全部包，但这些包仍未作为公共 API 导出。
 // 文件：src/com.example.legacy/module-info.java
 open module com.example.legacy {
-// 作用：open module 允许所有包被深度反射，但仍不等于 exports；它适合迁移阶段，长期最好收敛到具体包和框架模块。
+// 关键变化：// 作用：通过 open module 整体开放。 // 结果：运行时模块可深度反射 com.example.legacy 的全部包，但这些包仍未作为公共 API 导出。 // 文件：src/com.example.legacy/module-info.java open module com.example.legacy {；当前对象.module() 完成本例中的具体调用，后续语句观察调用后的状态。
+
     requires framework.runtime;
 }
 ```
@@ -241,10 +252,12 @@ java --module-path out --module app/app.Main
 jdeps 能发现静态引用和模块关系，但反射、ServiceLoader、配置文件和动态类名可能不在结果中；它不是运行时完整测试。
 
 ```java
+// 作用：jdeps 静态检查 app 的模块依赖，并用 -s 汇总 app.jar 的依赖边。
+// 关键变化：// 作用：jdeps 静态检查 app 的模块依赖，并用 -s 汇总 app.jar 的依赖边。；当前对象.jdeps() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 结果：--check app 打印 app 的模块依赖分析，-s app.jar 输出归档的摘要依赖边。
+
 // Windows PowerShell 示例
 jdeps --module-path lib --check app
-// 作用：通过 jdeps 静态依赖审计。
 jdeps --module-path lib -s app.jar
 ```
 
@@ -253,10 +266,12 @@ jdeps --module-path lib -s app.jar
 jlink 只适用于模块化依赖图，生成结果与操作系统和 CPU 平台相关；打包后仍要验证 TLS、字体、本地库和服务发现。
 
 ```java
+// 作用：jlink 按 app 的模块依赖裁剪出只包含所需模块的运行时镜像。
+// 关键变化：// 作用：jlink 按 app 的模块依赖裁剪出只包含所需模块的运行时镜像。；当前对象.jlink() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 结果：runtime 目录包含 app 及其传递依赖所需的定制 Java 运行镜像。
+
 // Windows PowerShell 示例
 jlink --module-path "$env:JAVA_HOME/jmods;out" --add-modules app --output runtime
-// 作用：通过 jlink 裁剪运行时。
 ```
 ## 简单案例
 

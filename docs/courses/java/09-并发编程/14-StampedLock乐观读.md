@@ -201,16 +201,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.StampedLock;
 
 public class StampedReadTimeoutDemo {
-// 作用：通过 tryReadLock(timeout) 带超时的真实读锁。
     public static void main(String[] args) throws InterruptedException {
         var lock = new StampedLock();
 // 关键变化：lock 接收表达式 new StampedLock() 的计算结果。
 // 初始状态：lock 的初始值为 new StampedLock()。
         long stamp = lock.tryReadLock(1, TimeUnit.MILLISECONDS);
+        // 关键变化：long stamp = lock.tryReadLock(1, TimeUnit.MILLISECONDS); 将返回值写入 stamp；stamp 现在保存该具体结果。
         System.out.println("stampAvailable=" + (stamp != 0L));
         // 输出：stampAvailable=true（没有写者占用时）
         if (stamp != 0L) {
             lock.unlockRead(stamp);
+            // 关键变化：lock.unlockRead(stamp)；lock；unlockRead；lock.unlockRead(stamp) 返回本次调用的具体结果，后续语句继续使用该值。
         }
     }
 }
@@ -227,16 +228,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.StampedLock;
 
 public class StampedWriteTimeoutDemo {
-// 作用：通过 tryWriteLock(timeout) 可被中断的有界写锁等待。
     public static void main(String[] args) throws InterruptedException {
         var lock = new StampedLock();
 // 关键变化：lock 接收表达式 new StampedLock() 的计算结果。
 // 初始状态：lock 的初始值为 new StampedLock()。
         long stamp = lock.tryWriteLock(1, TimeUnit.MILLISECONDS);
+        // 关键变化：long stamp = lock.tryWriteLock(1, TimeUnit.MILLISECONDS); 将返回值写入 stamp；stamp 现在保存该具体结果。
         System.out.println("stampAvailable=" + (stamp != 0L));
         // 输出：stampAvailable=true（没有读者或写者占用时）
         if (stamp != 0L) {
             lock.unlockWrite(stamp);
+            // 关键变化：lock.unlockWrite(stamp)；lock；unlockWrite；lock.unlockWrite(stamp) 返回本次调用的具体结果，后续语句继续使用该值。
         }
     }
 }
@@ -287,34 +289,46 @@ public class StampedConvertWriteDemo {
         // 作用：通过 tryConvertToWriteLock(stamp) 尝试读锁转写锁。
         try {
             long converted = lock.tryConvertToWriteLock(stamp);
+            // 关键变化：long converted = lock.tryConvertToWriteLock(stamp); 将返回值写入 converted；converted 现在保存该具体结果。
             if (converted != 0L) {
                 stamp = converted;
+                // 关键变化：stamp = converted; 将返回值写入 stamp；stamp 现在保存该具体结果。
                 value++;
+                // 关键变化：value++; 使 value 在当前值基础上递增 1。
                 System.out.println("converted=true");
                 // 输出：converted=true
                 lock.unlockWrite(stamp);
+                // 关键变化：lock.unlockWrite(stamp)；lock；unlockWrite；lock.unlockWrite(stamp) 返回本次调用的具体结果，后续语句继续使用该值。
                 stamp = 0L;
+                // 关键变化：stamp = 0L; 将返回值写入 stamp；stamp 现在保存该具体结果。
             } else {
                 lock.unlockRead(stamp);
+                // 关键变化：lock.unlockRead(stamp)；lock；unlockRead；lock.unlockRead(stamp) 返回本次调用的具体结果，后续语句继续使用该值。
                 stamp = 0L;
+                // 关键变化：stamp = 0L; 将返回值写入 stamp；stamp 现在保存该具体结果。
                 long writeStamp = lock.writeLock();
+                // 关键变化：long writeStamp = lock.writeLock(); 将返回值写入 writeStamp；writeStamp 现在保存该具体结果。
                 try {
                     value++;
+                    // 关键变化：value++; 使 value 在当前值基础上递增 1。
                     System.out.println("converted=false, write acquired");
                     // 输出：converted=false, write acquired
                 } finally {
                     lock.unlockWrite(writeStamp);
+                    // 关键变化：lock.unlockWrite(writeStamp)；lock；unlockWrite；lock.unlockWrite(writeStamp) 返回本次调用的具体结果，后续语句继续使用该值。
                 }
             }
         } finally {
             if (stamp != 0L) {
                 lock.unlockRead(stamp);
+                // 关键变化：lock.unlockRead(stamp)；lock；unlockRead；lock.unlockRead(stamp) 返回本次调用的具体结果，后续语句继续使用该值。
             }
         }
     }
 
     public static void main(String[] args) {
         new StampedConvertWriteDemo().increment();
+        // 关键变化：new StampedConvertWriteDemo().increment()；当前对象.increment() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 }
 ```
@@ -337,21 +351,28 @@ public class StampedConvertReadDemo {
         // 作用：通过 tryConvertToReadLock(stamp) 写锁降级为读锁。
         try {
             long readStamp = lock.tryConvertToReadLock(stamp);
+            // 关键变化：long readStamp = lock.tryConvertToReadLock(stamp); 将返回值写入 readStamp；readStamp 现在保存该具体结果。
             if (readStamp != 0L) {
                 stamp = readStamp;
+                // 关键变化：stamp = readStamp; 将返回值写入 stamp；stamp 现在保存该具体结果。
                 System.out.println("downgraded=true");
                 // 输出：downgraded=true
                 lock.unlockRead(stamp);
+                // 关键变化：lock.unlockRead(stamp)；lock；unlockRead；lock.unlockRead(stamp) 返回本次调用的具体结果，后续语句继续使用该值。
                 stamp = 0L;
+                // 关键变化：stamp = 0L; 将返回值写入 stamp；stamp 现在保存该具体结果。
             } else {
                 System.out.println("downgraded=false");
                 // 输出：downgraded=false
                 lock.unlockWrite(stamp);
+                // 关键变化：lock.unlockWrite(stamp)；lock；unlockWrite；lock.unlockWrite(stamp) 返回本次调用的具体结果，后续语句继续使用该值。
                 stamp = 0L;
+                // 关键变化：stamp = 0L; 将返回值写入 stamp；stamp 现在保存该具体结果。
             }
         } finally {
             if (stamp != 0L) {
                 lock.unlockWrite(stamp);
+                // 关键变化：lock.unlockWrite(stamp)；lock；unlockWrite；lock.unlockWrite(stamp) 返回本次调用的具体结果，后续语句继续使用该值。
             }
         }
     }
@@ -398,14 +419,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.StampedLock;
 
 public class StampedInterruptBoundaryDemo {
-// 作用：通过 tryWriteLock(timeout) 用超时获取响应中断。
     public static void main(String[] args) {
         var lock = new StampedLock();
 // 关键变化：lock 接收表达式 new StampedLock() 的计算结果。
 // 初始状态：lock 的初始值为 new StampedLock()。
         Thread.currentThread().interrupt();
+        // 关键变化：Thread.currentThread().interrupt()；Thread.currentThread() 完成本例中的具体调用，后续语句观察调用后的状态。
         try {
             lock.tryWriteLock(1, TimeUnit.MILLISECONDS);
+            // 关键变化：lock.tryWriteLock(1, TimeUnit.MILLISECONDS);；lock；tryWriteLock；lock.tryWriteLock(1) 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println("not interrupted");
             // 输出：不会执行到这里
         } catch (InterruptedException ex) {
@@ -413,6 +435,7 @@ public class StampedInterruptBoundaryDemo {
             // 输出：interrupted
         } finally {
             Thread.interrupted();
+            // 关键变化：Thread.interrupted()；Thread.interrupted() 完成本例中的具体调用，后续语句观察调用后的状态。
         }
     }
 }

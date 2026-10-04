@@ -690,10 +690,18 @@ function isCombinedApiHeading(heading) {
 }
 
 function getSupportedApiH3Subsections(body) {
-  return getAllH3Subsections(body).filter(({ heading, content }) =>
+  const explicit = getAllH3Subsections(body).filter(({ heading, content }) =>
     isExplicitApiHeading(heading) &&
     /```(?:java|sql|xml|properties|yaml|shell)(?:\s|$)/iu.test(content),
   )
+  const extra = getAllH3Subsections(body).filter(({ heading, content }) =>
+    [
+      'BlockingQueue：用消息传递代替共享列表',
+      'CountDownLatch：等待一组一次性事件',
+      '读写短文本文件：使用明确字符集',
+    ].includes(heading) && /```java(?:\s|$)/iu.test(content),
+  )
+  return [...explicit, ...extra]
 }
 
 function getExternalApiHeadingTokens(body) {
@@ -864,9 +872,14 @@ const COMMON_USAGE_CODE_LANGUAGES = new Set([
 const EXPLANATION_COMMENT_LABEL = /(?:输入|初始(?:状态)?|前置(?:条件)?|作用|关键变化|当前状态|说明)\s*[:：]/u
 const RESULT_COMMENT_LABEL = /(?:输出|结果)\s*[:：]/u
 const JAVA_INPUT_COMMENT_LABEL = /(?:输入|初始(?:状态)?|前置(?:条件)?)\s*[:：]/u
-const JAVA_ACTION_COMMENT_LABEL = /(?:作用|关键变化|当前状态|效果|返回|结果)\s*[:：]/u
+// A result/return label describes an observable value, not the operation that
+// produced it. Keep the action labels deliberately separate so the final
+// output line can never satisfy the adjacent-action contract by accident.
+const JAVA_ACTION_COMMENT_LABEL = /(?:作用|关键变化|当前状态|效果)\s*[:：]/u
 const JAVA_RESULT_COMMENT_LABEL = /(?:输出|结果|返回|异常)\s*[:：]/u
-const FORBIDDEN_EXAMPLE_COMMENT_PATTERN = /关键输入或调用是|执行后[^\r\n]*(?:完成|进入|得到|产生)|本例演示|示例完成|本次输出调用已产生可观察结果|接收对象或返回值按该参数产生对应状态|使用给定参数产生该输出/u
+const JAVA_ACTION_EFFECT_PATTERN = /(?:变为|变成|更新|追加|插入|删除|移除|写入|读取|返回|得到|产生|注册|匹配|替换|合并|累加|递减|递增|阻塞|唤醒|等待|创建|关闭|释放|格式化|判断|比较|校验|验证|转换|复制|获取|计算|查找|截取|拼接|检查|选择|遍历|处理|提供|取得|生成|启动|提交|停止|触发|保留|保持|消费|生产|长度|数量|元素|字段|键|值|状态|结果|集合|列表|队列|映射|异常|成功|失败|生效|调用后|之后|此时|最终|现在|剩余|内容|字符串|文本|时间|线程|任务|锁|配置|规则|响应|请求|对象|文件|目录|连接|资源|流|字节|索引|位置|引用|实例|类型|名称|标识)/u
+const JAVA_OUTPUT_CALL_PATTERN = /\bSystem\.out\.(?:print|println|printf)\s*\(/u
+const FORBIDDEN_EXAMPLE_COMMENT_PATTERN = /关键输入或调用是|执行后[^\r\n]*(?:完成|进入|得到|产生)|本例演示|示例完成|本次输出调用已产生可观察结果|接收对象或返回值按该参数产生对应状态|使用给定参数产生该输出|使用具体参数[^\r\n。]*(?:计算并返回结果|完成判断并返回布尔结果)|使用表达式中的具体参数完成本次调用|保存该调用按具体参数计算出的返回值|追加具体参数 当前元素|按具体键值参数 当前键和值|按具体参数 当前索引或条件|写入具体参数 当前值|标准输出写入具体参数 当前值|[^\r\n。]+按这次调用的具体参数完成更新|处理当前语句中的具体状态|后续代码可观察该调用产生的状态|该配置语句明确示例中的具体边界/u
 
 const WEAK_EXPLANATION_ANCHORS = new Set([
   'abstract', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const',
@@ -925,10 +938,50 @@ function getJavaStatementComment(code, statementIndex) {
 
 function getJavaStatementEndIndex(code, statementIndex) {
   const lines = code.split(/\r?\n/u)
+  let annotationDepth = 0
+  const startsWithAnnotation = /^\s*@[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*\s*\(/u.test(lines[statementIndex] ?? '')
   for (let index = statementIndex; index < lines.length; index += 1) {
-    if (/[;{}]\s*$/u.test(lines[index].trim())) return index
+    const trimmed = lines[index].trim()
+    if (startsWithAnnotation || annotationDepth > 0) {
+      annotationDepth += (trimmed.match(/\(/gu) || []).length
+      annotationDepth -= (trimmed.match(/\)/gu) || []).length
+      if (annotationDepth <= 0) return index
+      continue
+    }
+    if (/[;{}]\s*$/u.test(trimmed)) return index
+    // An annotation declaration is a complete operation even though Java
+    // does not terminate it with `;`; its adjacent contract comment belongs
+    // directly after the annotation line, before the annotated declaration.
+    if (/^@[A-Za-z_$][\w$]*(?:\([^\n]*\))?\s*$/u.test(trimmed)) return index
   }
   return statementIndex
+}
+
+function isJavaApiOperationLine(text) {
+  const trimmed = text.trim()
+  if (/^(?:for|if|while|switch|catch|synchronized)\s*\(/u.test(trimmed)) return false
+  if (/^@?[A-Za-z_$][\w$]*\s*$/u.test(trimmed) && trimmed.startsWith('@')) return false
+  // A declaration such as `public boolean equals(...) {` is not the call
+  // documented by an API heading; the invocation inside the example is.
+  if (trimmed.endsWith('{') && !/->\s*\{/u.test(trimmed) && !/\b(?:return|new)\b/u.test(trimmed)) return false
+  return true
+}
+
+function hasNonOutputJavaCall(text) {
+  const methodNames = [...text.matchAll(/\b[A-Za-z_$][\w$]*\s*\.\s*([A-Za-z_$][\w$]*)\s*\(/gu)]
+    .map((match) => match[1])
+  return methodNames.some((name) => !['print', 'println', 'printf'].includes(name))
+}
+
+function getJavaOperationCandidates(codeLines) {
+  return codeLines.filter(({ text }) => {
+    if (!isJavaApiOperationLine(text)) return false
+    if (JAVA_OUTPUT_CALL_PATTERN.test(text)) return false
+    if (/^\s*(?:package|import)\s/u.test(text)) return false
+    if (/\b(?:class|interface|record|enum)\s+[A-Za-z_$][\w$]*/u.test(text)) return false
+    if (/\bmain\s*\(/u.test(text)) return false
+    return /\bnew\s+[A-Z_$][\w$]*\s*(?:<[^>]*>)?\s*\(/u.test(text) || hasNonOutputJavaCall(text)
+  })
 }
 
 const JAVA_SETUP_IGNORED_TOKENS = new Set([
@@ -943,13 +996,32 @@ const JAVA_SETUP_IGNORED_TOKENS = new Set([
 
 function hasConcreteJavaStatementReference(comment, statement) {
   const codeWithoutComments = statement.replace(/\/\/.*$/u, '')
+  const normalizedStatement = codeWithoutComments.replace(/\s+/gu, ' ').trim().replace(/;\s*$/u, '')
+  const normalizedComment = comment.replace(/\s+/gu, ' ').trim()
+  if (normalizedStatement.length > 0 && normalizedComment.includes(normalizedStatement)) return true
+  const callNames = new Set(
+    [...codeWithoutComments.matchAll(/\b(?:new\s+)?([A-Za-z_$][\w$]*)\s*\(/gu)]
+      .map((match) => match[1]),
+  )
   const identifiers = [...codeWithoutComments.matchAll(/\b[A-Za-z_$][\w$]*\b/gu)]
     .map((match) => match[0])
-    .filter((token) => token.length > 1 && !JAVA_SETUP_IGNORED_TOKENS.has(token))
+    .filter((token) =>
+      token.length > 1 &&
+      !JAVA_SETUP_IGNORED_TOKENS.has(token) &&
+      !callNames.has(token),
+    )
   const literals = [
     ...codeWithoutComments.matchAll(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\b\d+(?:\.\d+)?\b/gu),
   ].map((match) => match[0])
   return [...new Set([...identifiers, ...literals])].some((anchor) => comment.includes(anchor))
+}
+
+function hasConcreteJavaActionComment(comment, statement) {
+  return (
+    JAVA_ACTION_COMMENT_LABEL.test(comment) &&
+    hasConcreteJavaStatementReference(comment, statement) &&
+    JAVA_ACTION_EFFECT_PATTERN.test(comment)
+  )
 }
 
 function inspectJavaStatementAdjacentComments(heading, code) {
@@ -973,12 +1045,21 @@ function inspectJavaStatementAdjacentComments(heading, code) {
     : apiName.startsWith('@')
       ? new RegExp(`@${escapedApiName}\\b`, 'u')
       : new RegExp(`(?:\\b${escapedApiName}\\s*\\(|\\bnew\\s+${escapedApiName}\\b)`, 'u')
-  const outputPattern = /\bSystem\.out\.(?:print|println|printf)\s*\(/u
-  const keyLines = keyPattern ? codeLines.filter(({ text }) => keyPattern.test(text)) : []
+  const explicitKeyLines = keyPattern
+    ? codeLines.filter(({ text }) =>
+      keyPattern.test(text) &&
+      isJavaApiOperationLine(text) &&
+      !JAVA_OUTPUT_CALL_PATTERN.test(text),
+    )
+    : []
+  const broadHeading = !keyPattern ||
+    ['BlockingQueue', 'CountDownLatch'].includes(headingLabel) ||
+    headingLabel === '读写短文本文件'
+  const keyLines = broadHeading ? getJavaOperationCandidates(codeLines) : explicitKeyLines
   const setupCandidates = codeLines.filter(({ index, text }) =>
     (keyLines.length === 0 || index <= keyLines[0].index) &&
     (!keyPattern || !keyPattern.test(text)) &&
-    !outputPattern.test(text) &&
+    !JAVA_OUTPUT_CALL_PATTERN.test(text) &&
     /(?:\bnew\s+|\b(?:var|byte|short|int|long|float|double|boolean|char|String|List|Set|Map|Queue|Deque|Path|File|URI|URL|Optional|Stream|LocalDate|LocalTime|LocalDateTime|Instant|Duration|Period|Pattern|Matcher|Class|Method|Field|Constructor|Thread|Executor\w*|Future|CompletableFuture|Atomic\w*|CountDownLatch|Semaphore|CyclicBarrier|ReentrantLock|ReadWriteLock|StampedLock|ObjectMapper|JSONObject|Workbook|Sheet|Row|CellStyle|JobDataMap)\b[^;=]*=)/u.test(text),
   )
   const setupLine = setupCandidates.find(({ index }) => {
@@ -997,27 +1078,25 @@ function inspectJavaStatementAdjacentComments(heading, code) {
     }
   }
 
-  const observableOutputLines = keyLines.length === 0 ? codeLines.filter(({ text }) => outputPattern.test(text)) : []
+  const controlOnlyHeading = /^(?:for|do-while|while|if|switch|try|catch|synchronized)$/u.test(headingLabel)
   const effectiveKeyLines = keyLines.length > 0
     ? keyLines
-    : observableOutputLines.length > 0
-      ? observableOutputLines
-      : setupLine
-        ? [setupLine]
-        : []
+    : !keyPattern && setupLine && !controlOnlyHeading
+      ? [setupLine]
+      : []
   for (const [keyIndex, keyLine] of effectiveKeyLines.entries()) {
     const keyEnd = getJavaStatementEndIndex(code, keyLine.index)
     const keyComment = getJavaStatementComment(code, keyEnd)
-    const keyIsObservableOutput = outputPattern.test(keyLine.text)
+    const keyIsObservableOutput = JAVA_OUTPUT_CALL_PATTERN.test(keyLine.text)
     if (keyIndex === 0 && !setupLine && !keyIsObservableOutput && !JAVA_INPUT_COMMENT_LABEL.test(keyComment)) {
       issues.push(`[${heading}] first java block must explain the input on the line after its key statement when no setup statement exists`)
     }
-    if (!JAVA_ACTION_COMMENT_LABEL.test(keyComment) && !(keyIsObservableOutput && JAVA_RESULT_COMMENT_LABEL.test(keyComment))) {
+    if (!hasConcreteJavaActionComment(keyComment, keyLine.text)) {
       issues.push(`[${heading}] first java block must explain the API call or state change on the line after its key statement`)
     }
   }
 
-  const outputLines = codeLines.filter(({ text }) => outputPattern.test(text))
+  const outputLines = codeLines.filter(({ text }) => JAVA_OUTPUT_CALL_PATTERN.test(text))
   for (const outputLine of outputLines) {
     const outputComment = getJavaStatementComment(code, getJavaStatementEndIndex(code, outputLine.index))
     if (!JAVA_RESULT_COMMENT_LABEL.test(outputComment)) {
@@ -1699,7 +1778,7 @@ test('persistence backend batch keeps MyBatis source boundary and database keywo
   )
   assert.match(
     redisBody,
-    /StringRedisTemplate redis = stringRedisTemplate;\s+String lua =[\s\S]*?java\.util\.List<String> keys[\s\S]*?Long allowed = redis\.execute\(script, keys, amount\)/u,
+    /StringRedisTemplate redis = stringRedisTemplate;\s+(?:(?:\/\/[^\r\n]*\r?\n)\s*)*String lua =[\s\S]*?java\.util\.List<String> keys[\s\S]*?Long allowed = redis\.execute\(script, keys, amount\)/u,
     'Redis Lua example must bind string KEYS/ARGV and a Long result through StringRedisTemplate',
   )
   assert.match(
@@ -2472,9 +2551,10 @@ System.out.println(names);
 ### \`RedisTemplate.opsForHash\`：写入 Hash 字段
 \`\`\`java
 redisTemplate.opsForHash().put("user:7", "name", "Ann");
-// 关键变化：key=user:7 的 name 字段变为 Ann
+// 关键变化：redisTemplate.opsForHash().put("user:7", "name", "Ann") 写入后该字段变为 Ann
 System.out.println(redisTemplate.opsForHash().get("user:7", "name"));
 // 输出：Ann
+// 作用：redisTemplate.opsForHash().get("user:7", "name") 返回已写入的 Ann。
 \`\`\`
 `
   assert.deepEqual(
@@ -2497,6 +2577,109 @@ names.add("Carol");
     inspectApiExampleComments(outputMasqueradingAsAction),
     ['[\`List.add\`：追加元素] first java block must explain the API call or state change on the line after its key statement'],
     'an output comment must not also satisfy the call-effect contract',
+  )
+
+  const resultOrReturnMasqueradingAsAction = `
+## 常用用法
+### \`List.get\`：读取元素
+\`\`\`java
+List<String> names = List.of("Alice", "Bob");
+// 初始状态：names 包含 Alice、Bob。
+int first = names.get(0);
+// 结果：first 为 Alice。
+System.out.println(first);
+// 输出：Alice
+\`\`\`
+`
+  assert.deepEqual(
+    inspectApiExampleComments(resultOrReturnMasqueradingAsAction),
+    ['[\`List.get\`：读取元素] first java block must explain the API call or state change on the line after its key statement'],
+    'a 结果 comment must not satisfy the adjacent action contract',
+  )
+
+  const directOutputCall = `
+## 常用用法
+### \`List.get\`：读取元素
+\`\`\`java
+List<String> names = List.of("Alice", "Bob");
+// 初始状态：names 包含 Alice、Bob。
+System.out.println(names.get(1));
+// 输出：Bob
+\`\`\`
+`
+  assert.deepEqual(
+    inspectApiExampleComments(directOutputCall),
+    [],
+    'a final println may report a nested API result without treating its output comment as an action comment',
+  )
+
+  const returnMasqueradingAsAction = resultOrReturnMasqueradingAsAction.replace(
+    '// 结果：first 为 Alice。',
+    '// 返回：first 接收 names.get(0) 的返回值。',
+  )
+  assert.deepEqual(
+    inspectApiExampleComments(returnMasqueradingAsAction),
+    ['[\`List.get\`：读取元素] first java block must explain the API call or state change on the line after its key statement'],
+    'a 返回 comment must not satisfy the adjacent action contract',
+  )
+
+  const genericAction = resultOrReturnMasqueradingAsAction.replace(
+    '// 结果：first 为 Alice。',
+    '// 作用：执行新增操作。',
+  )
+  assert.deepEqual(
+    inspectApiExampleComments(genericAction),
+    ['[\`List.get\`：读取元素] first java block must explain the API call or state change on the line after its key statement'],
+    'a generic action comment without the call target or argument must be rejected',
+  )
+
+  const genericActionWithoutEffect = resultOrReturnMasqueradingAsAction.replace(
+    '// 结果：first 为 Alice。',
+    '// 作用：names 使用参数 0。',
+  )
+  assert.deepEqual(
+    inspectApiExampleComments(genericActionWithoutEffect),
+    ['[\`List.get\`：读取元素] first java block must explain the API call or state change on the line after its key statement'],
+    'an action comment naming inputs but no post-call effect must be rejected',
+  )
+
+  const onlyFirstOfTwoCalls = resultOrReturnMasqueradingAsAction.replace(
+    'int first = names.get(0);\n// 结果：first 为 Alice。',
+    'int first = names.get(0);\n// 作用：names.get(0) 返回的元素写入 first。',
+  )
+    .replace(
+      'System.out.println(first);',
+      'int second = names.get(1);\nSystem.out.println(first + second);',
+    )
+  assert.deepEqual(
+    inspectApiExampleComments(onlyFirstOfTwoCalls),
+    ['[\`List.get\`：读取元素] first java block must explain the API call or state change on the line after its key statement'],
+    'every repeated API call needs its own adjacent action comment',
+  )
+
+  const repeatedMutations = `
+## 常用用法
+### \`List.add\`：逐次追加元素
+\`\`\`java
+List<String> list = new ArrayList<>(List.of("a"));
+// 初始状态：list 当前为 [a]
+list.add("b");
+// 关键变化：list.add("b") 将 "b" 追加到末尾，list 变为 [a, b]
+list.add("c");
+// 关键变化：list.add("c") 再追加 "c"，list 变为 [a, b, c]
+System.out.println(list);
+// 输出：[a, b, c]
+\`\`\`
+`
+  assert.deepEqual(inspectApiExampleComments(repeatedMutations), [])
+  const missingRepeatedMutation = repeatedMutations.replace(
+    '// 关键变化：list.add("c") 再追加 "c"，list 变为 [a, b, c]',
+    '// 输出：先前列表内容',
+  )
+  assert.deepEqual(
+    inspectApiExampleComments(missingRepeatedMutation),
+    ['[\`List.add\`：逐次追加元素] first java block must explain the API call or state change on the line after its key statement'],
+    'every repeated mutating call needs its own concrete state-change comment',
   )
 
   const detachedResult = `
@@ -2617,6 +2800,7 @@ test('all Java course prose stays free of known generated template filler', () =
   const badResultFixture = '// 结果：执行后，注册静态资源 URL。'
   const badBranchFixture = '// 结果：import 示例执行到' + '预期分支'
   const badAdjacentFixture = '// 关键变化：本次调用 foo();；接收对象或返回值按该参数产生对应状态。'
+  const badConcreteTemplateFixture = '// 关键变化：foo("x");；foo 使用具体参数 "x" 计算并返回结果。'
   assert.ok(
     FORBIDDEN_TEMPLATE_PHRASES.some((phrase) => badResultFixture.includes(phrase)),
     'generic 结果：执行后 comments must remain a locked bad fixture',
@@ -2629,6 +2813,11 @@ test('all Java course prose stays free of known generated template filler', () =
     badAdjacentFixture,
     FORBIDDEN_EXAMPLE_COMMENT_PATTERN,
     'generic adjacent API comments must remain a locked bad fixture',
+  )
+  assert.match(
+    badConcreteTemplateFixture,
+    FORBIDDEN_EXAMPLE_COMMENT_PATTERN,
+    'concrete-looking but still templated adjacent API comments must remain a locked bad fixture',
   )
 
   const violations = []

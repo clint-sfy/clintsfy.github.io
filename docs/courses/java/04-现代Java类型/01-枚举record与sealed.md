@@ -52,6 +52,7 @@ enum OrderStatus {
 public class EnumOverviewDemo {
     public static void main(String[] args) {
         OrderStatus status = OrderStatus.PAID;
+        // 关键变化：OrderStatus status = OrderStatus.PAID; 将返回值写入 status；status 现在保存该具体结果。
         System.out.println(status.name() + ", " + status.ordinal());
         // 输出：PAID, 1
     }
@@ -66,12 +67,15 @@ public class EnumOverviewDemo {
 // 语义：需要校验、规范化或保护可变组件时，跳转到 record 数据载体页面查看完整写法。
 // 调用参数：代码依次使用 "CNY"、1999。
 record Money(String currency, long cents) {}
+// 关键变化：// 语义：需要校验、规范化或保护可变组件时，跳转到 record 数据载体页面查看完整写法。 // 调用参数：代码依次使用 "CNY"、1999。 record Money(String currency, long cents) {}；当前对象.该操作(String currency) 返回本次调用的具体结果，后续语句继续使用该值。
+
 
 public class RecordOverviewDemo {
     public static void main(String[] args) {
         System.out.println(new Money("CNY", 1999).currency());
 // 输出：CNY；System.out.println 的实参为 new Money("CNY", 1999).currency()。
     }
+// 输入：// 输出：CNY；System.out.println 的实参为 new Money("CNY", 1999).currency()。 } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 ```
 
@@ -83,6 +87,7 @@ sealed 让新增结果分支变成显式的类型变更，适合编译器帮助�
 // 语义：sealed 让新增结果分支变成显式的类型变更，适合编译器帮助检查有限状态模型。
 // 初始状态：result 初始为 new LoginSuccess("u-1")。
 sealed interface LoginResult permits LoginSuccess, LoginFailure {}
+// 输入：// 初始状态：result 初始为 new LoginSuccess("u-1")。 sealed interface LoginResult permits LoginSuccess, LoginFailure {} 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 record LoginSuccess(String userId) implements LoginResult {}
 record LoginFailure(String reason) implements LoginResult {}
 
@@ -108,7 +113,10 @@ record User(String name, int age) {}
 
 public class PatternOverviewDemo {
     static String label(Object value) {
+    // 关键变化：static String label(Object value) {；当前对象；该操作；当前对象.该操作(Object value) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：static String label(Object value) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         if (value instanceof User(String name, int age)) {
+        // 关键变化：if (value instanceof User(String name, int age)) {；当前对象；if；当前对象.if(value instanceof User(String name, int age)) 返回本次调用的具体结果，后续语句继续使用该值。
             return name + ":" + age;
         }
         return "unknown";
@@ -135,14 +143,19 @@ java --enable-preview PatternOverviewDemo
 ```java
 enum Level {
     LOW(1), HIGH(2);
+    // 关键变化：LOW(1), HIGH(2);；当前对象；LOW；当前对象.LOW(1) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：LOW(1), HIGH(2); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 
     private final int code;
 
     Level(int code) {
+    // 关键变化：Level(int code) {；当前对象；Level；当前对象.Level(int code) 返回本次调用的具体结果，后续语句继续使用该值。
         this.code = code;
+        // 关键变化：this.code = code;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 
     int code() {
+    // 关键变化：int code() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return code;
     }
 }
@@ -161,6 +174,7 @@ non-sealed 会从该分支恢复开放继承；具体层次边界和模块规则
 
 ```java
 sealed interface Event permits BuiltInEvent, ExtensionEvent {}
+// 关键变化：sealed interface Event permits BuiltInEvent, ExtensionEvent {}；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 record BuiltInEvent() implements Event {}
 non-sealed class ExtensionEvent implements Event {}
 class VendorEvent extends ExtensionEvent {}
@@ -170,6 +184,7 @@ public class SealedExtensionOverviewDemo {
         System.out.println(new VendorEvent() instanceof Event);
 // 输出：true；System.out.println 的实参为 new VendorEvent() instanceof Event。
     }
+// 输入：// 输出：true；System.out.println 的实参为 new VendorEvent() instanceof Event。 } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 ```
 ## 简单案例

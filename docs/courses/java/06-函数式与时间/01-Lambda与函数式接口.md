@@ -63,7 +63,7 @@ Predicate<String> notBlank = text -> !text.isBlank();
 Predicate<String> startsWithJava = text -> text.startsWith("Java");
 // 初始状态：startsWithJava 当前为 text -> text.startsWith("Java")。
 Predicate<String> valid = notBlank.and(startsWithJava);
-// 作用：and 会先检查左侧条件，左侧为 false 时短路，不再执行右侧条件。
+// 关键变化：Predicate<String> valid = notBlank.and(startsWithJava); 将返回值写入 valid；valid 现在保存该具体结果。
 
 System.out.println(valid.test("Java 21"));
 // 输出：true
@@ -81,7 +81,7 @@ Predicate<String> isJava = "Java"::equals;
 Predicate<String> isKotlin = "Kotlin"::equals;
 // 初始状态：isKotlin 当前为 "Kotlin"::equals。
 Predicate<String> supported = isJava.or(isKotlin);
-// 作用：or 适合表达候选条件，左侧为 true 时会短路，不再执行右侧条件。
+// 关键变化：Predicate<String> supported = isJava.or(isKotlin); 将返回值写入 supported；supported 现在保存该具体结果。
 
 System.out.println(supported.test("Kotlin"));
 // 输出：true
@@ -133,7 +133,7 @@ Function<String, String> trim = String::trim;
 Function<String, Integer> length = String::length;
 // 初始状态：length 当前为 String::length。
 Function<String, Integer> trimmedLength = length.compose(trim);
-// 作用：compose 先把输入交给参数函数，再把中间结果交给当前函数。
+// 关键变化：Function<String, Integer> trimmedLength = length.compose(trim); 将返回值写入 trimmedLength；trimmedLength 现在保存该具体结果。
 
 System.out.println(trimmedLength.apply(" Java "));
 // 输出：4
@@ -151,7 +151,7 @@ Function<String, String> trim = String::trim;
 Function<String, String> upper = String::toUpperCase;
 // 初始状态：upper 当前为 String::toUpperCase。
 Function<String, String> normalize = trim.andThen(upper);
-// 作用：andThen 先执行当前函数，再把结果传给参数函数，适合按阅读顺序组织转换。
+// 关键变化：Function<String, String> normalize = trim.andThen(upper); 将返回值写入 normalize；normalize 现在保存该具体结果。
 
 System.out.println(normalize.apply(" java "));
 // 输出：JAVA
@@ -165,6 +165,7 @@ System.out.println(normalize.apply(" java "));
 // 语义：Consumer 没有返回值，常用于日志、通知和写入。
 // 初始状态：log 初始为 new ArrayList<>()；record 初始为 log::add。
 import java.util.ArrayList;
+// 输入：// 初始状态：log 初始为 new ArrayList<>()；record 初始为 log::add。 import java.util.ArrayList; 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -172,7 +173,9 @@ List<String> log = new ArrayList<>();
 // 初始状态：log 的初始值为 new ArrayList<>()。
 // 作用：Consumer 没有返回值，常用于日志、通知和写入；并行流中使用它修改普通集合通常不安全。
 Consumer<String> record = log::add;
+// 关键变化：Consumer<String> record = log::add; 将返回值写入 record；record 现在保存该具体结果。
 record.accept("saved");
+// 关键变化：record.accept("saved");；record；accept；record.accept("saved") 返回本次调用的具体结果，后续语句继续使用该值。
 System.out.println(log);
 // 输出：[saved]
 ```
@@ -192,7 +195,7 @@ Consumer<String> print = text -> output.add("value=" + text);
 // 初始状态：print 当前为 text -> output.add("value=" + text)。
 Consumer<String> count = text -> output.add("length=" + text.length());
 print.andThen(count).accept("Java");
-// 作用：组合的两个动作按顺序执行。
+// 关键变化：print.andThen(count).accept("Java");；print；andThen；print.andThen(count) 返回本次调用的具体结果，后续语句继续使用该值。
 System.out.println(output);
 // 输出：[value=Java, length=4]
 ```
@@ -239,6 +242,7 @@ System.out.println(normalize.apply(" Java "));
 import java.util.function.BinaryOperator;
 
 BinaryOperator<Integer> add = Integer::sum;
+// 关键变化：BinaryOperator<Integer> add = Integer::sum; 将返回值写入 add；add 现在保存该具体结果。
 System.out.println(add.apply(20, 22));
 // 输出：42
 ```
@@ -270,9 +274,10 @@ import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 
 BiPredicate<String, Integer> longEnough = (text, min) -> text.length() >= min;
+// 关键变化：BiPredicate<String, Integer> longEnough = (text, min) -> text.length() >= min;；text 按具体参数 text 读取并返回结果。
 // 初始状态：longEnough 当前为 (text, min) -> text.length() >= min。
-// 作用：通过 BiPredicate 用两个输入判断条件。
 BiFunction<String, String, String> join = (left, right) -> left + ":" + right;
+// 关键变化：BiFunction<String, String, String> join = (left, right) -> left + ":" + right；join 接收 该操作(left) 的返回值，当前值变为这次调用得到的具体结果。
 System.out.println(longEnough.test("Java", 4));
 // 输出：true
 System.out.println(join.apply("id", "20"));
@@ -285,10 +290,11 @@ System.out.println(join.apply("id", "20"));
 
 ```java
 BiFunction<String, Integer, String> join = (left, right) -> left + ":" + right;
-// 关键变化：join 接收表达式 (left, right) -> left + ":" + right 的计算结果。
+// 关键变化：BiFunction<String, Integer, String> join = (left, right) -> left + ":" + right；join 接收 该操作(left) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：左值为 id，右值为 20。；具体值：join = (left, right) -> left + ":" + right
 String text = join.apply("id", 20);
-// 结果：text 为 "id:20"
+// 关键变化：String text = join.apply("id", 20)；text 接收 apply("id") 的返回值，当前值变为这次调用得到的具体结果。
+// 结果：text 保存 join.apply("id", 20) 返回的具体字符串 "id:20"。
 ```
 
 ### `BiConsumer`：接收两个输入并执行动作
@@ -301,8 +307,9 @@ import java.util.function.BiConsumer;
 BiConsumer<String, Integer> printer = (key, value) -> System.out.println(key + "=" + value);
 // 输出：id=20
 // 初始状态：printer 由两参数 Lambda 初始化，输出格式为 key=value。
-// 作用：printer.accept 把键 "id" 和值 20 交给同一个无返回值动作。
 printer.accept("id", 20);
+// 关键变化：printer.accept("id", 20);；printer；accept；printer.accept("id") 返回本次调用的具体结果，后续语句继续使用该值。
+// 输入：printer.accept("id", 20); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 ```
 
 ### `Function.identity()`：原样返回元素
@@ -319,7 +326,7 @@ List<String> names = List.of("Ann", "Bob");
 // 初始状态：names 的初始值为 List.of("Ann", "Bob")。
 var same = names.stream().collect(
         Collectors.toMap(Function.identity(), String::length));
-        // 作用：通过 Function.identity() 原样返回元素。
+// 关键变化：var same = names.stream().collect( Collectors.toMap(Function.identity(), String::length)); 将返回值写入 same；same 现在保存该具体结果。
 System.out.println(same);
 // 输出：{Ann=3, Bob=3}
 ```
@@ -349,6 +356,7 @@ int limit = 10;
 // 关键变化：limit 接收表达式 10 的计算结果。
 // 初始状态：limit 当前为 10。
 java.util.function.Predicate<Integer> underLimit = value -> value < limit;
+// 关键变化：java.util.function.Predicate<Integer> underLimit = value -> value < limit; 将返回值写入 underLimit；underLimit 现在保存该具体结果。
 System.out.println(underLimit.test(8));
 // 输出：true
 ```

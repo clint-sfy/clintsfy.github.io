@@ -67,11 +67,12 @@ import java.util.Map;
 public class MapGetDemo {
     public static void main(String[] args) {
         Map<String, Integer> scores = new LinkedHashMap<>();
+        // 关键变化：Map<String, Integer> scores = new LinkedHashMap<>()；scores 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：scores 当前为 new LinkedHashMap<>()。
         scores.put("java", 95);
+        // 关键变化：scores.put("java", 95);；scores 按具体键值参数 "java" 更新映射内容。
         System.out.println(scores.get("java"));
 // 输出：95
-        // 作用：get 返回键对应的值，键不存在时返回 null。
         System.out.println(scores.get("sql"));
         // 输出：null
     }
@@ -88,10 +89,10 @@ import java.util.Map;
 public class MapDefaultDemo {
     public static void main(String[] args) {
         Map<String, Integer> map = Map.of("java", 95);
+        // 关键变化：Map<String, Integer> map = Map.of("java", 95)；Map.of("java") 返回转换后的具体值，赋给当前示例中的接收变量。
         // 初始状态：map 当前为 Map.of("java", 95)。
         System.out.println(map.getOrDefault("sql", 0));
 // 输出：0
-        // 作用：getOrDefault 只提供读取时的兜底，不会把默认值写回 Map。
     }
 }
 ```
@@ -106,10 +107,10 @@ import java.util.Map;
 public class MapContainsKeyDemo {
     public static void main(String[] args) {
         Map<String, Integer> map = Map.of("java", 95);
+        // 关键变化：Map<String, Integer> map = Map.of("java", 95)；Map.of("java") 返回转换后的具体值，赋给当前示例中的接收变量。
         // 初始状态：map 当前为 Map.of("java", 95)。
         System.out.println(map.containsKey("java"));
 // 输出：true
-        // 作用：containsKey 能区分“键缺失”和“键存在但映射到 null”。
     }
 }
 ```
@@ -124,10 +125,10 @@ import java.util.Map;
 public class MapContainsValueDemo {
     public static void main(String[] args) {
         Map<String, Integer> map = Map.of("java", 95);
+        // 关键变化：Map<String, Integer> map = Map.of("java", 95)；Map.of("java") 返回转换后的具体值，赋给当前示例中的接收变量。
         // 初始状态：map 当前为 Map.of("java", 95)。
         System.out.println(map.containsValue(95));
 // 输出：true
-        // 作用：containsValue 通常需要扫描全部值，不适合放在高频热点循环中。
         System.out.println(map.containsValue(90));
         // 输出：false
     }
@@ -171,7 +172,7 @@ public class MapEntrySetDemo {
         map.put("java", 95);
         map.put("sql", 88);
         for (Map.Entry<String, Integer> entry : map.entrySet()) {
-        // 作用：同时需要键和值时优先 entrySet。
+        // 关键变化：for (Map.Entry<String, Integer> entry : map.entrySet()) {；当前对象；for；当前对象.for(Map.Entry<String) 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println(entry.getKey() + "=" + entry.getValue());
             // 输出：java=95
         }
@@ -192,9 +193,9 @@ public class MapPutIfAbsentDemo {
         Map<String, Integer> map = new LinkedHashMap<>();
         // 初始状态：map 当前为 new LinkedHashMap<>()。
         map.putIfAbsent("java", 95);
-        // 作用：键不存在或当前值为 null 时写入，已有非 null 值不覆盖。
+        // 关键变化：map.putIfAbsent("java", 95) 写入键 "java" 的值 95，map 变为 {java=95}。
         map.putIfAbsent("java", 100);
-// // 关键变化：map.putIfAbsent("java", 100) 使用括号内的具体实参更新接收对象状态。
+        // 关键变化：map.putIfAbsent("java", 100) 保留已有的 java=95，map 仍为 {java=95}。
         System.out.println(map);
         // 输出：{java=95}
     }
@@ -214,9 +215,9 @@ public class MapMergeDemo {
         Map<String, Integer> count = new LinkedHashMap<>();
         // 初始状态：count 当前为 new LinkedHashMap<>()。
         count.merge("java", 1, Integer::sum);
-        // 作用：缺失键直接放入给定值，已有值才执行合并函数。
+        // 关键变化：count.merge("java", 1, Integer::sum) 为缺失键写入 java=1，count 变为 {java=1}。
         count.merge("java", 1, Integer::sum);
-// // 关键变化：count.merge("java", 1, Integer::sum) 使用括号内的具体实参更新接收对象状态。
+        // 关键变化：count.merge("java", 1, Integer::sum) 将旧值 1 与参数 1 合并为 2，count 变为 {java=2}。
         System.out.println(count);
         // 输出：{java=2}
     }
@@ -238,7 +239,7 @@ public class MapComputeIfAbsentDemo {
         Map<String, List<String>> tags = new LinkedHashMap<>();
         // 初始状态：tags 当前为 new LinkedHashMap<>()。
         tags.computeIfAbsent("java", key -> new ArrayList<>()).add("String");
-        // 作用：已有非 null 值时不执行计算。
+        // 关键变化：tags.computeIfAbsent("java", key -> new ArrayList<>()).add("String");；tags 按具体键值参数 "java" 更新映射内容。
         System.out.println(tags);
         // 输出：{java=[String]}
     }
@@ -282,7 +283,7 @@ public class MapKeySetDemo {
         map.put("java", 95);
         map.put("sql", 88);
         map.keySet().remove("sql");
-        // 作用：keySet 返回与源 Map 联动的键视图，需要独立结果时显式复制。
+        // 关键变化：map.keySet().remove("sql")；map.keySet() 完成本例中的具体调用，后续语句观察调用后的状态。
         System.out.println(map);
         // 输出：{java=95}
     }
@@ -300,12 +301,14 @@ import java.util.Map;
 public class MapValuesDemo {
     public static void main(String[] args) {
         Map<String, Integer> map = new LinkedHashMap<>();
+        // 关键变化：Map<String, Integer> map = new LinkedHashMap<>()；map 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：map 当前为 new LinkedHashMap<>()。
         map.put("java", 95);
+        // 关键变化：map.put("java", 95);；map 按具体键值参数 "java" 更新映射内容。
         map.put("sql", 95);
+        // 关键变化：map.put("sql", 95);；map 按具体键值参数 "sql" 更新映射内容。
         System.out.println(map.values());
 // 输出：[95, 95]
-        // 作用：values 返回与源 Map 联动的值视图，并允许出现重复值。
     }
 }
 ```
@@ -321,11 +324,12 @@ import java.util.Map;
 public class MapEntrySetViewDemo {
     public static void main(String[] args) {
         Map<String, Integer> map = new LinkedHashMap<>();
+        // 关键变化：Map<String, Integer> map = new LinkedHashMap<>()；map 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：map 当前为 new LinkedHashMap<>()。
         map.put("java", 95);
+        // 关键变化：map.put("java", 95);；map 按具体键值参数 "java" 更新映射内容。
         System.out.println(map.entrySet());
 // 输出：[java=95]
-        // 作用：entrySet 适合同时读取键和值，条目视图也会与源 Map 联动。
     }
 }
 ```
@@ -407,7 +411,7 @@ public class MapComputeDemo {
         Map<String, Integer> map = new LinkedHashMap<>();
         // 初始状态：map 当前为 new LinkedHashMap<>()。
         map.compute("sql", (key, old) -> old == null ? 1 : old + 1);
-        // 作用：通过 Map.compute 按当前映射重算。
+        // 关键变化：map.compute("sql", (key, old) -> old == null ? 1 : old + 1);；map 按具体键值参数 "sql" 更新映射内容。
         System.out.println(map);
         // 输出：{sql=1}
     }
@@ -428,7 +432,7 @@ public class MapComputeIfPresentDemo {
         // 初始状态：map 当前为 new LinkedHashMap<>()。
         map.put("java", 1);
         map.computeIfPresent("java", (key, old) -> old + 1);
-        // 作用：通过 Map.computeIfPresent 存在时重算。
+        // 关键变化：map.computeIfPresent("java", (key, old) -> old + 1);；map；computeIfPresent；map.computeIfPresent("java") 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println(map);
         // 输出：{java=2}
     }
@@ -452,7 +456,7 @@ public class MapReplaceAllDemo {
         scores.put("java", 90);
         scores.put("sql", 80);
         scores.replaceAll((key, value) -> value + 5);
-        // 作用：replaceAll 原地更新每个值；不要在回调里递归结构性修改同一个 Map。
+        // 关键变化：scores.replaceAll((key, value) -> value + 5);；scores；replaceAll；scores.replaceAll((key, value) -> value + 5) 返回转换后的具体值，赋给当前示例中的接收变量。
         System.out.println(scores);
         // 输出：{java=95, sql=85}
     }
@@ -489,9 +493,8 @@ public class MapOfEntriesDemo {
         Map<String, Integer> codes = Map.ofEntries(
             Map.entry("created", 201),
             Map.entry("badRequest", 400));
+        // 关键变化：Map<String, Integer> codes = Map.ofEntries( Map.entry("created", 201), Map.entry("badRequest", 400))；codes 接收 ofEntries(Map.entry("created", 201)) 的返回值，当前值变为这次调用得到的具体结果。
 // 输入：codes 的初始值为 Map.ofEntries(。
-            // 作用：Map.ofEntries 用条目参数创建不可变映射，适合键值对较多的常量。
-            // 作用：通过 Map.ofEntries 创建多条不可变映射。
         System.out.println(codes.get("created"));
         // 输出：201
     }
@@ -512,7 +515,7 @@ public class MapCopyOfDemo {
         // 初始状态：source 当前为 new LinkedHashMap<>()。
         source.put("java", 95);
         Map<String, Integer> snapshot = Map.copyOf(source);
-        // 作用：通过 Map.copyOf 不可修改 Map 快照。
+        // 关键变化：Map<String, Integer> snapshot = Map.copyOf(source); 的返回值写入 snapshot，调用后 snapshot 保存该具体结果。
         source.put("java", 100);
         System.out.println(snapshot.get("java"));
         // 输出：95
@@ -530,14 +533,16 @@ import java.util.LinkedHashMap;
 
 public class AccessOrderMapDemo {
     public static void main(String[] args) {
-    // 作用：最后一个构造参数 true 开启访问顺序；这只是 LRU 的基础，不自动限制容量或提供并发保护。
         LinkedHashMap<String, Integer> map =
             new LinkedHashMap<>(16, 0.75f, true);
-// // 关键变化：LinkedHashMap<String, Integer> map = 使用表达式中的具体参数完成本次调用。
 // 初始状态：表达式为 LinkedHashMap<String, Integer> map =。
+            // 关键变化：new LinkedHashMap<>(16, 0.75f, true);；当前对象；该操作；当前对象.该操作(16) 返回本次调用的具体结果，后续语句继续使用该值。
         map.put("A", 1);
+        // 关键变化：map.put("A", 1)；map 按具体键值参数 "A" 更新映射内容。
         map.put("B", 2);
+        // 关键变化：map.put("B", 2)；map 按具体键值参数 "B" 更新映射内容。
         map.get("A");
+        // 作用：map.get("A"); 读取括号中的具体参数对应的元素或文本并返回给后续逻辑。
         System.out.println(map.keySet());
         // 输出：[B, A]
     }
@@ -555,13 +560,13 @@ import java.util.TreeMap;
 public class TreeMapRangeDemo {
     public static void main(String[] args) {
         TreeMap<Integer, String> map = new TreeMap<>();
+        // 关键变化：TreeMap<Integer, String> map = new TreeMap<>()；map 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：map 当前为 new TreeMap<>()。
         map.put(1, "a");
         map.put(2, "b");
         map.put(3, "c");
         System.out.println(map.subMap(1, true, 3, false));
 // 输出：{1=a, 2=b}
-        // 作用：通过 TreeMap.subMap 查询键区间视图。
     }
 }
 ```
@@ -576,13 +581,13 @@ import java.util.TreeMap;
 public class TreeMapHeadMapDemo {
     public static void main(String[] args) {
         TreeMap<Integer, String> map = new TreeMap<>();
+        // 关键变化：TreeMap<Integer, String> map = new TreeMap<>()；map 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：map 当前为 new TreeMap<>()。
         map.put(1, "a");
         map.put(2, "b");
         map.put(3, "c");
         System.out.println(map.headMap(2, true));
 // 输出：{1=a, 2=b}
-        // 作用：通过 TreeMap.headMap 查询小于上界的键视图。
     }
 }
 ```
@@ -597,13 +602,13 @@ import java.util.TreeMap;
 public class TreeMapTailMapDemo {
     public static void main(String[] args) {
         TreeMap<Integer, String> map = new TreeMap<>();
+        // 关键变化：TreeMap<Integer, String> map = new TreeMap<>()；map 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：map 当前为 new TreeMap<>()。
         map.put(1, "a");
         map.put(2, "b");
         map.put(3, "c");
         System.out.println(map.tailMap(2, false));
 // 输出：{3=c}
-        // 作用：通过 TreeMap.tailMap 查询大于下界的键视图。
     }
 }
 ```
@@ -644,8 +649,8 @@ public class SynchronizedMapDemo {
     public static void main(String[] args) {
         Map<String, Integer> map =
             Collections.synchronizedMap(new HashMap<>());
+            // 关键变化：Collections.synchronizedMap(new HashMap<>());；Collections；synchronizedMap；Collections.synchronizedMap(new HashMap<>()) 返回本次调用的具体结果，后续语句继续使用该值。
             // 初始状态：map 当前保存 Collections.synchronizedMap(new HashMap<>())的计算结果。
-            // 作用：通过 Collections.synchronizedMap 同步包装。
         map.put("java", 95);
         synchronized (map) {
             System.out.println(map.get("java"));
@@ -664,12 +669,14 @@ public class SynchronizedMapDemo {
 import java.util.HashMap;
 import java.util.Map;
 Map<String, Integer> scores = new HashMap<>();
+// 关键变化：Map<String, Integer> scores = new HashMap<>()；scores 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：scores 当前为 new HashMap<>()。
 scores.put("A", 1);
+// 关键变化：scores.put("A", 1);；scores 按具体键值参数 "A" 更新映射内容。
 scores.put("A", 2);
+// 关键变化：scores.put("A", 2);；scores 按具体键值参数 "A" 更新映射内容。
 System.out.println(scores.size());
 // 输出：1
-// 作用：通过 Map.size 统计映射条目数量。
 ```
 
 ```java

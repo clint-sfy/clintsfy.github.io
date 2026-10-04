@@ -48,15 +48,21 @@ public class SynchronizedBlockDemo {
     private int count;
 
     void increment() {
+    // 关键变化：void increment() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         synchronized (lock) {
+        // 关键变化：synchronized (lock) {；当前对象；synchronized；当前对象.synchronized(lock) 返回本次调用的具体结果，后续语句继续使用该值。
             count++;
+            // 关键变化：count++; 使 count 在当前值基础上递增 1。
         }
     }
 
     public static void main(String[] args) {
         var counter = new SynchronizedBlockDemo();
+        // 关键变化：var counter = new SynchronizedBlockDemo(); 将返回值写入 counter；counter 现在保存该具体结果。
         counter.increment();
+        // 关键变化：counter.increment()；counter.increment() 完成本例中的具体调用，后续语句观察调用后的状态。
         counter.increment();
+        // 关键变化：counter.increment()；counter.increment() 完成本例中的具体调用，后续语句观察调用后的状态。
         System.out.println(counter.count);
         // 输出：2
     }
@@ -77,19 +83,24 @@ public class SynchronizedMethodDemo {
     // 初始状态：balance 当前为 100。
 
     synchronized void withdraw(int amount) {
-    // 作用：实例 synchronized 方法锁住当前对象。
+    // 关键变化：synchronized void withdraw(int amount) {；当前对象；该操作；当前对象.该操作(int amount) 返回本次调用的具体结果，后续语句继续使用该值。
         if (amount <= balance) {
+        // 关键变化：if (amount <= balance) {；当前对象；if；当前对象.if(amount <= balance) 返回本次调用的具体结果，后续语句继续使用该值。
             balance -= amount;
+            // 关键变化：balance -= amount;；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         }
     }
 
     synchronized int balance() {
+    // 关键变化：synchronized int balance() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return balance;
     }
 
     public static void main(String[] args) {
         var account = new SynchronizedMethodDemo();
+        // 关键变化：var account = new SynchronizedMethodDemo(); 将返回值写入 account；account 现在保存该具体结果。
         account.withdraw(30);
+        // 关键变化：account.withdraw(30);；account；withdraw；account.withdraw(30) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println(account.balance());
         // 输出：70
     }
@@ -108,13 +119,17 @@ public class SynchronizedStaticDemo {
     private static int created;
 
     static synchronized void record() {
-    // 作用：静态 synchronized 方法锁住 SynchronizedStaticDemo.class，所有实例共享这把类锁。
+    // 关键变化：static synchronized void record() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：static synchronized void record() { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         created++;
+        // 关键变化：created++; 使 created 在当前值基础上递增 1。
     }
 
     public static void main(String[] args) {
         record();
+        // 关键变化：record();；当前对象.record() 完成本例中的具体调用，后续语句观察调用后的状态。
         record();
+        // 关键变化：record();；当前对象.record() 完成本例中的具体调用，后续语句观察调用后的状态。
         System.out.println(created);
         // 输出：2
     }
@@ -253,8 +268,9 @@ public class TimedWaitDemo {
 // 初始状态：lock 的初始值为 new Object()。
         synchronized (lock) {
             long start = System.nanoTime();
-            // 作用：通过 wait(long) 带超时的条件等待。
+            // 关键变化：long start = System.nanoTime(); 将返回值写入 start；start 现在保存该具体结果。
             lock.wait(1);
+            // 关键变化：lock.wait(1);；lock；wait；lock.wait(1) 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println("wait returned=" + (System.nanoTime() >= start));
             // 输出：wait returned=true
         }
@@ -274,7 +290,7 @@ public class NotifyOneDemo {
         // 初始状态：lock 当前为 new Object()。
         synchronized (lock) {
             lock.notify();
-            // 作用：notify() 不保证唤醒哪个线程，也不保证它能立即获得锁。生产者/消费者通常选择 notifyAll，并让每个醒来的线程重新检查自己的条件。
+            // 关键变化：lock.notify()；lock.notify() 完成本例中的具体调用，后续语句观察调用后的状态。
             System.out.println("one waiter may wake");
             // 输出：one waiter may wake
         }
@@ -290,14 +306,15 @@ public class NotifyOneDemo {
 // 说明：main 未进入 synchronized(lock) 就调用 lock.wait()，因此当前线程不是监视器所有者并抛出 IllegalMonitorStateException。
 public class WaitMonitorRuleDemo {
     public static void main(String[] args) {
-    // 作用：调用 wait、notify 或 notifyAll 前必须持有对应监视器，否则会抛 IllegalMonitorStateException。这个规则经常在把锁对象和条件对象拆开时被忽略。
         Object lock = new Object();
 // 关键变化：lock 接收表达式 new Object() 的计算结果。
 // 初始状态：lock 的初始值为 new Object()。
         try {
             lock.wait();
+            // 关键变化：lock.wait()；lock.wait() 完成本例中的具体调用，后续语句观察调用后的状态。
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
+            // 关键变化：Thread.currentThread().interrupt()；Thread.currentThread() 完成本例中的具体调用，后续语句观察调用后的状态。
         } catch (IllegalMonitorStateException ex) {
             System.out.println(ex.getClass().getSimpleName());
             // 输出：IllegalMonitorStateException
@@ -314,7 +331,8 @@ public class WaitMonitorRuleDemo {
 // 说明：shortWork() 持有 this 监视器期间不做阻塞 I/O；这样虚拟线程能尽快释放监视器及载体。
 public class MonitorBlockingBoundaryDemo {
     synchronized void shortWork() {
-    // 作用：在 JDK 20 虚拟线程预览实现中，监视器内的长时间阻塞可能 pin 住载体线程；这不是要求把所有 synchronized 换成 Lock，而是要通过 JFR 定位并缩短临界区。
+    // 关键变化：synchronized void shortWork() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：synchronized void shortWork() { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         System.out.println("keep monitor work short");
         // 输出：keep monitor work short
     }
@@ -322,7 +340,8 @@ public class MonitorBlockingBoundaryDemo {
     public static void main(String[] args) {
         new MonitorBlockingBoundaryDemo().shortWork();
 // // 返回：new MonitorBlockingBoundaryDemo().shortWork() 按构造参数创建新对象。
-// 初始状态：表达式为 new MonitorBlockingBoundaryDemo().shortWork()。
+        // 输入：new MonitorBlockingBoundaryDemo().shortWork(); 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
+        // 关键变化：new MonitorBlockingBoundaryDemo().shortWork();；当前对象.shortWork() 完成本例中的具体调用，后续语句观察调用后的状态。
     }
 }
 ```

@@ -30,6 +30,7 @@ Maven 坐标由 groupId、artifactId、version 组成，依赖树和 dependencyM
 
 ```java
 // 说明：Maven 生命周期：运行测试与工程校验 的具体调用为 String[] lifecycle = {"mvn", "test", "&&", "mvn", "verify"};
+// 输入：// 说明：Maven 生命周期：运行测试与工程校验 的具体调用为 String[] lifecycle = {"mvn", "test", "&&", "mvn", "verify"}; 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 String[] lifecycle = {"mvn", "test", "&&", "mvn", "verify"};
 // 关键变化：lifecycle 接收表达式 {"mvn", "test", "&&", "mvn", "verify"} 的计算结果。
 // 初始状态：lifecycle 当前为 {"mvn", "test", "&&", "mvn", "verify"}。
@@ -51,9 +52,10 @@ import org.junit.jupiter.api.Test;
 class PriceTest {
     @Test
     void totalsTwoItems() {
+    // 关键变化：void totalsTwoItems() {；当前对象.Test() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 输入：表达式为 @Test。
-    // 作用：用 @Test 标记可由 JUnit 5 独立执行的测试方法。
         assertEquals(30, 10 + 20);
+        // 关键变化：assertEquals(30, 10 + 20);；当前对象；assertEquals；当前对象.assertEquals(30) 返回本次调用的具体结果，后续语句继续使用该值。
     }
 }
 // 输出：断言成立，测试通过。
@@ -66,12 +68,13 @@ class PriceTest {
 ```java
 // 说明：assertThrows：验证异常路径 的具体调用为 var error = assertThrows(IllegalArgumentException.class,
 import static org.junit.jupiter.api.Assertions.assertThrows;
+// 输入：// 说明：assertThrows：验证异常路径 的具体调用为 var error = assertThrows(IllegalArgumentException.class, import static org.junit.jupiter.api.Assertions.assertThrows; 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 
 var error = assertThrows(IllegalArgumentException.class,
         () -> Integer.parseInt("x"));
 // 输入：error 的初始值为 assertThrows(IllegalArgumentException.class,。
-        // 作用：用 assertThrows 同时验证异常类型并取得异常对象供后续断言。
-// 输出：error 的类型是 NumberFormatException。
+// 关键变化：var error = assertThrows(IllegalArgumentException.class, () -> Integer.parseInt("x"))；error 接收 parseInt(IllegalArgumentException.class) 的返回值，当前值变为这次调用得到的具体结果。
+// 结果：error 保存 Integer.parseInt("x") 抛出的 IllegalArgumentException 实例。
 ```
 
 ### SLF4J 参数化日志：记录结构化上下文
@@ -81,7 +84,9 @@ var error = assertThrows(IllegalArgumentException.class,
 ```java
 // 说明：SLF4J 参数化日志：记录结构化上下文 的具体调用为 logger.info("order accepted, orderId={}", orderId);
 logger.info("order accepted, orderId={}", orderId);
-// 输出：INFO order accepted, orderId=42（前提：orderId 为 42 且 INFO 级别已启用）。
+// 关键变化：logger.info("order accepted, orderId={}", orderId) 将 orderId 的具体值填入 {} 占位符并发出一条日志事件；该调用不返回业务值。
+// 输入：logger.info 使用 orderId 的具体值填充占位符；结果：日志事件记录 order accepted 和该订单号。
+// 输出：日志事件包含 order accepted 和本次 orderId 的具体值。
 ```
 
 ### `@PreDestroy`：在容器销毁前释放资源
@@ -94,8 +99,8 @@ import jakarta.annotation.PreDestroy;
 class Worker {
     private boolean closed;
     @PreDestroy void close() { closed = true; }
+    // 关键变化：@PreDestroy void close() { closed = true; }；注解参数 当前参数 绑定到声明位置，框架或反射按该配置处理声明。
 // 输入：closed 的初始值为 true; }。
-    // 作用：容器管理的 Bean 可用它声明关闭回调；不要依赖它处理必须立即提交的业务数据。
     boolean isClosed() { return closed; }
 }
 // 结果：Spring/Jakarta 容器销毁 Worker 前调用 close()
@@ -110,9 +115,10 @@ class Worker {
 import jakarta.annotation.Resource;
 class ReportService {
     @Resource(name = "auditClock")
+    // 关键变化：@Resource(name = "auditClock")；注解参数 name = "auditClock" 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@Resource(name = "auditClock") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     java.time.Clock clock;
 // 输入：name 的初始值为 "auditClock")。
-    // 作用：它是 Jakarta 标准注解；显式指定 name 可把注入点与 Bean 名称对齐。
     long now() { return clock.millis(); }
 }
 // 结果：容器把名为 auditClock 的 Bean 注入 clock
@@ -160,11 +166,13 @@ System.out.println(Charset.isSupported(current.name()));
 
 ```java
 // 说明：Random.nextInt：生成有上界的伪随机整数 的具体调用为 var random = new Random(42);
+// 输入：// 说明：Random.nextInt：生成有上界的伪随机整数 的具体调用为 var random = new Random(42); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 import java.util.Random;
 var random = new Random(42);
+// 关键变化：var random = new Random(42)；random 接收 该操作(42) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：random 当前为 new Random(42)。
 int value = random.nextInt(10);
-// 作用：nextInt(bound) 返回 [0, bound)；它不适合密码、令牌等安全用途。
+// 关键变化：int value = random.nextInt(10); 的返回值写入 value，调用后 value 保存该具体结果。
 System.out.println(value >= 0);
 // 输出：true、true、0
 System.out.println(value < 10);

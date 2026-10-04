@@ -174,10 +174,15 @@ import java.sql.PreparedStatement;
 import java.time.Instant;
 
 try (Connection connection = dataSource.getConnection();
+// 输入：try (Connection connection = dataSource.getConnection(); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
+// 关键变化：try (Connection connection = dataSource.getConnection()；try-with-resources 打开具体资源并在代码块结束时关闭它。
      PreparedStatement statement = connection.prepareStatement(
          "UPDATE account SET created_at = ? WHERE id = ?")) {
+     // 关键变化：PreparedStatement statement = connection.prepareStatement( "UPDATE account SET created_at = ? WHERE id = ?")) { 将返回值写入 statement；statement 现在保存该具体结果。
     statement.setObject(1, Instant.parse("2026-10-01T00:00:00Z"));
+    // 关键变化：statement.setObject(1, Instant.parse("2026-10-01T00:00:00Z"));；statement；setObject；statement.setObject(1) 返回本次调用的具体结果，后续语句继续使用该值。
     statement.setLong(2, 1L);
+    // 关键变化：statement.setLong(2, 1L);；statement；setLong；statement.setLong(2) 返回本次调用的具体结果，后续语句继续使用该值。
     System.out.println(statement.getParameterMetaData().getParameterCount());
     // 输出：2
 }

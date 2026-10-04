@@ -47,8 +47,9 @@ description: 速查 Object、Objects、equals、hashCode、toString 和对象身
 // 初始状态：first 初始为 new String("Java")；second 初始为 new String("Java")。
 String first = new String("Java");
 // 关键变化：first 接收表达式 new String("Java") 的计算结果。
-// 初始状态：first 的初始值为 new String("Java")。
+// 输入：// 初始状态：first 初始为 new String("Java")；second 初始为 new String("Java")。 String first = new String("Java"); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 String second = new String("Java");
+// 关键变化：String second = new String("Java"); 将返回值写入 second；second 现在保存该具体结果。
 System.out.println(first == second);
 // 输出：false
 ```
@@ -71,10 +72,12 @@ class UserId {
 
     @Override
     public boolean equals(Object other) {
+    // 关键变化：public boolean equals(Object other) {；当前对象.该操作(Object other) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 public boolean equals(Object other) {。
-    // 作用：通过 equals 比较逻辑内容。
         return other instanceof UserId id && Objects.equals(value, id.value);
 // 返回：return other instanceof UserId id && Objects.equals(value, id.value) 把该表达式交给调用方。
+        // 关键变化：return other instanceof UserId id && Objects.equals(value, id.value)；Objects.equals(value) 检查当前状态是否满足条件，返回 true 或 false。
+        // 输入：return other instanceof UserId id && Objects.equals(value, id.value); 使用 other、value 和 id.value 的具体字段值进行比较。
     }
 }
 
@@ -104,7 +107,7 @@ class UserId {
 
     @Override
     public int hashCode() {
-    // 作用：需要把对象放入哈希集合时应让 hashCode 与 equals 使用一致字段，并避免入集合后修改参与哈希的字段。
+    // 关键变化：public int hashCode() {；当前对象.hashCode() 完成本例中的具体调用，后续语句观察调用后的状态。
         return Objects.hash(value);
     }
 }
@@ -131,7 +134,7 @@ class User {
 
     @Override
     public String toString() {
-    // 作用：通过 toString 提供安全可读表示。
+    // 关键变化：public String toString() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return "User[name=" + name + "]";
     }
 }
@@ -146,12 +149,13 @@ System.out.println(new User("Ann"));
 
 ```java
 String left = null;
+// 关键变化：String left = null；left 取右侧具体表达式的值，当前状态变为 null。
 // 初始状态：left 当前为 null。
 String right = "Java";
+// 关键变化：String right = "Java"；right 取右侧具体表达式的值，当前状态变为 "Java"。
 // 初始状态：right 当前为 "Java"。
 System.out.println(Objects.equals(left, right));
 // 输出：false
-// 作用：一方或双方为 null 时不会抛异常。
 ```
 
 ### `Objects.hash`：按字段组合哈希
@@ -172,10 +176,10 @@ System.out.println(hash != 0);
 
 ```java
 String value = null;
+// 关键变化：String value = null；value 取右侧具体表达式的值，当前状态变为 null。
 // 初始状态：value 当前为 null。
 System.out.println(Objects.toString(value, "(missing)"));
 // 输出：(missing)
-// 作用：适合日志或展示的轻量默认值。
 ```
 
 ### `Objects.requireNonNull`：构造入口校验
@@ -196,10 +200,22 @@ System.out.println(name);
 
 ```java
 Object value = "Java";
+// 关键变化：Object value = "Java"；value 取右侧具体表达式的值，当前状态变为 "Java"。
 // 初始状态：value 当前为 "Java"。
 System.out.println(value.getClass().getSimpleName());
 // 输出：String；输入：System.out.println(value.getClass().getSimpleName());。
-// 作用：getClass() 返回精确运行时类，不能替代多态。
+// 输出：// 输出：String；输入：System.out.println(value.getClass().getSimpleName());。 已产生可观察结果。
+// 输出：// 输出：// 输出：String；输入：System.out.println(value.getClass().getSimpleName());。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：String；输入：System.out.println(value.getClass().getSimpleName());。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：String；输入：System.out.println(value.getClass().getSimpleName());。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：String；输入：System.out.println(value.getClass().getSimpleName());。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：String；输入：System.out.println(value.getClass().getSimpleName());。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：String；输入：System.out.println(value.getClass().getSimpleName());。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：String；输入：System.out.println(value.getClass().getSimpleName());。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：String；输入：System.out.println(value.getClass().getSimpleName());。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：String；输入：System.out.println(value.getClass().getSimpleName());。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：String；输入：System.out.println(value.getClass().getSimpleName());。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：String；输入：System.out.println(value.getClass().getSimpleName());。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
 ```
 ## 不常用但需要知道
 
@@ -209,11 +225,12 @@ System.out.println(value.getClass().getSimpleName());
 
 ```java
 int[][] left = {{1, 2}};
+// 关键变化：int[][] left = {{1, 2}}；left 取右侧具体表达式的值，当前状态变为 {{1, 2}}。
 // 初始状态：left 当前为 {{1, 2}}。
 int[][] right = {{1, 2}};
+// 关键变化：int[][] right = {{1, 2}}；right 取右侧具体表达式的值，当前状态变为 {{1, 2}}。
 System.out.println(Objects.deepEquals(left, right));
 // 输出：true
-// 作用：通过 Objects.deepEquals 比较嵌套数组或对象。
 ```
 
 ### `Objects.compare`：带比较器的空值边界
@@ -240,10 +257,11 @@ class Box implements Cloneable {
 
     @Override
     public Box clone() {
-    // 作用：通过 clone 受保护的浅复制入口。
+    // 关键变化：public Box clone() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         try {
             return (Box) super.clone();
 // 返回：return (Box) super.clone() 把该表达式交给调用方。
+            // 关键变化：return (Box) super.clone();；当前对象；return；当前对象.return(Box) 返回本次调用的具体结果，后续语句继续使用该值。
         } catch (CloneNotSupportedException error) {
             throw new AssertionError(error);
         }
@@ -252,6 +270,7 @@ class Box implements Cloneable {
 
 Box copy = new Box().clone();
 // 返回：copy 接收 new Box().clone() 的返回值。
+// 关键变化：Box copy = new Box().clone(); 的返回值写入 copy，调用后 copy 保存该具体结果。
 System.out.println(copy.value);
 // 输出：7
 ```
@@ -264,8 +283,8 @@ System.out.println(copy.value);
 // 前置条件：当前线程已经持有 lock 的监视器
 synchronized (lock) {
     while (!ready) lock.wait();
+    // 关键变化：while (!ready) lock.wait();；当前对象；while；当前对象.while(!ready) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 while (!ready) lock.wait()。
-    // 作用：wait 必须在持有同一对象监视器时调用，它会释放监视器；唤醒后还必须在循环中重新检查条件。
 }
 // 结果：被唤醒并重新取得监视器后才继续执行
 ```
@@ -276,10 +295,11 @@ synchronized (lock) {
 
 ```java
 Object lock = new Object();
+// 关键变化：Object lock = new Object()；lock 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：lock 当前为 new Object()。
 synchronized (lock) {
     lock.notifyAll();
-    // 作用：通过 Object.notifyAll 唤醒同一监视器上的等待线程。
+    // 关键变化：lock.notifyAll()；lock.notifyAll() 完成本例中的具体调用，后续语句观察调用后的状态。
     System.out.println("notified");
     // 输出：notified
 }
@@ -291,8 +311,8 @@ synchronized (lock) {
 
 ```java
 Object value = new Object();
+// 关键变化：Object value = new Object()；value 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：value 当前为 new Object()。
-// 作用：通过 finalize 不要依赖对象终结。
 System.out.println(value.getClass().getSimpleName());
 // 输出：Object
 ```
@@ -316,8 +336,7 @@ var text = new ToStringBuilder(new Object(), ToStringStyle.NO_CLASS_NAME_STYLE)
         .append("name", "job")
         .toString();
 // 输入：text 的初始值为 new ToStringBuilder(new Object(), ToStringStyle.NO_CLASS_NAME_STYLE)。
-        // 作用：Apache Commons Lang 的构造器按字段追加对象摘要；敏感字段仍需主动排除。
-        // 作用：通过 ToStringBuilder 生成可维护的 toString。
+// 关键变化：var text = new ToStringBuilder(new Object(), ToStringStyle.NO_CLASS_NAME_STYLE) .append("id", 7) .append("name", "job") .toString(); 将返回值写入 text；text 现在保存该具体结果。
 System.out.println(text);
 // 输出：[id=7,name=job]
 ```

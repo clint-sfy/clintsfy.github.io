@@ -169,7 +169,7 @@ class User {
 TypeReference<Map<String, List<User>>> type =
     new TypeReference<Map<String, List<User>>>() {};
     // 初始状态：type 当前保存 new TypeReference<Map<String, List<User>>>() {}的计算结果。
-    // 作用：Class<T> 无法表达 Map<String, List<User>> 等嵌套参数时，使用 TypeReference 捕获完整泛型结构。
+    // 关键变化：new TypeReference<Map<String, List<User>>>() {}; 创建并保留 Map<String, List<User>> 的完整泛型类型信息，type 现在可供后续转换读取。
 System.out.println(type.getType().getTypeName().contains("java.util.List"));
 // 输出：true
 ```
@@ -193,7 +193,7 @@ String json = "{\"admins\":[{\"name\":\"Ann\"}]}";
 // 初始状态：json 当前为 "{\"admins\":[{\"name\":\"Ann\"}]}"。
 Map<String, List<User>> grouped = JSONUtil.toBean(
     json, new TypeReference<Map<String, List<User>>>() {}, false);
-    // 作用：目标类型包含多层泛型时，把 TypeReference 和 JSON 文本交给 toBean，并显式选择是否忽略转换错误。
+// 关键变化：Map<String, List<User>> grouped = JSONUtil.toBean( json, new TypeReference<Map<String, List<User>>>() {}, false)；grouped 接收 toBean(json) 的返回值，当前值变为这次调用得到的具体结果。
 System.out.println(grouped.get("admins").get(0).name);
 // 输出：Ann
 ```
@@ -214,7 +214,7 @@ User source = new User();
 // 初始状态：source 当前为 new User()。
 source.name = "Ann";
 String json = JSONUtil.toJsonStr(source);
-// 作用：需要按 JSON 字段语义复制对象时，先用 toJsonStr 生成中间文本；它可能丢失未序列化字段，因此不是通用深复制保证。
+// 关键变化：String json = JSONUtil.toJsonStr(source); 将返回值写入 json；json 现在保存该具体结果。
 System.out.println(json);
 // 输出：{"name":"Ann"}
 ```
@@ -236,7 +236,7 @@ User source = new User();
 source.name = "Ann";
 String json = "{\"name\":\"Ann\"}";
 User copy = JSONUtil.toBean(json, User.class);
-// 作用：已有中间 JSON 时使用 toBean 创建新的目标实例；复制前要评估字段丢失、日期格式和嵌套引用语义。
+// 关键变化：User copy = JSONUtil.toBean(json, User.class); 将返回值写入 copy；copy 现在保存该具体结果。
 System.out.println(copy.name + ", same=" + (source == copy));
 // 输出：Ann, same=false
 ```

@@ -99,6 +99,7 @@ redisTemplate.opsForValue().set("counter", "4");
 // 输入：先把 Redis key="counter" 设置为字符串值 "4"，Lua 的 INCR 将它提升为 5。
 Long value = redisTemplate.execute(script, List.of("counter"));
 // 返回：execute 将 KEYS[1]="counter" 交给 Lua，Redis 中 counter 从 4 变为 5，value 接收 Long 结果 5。
+// 关键变化：Long value = redisTemplate.execute(script, List.of("counter")); 的返回值写入 value，调用后 value 保存该具体结果。
 System.out.println(value);
 // 输出：5
 ```
@@ -111,6 +112,7 @@ System.out.println(value);
 DefaultRedisScript<Long> script = new DefaultRedisScript<>("return 1", Long.class);
 // 输入：script 的初始值为 new DefaultRedisScript<>("return 1", Long.class)。
 // 返回：script 保存 Lua 文本 return 1，并声明 Redis 整数结果转换为 Long。
+// 关键变化：DefaultRedisScript<Long> script = new DefaultRedisScript<>("return 1", Long.class); 的返回值写入 script，调用后 script 保存该具体结果。
 System.out.println(script.getResultType().getSimpleName());
 // 输出：Long
 // 返回：getResultType() 返回 Long.class，getSimpleName() 把本次返回类型展示为 Long。
@@ -124,6 +126,7 @@ System.out.println(script.getResultType().getSimpleName());
 StringRedisSerializer serializer = new StringRedisSerializer(StandardCharsets.UTF_8);
 // 输入：serializer 的初始值为 new StringRedisSerializer(StandardCharsets.UTF_8)。
 // 返回：serializer 使用 UTF-8 编码 key/value 字节。
+// 关键变化：StringRedisSerializer serializer = new StringRedisSerializer(StandardCharsets.UTF_8); 的返回值写入 serializer，调用后 serializer 保存该具体结果。
 System.out.println(new String(serializer.serialize("user:7"), StandardCharsets.UTF_8));
 // 输出：user:7
 // 返回：serialize("user:7") 后按 UTF-8 解码仍得到 user:7；该 serializer 不会把 User 对象变成 JSON。
@@ -145,6 +148,7 @@ redis.opsForValue().set(key, "active", Duration.ofMinutes(5));
 // 输入：key="app:profile:7"、value="active"、TTL=5 分钟；set 后该 key 存在且将在约 5 分钟后过期。
 String value = redis.opsForValue().get(key);
 // 返回：get("app:profile:7") 读取刚写入的 value="active"；key 过期或不存在时返回 null。
+// 关键变化：String value = redis.opsForValue().get(key); 的返回值写入 value，调用后 value 保存该具体结果。
 System.out.println(value);
 // 输出：active
 ```
@@ -157,6 +161,7 @@ System.out.println(value);
 
 ```java
 redis.opsForHash().put("app:user:7", "status", "ACTIVE");
+// 关键变化：redis.opsForHash().put("app:user:7", "status", "ACTIVE")；redis.opsForHash() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 输入：key="app:user:7"、field="status"、value="ACTIVE"；写入后该字段状态为 ACTIVE。
 System.out.println(redis.opsForHash().get("app:user:7", "status"));
 // 输出：ACTIVE
@@ -171,6 +176,7 @@ Hash field 需要稳定命名和类型契约；多个 field 的跨 key 更新不
 
 ```java
 redis.opsForList().rightPush("app:jobs", "job-1");
+// 关键变化：redis.opsForList().rightPush("app:jobs", "job-1")；redis.opsForList() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 输入：key="app:jobs"、value="job-1"；rightPush 后列表右端新增 job-1。
 System.out.println(redis.opsForList().leftPop("app:jobs"));
 // 输出：job-1
@@ -185,6 +191,7 @@ List 需要设置长度上限并处理消费失败；需要可靠消息时应评
 
 ```java
 redis.opsForSet().add("app:roles:7", "reader", "reader");
+// 关键变化：redis.opsForSet().add("app:roles:7", "reader", "reader")；redis.opsForSet() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 输入：key="app:roles:7"，传入成员 reader 两次；Set 去重后只保留一个 reader。
 System.out.println(redis.opsForSet().size("app:roles:7"));
 // 输出：1
@@ -201,9 +208,10 @@ Set 只保证成员唯一，不保证顺序；集合过大时应限制基数并�
 import java.time.Duration;
 
 redis.opsForValue().set("app:token:7", "opaque", Duration.ofSeconds(60));
+// 关键变化：redis.opsForValue().set("app:token:7", "opaque", Duration.ofSeconds(60))；redis.opsForValue() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 输入：key="app:token:7"、value="opaque"、TTL=60 秒；set 后该 key 具有明确过期时间。
 Long seconds = redis.getExpire("app:token:7");
-// 返回：getExpire("app:token:7") 返回剩余秒数，刚设置后应为 0 到 60 之间。
+// 关键变化：Long seconds = redis.getExpire("app:token:7")；seconds 接收 getExpire("app:token:7") 的返回值，当前值变为这次调用得到的具体结果。
 System.out.println(seconds != null && seconds > 0);
 // 输出：true
 ```
@@ -250,19 +258,27 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 StringRedisTemplate redis = stringRedisTemplate;
+// 关键变化：StringRedisTemplate redis = stringRedisTemplate；redis 取右侧具体表达式的值，当前状态变为 stringRedisTemplate。
+// 输入：StringRedisTemplate redis = stringRedisTemplate; 使用语句中的具体实参或初始值，redis 从这里进入后续操作。
 String lua = "local n = redis.call('GET', KEYS[1]); "
     + "if n and tonumber(n) >= tonumber(ARGV[1]) then "
     + "redis.call('DECRBY', KEYS[1], ARGV[1]); return 1; end; return 0;";
-// 关键变化：调用表达式 String lua = "local n = redis.call('GET', KEYS[1]); " + "if n and tonumber(n) >= tonumber(ARGV[1]) then " + "redis.call('DECRBY', KEYS[1], ARGV[1]); return 1; end; return 0;"; 读取或更新本行列出的对象和参数。
+    // 关键变化：+ "redis.call('DECRBY', KEYS[1], ARGV[1]); return 1; end; return 0;";；redis；call；redis.call('DECRBY') 返回本次调用的具体结果，后续语句继续使用该值。
+    // 关键变化：+ "if n and tonumber(n) >= tonumber(ARGV[1]) then " + "redis.call('DECRBY', KEYS[1], ARGV[1]); return 1; end; return 0;";；redis；call；redis.call(n) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 关键变化：+ "redis.call('DECRBY', KEYS[1], ARGV[1]); return 1; end; return 0;";；redis；call；redis.call('DECRBY') 返回本次调用的具体结果，后续语句继续使用该值。
 // 初始状态：lua 包含基于 KEYS[1] 和 ARGV[1] 的原子配额检查与扣减逻辑。
 var script = new DefaultRedisScript<Long>(lua, Long.class);
+// 关键变化：var script = new DefaultRedisScript<Long>(lua, Long.class)；script 接收 该操作(lua) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：Lua 脚本按 KEYS[1]="app:quota:7"、ARGV[1]="1" 检查并扣减配额。
 java.util.List<String> keys = java.util.List.of("app:quota:7");
+// 关键变化：java.util.List<String> keys = java.util.List.of("app:quota:7")；List.of("app:quota:7") 返回转换后的具体值，赋给当前示例中的接收变量。
 String amount = "1";
+// 关键变化：String amount = "1"；amount 取右侧具体表达式的值，当前状态变为 "1"。
 redis.opsForValue().set("app:quota:7", "3");
+// 关键变化：redis.opsForValue().set("app:quota:7", "3")；redis.opsForValue() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 输入：先把配额 key="app:quota:7" 设置为 "3"，本次请求 amount="1"。
 Long allowed = redis.execute(script, keys, amount);
-// 返回：execute 在 Redis 内原子读取 3、扣减 1 并返回 Long=1；调用后 app:quota:7 的值为 2。
+// 关键变化：Long allowed = redis.execute(script, keys, amount)；redis.execute(script) 改变当前资源或任务状态，后续步骤观察这一变化。
 System.out.println(allowed);
 // 输出：1
 ```
@@ -298,7 +314,7 @@ class UserService {
     void updateStatus(long id, String status) {
         repository.updateStatus(id, status);
         events.publishEvent(new UserStatusChanged(id));
-// // 关键变化：events.publishEvent(new UserStatusChanged(id)) 使用表达式中的具体参数完成本次调用。
+// // 关键变化：events.publishEvent(new UserStatusChanged(id))；events.publishEvent(new UserStatusChanged(id)) 返回本次调用的具体结果，后续语句继续使用该值。
 // 初始状态：表达式为 events.publishEvent(new UserStatusChanged(id))。
     }
 }

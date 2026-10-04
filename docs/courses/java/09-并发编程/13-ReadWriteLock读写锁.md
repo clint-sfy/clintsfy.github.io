@@ -73,18 +73,22 @@ public class ReadLockDemo {
 // 关键变化：lock 接收右侧表达式 new ReentrantReadWriteLock() 的计算结果。
 // 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
     private int value = 42;
+    // 关键变化：private int value = 42; 将返回值写入 value；value 现在保存该具体结果。
 
     int read() {
         lock.readLock().lock();
+        // 关键变化：lock.readLock().lock();；lock.readLock() 完成本例中的具体调用，后续语句观察调用后的状态。
         try {
             return value;
         } finally {
             lock.readLock().unlock();
+            // 关键变化：lock.readLock().unlock()；lock.readLock() 完成本例中的具体调用，后续语句观察调用后的状态。
         }
     }
 
     public static void main(String[] args) {
         var state = new ReadLockDemo();
+        // 关键变化：var state = new ReadLockDemo(); 将返回值写入 state；state 现在保存该具体结果。
         System.out.println(state.read());
         // 输出：42
     }
@@ -109,16 +113,21 @@ public class WriteLockDemo {
 
     void add(int delta) {
         lock.writeLock().lock();
+        // 关键变化：lock.writeLock().lock();；lock.writeLock() 完成本例中的具体调用，后续语句观察调用后的状态。
         try {
             value += delta;
+            // 关键变化：value += delta；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         } finally {
             lock.writeLock().unlock();
+            // 关键变化：lock.writeLock().unlock()；lock.writeLock() 完成本例中的具体调用，后续语句观察调用后的状态。
         }
     }
 
     public static void main(String[] args) {
         var state = new WriteLockDemo();
+        // 关键变化：var state = new WriteLockDemo(); 将返回值写入 state；state 现在保存该具体结果。
         state.add(5);
+        // 关键变化：state.add(5)；state 追加具体参数 5，容器内容随之增长。
         System.out.println("updated");
         // 输出：updated
     }
@@ -230,12 +239,14 @@ public class ReadLockTimeoutDemo {
 // 关键变化：lock 接收表达式 new ReentrantReadWriteLock() 的计算结果。
 // 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
         boolean acquired = lock.readLock().tryLock(1, TimeUnit.MILLISECONDS);
+        // 关键变化：boolean acquired = lock.readLock().tryLock(1, TimeUnit.MILLISECONDS); 将返回值写入 acquired；acquired 现在保存该具体结果。
         try {
             System.out.println("acquired=" + acquired);
             // 输出：acquired=true（没有其他线程持有写锁时）
         } finally {
             if (acquired) {
                 lock.readLock().unlock();
+                // 关键变化：lock.readLock().unlock()；lock.readLock() 完成本例中的具体调用，后续语句观察调用后的状态。
             }
         }
     }
@@ -257,11 +268,13 @@ public class WriteLockInterruptibleDemo {
 // 关键变化：lock 接收表达式 new ReentrantReadWriteLock() 的计算结果。
 // 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
         lock.writeLock().lockInterruptibly();
+        // 关键变化：lock.writeLock().lockInterruptibly()；lock.writeLock() 完成本例中的具体调用，后续语句观察调用后的状态。
         try {
             System.out.println("write lock acquired");
             // 输出：write lock acquired
         } finally {
             lock.writeLock().unlock();
+            // 关键变化：lock.writeLock().unlock()；lock.writeLock() 完成本例中的具体调用，后续语句观察调用后的状态。
         }
     }
 }
@@ -282,12 +295,13 @@ public class ReadLockCountDemo {
 // 关键变化：lock 接收表达式 new ReentrantReadWriteLock() 的计算结果。
 // 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
         lock.readLock().lock();
+        // 关键变化：lock.readLock().lock();；lock.readLock() 完成本例中的具体调用，后续语句观察调用后的状态。
         try {
             System.out.println(lock.getReadLockCount());
 // 输出：1
-            // 作用：通过 getReadLockCount() 只用于诊断当前读者数量。
         } finally {
             lock.readLock().unlock();
+            // 关键变化：lock.readLock().unlock()；lock.readLock() 完成本例中的具体调用，后续语句观察调用后的状态。
         }
     }
 }
@@ -309,6 +323,7 @@ public class ReadLockConditionDemo {
 // 初始状态：lock 的初始值为 new ReentrantReadWriteLock()。
         try {
             lock.readLock().newCondition();
+            // 关键变化：lock.readLock().newCondition()；lock.readLock() 完成本例中的具体调用，后续语句观察调用后的状态。
         } catch (UnsupportedOperationException ex) {
             System.out.println(ex.getClass().getSimpleName());
             // 输出：UnsupportedOperationException

@@ -55,6 +55,7 @@ Properties config = new Properties();
 // 初始状态：config 的初始值为 new Properties()。
 config.setProperty("resource.loader.file.path", "templates");
 // config 中的 templates 是引擎随后查找 .vm 文件的受信任根目录。
+// 关键变化：config.setProperty("resource.loader.file.path", "templates")；config；setProperty；config.setProperty("resource.loader.file.path") 返回本次调用的具体结果，后续语句继续使用该值。
 System.out.println(config.getProperty("resource.loader.file.path"));
 // 输出：templates
 ```
@@ -79,9 +80,10 @@ public class VelocityInitDemo {
         config.setProperty("resource.loader.file.path", "templates");
         config.setProperty("resource.default_encoding", "UTF-8");
         VelocityEngine engine = new VelocityEngine(config);
+        // 关键变化：VelocityEngine engine = new VelocityEngine(config)；engine 接收 该操作(config) 的返回值，当前值变为这次调用得到的具体结果。
         // init() 根据 config 创建文件资源加载器，之后 engine 才能查找模板。
         engine.init();
-// // 关键变化：engine.init() 使用表达式中的具体参数完成本次调用。
+        // 关键变化：engine.init()；engine.init() 完成本例中的具体调用，后续语句观察调用后的状态。
         System.out.println("Velocity ready");
         // 输出：Velocity ready
     }
@@ -103,12 +105,13 @@ public class VelocityContextDemo {
         // 初始状态：fields 当前为 List.of("id", "name")。
         // fields 保留字段顺序，模板中的 #foreach 会按 id、name 的顺序迭代。
         VelocityContext context = new VelocityContext();
+        // 关键变化：VelocityContext context = new VelocityContext()；context 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
         context.put("packageName", "example.user");
-// // 关键变化：context.put("packageName", "example.user") 使用括号内的具体实参更新接收对象状态。
+        // 关键变化：context.put("packageName", "example.user");；context 按具体键值参数 "packageName" 更新映射内容。
         context.put("className", "UserView");
-// // 关键变化：context.put("className", "UserView") 使用括号内的具体实参更新接收对象状态。
+        // 关键变化：context.put("className", "UserView");；context 按具体键值参数 "className" 更新映射内容。
         context.put("fields", fields);
-// // 关键变化：context.put("fields", fields) 使用括号内的具体实参更新接收对象状态。
+        // 关键变化：context.put("fields", fields);；context 按具体键值参数 "fields" 更新映射内容。
         // context 只暴露模板使用的三个键，不向模板传递文件系统或反射能力。
         System.out.println(context.get("className"));
         // 输出：UserView
@@ -135,7 +138,7 @@ public class VelocityMergeDemo {
         StringWriter writer = new StringWriter();
         // merge() 执行 template 并把结果写入内存 writer，此时还没有覆盖任何文件。
         template.merge(context, writer);
-// // 关键变化：template.merge(context, writer) 使用括号内的具体实参更新接收对象状态。
+        // 关键变化：template.merge(context, writer);；template 按具体键值参数 context 更新映射内容。
         String source = writer.toString();
         System.out.println(source.contains("UserService"));
         // 输出：模板使用 $className 时为 true
@@ -163,9 +166,8 @@ public class VelocityLoadDemo {
         Template template = engine.getTemplate(
                 templateName,
                 StandardCharsets.UTF_8.name());
-// // 关键变化：StandardCharsets.UTF_8.name()) 使用表达式中的具体参数完成本次调用。
-                // 作用：通过 VelocityEngine.getTemplate 按 UTF-8 加载受信任模板。
         // template 来自 engine 配置的 templates 根目录，并以 UTF-8 解码。
+        // 关键变化：Template template = engine.getTemplate( templateName, StandardCharsets.UTF_8.name()); 将返回值写入 template；template 现在保存该具体结果。
         System.out.println(template.getName());
         // 输出：java/model.vm
         return template;

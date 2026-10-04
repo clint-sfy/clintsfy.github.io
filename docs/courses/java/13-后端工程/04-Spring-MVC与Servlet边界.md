@@ -52,9 +52,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 class HealthController {
 // 输入：表达式为 @RestController。
-// // 关键变化：class HealthController { 使用表达式中的具体参数完成本次调用。
     @GetMapping("/health")
+    // 关键变化：@GetMapping("/health")；注解参数 "/health" 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@GetMapping("/health") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     String health() {
+    // 关键变化：String health() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return "ok";
     }
 }
@@ -77,9 +79,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/users")
+// 关键变化：@RequestMapping("/users")；注解参数 "/users" 绑定到声明位置，框架或反射按该配置处理声明。
+// 输入：@RequestMapping("/users") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 class UserController {
 // 输入：表达式为 @RequestMapping("/users")。
-// // 关键变化：class UserController { 使用表达式中的具体参数完成本次调用。
     String basePath() { return "/users"; }
 }
 
@@ -102,9 +105,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 class UserQueryController {
     @GetMapping("/users/{id}")
+    // 关键变化：@GetMapping("/users/{id}")；注解参数 "/users/{id}" 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@GetMapping("/users/{id}") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     String find(@PathVariable long id) { return "user-" + id; }
 // 输入：表达式为 @GetMapping("/users/{id}")。
-// // 关键变化：String find(@PathVariable long id) { return "user-" + id; } 使用表达式中的具体参数完成本次调用。
 }
 
 System.out.println(new UserQueryController().find(7));
@@ -131,8 +135,8 @@ record CreateUser(String name) {}
 class CreateUserController {
     @PostMapping("/users")
     String create(@RequestBody CreateUser request) {
+    // 关键变化：String create(@RequestBody CreateUser request) {；当前对象；该操作；当前对象.该操作(@RequestBody CreateUser request) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 String create(@RequestBody CreateUser request) {。
-// // 关键变化：String create(@RequestBody CreateUser request) { 使用表达式中的具体参数完成本次调用。
         return "created:" + request.name();
     }
 }
@@ -200,7 +204,8 @@ System.out.println(new ApiErrors().badRequest(new IllegalArgumentException("inva
 ```java
 import jakarta.servlet.Filter;
 Filter servletFilter = (request, response, chain) -> chain.doFilter(request, response);
-// 关键变化：servletFilter 接收右侧表达式 (request, response, chain) -> chain.doFilter(request, response) 的计算结果。
+// 关键变化：Filter servletFilter = (request, response, chain) -> chain.doFilter(request, response)；servletFilter 接收 doFilter(request) 的返回值，当前值变为这次调用得到的具体结果。
+// 输入：Filter servletFilter = (request, response, chain) -> chain.doFilter(request, response); 使用语句中的具体实参或初始值，servletFilter 从这里进入后续操作。
 System.out.println(servletFilter != null);
 // 输出：true
 // 说明：Filter 读取 X-Trace-Id、写入 request 属性 traceId 后调用 chain.doFilter；漏调会在此终止请求，直接 new 不验证容器映射或链顺序。
@@ -238,8 +243,10 @@ ResponseEntity<String> response = ResponseEntity
     .status(201)
     .header("X-Request-Id", "req-7")
     .body("created");
+    // 关键变化：.body("created");；当前对象；body；当前对象.body("created") 返回本次调用的具体结果，后续语句继续使用该值。
+    // 关键变化：.header("X-Request-Id", "req-7") .body("created");；当前对象；header；当前对象.header("X-Request-Id") 返回本次调用的具体结果，后续语句继续使用该值。
+    // 关键变化：.body("created");；当前对象；body；当前对象.body("created") 返回本次调用的具体结果，后续语句继续使用该值。
     // 初始状态：response 当前保存 ResponseEntity .status(201) .header("X-Request-Id", "req-7") .body("created")的计算结果。
-// // 关键变化：.body("created") 使用表达式中的具体参数完成本次调用。
 System.out.println(response.getStatusCode().value() + "/" + response.getBody());
 // 输出：201/created
 // 说明：ResponseEntity 同时携带示例 body、明确状态码和响应头；例如 X-Request-Id=req-1 会随响应返回，而不是写进 JSON 对象。
@@ -260,13 +267,16 @@ import java.io.IOException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 class RequestIdFilter extends OncePerRequestFilter {
-// // 关键变化：class RequestIdFilter extends OncePerRequestFilter { 使用表达式中的具体参数完成本次调用。
     @Override
     protected void doFilterInternal(
         HttpServletRequest request, HttpServletResponse response, FilterChain chain)
         throws ServletException, IOException {
+    // 关键变化：protected void doFilterInternal( HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {；当前对象.OncePerRequestFilter(HttpServletRequest request) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：protected void doFilterInternal( HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         response.setHeader("X-Request-Id", "generated");
+        // 关键变化：response.setHeader("X-Request-Id", "generated");；response；setHeader；response.setHeader("X-Request-Id") 返回本次调用的具体结果，后续语句继续使用该值。
         chain.doFilter(request, response);
+        // 关键变化：chain.doFilter(request, response);；chain；doFilter；chain.doFilter(request) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println("filter-finished");
         // 输出：filter-finished
     }
@@ -288,7 +298,7 @@ class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new RequestTraceInterceptor()).order(10);
-// // 关键变化：registry.addInterceptor(new RequestTraceInterceptor()).order(10) 使用表达式中的具体参数完成本次调用。
+// // 关键变化：registry.addInterceptor(new RequestTraceInterceptor()).order(10)；registry.addInterceptor(new RequestTraceInterceptor()) 返回本次调用的具体结果，后续语句继续使用该值。
 // 初始状态：表达式为 registry.addInterceptor(new RequestTraceInterceptor()).order(10)。
         System.out.println("trace-order=10");
         // 输出：trace-order=10
@@ -333,14 +343,18 @@ void inspect(HttpServletRequest request, HttpServletResponse response) throws Ex
 // 结果：POST `/orders` 返回 `201` 和订单 ID `42`。
 @RestController
 @RequestMapping("/orders")
+// 关键变化：@RequestMapping("/orders")；注解参数 "/orders" 绑定到声明位置，框架或反射按该配置处理声明。
+// 输入：@RequestMapping("/orders") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 class OrderController {
     @PostMapping
     ResponseEntity<Long> create(@RequestBody CreateOrder body) {
+    // 关键变化：ResponseEntity<Long> create(@RequestBody CreateOrder body) {；当前对象；该操作；当前对象.该操作(@RequestBody CreateOrder body) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 @PostMapping。
-    // 作用：@PostMapping 映射 POST 请求；对重试敏感的创建操作要另行设计幂等键。
-    // 作用：通过 @PostMapping 接收创建命令。
         long id = 42L;
+        // 关键变化：long id = 42L;；id 取右侧具体表达式的值，当前状态变为 42L。
+        // 输入：long id = 42L; 提供具体参数或初始值，id 从该语句开始参与后续操作。
         return ResponseEntity.status(201).body(id);
+        // 关键变化：return ResponseEntity.status(201).body(id);；ResponseEntity；status；ResponseEntity.status(201) 返回本次调用的具体结果，后续语句继续使用该值。
     }
     record CreateOrder(String sku) {}
 }
@@ -357,11 +371,12 @@ class OrderController {
 @RestController
 class ProfileController {
     @PutMapping("/profiles/{id}")
+    // 关键变化：@PutMapping("/profiles/{id}")；注解参数 "/profiles/{id}" 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@PutMapping("/profiles/{id}") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     Profile replace(@PathVariable long id, @RequestBody Profile body) {
 // 输入：表达式为 @PutMapping("/profiles/{id}")。
-    // 作用：@PutMapping 通常表示对已知资源的整体替换；局部更新应明确 PATCH 语义。
-    // 作用：通过 @PutMapping 处理可幂等更新。
         return new Profile(id, body.name());
+        // 输入：return new Profile(id, body.name()); 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
     }
     record Profile(long id, String name) {}
     String route() { return "PUT /profiles/{id}"; }
@@ -379,10 +394,10 @@ class ProfileController {
 @RestController
 class SessionController {
     @DeleteMapping("/sessions/{id}")
+    // 关键变化：@DeleteMapping("/sessions/{id}")；注解参数 "/sessions/{id}" 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@DeleteMapping("/sessions/{id}") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     ResponseEntity<Void> delete(@PathVariable String id) {
 // 输入：表达式为 @DeleteMapping("/sessions/{id}")。
-    // 作用：@DeleteMapping 将 DELETE 映射到方法；返回值应明确区分成功、不存在与无权。
-    // 作用：通过 @DeleteMapping 处理删除命令。
         System.out.println("delete " + id);
 // 输出：System.out 调用参数为 "delete " + id。
         return ResponseEntity.noContent().build();
@@ -403,9 +418,10 @@ class SessionController {
 class UserController {
     @GetMapping("/users/{id}")
     String find(@PathVariable("id") long userId) {
+    // 关键变化：String find(@PathVariable("id") long userId) {；当前对象；该操作；当前对象.该操作(@PathVariable("id") long userId) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 String find(@PathVariable("id") long userId) {。
-    // 作用：通过 @PathVariable 读取路径变量。
         if (userId <= 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        // 输入：if (userId <= 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST); 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
         return "user:" + userId;
     }
     String example() { return find(7); }
@@ -425,9 +441,10 @@ class SearchController {
     @GetMapping("/search")
     List<String> search(
             @RequestParam(defaultValue = "10") int limit) {
+            // 关键变化：@RequestParam(defaultValue = "10") int limit) {；注解参数 defaultValue = "10" 绑定到声明位置，框架或反射按该配置处理声明。
 // 输入：defaultValue 的初始值为 "10") int limit) {。
-            // 作用：通过 @RequestParam 读取查询或表单参数。
         int safeLimit = Math.min(limit, 100);
+        // 输入：int safeLimit = Math.min(limit, 100); 提供具体参数或初始值，safeLimit 从该语句开始参与后续操作。
         return List.of("limit=" + safeLimit);
     }
 }
@@ -444,14 +461,17 @@ class SearchController {
 @Controller
 class HealthController {
     @GetMapping("/health")
+    // 关键变化：@GetMapping("/health")；注解参数 "/health" 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@GetMapping("/health") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     @ResponseBody
     Map<String, String> health() {
+    // 关键变化：Map<String, String> health() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 输入：表达式为 @ResponseBody。
-    // 作用：@ResponseBody 跳过视图解析，由 HttpMessageConverter 序列化返回值；@RestController 已组合该语义。
-    // 作用：通过 @ResponseBody 将返回值写入响应体。
         return Map.of("status", "UP");
+        // 关键变化：return Map.of("status", "UP");；Map；of；Map.of("status") 返回转换后的具体值，赋给当前示例中的接收变量。
     }
     String mediaType() { return "application/json"; }
+    // 关键变化：String mediaType() { return "application/json"; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 }
 ```
 
@@ -466,10 +486,10 @@ class HealthController {
 @RestControllerAdvice
 class ApiErrors {
     @ExceptionHandler(IllegalArgumentException.class)
+    // 关键变化：@ExceptionHandler(IllegalArgumentException.class)；注解参数 IllegalArgumentException.class 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@ExceptionHandler(IllegalArgumentException.class) 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     ResponseEntity<Map<String, String>> badInput(IllegalArgumentException ex) {
 // 输入：表达式为 @ExceptionHandler(IllegalArgumentException.class)。
-    // 作用：@ExceptionHandler 只处理声明的异常类型；不要用一个笼统的 Exception 分支掩盖编程错误。
-    // 作用：通过 @ExceptionHandler 映射已知异常。
         return ResponseEntity.badRequest()
             .body(Map.of("code", "BAD_INPUT"));
     }
@@ -488,15 +508,19 @@ class ApiErrors {
 @RestControllerAdvice
 class GlobalErrors {
 // 输入：表达式为 @RestControllerAdvice。
-// 作用：@RestControllerAdvice 组合全局 advice 与响应体语义；应输出稳定协议，不向客户端暴露堆栈。
-// 作用：通过 @RestControllerAdvice 集中处理 REST 异常。
     @ExceptionHandler(NoSuchElementException.class)
+    // 关键变化：@ExceptionHandler(NoSuchElementException.class)；注解参数 NoSuchElementException.class 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@ExceptionHandler(NoSuchElementException.class) 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     ProblemDetail notFound(NoSuchElementException ex) {
+    // 关键变化：ProblemDetail notFound(NoSuchElementException ex) {；当前对象；该操作；当前对象.该操作(NoSuchElementException ex) 返回本次调用的具体结果，后续语句继续使用该值。
         ProblemDetail detail = ProblemDetail.forStatus(404);
+        // 关键变化：ProblemDetail detail = ProblemDetail.forStatus(404)；detail 接收 forStatus(404) 的返回值，当前值变为这次调用得到的具体结果。
         detail.setTitle("resource not found");
+        // 关键变化：detail.setTitle("resource not found");；detail；setTitle；detail.setTitle("resource not found") 返回本次调用的具体结果，后续语句继续使用该值。
         return detail;
     }
     String format() { return "problem+json"; }
+    // 关键变化：String format() { return "problem+json"; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 }
 ```
 
@@ -512,12 +536,11 @@ final class RequestIdFilter implements Filter {
     public void doFilter(ServletRequest request,
                          ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
+    // 关键变化：public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {；当前对象；该操作；当前对象.该操作(ServletRequest request) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 public void doFilter(ServletRequest request,。
-                         // 作用：FilterChain.doFilter 是过滤链继续的显式边界；不调用即表示当前 Filter 终止请求。
-                         // 作用：通过 FilterChain.doFilter 放行到下一个过滤器。
         request.setAttribute("requestId", UUID.randomUUID().toString());
         chain.doFilter(request, response);
-// // 关键变化：chain.doFilter(request, response) 使用表达式中的具体参数完成本次调用。
+        // 关键变化：chain.doFilter(request, response);；chain；doFilter；chain.doFilter(request) 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println("response completed");
 // 输出：System.out 调用参数为 "response completed"。
     }
@@ -538,9 +561,8 @@ class WebConfiguration implements WebMvcConfigurer {
         registry.addInterceptor(new LocaleInterceptor())
             .addPathPatterns("/api/**")
             .excludePathPatterns("/api/public/**");
+        // 关键变化：registry.addInterceptor(new LocaleInterceptor()) .addPathPatterns("/api/**") .excludePathPatterns("/api/public/**");；registry；addInterceptor；registry.addInterceptor(new LocaleInterceptor()) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 registry.addInterceptor(new LocaleInterceptor())。
-            // 作用：addInterceptor 注册的是 Handler 拦截器，不会覆盖在 Servlet 层就终止的请求。
-            // 作用：通过 InterceptorRegistry.addInterceptor 注册 MVC 拦截器。
     }
     String scope() { return "handler"; }
 }
@@ -560,9 +582,8 @@ class StaticConfiguration implements WebMvcConfigurer {
         registry.addResourceHandler("/assets/**")
             .addResourceLocations("classpath:/public/")
             .setCachePeriod(3600);
+        // 关键变化：registry.addResourceHandler("/assets/**") .addResourceLocations("classpath:/public/") .setCachePeriod(3600);；registry；addResourceHandler；registry.addResourceHandler("/assets/**") 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 registry.addResourceHandler("/assets/**")。
-            // 作用：addResourceHandler 定义对外 URL pattern；对应的物理位置仍必须限制在白名单根目录。
-            // 作用：通过 ResourceHandlerRegistry.addResourceHandler 注册静态资源 URL。
     }
     String publicPath() { return "/assets/**"; }
 }
@@ -578,14 +599,17 @@ class StaticConfiguration implements WebMvcConfigurer {
 // 结果：只允许 `https://app.example.com` 按列出的方法跨域访问。
 @Bean
 CorsConfiguration apiCors() {
-// 作用：通过 CorsConfiguration 声明 CORS 白名单。
     CorsConfiguration cors = new CorsConfiguration();
 // 输入：cors 的初始值为 new CorsConfiguration()。
     // 作用：CorsConfiguration 必须显式限制来源、方法和请求头；携带凭证时不能把来源设为通配符。
     cors.setAllowedOrigins(List.of("https://app.example.com"));
+    // 关键变化：cors.setAllowedOrigins(List.of("https://app.example.com")) 将跨域来源白名单限定为该具体站点。
     cors.setAllowedMethods(List.of("GET", "POST"));
+    // 关键变化：cors.setAllowedMethods(List.of("GET", "POST")) 只允许 GET 和 POST 两种请求方法。
     cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+    // 关键变化：cors.setAllowedHeaders(List.of("Authorization", "Content-Type")) 只接收列出的两个请求头。
     cors.setAllowCredentials(true);
+    // 关键变化：cors.setAllowCredentials(true) 开启凭证跨域；此时来源不能使用通配符。
     return cors;
 }
 ```
@@ -602,13 +626,14 @@ CorsConfiguration apiCors() {
 UrlBasedCorsConfigurationSource corsSource(CorsConfiguration apiCors) {
     UrlBasedCorsConfigurationSource source =
         new UrlBasedCorsConfigurationSource();
-        // 初始状态：source 当前保存 new UrlBasedCorsConfigurationSource()的计算结果。
+        // 关键变化：new UrlBasedCorsConfigurationSource();；当前对象.registerCorsConfiguration() 完成本例中的具体调用，后续语句观察调用后的状态。
+        // 输入：new UrlBasedCorsConfigurationSource(); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     source.registerCorsConfiguration("/api/**", apiCors);
-    // 作用：通过 UrlBasedCorsConfigurationSource.registerCorsConfiguration 按 URL 注册 CORS。
+    // 关键变化：source.registerCorsConfiguration("/api/**", apiCors) 将 apiCors 绑定到 /api/** 路径。
     CorsConfiguration open = new CorsConfiguration();
     open.setAllowedOrigins(List.of("https://docs.example.com"));
     source.registerCorsConfiguration("/docs/**", open);
-// // 关键变化：source.registerCorsConfiguration("/docs/**", open) 使用表达式中的具体参数完成本次调用。
+    // 关键变化：source.registerCorsConfiguration("/docs/**", open) 将允许 docs.example.com 的 open 规则绑定到 /docs/** 路径。
     return source;
 }
 ```
@@ -623,7 +648,6 @@ UrlBasedCorsConfigurationSource corsSource(CorsConfiguration apiCors) {
 // 结果：匹配规则的 `OPTIONS` 预检请求在 Servlet 过滤链中得到 CORS 响应。
 @Bean
 CorsFilter corsFilter(UrlBasedCorsConfigurationSource source) {
-// 作用：通过 CorsFilter 在 Servlet 链前置处理 CORS。
     CorsFilter filter = new CorsFilter(source);
 // 输入：filter 的初始值为 new CorsFilter(source)。
     // 作用：CorsFilter 适合在 MVC 之前处理预检请求；已由 Spring Security 统一配置时不要重复注册。
@@ -649,7 +673,7 @@ void writeDownloadHeaders(HttpServletResponse response) {
 // 输入：表达式为 response.addHeader("Vary", "Origin")。
     // 作用：通过 HttpServletResponse.addHeader 追加可重复响应头。
     response.addHeader("Vary", "Access-Control-Request-Method");
-// // 关键变化：response.addHeader("Vary", "Access-Control-Request-Method") 使用表达式中的具体参数完成本次调用。
+    // 关键变化：response.addHeader("Vary", "Access-Control-Request-Method");；response；addHeader；response.addHeader("Vary") 返回本次调用的具体结果，后续语句继续使用该值。
     response.setHeader(
         "Content-Disposition",
         "attachment; filename=report.csv");
@@ -670,7 +694,7 @@ void requireApiKey(HttpServletRequest request,
     // 初始状态：apiKey 当前为 request.getHeader("X-Api-Key")。
     if (apiKey == null) {
         response.sendError(401, "missing api key");
-        // 作用：通过 HttpServletResponse.sendError 交给容器生成错误响应。
+        // 关键变化：response.sendError(401, "missing api key");；response；sendError；response.sendError(401) 返回本次调用的具体结果，后续语句继续使用该值。
         return;
     }
     response.setStatus(204);
@@ -686,17 +710,22 @@ void requireApiKey(HttpServletRequest request,
 ```java
 // 结果：读完缓存字节后 `isFinished()` 返回 `true`。
 final class ByteArrayServletInputStream extends ServletInputStream {
-// 作用：通过 ServletInputStream 适配 Servlet 请求体字节流。
     private final ByteArrayInputStream delegate;
     ByteArrayServletInputStream(byte[] body) {
+    // 关键变化：ByteArrayServletInputStream(byte[] body) {；当前对象；ByteArrayServletInputStream；当前对象.ByteArrayServletInputStream(byte[] body) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：ByteArrayServletInputStream(byte[] body) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         this.delegate = new ByteArrayInputStream(body);
-// 关键变化：delegate 接收右侧表达式 new ByteArrayInputStream(body) 的计算结果。
+        // 关键变化：this.delegate = new ByteArrayInputStream(body);；当前对象；该操作；当前对象.该操作(body) 返回本次调用的具体结果，后续语句继续使用该值。
 // 初始状态：delegate 的初始值为 new ByteArrayInputStream(body)。
     }
     public int read() { return delegate.read(); }
+    // 关键变化：public int read() { return delegate.read(); }；delegate.read(当前索引或键) 读取具体内容并返回该值。
     public boolean isFinished() { return delegate.available() == 0; }
+    // 关键变化：public boolean isFinished() { return delegate.available() == 0; }；delegate.available() 完成本例中的具体调用，后续语句观察调用后的状态。
     public boolean isReady() { return true; }
+    // 关键变化：public boolean isReady() { return true; }；当前对象.ServletInputStream() 完成本例中的具体调用，后续语句观察调用后的状态。
     public void setReadListener(ReadListener listener) {}
+    // 关键变化：public void setReadListener(ReadListener listener) {}；当前对象；该操作；当前对象.该操作(ReadListener listener) 返回本次调用的具体结果，后续语句继续使用该值。
 }
 ```
 

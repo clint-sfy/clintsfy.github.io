@@ -69,22 +69,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class ImportService {
-// // 关键变化：final class ImportService { 使用表达式中的具体参数完成本次调用。
     private static final Logger log = LoggerFactory.getLogger(ImportService.class);
-    // 作用：用于按类获取 SLF4J `Logger`，让业务代码只依赖门面并保留统一级别和字段约定。
+    // 关键变化：private static final Logger log = LoggerFactory.getLogger(ImportService.class)；log 接收 getLogger(ImportService.class) 的返回值，当前值变为这次调用得到的具体结果。
+    // 输入：private static final Logger log = LoggerFactory.getLogger(ImportService.class); 使用语句中的具体实参或初始值，log 从这里进入后续操作。
 
     void run(String jobId) {
+    // 关键变化：void run(String jobId) {；当前对象；该操作；当前对象.该操作(String jobId) 返回本次调用的具体结果，后续语句继续使用该值。
         String safeJobId = safeContextId(jobId);
-// 关键变化：safeJobId 接收表达式 safeContextId(jobId) 的计算结果。
+        // 关键变化：String safeJobId = safeContextId(jobId)；safeJobId 接收 该操作(jobId) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：safeJobId 的初始值为 safeContextId(jobId)。
         log.info("job={} started", safeJobId);
+        // 关键变化：log.info("job={} started", safeJobId);；log；info；log.info("job={} started") 返回本次调用的具体结果，后续语句继续使用该值。
         System.out.println("logged=" + safeJobId);
 // 输出：logged=job-1
     }
 }
 
 new ImportService().run("job-1");
-// 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
+// 关键变化：new ImportService().run("job-1");；当前对象.run() 完成本例中的具体调用，后续语句观察调用后的状态。
 ```
 
 同一个类只保留一个静态 logger 即可；日志级别由配置决定，不能把 `System.out` 当作生产日志通道。输出的事件名和字段名应稳定，便于检索和统计。
@@ -140,7 +142,9 @@ String appender = "RollingFileAppender";
 // 关键变化：appender 接收表达式 "RollingFileAppender" 的计算结果。
 // 初始状态：appender 当前为 "RollingFileAppender"。
 String policy = "SizeAndTimeBasedRollingPolicy";
+// 关键变化：String policy = "SizeAndTimeBasedRollingPolicy"; 将返回值写入 policy；policy 现在保存该具体结果。
 String pattern = "%d %-5level [%X{traceId}] %logger - %msg%n";
+// 关键变化：String pattern = "%d %-5level [%X{traceId}] %logger - %msg%n"; 将返回值写入 pattern；pattern 现在保存该具体结果。
 System.out.println(appender + "/" + policy + ":" + pattern);
 // 输出：RollingFileAppender/SizeAndTimeBasedRollingPolicy:%d %-5level [%X{traceId}] %logger - %msg%n
 // 说明：appender=RollingFileAppender 配合 policy=SizeAndTimeBasedRollingPolicy；pattern 中的 %X{traceId} 从 MDC 读取请求标识。真实文件名、单卷大小和保留周期应在 logback-spring.xml 中配置。
@@ -156,14 +160,16 @@ Logback XML 中通常把 `RollingFileAppender` 配合 `SizeAndTimeBasedRollingPo
 import org.slf4j.MDC;
 
 void handle(String traceId) {
-// // 关键变化：void handle(String traceId) { 使用表达式中的具体参数完成本次调用。
+// 关键变化：void handle(String traceId) {；当前对象；该操作；当前对象.该操作(String traceId) 返回本次调用的具体结果，后续语句继续使用该值。
+// 输入：void handle(String traceId) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     MDC.put("traceId", safeContextId(traceId));
-    // 作用：用于让同一请求的日志带上 `traceId`，并在复用线程返回池前清理上下文。
+    // 关键变化：MDC.put("traceId", safeContextId(traceId));；MDC 按具体键值参数 "traceId" 更新映射内容。
     try {
         System.out.println("trace=" + MDC.get("traceId"));
         // 输出：trace=req-7
     } finally {
         MDC.remove("traceId");
+        // 关键变化：MDC.remove("traceId");；MDC 按具体参数 "traceId" 删除目标内容。
     }
 }
 // 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
@@ -203,12 +209,18 @@ import org.aspectj.lang.annotation.Pointcut;
 @Aspect
 class OperationLogAspect {
     @Pointcut("within(app.service..*) && execution(* *(..))")
+    // 关键变化：@Pointcut("within(app.service..*) && execution(* *(..))")；注解参数 "within(app.service..*) && execution(* *(..))" 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@Pointcut("within(app.service..*) && execution(* *(..))") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     void serviceBoundary() {}
-// // 关键变化：void serviceBoundary() {} 使用表达式中的具体参数完成本次调用。
+    // 关键变化：void serviceBoundary() {}；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 
     @Around("serviceBoundary()")
+    // 关键变化：@Around("serviceBoundary()")；注解参数 "serviceBoundary()" 绑定到声明位置，框架或反射按该配置处理声明。
     Object logOperation(ProceedingJoinPoint joinPoint) throws Throwable {
+    // 关键变化：Object logOperation(ProceedingJoinPoint joinPoint) throws Throwable {；当前对象；该操作；当前对象.该操作(ProceedingJoinPoint joinPoint) 返回本次调用的具体结果，后续语句继续使用该值。
         Object result = joinPoint.proceed();
+        // 关键变化：Object result = joinPoint.proceed(); 将返回值写入 result；result 现在保存该具体结果。
+        // 输入：joinPoint.proceed() 继续执行当前业务方法，result 接收该方法的具体返回值或异常。
         System.out.println("audit=success:" + joinPoint.getSignature().getName());
 // 输出：audit=success:update
         return result;
@@ -257,7 +269,7 @@ final class CacheReader {
         // 作用：通过 Logger.debug 记录可按需开启的调试细节。
         String value = "hit";
         log.debug("cache result key={} present={}", key, value != null);
-// // 关键变化：log.debug("cache result key={} present={}", key, value != null) 使用表达式中的具体参数完成本次调用。
+        // 关键变化：log.debug("cache result key={} present={}", key, value != null);；log；debug；log.debug("cache result key={} present={}") 返回本次调用的具体结果，后续语句继续使用该值。
         return value;
     }
 }

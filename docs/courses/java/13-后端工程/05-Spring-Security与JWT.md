@@ -119,7 +119,8 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Bean
 SecurityFilterChain apiSecurity(HttpSecurity http) throws Exception {
-// // 关键变化：SecurityFilterChain apiSecurity(HttpSecurity http) throws Exception { 使用表达式中的具体参数完成本次调用。
+// 关键变化：SecurityFilterChain apiSecurity(HttpSecurity http) throws Exception {；当前对象；该操作；当前对象.该操作(HttpSecurity http) 返回本次调用的具体结果，后续语句继续使用该值。
+// 输入：SecurityFilterChain apiSecurity(HttpSecurity http) throws Exception { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     http
         .csrf(csrf -> csrf.disable())
         .sessionManagement(session -> session.sessionCreationPolicy(
@@ -127,7 +128,13 @@ SecurityFilterChain apiSecurity(HttpSecurity http) throws Exception {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/health", "/login").permitAll()
             .anyRequest().authenticated());
+            // 关键变化：.anyRequest().authenticated());；当前对象.anyRequest() 完成本例中的具体调用，后续语句观察调用后的状态。
+        // 关键变化：.sessionManagement(session -> session.sessionCreationPolicy( SessionCreationPolicy.STATELESS)) .authorizeHttpRequests(auth -> auth .requestMatchers("/health", "/login").permitAll() .anyRequest().authenticated());；当前对象；sessionManagement；当前对象.sessionManagement(session -> session.sessionCreationPolicy( SessionCreationPolicy.STATELESS)) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 关键变化：.authorizeHttpRequests(auth -> auth .requestMatchers("/health", "/login").permitAll() .anyRequest().authenticated());；当前对象；authorizeHttpRequests；当前对象.authorizeHttpRequests(auth -> auth .requestMatchers("/health", "/login").permitAll() .anyRequest().authenticated()) 返回本次调用的具体结果，后续语句继续使用该值。
+            // 关键变化：.requestMatchers("/health", "/login").permitAll() .anyRequest().authenticated());；当前对象；requestMatchers；当前对象.requestMatchers("/health") 返回本次调用的具体结果，后续语句继续使用该值。
+            // 关键变化：.anyRequest().authenticated());；当前对象.anyRequest() 完成本例中的具体调用，后续语句观察调用后的状态。
     return http.build();
+    // 关键变化：return http.build()；http.build(当前参数) 创建或取得具体资源，后续语句使用该对象。
 }
 
 System.out.println("policy=" + SessionCreationPolicy.STATELESS);
@@ -150,7 +157,7 @@ void configure(HttpSecurity http) throws Exception {
         .requestMatchers("/admin/**").hasRole("ADMIN")
         .anyRequest().authenticated());
 // 输入：表达式为 http.authorizeHttpRequests(auth -> auth。
-// // 关键变化：.anyRequest().authenticated()) 使用表达式中的具体参数完成本次调用。
+    // 关键变化：http.authorizeHttpRequests(auth -> auth .requestMatchers("/reports/**").hasAuthority("report:read") .requestMatchers("/admin/**").hasRole("ADMIN") .anyRequest().authenticated());；http；authorizeHttpRequests；http.authorizeHttpRequests(auth -> auth .requestMatchers("/reports/**").hasAuthority("report:read") .requestMatchers("/admin/**").hasRole("ADMIN") .anyRequest().authenticated()) 返回本次调用的具体结果，后续语句继续使用该值。
     System.out.println("/admin requires ROLE_ADMIN");
     // 输出：/admin requires ROLE_ADMIN
 }
@@ -179,15 +186,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class MethodSecurityConfig {
     @Bean ReportService reportService() {
         return new ReportService();
-        // 初始状态：本例的输入由 return new ReportService() 构造。
+        // 输入：return new ReportService(); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     }
 }
 
 class ReportService {
     @PreAuthorize("hasAuthority('report:read') and #ownerId == authentication.name")
+    // 关键变化：@PreAuthorize("hasAuthority('report:read') and #ownerId == authentication.name")；注解参数 "hasAuthority('report:read') and #ownerId == authentication.name" 绑定到声明位置，框架或反射按该配置处理声明。
     public String read(@P("ownerId") String ownerId) {
-// // 关键变化：public String read(@P("ownerId") String ownerId) { 使用表达式中的具体参数完成本次调用。
-    // 作用：用于把依赖方法参数或细粒度权限的授权放在服务方法入口；它需要 `@EnableMethodSecurity` 和 Spring 容器创建的 Bean 代理，不能代替 URL 层的粗粒度防护。
         return "report-for-" + ownerId;
     }
 }
@@ -220,9 +226,10 @@ try (var context = new AnnotationConfigApplicationContext(MethodSecurityConfig.c
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 var encoder = new BCryptPasswordEncoder();
+// 关键变化：var encoder = new BCryptPasswordEncoder()；encoder 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：encoder 当前为 new BCryptPasswordEncoder()。
-// 作用：用于让密码只以带盐哈希形式持久化，并用 `matches` 验证登录输入；密码哈希不是可逆加密，也不应写入日志。
 String storedHash = encoder.encode("correct-horse");
+// 关键变化：String storedHash = encoder.encode("correct-horse")；storedHash 接收 encode("correct-horse") 的返回值，当前值变为这次调用得到的具体结果。
 System.out.println(encoder.matches("correct-horse", storedHash));
 // 输出：true
 ```
@@ -235,10 +242,12 @@ System.out.println(encoder.matches("correct-horse", storedHash));
 
 ```java
 String authorization = "Bearer <access-token>";
+// 关键变化：String authorization = "Bearer <access-token>"；authorization 取右侧具体表达式的值，当前状态变为 "Bearer <access-token>"。
 // 初始状态：authorization 当前为 "Bearer <access-token>"。
-// 关键变化：authorization 接收右侧表达式 "Bearer <access-token>" 的计算结果。
 boolean bearer = authorization.regionMatches(true, 0, "Bearer ", 0, 7)
     && authorization.length() > 7;
+    // 关键变化：&& authorization.length() > 7；authorization.length() 读取当前内容的数量，返回具体数值。
+    // 关键变化：&& authorization.length() > 7；authorization.length() 读取当前内容的数量，返回具体数值。
 System.out.println("bearer=" + bearer);
 // 输出：bearer=true
 // 说明：客户端发送 Authorization: Bearer eyJ...；认证过滤器提取 Bearer 后的 token。这个字符串示例未验签，不会仅因请求头存在就建立 SecurityContext。
@@ -255,11 +264,10 @@ import java.util.Map;
 
 Map<String, Object> claims = Map.of(
     "sub", "user-7", "jti", "token-7");
+// 关键变化：Map<String, Object> claims = Map.of( "sub", "user-7", "jti", "token-7")；Map.of("sub") 返回转换后的具体值，赋给当前示例中的接收变量。
     // 初始状态：claims 当前保存 Map.of( "sub", "user-7", "jti", "token-7")的计算结果。
-// // 关键变化："sub", "user-7", "jti", "token-7") 使用表达式中的具体参数完成本次调用。
 System.out.println(claims.get("sub"));
 // 输出：user-7
-// 作用：用于从已完成签名、算法、发行者和受众校验的 JWT 中读取主体。
 ```
 
 不要在验签前据 claims 授权；`jti` 可用于撤销集合和审计关联。
@@ -272,12 +280,12 @@ System.out.println(claims.get("sub"));
 import java.time.Instant;
 
 long expiresAt = 4_102_444_800L;
+// 关键变化：long expiresAt = 4_102_444_800L；expiresAt 取右侧具体表达式的值，当前状态变为 4_102_444_800L。
 // 初始状态：expiresAt 当前为 4_102_444_800L。
-// 关键变化：expiresAt 接收右侧表达式 4_102_444_800L 的计算结果。
 boolean active = Instant.now().getEpochSecond() < expiresAt;
+// 关键变化：boolean active = Instant.now().getEpochSecond() < expiresAt；active 接收 now(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
 System.out.println("active=" + active);
 // 输出：active=true
-// 作用：用于把已验签 JWT 的过期时间与统一时钟比较并进入认证失败路径。
 ```
 
 时间判断可允许经过评估的时钟偏差，但不应用过大容差掩盖客户端时钟或令牌刷新缺陷。
@@ -293,8 +301,8 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 
 AuthenticationEntryPoint entryPoint = (request, response, exception) ->
     response.sendError(401, "unauthorized");
-// // 关键变化：response.sendError(401, "unauthorized") 使用表达式中的具体参数完成本次调用。
-    // 作用：用于把缺少凭据、凭据无效或 JWT 已过期的请求统一映射为 HTTP 401；不要把未认证伪装成业务 403。
+    // 关键变化：response.sendError(401, "unauthorized");；response；sendError；response.sendError(401) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：response.sendError(401, "unauthorized"); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 System.out.println("entry-point=401");
 // 输出：entry-point=401
 ```
@@ -310,8 +318,8 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 
 AccessDeniedHandler denied = (request, response, exception) ->
     response.sendError(403, "forbidden");
-// // 关键变化：response.sendError(403, "forbidden") 使用表达式中的具体参数完成本次调用。
-    // 作用：用于把已通过认证但不满足角色或权限规则的请求统一映射为 HTTP 403；这能区分“需要登录”和“登录后仍无权”。
+    // 关键变化：response.sendError(403, "forbidden");；response；sendError；response.sendError(403) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：response.sendError(403, "forbidden"); 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 System.out.println("access-denied=403");
 // 输出：access-denied=403
 ```
@@ -348,13 +356,16 @@ System.out.println(request != null ? "scope=report:read" : "missing");
 @EnableMethodSecurity
 class MethodSecurityConfiguration {
 // 输入：表达式为 @EnableMethodSecurity。
-// 作用：@EnableMethodSecurity 让 @PreAuthorize 等注解生效；它不代替 URL 层的请求授权和对象所有权检查。
-// 作用：通过 @EnableMethodSecurity 启用方法级授权。
     @Bean
     MethodSecurityExpressionHandler expressionHandler() {
+    // 关键变化：MethodSecurityExpressionHandler expressionHandler() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：MethodSecurityExpressionHandler expressionHandler() { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         return new DefaultMethodSecurityExpressionHandler();
+        // 关键变化：return new DefaultMethodSecurityExpressionHandler();；当前对象.EnableMethodSecurity() 完成本例中的具体调用，后续语句观察调用后的状态。
+        // 输入：return new DefaultMethodSecurityExpressionHandler(); 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
     }
     String layer() { return "service"; }
+    // 关键变化：String layer() { return "service"; }；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 }
 ```
 
@@ -393,9 +404,8 @@ Claims parseLegacy(String token, String secret) {
         .setSigningKey(secret)
         .parseClaimsJws(token)
         .getBody();
+    // 关键变化：return Jwts.parser() .setSigningKey(secret) .parseClaimsJws(token) .getBody()；Jwts.parser() 完成本例中的具体调用，后续语句观察调用后的状态。
 // 输入：表达式为 return Jwts.parser()。
-        // 作用：Jwts.parser 属于旧版 JJWT API；维护旧项目时必须先配置验签密钥，不能只 Base64 解码 payload。
-        // 作用：通过 Jwts.parser 构建 JWT 解析验证器。
 }
 
 String inputKind() { return "signed JWT"; }

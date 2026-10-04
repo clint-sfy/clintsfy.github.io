@@ -47,11 +47,12 @@ Bean Validation 只回答“输入是否满足声明的格式和规则”，不�
 import jakarta.validation.constraints.NotBlank;
 record CreateNote(@NotBlank String title) {}
 // 输入：表达式为 record CreateNote(@NotBlank String title) {}。
-// // 关键变化：record CreateNote(@NotBlank String title) {} 使用表达式中的具体参数完成本次调用。
+// 关键变化：record CreateNote(@NotBlank String title) {} 为 title 绑定 @NotBlank，验证时拒绝 null、空串和全空白文本。
 
 System.out.println(new CreateNote("hello").title());
 // 输出：hello
 // 说明：name 为 null、"" 或 "   " 时 @NotBlank 产生约束违规；"Alice" 通过。直接 new DTO 不会自动校验，需 MVC 的 @Valid 或 Validator。
+// 输入：// 说明：name 为 null、"" 或 " " 时 @NotBlank 产生约束违规；"Alice" 通过。直接 new DTO 不会自动校验，需 MVC 的 @Valid 或 Validator。 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 ```
 
 约束只在验证器被触发时生效；直接调用 record 构造器不会自动抛出校验异常。
@@ -65,7 +66,7 @@ import jakarta.validation.constraints.Size;
 
 record NoteBody(@Size(min = 1, max = 200) String body) {}
 // 输入：min 的初始值为 1, max = 200) String body) {}。
-// 关键变化：min 接收右侧表达式 1, max = 200) String body) {} 的计算结果。
+// 关键变化：record NoteBody(@Size(min = 1, max = 200) String body) {} 为 body 绑定长度区间 1..200，超出区间的值校验失败。
 System.out.println(new NoteBody("text").body().length());
 // 输出：4
 // 说明：@Size(min=2, max=20) 按字符序列长度检查 nickname，长度 1 或 21 失败；null 是否允许由 @NotNull/@NotBlank 另行决定。
@@ -85,8 +86,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 class NoteController {
     @PostMapping("/notes")
     String create(@Valid @RequestBody CreateNote request) {
+    // 关键变化：String create(@Valid @RequestBody CreateNote request) {；当前对象；该操作；当前对象.该操作(@Valid @RequestBody CreateNote request) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 String create(@Valid @RequestBody CreateNote request) {。
-// // 关键变化：String create(@Valid @RequestBody CreateNote request) { 使用表达式中的具体参数完成本次调用。
         return "accepted:" + request.title();
     }
 }
@@ -107,9 +108,10 @@ import org.springframework.validation.annotation.Validated;
 
 interface OnCreate {}
 @Validated(OnCreate.class)
+// 关键变化：@Validated(OnCreate.class)；注解参数 OnCreate.class 绑定到声明位置，框架或反射按该配置处理声明。
+// 输入：@Validated(OnCreate.class) 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 class CreateNoteService {}
 // 输入：表达式为 @Validated(OnCreate.class)。
-// // 关键变化：class CreateNoteService {} 使用表达式中的具体参数完成本次调用。
 System.out.println(CreateNoteService.class.isAnnotationPresent(Validated.class));
 // 输出：true
 // 说明：@Validated(Update.class) 只执行 Update 组及其继承组约束；控制器必须由 Spring 管理，直接 new 后调用不会通过方法校验代理。
@@ -175,19 +177,27 @@ import java.lang.annotation.Target;
 
 @Documented
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER,
+// 关键变化：@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER,；注解参数 {ElementType.FIELD 绑定到声明位置，框架或反射按该配置处理声明。
+// 输入：@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     ElementType.ANNOTATION_TYPE, ElementType.TYPE_USE})
 @Retention(RetentionPolicy.RUNTIME)
+// 关键变化：@Retention(RetentionPolicy.RUNTIME)；注解参数 RetentionPolicy.RUNTIME 绑定到声明位置，框架或反射按该配置处理声明。
 @Constraint(validatedBy = StrongCodeValidator.class)
+// 关键变化：@Constraint(validatedBy = StrongCodeValidator.class)；注解参数 validatedBy = StrongCodeValidator.class 绑定到声明位置，框架或反射按该配置处理声明。
 @interface StrongCode {
-// // 关键变化：@interface StrongCode { 使用表达式中的具体参数完成本次调用。
     String message() default "{strongCode.invalid}";
+    // 关键变化：String message() default "{strongCode.invalid}";；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     Class<?>[] groups() default {};
+    // 关键变化：Class<?>[] groups() default {};；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
     Class<? extends Payload>[] payload() default {};
+    // 关键变化：Class<? extends Payload>[] payload() default {};；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
 }
 
 class StrongCodeValidator implements ConstraintValidator<StrongCode, String> {
     @Override public boolean isValid(String value, ConstraintValidatorContext context) {
+    // 关键变化：@Override public boolean isValid(String value, ConstraintValidatorContext context) {；注解参数 String value 绑定到声明位置，框架或反射按该配置处理声明。
         return value == null || value.matches("[A-Z]{2}-\\d{4}");
+        // 关键变化：return value == null || value.matches("[A-Z]{2}-\\d{4}")；value.matches("[A-Z]{2}-\\d{4}") 检查当前内容与具体参数的关系，返回 true 或 false。
     }
 }
 
@@ -281,12 +291,15 @@ record CreateTask(
     @NotNull LocalDate dueDate,
     @NotBlank String title) {}
 // 输入：表达式为 @NotNull LocalDate dueDate,。
-    // 作用：@NotNull 只排除 null，不限制字符串空白或容器长度；要按值类型叠加其他约束。
-    // 作用：通过 @NotNull 拒绝 null 值。
+// 关键变化：@NotNull LocalDate dueDate 要求 dueDate 使用具体非 null 日期值，null 输入会产生约束违规。
 
 class TaskFactory {
     CreateTask valid() {
+    // 关键变化：CreateTask valid() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：CreateTask valid() { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         return new CreateTask(LocalDate.of(2030, 1, 1), "ship");
+        // 关键变化：return new CreateTask(LocalDate.of(2030, 1, 1), "ship");；LocalDate.of(LocalDate.of(2030, 1, 1)) 返回转换后的具体值，赋给当前示例中的接收变量。
+        // 输入：return new CreateTask(LocalDate.of(2030, 1, 1), "ship"); 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
     }
 }
 ```
@@ -304,12 +317,14 @@ record SignupRequest(
     @Email
     String email) {}
 // 输入：表达式为 @Email。
-    // 作用：@Email 检查形式而非邮箱真实存在；若不允许空值，需与 @NotBlank 组合。
-    // 作用：通过 @Email 检查邮箱形式。
 
 class SignupExample {
     SignupRequest sample() {
+    // 关键变化：SignupRequest sample() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
+    // 输入：SignupRequest sample() { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         return new SignupRequest("dev@example.com");
+        // 关键变化：return new SignupRequest("dev@example.com");；当前对象.Email("dev@example.com") 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：return new SignupRequest("dev@example.com"); 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
     }
 }
 ```
@@ -324,15 +339,16 @@ class SignupExample {
 // 结果：`zh-CN` 通过，`zh_cn` 返回 `must be ll or ll-CC`。
 record LocaleRequest(
     @Pattern(
+    // 关键变化：@Pattern(；注解参数 当前参数 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@Pattern( 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         regexp = "[a-z]{2}(-[A-Z]{2})?",
         message = "must be ll or ll-CC")
     String locale) {}
 // 输入：表达式为 @Pattern(。
-    // 作用：@Pattern 适合稳定的小型格式规则；复杂业务规则应使用自定义约束提供明确错误。
-    // 作用：通过 @Pattern 限制文本格式。
 
 class LocaleExample {
     LocaleRequest sample() { return new LocaleRequest("zh-CN"); }
+    // 输入：LocaleRequest sample() { return new LocaleRequest("zh-CN"); } 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
 }
 ```
 
@@ -346,12 +362,12 @@ class LocaleExample {
 // 结果：标注 `@Slug` 的值由 `SlugValidator` 检查，失败时输出 `invalid slug`。
 @Documented
 @Constraint(validatedBy = SlugValidator.class)
+// 关键变化：@Constraint(validatedBy = SlugValidator.class)；注解参数 validatedBy = SlugValidator.class 绑定到声明位置，框架或反射按该配置处理声明。
+// 输入：@Constraint(validatedBy = SlugValidator.class) 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 @Target({ ElementType.FIELD, ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Slug {
 // 输入：validatedBy 的初始值为 SlugValidator.class)。
-// 作用：@Constraint 将注解绑定到 ConstraintValidator；验证器应无状态，并把 null 策略交给 @NotNull。
-// 作用：通过 @Constraint 声明自定义约束。
     String message() default "invalid slug";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};

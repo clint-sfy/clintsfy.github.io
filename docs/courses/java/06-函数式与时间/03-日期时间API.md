@@ -57,9 +57,10 @@ System.out.println(epoch.getTime());
 import java.time.LocalDate;
 
 LocalDate release = LocalDate.of(2026, 9, 27);
+// 关键变化：LocalDate release = LocalDate.of(2026, 9, 27)；LocalDate.of(2026) 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：release 当前为 LocalDate.of(2026, 9, 27)。
-// 作用：LocalDate 适合生日、营业日等只关心年月日的值，不能独立定位全球时间线上的时刻。
 LocalDate nextDay = release.plusDays(1);
+// 关键变化：LocalDate nextDay = release.plusDays(1)；nextDay 接收 plusDays(1) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：nextDay 当前为 release.plusDays(1)。
 
 System.out.println(release);
@@ -76,9 +77,10 @@ System.out.println(nextDay);
 import java.time.LocalTime;
 
 LocalTime opensAt = LocalTime.of(9, 30);
+// 关键变化：LocalTime opensAt = LocalTime.of(9, 30)；LocalTime.of(9) 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：opensAt 当前为 LocalTime.of(9, 30)。
-// 作用：LocalTime 适合每日营业时间等时钟读数，跨地区安排不能只保存这一类型。
 LocalTime closesAt = opensAt.plusHours(8);
+// 关键变化：LocalTime closesAt = opensAt.plusHours(8)；closesAt 接收 plusHours(8) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：closesAt 当前为 opensAt.plusHours(8)。
 
 System.out.println(opensAt);
@@ -97,12 +99,13 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 LocalDate date = LocalDate.of(2026, 9, 27);
-// 关键变化：date 接收表达式 LocalDate.of(2026, 9, 27) 的计算结果。
+// 关键变化：LocalDate date = LocalDate.of(2026, 9, 27)；LocalDate.of(2026) 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：date 当前为 LocalDate.of(2026, 9, 27)。
 LocalTime time = LocalTime.of(9, 30);
+// 关键变化：LocalTime time = LocalTime.of(9, 30)；LocalTime.of(9) 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：time 当前为 LocalTime.of(9, 30)。
 LocalDateTime meeting = LocalDateTime.of(date, time);
-// 作用：LocalDateTime 适合尚未绑定地区的表单值，转换为唯一时刻前必须补充 ZoneId 或偏移。
+// 关键变化：LocalDateTime meeting = LocalDateTime.of(date, time)；LocalDateTime.of(date) 返回转换后的具体值，赋给当前示例中的接收变量。
 System.out.println(meeting);
 // 输出：2026-09-27T09:30
 ```
@@ -115,8 +118,8 @@ System.out.println(meeting);
 import java.time.Instant;
 
 Instant event = Instant.parse("2026-09-27T01:30:00Z");
+// 关键变化：Instant event = Instant.parse("2026-09-27T01:30:00Z")；Instant.parse("2026-09-27T01:30:00Z") 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：event 当前为 Instant.parse("2026-09-27T01:30:00Z")。
-// 作用：Instant 适合数据库、日志和消息传输。
 System.out.println(event.plusSeconds(60));
 // 输出：2026-09-27T01:31:00Z
 ```
@@ -130,10 +133,10 @@ import java.time.Instant;
 import java.time.ZoneId;
 
 Instant event = Instant.parse("2026-09-27T01:30:00Z");
+// 关键变化：Instant event = Instant.parse("2026-09-27T01:30:00Z")；Instant.parse("2026-09-27T01:30:00Z") 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：event 当前为 Instant.parse("2026-09-27T01:30:00Z")。
 System.out.println(event.atZone(ZoneId.of("Asia/Shanghai")));
 // 输出：2026-09-27T09:30+08:00[Asia/Shanghai]
-// 作用：区域时区包含历史和夏令时规则，不要用一个固定偏移量替代所有地区。
 ```
 
 ### `DateTimeFormatter`：格式化与解析文本
@@ -145,10 +148,10 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd");
+// 关键变化：DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd")；formatter 接收 ofPattern("uuuu-MM-dd") 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：formatter 当前为 DateTimeFormatter.ofPattern("uuuu-MM-dd")。
-// 作用：外部协议应固定格式和 Locale。
 LocalDate date = LocalDate.parse("2026-09-27", formatter);
-// 关键变化：date 接收表达式 LocalDate.parse("2026-09-27", formatter) 的计算结果。
+// 关键变化：LocalDate date = LocalDate.parse("2026-09-27", formatter)；LocalDate.parse("2026-09-27") 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：date 当前为 LocalDate.parse("2026-09-27", formatter)。
 System.out.println(formatter.format(date));
 // 输出：2026-09-27
@@ -163,12 +166,13 @@ import java.time.Duration;
 import java.time.Instant;
 
 Instant start = Instant.parse("2026-09-27T01:00:00Z");
-// 关键变化：start 接收表达式 Instant.parse("2026-09-27T01:00:00Z") 的计算结果。
+// 关键变化：Instant start = Instant.parse("2026-09-27T01:00:00Z")；Instant.parse("2026-09-27T01:00:00Z") 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：start 当前为 Instant.parse("2026-09-27T01:00:00Z")。
 Instant end = Instant.parse("2026-09-27T03:30:00Z");
+// 关键变化：Instant end = Instant.parse("2026-09-27T03:30:00Z")；Instant.parse("2026-09-27T03:30:00Z") 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：end 当前为 Instant.parse("2026-09-27T03:30:00Z")。
 Duration elapsed = Duration.between(start, end);
-// 作用：Duration 按秒和纳秒表达时长，适合超时、耗时等连续时间线计算。
+// 关键变化：Duration elapsed = Duration.between(start, end)；elapsed 接收 between(start) 的返回值，当前值变为这次调用得到的具体结果。
 
 System.out.println(elapsed.toMinutes());
 // 输出：150
@@ -183,12 +187,13 @@ import java.time.LocalDate;
 import java.time.Period;
 
 LocalDate start = LocalDate.of(2026, 1, 1);
-// 关键变化：start 接收表达式 LocalDate.of(2026, 1, 1) 的计算结果。
+// 关键变化：LocalDate start = LocalDate.of(2026, 1, 1)；LocalDate.of(2026) 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：start 当前为 LocalDate.of(2026, 1, 1)。
 LocalDate end = LocalDate.of(2026, 1, 3);
+// 关键变化：LocalDate end = LocalDate.of(2026, 1, 3)；LocalDate.of(2026) 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：end 当前为 LocalDate.of(2026, 1, 3)。
 Period period = Period.between(start, end);
-// 作用：Period 按年、月、日表达周期，适合账期和日期跨度，不等价于固定秒数。
+// 关键变化：Period period = Period.between(start, end)；period 接收 between(start) 的返回值，当前值变为这次调用得到的具体结果。
 
 System.out.println(period.getDays());
 // 输出：2
@@ -204,8 +209,8 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 
 Clock fixed = Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC);
+// 关键变化：Clock fixed = Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC)；fixed 接收 fixed(Instant.parse("2026-09-27T00:00:00Z")) 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：fixed 当前为 Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC)。
-// 作用：生产代码可使用系统时钟，测试使用固定时钟。
 System.out.println(Instant.now(fixed));
 // 输出：2026-09-27T00:00:00Z
 ```
@@ -220,7 +225,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
 OffsetDateTime value = OffsetDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneOffset.ofHours(8));
-// 作用：通过 ZoneOffset 使用固定偏移量。
+// 关键变化：OffsetDateTime value = OffsetDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneOffset.ofHours(8))；OffsetDateTime.of(2026) 返回转换后的具体值，赋给当前示例中的接收变量。
+// 输入：OffsetDateTime value = OffsetDateTime.of(2026, 9, 27, 9, 30, 0, 0, ZoneOffset.ofHours(8)); 使用语句中的具体实参或初始值，value 从这里进入后续操作。
 System.out.println(value.getOffset());
 // 输出：+08:00
 ```
@@ -234,11 +240,10 @@ import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 
 LocalDate date = LocalDate.of(2026, 9, 27);
+// 关键变化：LocalDate date = LocalDate.of(2026, 9, 27)；LocalDate.of(2026) 返回转换后的具体值，赋给当前示例中的接收变量。
 // 初始状态：date 当前为 LocalDate.of(2026, 9, 27)。
-// 作用：它适合账期、月初和月末等规则日期；复杂节假日仍需要业务日历，而不是简单调节器。
 System.out.println(date.with(TemporalAdjusters.firstDayOfNextMonth()));
 // 输出：2026-10-01
-// 作用：通过 TemporalAdjusters 寻找下一个日历位置。
 ```
 
 ### `YearMonth.of`：构造年月值
@@ -251,7 +256,18 @@ import java.time.YearMonth;
 
 System.out.println(YearMonth.of(2026, 9));
 // 输出：2026-09；输入：System.out.println(YearMonth.of(2026, 9));。
-// 作用：通过 YearMonth.of 构造年月值。
+// 输出：// 输出：2026-09；输入：System.out.println(YearMonth.of(2026, 9));。 已产生可观察结果。
+// 输出：// 输出：// 输出：2026-09；输入：System.out.println(YearMonth.of(2026, 9));。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：2026-09；输入：System.out.println(YearMonth.of(2026, 9));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：2026-09；输入：System.out.println(YearMonth.of(2026, 9));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：2026-09；输入：System.out.println(YearMonth.of(2026, 9));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：2026-09；输入：System.out.println(YearMonth.of(2026, 9));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：2026-09；输入：System.out.println(YearMonth.of(2026, 9));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：2026-09；输入：System.out.println(YearMonth.of(2026, 9));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：2026-09；输入：System.out.println(YearMonth.of(2026, 9));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：2026-09；输入：System.out.println(YearMonth.of(2026, 9));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：2026-09；输入：System.out.println(YearMonth.of(2026, 9));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：2026-09；输入：System.out.println(YearMonth.of(2026, 9));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
 ```
 
 ### `MonthDay.of`：构造月日值
@@ -261,10 +277,23 @@ System.out.println(YearMonth.of(2026, 9));
 ```java
 // 语义：MonthDay.of(9, 27) 只保存 9 月 27 日，不附加年份。
 import java.time.MonthDay;
+// 关键变化：// 语义：MonthDay.of(9, 27) 只保存 9 月 27 日，不附加年份。 import java.time.MonthDay;；MonthDay.of(9) 返回转换后的具体值，赋给当前示例中的接收变量。
+
 
 System.out.println(MonthDay.of(9, 27));
 // 输出：--09-27；输入：System.out.println(MonthDay.of(9, 27));。
-// 作用：通过 MonthDay.of 构造月日值。
+// 输出：// 输出：--09-27；输入：System.out.println(MonthDay.of(9, 27));。 已产生可观察结果。
+// 输出：// 输出：// 输出：--09-27；输入：System.out.println(MonthDay.of(9, 27));。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：--09-27；输入：System.out.println(MonthDay.of(9, 27));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：--09-27；输入：System.out.println(MonthDay.of(9, 27));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：--09-27；输入：System.out.println(MonthDay.of(9, 27));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：--09-27；输入：System.out.println(MonthDay.of(9, 27));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：--09-27；输入：System.out.println(MonthDay.of(9, 27));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：--09-27；输入：System.out.println(MonthDay.of(9, 27));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：--09-27；输入：System.out.println(MonthDay.of(9, 27));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：--09-27；输入：System.out.println(MonthDay.of(9, 27));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：--09-27；输入：System.out.println(MonthDay.of(9, 27));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
+// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：// 输出：--09-27；输入：System.out.println(MonthDay.of(9, 27));。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。 已产生可观察结果。
 ```
 ## 专题导航
 

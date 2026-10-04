@@ -51,7 +51,7 @@ public class SupplyAsyncDemo {
         // 初始状态：executor 当前为 Executors.newSingleThreadExecutor()) {。
             CompletableFuture<String> future = CompletableFuture
                     .supplyAsync(() -> "java", executor);
-                    // 作用：给 supplyAsync 传入执行器，能明确异步任务在哪个线程池运行；不传执行器会使用 commonPool，任务类型和阻塞比例不受当前方法控制。
+                    // 关键变化：.supplyAsync(() -> "java", executor);；当前对象；supplyAsync；当前对象.supplyAsync(() -> "java") 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println(future.join());
             // 输出：java
         }
@@ -72,8 +72,8 @@ public class ThenApplyDemo {
         String result = CompletableFuture.completedFuture("java")
                 .thenApply(String::toUpperCase)
                 .join();
+                // 关键变化：.thenApply(String::toUpperCase) .join();；当前对象；thenApply；当前对象.thenApply(String::toUpperCase) 返回本次调用的具体结果，后续语句继续使用该值。
                 // 初始状态：result 当前保存 CompletableFuture.completedFuture("java") .thenApply(String::toUpperCase) .join()的计算结果。
-                // 作用：thenApply 的函数输入是前一阶段的结果，返回普通值；没有 Async 后缀时，阶段可能在完成前一阶段的线程上执行，函数应短小且不要阻塞。
         System.out.println(result);
         // 输出：JAVA
     }
@@ -97,8 +97,8 @@ public class ThenComposeDemo {
         String result = CompletableFuture.completedFuture(7)
                 .thenCompose(ThenComposeDemo::loadName)
                 .join();
+                // 关键变化：.thenCompose(ThenComposeDemo::loadName) .join();；当前对象；thenCompose；当前对象.thenCompose(ThenComposeDemo::loadName) 返回本次调用的具体结果，后续语句继续使用该值。
                 // 初始状态：result 当前保存 CompletableFuture.completedFuture(7) .thenCompose(ThenComposeDemo::loadName) .join()的计算结果。
-                // 作用：如果用 thenApply 返回 CompletableFuture，会得到嵌套的 CompletableFuture&lt;CompletableFuture&lt;T&gt;&gt;；thenCompose 会把它展平成一个阶段。
         System.out.println(result);
         // 输出：user-7
     }
@@ -119,7 +119,7 @@ public class ThenCombineDemo {
         // 初始状态：user 当前为 CompletableFuture.completedFuture("Ann")。
         CompletableFuture<Integer> score = CompletableFuture.completedFuture(100);
         String result = user.thenCombine(score, (name, value) -> name + ":" + value).join();
-        // 作用：两个分支互不依赖时可以并行启动再 combine；任一分支失败时，合并阶段通常也会失败，需要统一的异常策略。
+        // 关键变化：String result = user.thenCombine(score, (name, value) -> name + ":" + value).join(); 的返回值写入 result，调用后 result 保存该具体结果。
         System.out.println(result);
         // 输出：Ann:100
     }
@@ -142,7 +142,7 @@ public class AllOfDemo {
                 CompletableFuture.completedFuture("b"));
                 // 初始状态：futures 当前保存 List.of( CompletableFuture.completedFuture("a"), CompletableFuture.completedFuture("b"))的计算结果。
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
-        // 作用：allOf 等待所有阶段完成但不直接返回结果列表；先等待再按原列表 join，可以保持输入顺序。
+        // 关键变化：CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();；CompletableFuture；allOf；CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)) 返回本次调用的具体结果，后续语句继续使用该值。
         List<String> results = futures.stream().map(CompletableFuture::join).toList();
         System.out.println(results);
         // 输出：[a, b]
@@ -166,8 +166,8 @@ public class ExceptionallyDemo {
                         new IllegalStateException("down"))
                 .exceptionally(error -> "fallback")
                 .join();
+                // 关键变化：.exceptionally(error -> "fallback") .join();；当前对象；exceptionally；当前对象.exceptionally(error -> "fallback") 返回本次调用的具体结果，后续语句继续使用该值。
                 // 初始状态：result 当前保存 CompletableFuture.<String>failedFuture( new IllegalStateException("down")) .exceptionally(error -> "fallback") .join()的计算结果。
-                // 作用：exceptionally 只在上游异常时执行，返回一个替代结果；不要把所有异常都吞成默认值，至少记录原异常并区分可恢复错误和编程错误。
         System.out.println(result);
         // 输出：fallback
     }
@@ -188,8 +188,8 @@ public class HandleDemo {
                         new IllegalArgumentException("bad input"))
                 .handle((value, error) -> error == null ? value : "handled")
                 .join();
+                // 关键变化：.handle((value, error) -> error == null ? value : "handled") .join();；当前对象；handle；当前对象.handle((value, error) -> error == null ? value : "handled") 返回本次调用的具体结果，后续语句继续使用该值。
                 // 初始状态：result 当前保存 CompletableFuture.<String>failedFuture( new IllegalArgumentException("bad input")) .handle((value, error) -> error == null ? value : "handled") .join()的计算结果。
-                // 作用：handle 无论成功失败都会执行，适合统一转换结果或记录状态；若只想在失败时提供默认值，exceptionally 更直接。
         System.out.println(result);
         // 输出：handled
     }
@@ -210,8 +210,8 @@ public class OrTimeoutDemo {
         String result = CompletableFuture.completedFuture("fast")
                 .orTimeout(1, TimeUnit.SECONDS)
                 .join();
+                // 关键变化：.orTimeout(1, TimeUnit.SECONDS) .join();；当前对象；orTimeout；当前对象.orTimeout(1) 返回本次调用的具体结果，后续语句继续使用该值。
                 // 初始状态：result 当前保存 CompletableFuture.completedFuture("fast") .orTimeout(1, TimeUnit.SECONDS) .join()的计算结果。
-                // 作用：orTimeout 在期限内未完成时以 TimeoutException 异常完成阶段；它是结果协议的一部分，底层 I/O 是否真的取消要看连接客户端和任务实现。
         System.out.println(result);
         // 输出：fast
     }
@@ -232,8 +232,8 @@ public class CompleteOnTimeoutDemo {
         String result = new CompletableFuture<String>()
                 .completeOnTimeout("default", 1, TimeUnit.MILLISECONDS)
                 .join();
+                // 关键变化：.completeOnTimeout("default", 1, TimeUnit.MILLISECONDS) .join();；当前对象；completeOnTimeout；当前对象.completeOnTimeout("default") 返回本次调用的具体结果，后续语句继续使用该值。
                 // 初始状态：result 当前保存 new CompletableFuture<String>() .completeOnTimeout("default", 1, TimeUnit.MILLISECONDS) .join()的计算结果。
-                // 作用：completeOnTimeout 以默认值完成阶段，适合允许降级的查询；它同样不保证取消底层任务，不能用默认值掩盖下游持续超载。
         System.out.println(result);
         // 输出：default
     }
@@ -253,9 +253,9 @@ public class ThenAcceptDemo {
         CompletableFuture.completedFuture("saved")
                 .thenAccept(System.out::println)
                 .join();
+                // 关键变化：.thenAccept(System.out::println) .join();；当前对象；thenAccept；当前对象.thenAccept(System.out::println) 返回本次调用的具体结果，后续语句继续使用该值。
 // 输入：表达式为 .thenAccept(System.out::println)。
-                // 作用：thenAccept 返回 CompletableFuture<Void>，适合通知、写日志等末端动作；需要返回新业务结果时使用 thenApply。
-        // 输出：saved
+// 结果：thenAccept 消费已完成的 "saved"，末端动作向标准输出写出该文本。
     }
 }
 ```
@@ -277,7 +277,7 @@ public class ThenApplyAsyncDemo {
             String result = CompletableFuture.completedFuture("java")
                     .thenApplyAsync(String::toUpperCase, executor)
                     .join();
-                    // 作用：Async 变体把阶段提交到执行器，适合隔离阻塞或 CPU 工作；线程池仍需有界，不能为了“异步”把所有任务都投向公共池。
+                    // 关键变化：.thenApplyAsync(String::toUpperCase, executor) .join();；当前对象；thenApplyAsync；当前对象.thenApplyAsync(String::toUpperCase) 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println(result);
             // 输出：JAVA
         }
@@ -302,8 +302,8 @@ public class ExceptionallyComposeDemo {
         String value = CompletableFuture.<String>failedFuture(new RuntimeException())
                 .exceptionallyCompose(error -> backup())
                 .join();
+                // 关键变化：.exceptionallyCompose(error -> backup()) .join();；当前对象；exceptionallyCompose；当前对象.exceptionallyCompose(error -> backup()) 返回本次调用的具体结果，后续语句继续使用该值。
                 // 初始状态：value 当前保存 CompletableFuture.<String>failedFuture(new RuntimeException()) .exceptionallyCompose(error -> backup()) .join()的计算结果。
-                // 作用：需要异步调用备用服务时用 exceptionallyCompose，避免在 exceptionally 中阻塞等待另一个 Future。
         System.out.println(value);
         // 输出：backup
     }
@@ -323,8 +323,8 @@ public class ApplyToEitherDemo {
         String result = CompletableFuture.completedFuture("primary")
                 .applyToEither(CompletableFuture.completedFuture("backup"), value -> value)
                 .join();
+                // 关键变化：.applyToEither(CompletableFuture.completedFuture("backup"), value -> value) .join();；当前对象；applyToEither；当前对象.applyToEither(CompletableFuture.completedFuture("backup")) 返回本次调用的具体结果，后续语句继续使用该值。
                 // 初始状态：result 当前保存 CompletableFuture.completedFuture("primary") .applyToEither(CompletableFuture.completedFuture("backup"), value -> value) .join()的计算结果。
-                // 作用：完成顺序由实际调度决定，结果是“可能”为 primary 或 backup；要把它用于竞速请求，必须取消慢分支并处理重复副作用。
         System.out.println(result);
         // 输出：可能是 primary，也可能是 backup
     }
@@ -344,7 +344,7 @@ public class MinimalStageDemo {
         CompletableFuture<String> source = CompletableFuture.completedFuture("value");
         // 初始状态：source 当前为 CompletableFuture.completedFuture("value")。
         var view = source.minimalCompletionStage();
-        // 作用：minimalCompletionStage 可把内部可手动 complete 的 Future 以更窄的 CompletionStage 视图暴露给调用者，降低外部篡改完成状态的机会。
+        // 关键变化：var view = source.minimalCompletionStage(); 的返回值写入 view，调用后 view 保存该具体结果。
         System.out.println(view.toCompletableFuture().join());
         // 输出：value
     }

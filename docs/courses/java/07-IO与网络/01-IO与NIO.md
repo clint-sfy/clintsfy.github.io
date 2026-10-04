@@ -78,7 +78,7 @@ var file = Files.createTempFile("java-lines-", ".txt");
 // 初始状态：file 当前为 Files.createTempFile("java-lines-", ".txt")。
 Files.writeString(file, "java\napi\n");
 try (var lines = Files.lines(file)) {
-// 作用：需要按行处理文本或避免一次载入整个文件时使用 Files.lines，并用 try-with-resources 关闭返回的流。
+// 关键变化：try (var lines = Files.lines(file)) {；当前对象；try；当前对象.try(var lines = Files.lines(file)) 返回本次调用的具体结果，后续语句继续使用该值。
     System.out.println(lines.count());
     // 输出：2
 }
@@ -125,9 +125,12 @@ public class IoLayerChoiceDemo {
 import java.nio.ByteBuffer;
 
 ByteBuffer buffer = ByteBuffer.allocate(4);
-// 作用：需要为 NIO 分块读写准备内存区域时使用 ByteBuffer，写入数据后必须调用 flip() 才能按有效范围读取。
+// 关键变化：ByteBuffer buffer = ByteBuffer.allocate(4)；buffer 接收 allocate(4) 的返回值，当前值变为这次调用得到的具体结果。
+// 输入：ByteBuffer buffer = ByteBuffer.allocate(4); 使用语句中的具体实参或初始值，buffer 从这里进入后续操作。
 buffer.put((byte) 7).put((byte) 8);
+// 关键变化：buffer.put((byte) 7).put((byte) 8);；buffer 按具体键值参数 (byte) 7 更新映射内容。
 buffer.flip();
+// 关键变化：buffer.flip()；buffer.flip() 完成本例中的具体调用，后续语句观察调用后的状态。
 System.out.println(buffer.get() + ", " + buffer.get());
 // 输出：7, 8
 ```
@@ -144,15 +147,19 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
 var file = Files.createTempFile("java-channel-", ".txt");
+// 关键变化：var file = Files.createTempFile("java-channel-", ".txt")；file 接收 createTempFile("java-channel-") 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：file 当前为 Files.createTempFile("java-channel-", ".txt")。
-// 作用：需要通过 NIO 通道分块读取文件时使用 FileChannel，并在资源边界关闭通道和处理未读完的数据。
 Files.writeString(file, "OK");
+// 关键变化：Files.writeString(file, "OK");；Files 写入具体参数 file，对象状态或输出内容随之改变。
 try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
+// 关键变化：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {；当前对象；try；当前对象.try(FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) 返回本次调用的具体结果，后续语句继续使用该值。
     ByteBuffer buffer = ByteBuffer.allocate(2);
+    // 关键变化：ByteBuffer buffer = ByteBuffer.allocate(2)；buffer 接收 allocate(2) 的返回值，当前值变为这次调用得到的具体结果。
     System.out.println(channel.read(buffer));
     // 输出：2
 }
 Files.deleteIfExists(file);
+// 关键变化：Files.deleteIfExists(file);；Files 按具体参数 file 删除目标内容。
 ```
 
 需要控制 position、limit 和零拷贝传输时阅读 [NIO Buffer 与 Channel](/courses/java/07-IO与网络/05-NIO-Buffer与Channel)。
@@ -170,6 +177,7 @@ import java.nio.file.Path;
 public class FilePathBridgeDemo {
     public static void main(String[] args) {
         File legacy = new File("notes.txt");
+        // 关键变化：File legacy = new File("notes.txt")；legacy 接收 该操作("notes.txt") 的返回值，当前值变为这次调用得到的具体结果。
         // 初始状态：legacy 当前为 new File("notes.txt")。
         Path modern = legacy.toPath();
         // 作用：File 仍存在于旧库和旧签名中，但它的异常、属性和符号链接表达能力较弱；新代码从 Path 开始，需要兼容旧 API 时用 toPath() 或 toFile() 做边界转换。

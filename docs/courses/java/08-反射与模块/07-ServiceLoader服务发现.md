@@ -77,10 +77,11 @@ com.example.json.JsonFormatter
 
 // 文件：com/example/json/JsonFormatter.java
 package com.example.json;
-// 作用：配置文件每行写一个实现类全名，空行和 # 注释会被忽略；文件必须放进提供方 JAR 的正确资源路径，类名拼写和可见构造器都要能被运行时加载。
 
 public class JsonFormatter implements com.example.spi.Formatter {
     public String format(String value) { return "json:" + value; }
+    // 关键变化：public String format(String value) { return "json:" + value; }；当前对象；该操作；当前对象.该操作(String value) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：public String format(String value) { return "json:" + value; } 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 }
 // 输出：ServiceLoader 可从 classpath 配置发现 JsonFormatter。
 ```
@@ -98,13 +99,16 @@ interface Encoder { String encode(String value); }
 public class ServiceIteratorDemo {
     public static void main(String[] args) {
         ServiceLoader<Encoder> loader = ServiceLoader.load(Encoder.class);
+        // 关键变化：ServiceLoader<Encoder> loader = ServiceLoader.load(Encoder.class); 将返回值写入 loader；loader 现在保存该具体结果。
         int count = 0;
         // 初始状态：count 当前为 0。
+        // 关键变化：int count = 0; 将返回值写入 count；count 现在保存该具体结果。
         for (Encoder encoder : loader) {
-        // 作用：增强 for 会按发现顺序惰性创建实例；不要假设遍历顺序就是优先级，多个实现要在业务层按能力、版本或配置选择。
+        // 关键变化：for (Encoder encoder : loader) {；当前对象；for；当前对象.for(Encoder encoder : loader) 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println(encoder.encode("java"));
             // 输出：由具体提供方决定
             count++;
+            // 关键变化：count++; 使 count 在当前值基础上递增 1。
         }
         System.out.println(count >= 0);
         // 输出：true
@@ -185,12 +189,15 @@ module app.json {
 import java.util.ServiceLoader;
 
 interface Plugin { String name(); }
-// 作用：插件式应用常使用上下文类加载器；类加载器层级错误会出现“配置存在但发现不到”的问题，框架应明确谁负责设置和恢复上下文加载器。
 
 public class ServiceClassLoaderDemo {
     public static void main(String[] args) {
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        // 关键变化：ClassLoader loader = Thread.currentThread().getContextClassLoader(); 将返回值写入 loader；loader 现在保存该具体结果。
+        // 输入：Thread.currentThread().getContextClassLoader() 提供当前线程的具体上下文类加载器，后续 ServiceLoader.load 使用它查找 Plugin。
         ServiceLoader<Plugin> services = ServiceLoader.load(Plugin.class, loader);
+        // 输入：ServiceLoader.load(Plugin.class, loader) 使用 Plugin 服务类型和当前线程上下文类加载器查找提供方。
+        // 关键变化：ServiceLoader<Plugin> services = ServiceLoader.load(Plugin.class, loader); 将返回值写入 services；services 现在保存该具体结果。
         System.out.println(services != null);
         // 输出：true
     }
@@ -231,11 +238,12 @@ interface Renderer { String render(); }
 public class ServiceProviderGetDemo {
     public static void main(String[] args) {
         var provider = ServiceLoader.load(Renderer.class).stream().findFirst();
+        // 关键变化：var provider = ServiceLoader.load(Renderer.class).stream().findFirst()；ServiceLoader.load(Renderer.class) 创建或取得具体资源，后续语句使用该对象。
         // 初始状态：provider 当前为 ServiceLoader.load(Renderer.class).stream().findFirst()。
         if (provider.isPresent()) {
+        // 关键变化：if (provider.isPresent()) {；当前对象；if；当前对象.if(provider.isPresent()) 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println(provider.get().getClass().getSimpleName());
 // 输出：由配置的实现类决定
-            // 作用：通过 Provider.get 按需创建单个实现。
         } else {
             System.out.println("none");
             // 输出：none
@@ -253,17 +261,18 @@ import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 
 interface BrokenService { }
-// 作用：配置文件不存在通常只是没有实现，类名错误、构造器失败或类型不匹配则可能抛 ServiceConfigurationError；可选插件可隔离失败，核心服务不应静默吞掉。
 
 public class ServiceErrorDemo {
     public static void main(String[] args) {
         try {
             for (BrokenService ignored : ServiceLoader.load(BrokenService.class)) {
+            // 关键变化：for (BrokenService ignored : ServiceLoader.load(BrokenService.class)) {；当前对象；for；当前对象.for(BrokenService ignored : ServiceLoader.load(BrokenService.class)) 返回本次调用的具体结果，后续语句继续使用该值。
+            // 输入：for (BrokenService ignored : ServiceLoader.load(BrokenService.class)) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
                 System.out.println(ignored);
 // 输出：ServiceConfigurationError
             }
         } catch (ServiceConfigurationError e) {
-        // 作用：通过 ServiceConfigurationError 处理服务配置错误。
+        // 关键变化：} catch (ServiceConfigurationError e) {；当前对象；该操作；当前对象.该操作(ServiceConfigurationError e) 返回本次调用的具体结果，后续语句继续使用该值。
             System.out.println(e.getClass().getSimpleName());
 // 输出：System.out 调用参数为 e.getClass().getSimpleName()。
         }
@@ -318,10 +327,10 @@ public class ServiceThreadBoundaryDemo {
 import java.util.ServiceLoader;
 
 public class ModuleLayerServiceDemo {
-// 作用：自定义 ModuleLayer 适合插件隔离和版本并存，但涉及模块解析、类加载器和生命周期；普通应用优先使用 boot layer 或 classpath ServiceLoader。
     public static void main(String[] args) {
         ServiceLoader<Object> loader = ServiceLoader.load(ModuleLayer.boot(), Object.class);
-        // 作用：通过 ModuleLayer 从模块层加载服务。
+        // 关键变化：ServiceLoader<Object> loader = ServiceLoader.load(ModuleLayer.boot(), Object.class)；ServiceLoader.load(ModuleLayer.boot()) 创建或取得具体资源，后续语句使用该对象。
+        // 输入：ServiceLoader<Object> loader = ServiceLoader.load(ModuleLayer.boot(), Object.class); 使用语句中的具体实参或初始值，loader 从这里进入后续操作。
         System.out.println(loader != null);
         // 输出：true
     }

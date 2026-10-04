@@ -51,9 +51,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class BackendApplication {
 // 输入：表达式为 @SpringBootApplication。
-// // 关键变化：public class BackendApplication { 使用表达式中的具体参数完成本次调用。
     public static void main(String[] args) {
         var context = SpringApplication.run(BackendApplication.class, args);
+        // 关键变化：var context = SpringApplication.run(BackendApplication.class, args);；context 接收 run(BackendApplication.class) 的返回值，当前值变为这次调用得到的具体结果。
+        // 输入：var context = SpringApplication.run(BackendApplication.class, args); 提供具体参数或初始值，context 从该语句开始参与后续操作。
         System.out.println(context != null);
         // 输出：true
     }
@@ -76,11 +77,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 class TimeConfiguration {
 // 输入：表达式为 @Configuration。
-// // 关键变化：class TimeConfiguration { 使用表达式中的具体参数完成本次调用。
-// 作用：通过 @Configuration 声明配置类。
     @Bean("systemClock")
+    // 关键变化：@Bean("systemClock")；注解参数 "systemClock" 绑定到声明位置，框架或反射按该配置处理声明。
+    // 输入：@Bean("systemClock") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
     Clock systemClock() {
+    // 关键变化：Clock systemClock() {；当前对象.该操作() 完成本例中的具体调用，后续语句观察调用后的状态。
         return Clock.system(ZoneOffset.UTC);
+        // 关键变化：return Clock.system(ZoneOffset.UTC);；Clock；system；Clock.system(ZoneOffset.UTC) 返回本次调用的具体结果，后续语句继续使用该值。
     }
 }
 // 结果：容器中存在名为 systemClock、时区为 Z 的 Clock Bean
@@ -94,9 +97,10 @@ class TimeConfiguration {
 
 ```java
 String yml = "server:\n  port: 8080\nclient:\n  timeout: 2s\n";
+// 关键变化：String yml = "server:\n port: 8080\nclient:\n timeout: 2s\n"；yml 取右侧具体表达式的值，当前状态变为 "server:\n port: 8080\nclient:\n timeout: 2s\n"。
 // 初始状态：yml 当前为 "server:\n  port: 8080\nclient:\n  timeout: 2s\n"。
-// 关键变化：yml 接收右侧表达式 "server:\n port: 8080\nclient:\n timeout: 2s\n" 的计算结果。
 boolean hasPort = yml.contains("port: 8080");
+// 关键变化：boolean hasPort = yml.contains("port: 8080")；yml.contains("port: 8080") 检查当前内容与具体参数的关系，返回 true 或 false。
 System.out.println(hasPort);
 // 输出：true
 // 说明：这段 application.yml 文本声明 server.port=8080、client.timeout=2s；这里只用 contains 验证文本，未启动 Spring，因此没有加载 Environment 或绑定配置。
@@ -112,12 +116,14 @@ System.out.println(hasPort);
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "client")
+// 关键变化：@ConfigurationProperties(prefix = "client")；注解参数 prefix = "client" 绑定到声明位置，框架或反射按该配置处理声明。
+// 输入：@ConfigurationProperties(prefix = "client") 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 public record ClientProperties(String baseUrl, int timeoutSeconds) {
 // 输入：prefix 的初始值为 "client")。
-// // 关键变化：public record ClientProperties(String baseUrl, int timeoutSeconds) { 使用表达式中的具体参数完成本次调用。
     public ClientProperties {
         if (timeoutSeconds <= 0) {
             throw new IllegalArgumentException("timeoutSeconds must be positive");
+            // 输入：throw new IllegalArgumentException("timeoutSeconds must be positive"); 提供具体参数或初始值，示例对象 从该语句开始参与后续操作。
         }
     }
 }
@@ -186,9 +192,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 class WarmupRunner implements ApplicationRunner {
-// // 关键变化：class WarmupRunner implements ApplicationRunner { 使用表达式中的具体参数完成本次调用。
     @Override
     public void run(ApplicationArguments args) {
+    // 关键变化：public void run(ApplicationArguments args) {；当前对象；该操作；当前对象.该操作(ApplicationArguments args) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：public void run(ApplicationArguments args) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         System.out.println("cache warmup");
         // 输出：cache warmup
     }
@@ -208,10 +215,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 class PropertyProbe {
-// // 关键变化：class PropertyProbe { 使用表达式中的具体参数完成本次调用。
     PropertyProbe(Environment environment) {
+    // 关键变化：PropertyProbe(Environment environment) {；当前对象；PropertyProbe；当前对象.PropertyProbe(Environment environment) 返回本次调用的具体结果，后续语句继续使用该值。
+    // 输入：PropertyProbe(Environment environment) { 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
         String port = environment.getProperty("server.port", "8080");
-// 关键变化：port 接收表达式 environment.getProperty("server.port", "8080") 的计算结果。
+        // 关键变化：String port = environment.getProperty("server.port", "8080")；port 接收 getProperty("server.port") 的返回值，当前值变为这次调用得到的具体结果。
 // 初始状态：port 的初始值为 environment.getProperty("server.port", "8080")。
         System.out.println(port);
         // 输出：8080
