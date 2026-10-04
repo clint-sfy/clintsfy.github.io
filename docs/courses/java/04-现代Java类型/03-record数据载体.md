@@ -1,6 +1,6 @@
 ---
 title: record 数据载体
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -37,9 +37,11 @@ record 不能继承普通类，只能隐式继承 java.lang.Record，但可以�
 
 ### 声明最小 record：自动获得值语义成员
 
-组件声明会生成同名访问器、规范构造器、equals、hashCode 和 toString。两个组件值相同的 record 实例通常具有值对象语义。
+需要声明小型值对象时使用 record 组件，编译器会生成同名访问器、规范构造器以及 `equals`、`hashCode` 和 `toString`。
 
 ```java
+// 语义：需要声明小型值对象时使用 record 组件，编译器会生成同名访问器、规范构造器以及 equals、hashCode 和 toString。
+// 初始状态：left 初始为 new Point(3, 4)；right 初始为 new Point(3, 4)。
 record Point(int x, int y) {}
 
 public class RecordBasicDemo {
@@ -59,6 +61,8 @@ public class RecordBasicDemo {
 紧凑构造器的参数名就是组件名，可以在隐式赋值前校验和规范化；不要在其中再次给字段赋值，record 组件字段由编译器完成赋值。
 
 ```java
+// 语义：紧凑构造器的参数名就是组件名，可以在隐式赋值前校验和规范化。
+// 初始状态：name 初始为 new UserName(" Alice ")。
 record UserName(String value) {
     public UserName {
         if (value == null || value.isBlank()) {
@@ -82,6 +86,8 @@ public class RecordCompactConstructorDemo {
 显式规范构造器的参数必须与组件一一对应，并且要明确给每个组件赋值；大多数校验场景用紧凑构造器更简洁。
 
 ```java
+// 语义：显式规范构造器的参数必须与组件一一对应，并且要明确给每个组件赋值。
+// 调用参数：代码依次使用 1、65535、"port out of range"、8080。
 record Port(int value) {
     public Port(int value) {
         if (value < 1 || value > 65535) {
@@ -104,6 +110,8 @@ public class RecordCanonicalConstructorDemo {
 访问器名就是组件名；如果框架要求 getName()，可以额外定义方法，但不要误以为 record 自动生成 JavaBean getter。
 
 ```java
+// 语义：访问器名就是组件名。
+// 初始状态：user 初始为 new User("Alice", 20)。
 record User(String name, int age) {}
 
 public class RecordAccessorDemo {
@@ -117,9 +125,11 @@ public class RecordAccessorDemo {
 
 ### 用 List.copyOf 隔离可变集合组件
 
-List.copyOf 会复制列表结构并返回不可修改列表，但不会复制可变元素本身。它也拒绝 null 列表元素；是否允许 null 要在构造器边界明确决定。
+需要隔离 record 的可变列表组件时使用 `List.copyOf`，它会复制列表结构并拒绝 `null`，但不会复制可变元素本身。
 
 ```java
+// 语义：需要隔离 record 的可变列表组件时使用 List.copyOf，它会复制列表结构并拒绝 null，但不会复制可变元素本身。
+// 初始状态：source 初始为 new ArrayList<>(List.of("book"))；order 初始为 new Order(source)。
 import java.util.ArrayList;
 import java.util.List;
 
@@ -145,6 +155,8 @@ public class RecordShallowImmutableDemo {
 record 可以实现一个或多个接口，适合让不同数据载体遵守同一读取契约；它不能通过 extends SomeClass 继承普通类。
 
 ```java
+// 语义：record 可以实现一个或多个接口，适合让不同数据载体遵守同一读取契约。
+// 调用参数：代码依次使用 "p-1"、"Book"、-1。
 interface Identified {
     String id();
 }
@@ -165,9 +177,11 @@ public class RecordInterfaceDemo {
 
 ### 使用 record pattern 直接拆出组件（JDK 20 预览）
 
-record pattern 把类型判断、转换和组件读取合在一起。JDK 20 中它是预览特性，编译与运行必须配套：
+需要在 JDK 20 中合并类型判断、转换和组件读取时可使用预览版 record pattern，并为编译与运行配套启用预览特性。
 
 ```java
+// 语义：需要在 JDK 20 中合并类型判断、转换和组件读取时可使用预览版 record pattern，并为编译与运行配套启用预览特性。
+// 调用参数：代码依次使用 "x="、", y="、"unknown"、2、5。
 record Point(int x, int y) {}
 
 public class RecordPatternDemo {
@@ -195,6 +209,8 @@ java --enable-preview RecordPatternDemo
 嵌套模式适合小型、结构稳定的数据树；当校验逻辑复杂或需要多处复用时，先显式转换为局部变量通常更容易调试。
 
 ```java
+// 语义：javac --release 20 --enable-preview RecordPatternDemo.java java --enable-preview RecordPatternDemo。
+// 调用参数：代码依次使用 "@"、"unknown"、"Alice"、"Shanghai"。
 record Address(String city) {}
 record User(String name, Address address) {}
 

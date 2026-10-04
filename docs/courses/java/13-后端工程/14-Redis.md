@@ -1,6 +1,6 @@
 ---
 title: Redis
-date: 2026-10-01
+date: 2026-10-01T00:00:00.000Z
 category: Java后端工程
 tags:
   - Java
@@ -36,6 +36,84 @@ Redis 很快，但它首先是一个网络服务和内存数据结构服务器�
 
 ## 常用用法
 
+### `RedisTemplate.opsForHash`：读写 Hash 字段
+
+用途：用于在一个 Redis Hash 中按字段读写结构化对象的局部数据。
+
+```java
+redisTemplate.opsForHash().put("user:7", "name", "Ann");
+System.out.println(redisTemplate.opsForHash().get("user:7", "name"));
+// 输出：Ann
+// 说明：opsForHash().put("user:42", "name", "Alice") 写入 key=user:42、field=name、value=Alice；get 用同一 key/field 返回 Alice。
+```
+
+### `RedisTemplate.opsForList`：维护列表元素
+
+用途：用于按队列或栈语义向 Redis List 写入并读取元素。
+
+```java
+redisTemplate.opsForList().rightPush("jobs", "job-1");
+System.out.println(redisTemplate.opsForList().leftPop("jobs"));
+// 输出：job-1
+// 说明：rightPush("jobs", "job-1") 把 job-1 追加到列表右端，leftPop("jobs") 从左端取出，形成 FIFO；空列表返回 null。
+```
+
+### `RedisTemplate.delete`：删除明确缓存键
+
+用途：用于在数据变更后删除一个已知缓存键并观察是否存在目标。
+
+```java
+Boolean deleted = redisTemplate.delete("user:7");
+System.out.println(Boolean.TRUE.equals(deleted));
+// 输出：删除到键时为 true。
+// 说明：redisTemplate.delete("user:42") 只删除精确 key user:42，返回 true 表示原键存在并被删除，false 表示不存在。
+```
+
+### `RedisTemplate.keys`：查找匹配键及生产风险
+
+用途：用于小型受控数据集的诊断查找；生产大键空间应改用游标式 `SCAN`。
+
+```java
+Set<String> keys = redisTemplate.keys("demo:user:*");
+System.out.println(keys == null ? 0 : keys.size());
+// 输出：当前匹配键数量；禁止把外部输入直接作为模式。
+// 说明：keys("user:*") 返回当前数据库中匹配 user: 前缀的 key 集合，但会阻塞遍历整个 keyspace；生产环境用 SCAN 游标分批读取。
+```
+
+### `RedisTemplate.execute`：原子执行 Lua 脚本
+
+用途：用于在 Redis 服务端一次完成需要原子性的检查与更新。
+
+```java
+DefaultRedisScript<Long> script = new DefaultRedisScript<>("return redis.call('INCR', KEYS[1])", Long.class);
+Long value = redisTemplate.execute(script, List.of("counter"));
+System.out.println(value);
+// 输出：counter 自增后的值。
+// 说明：execute(script, List.of("counter:42"), "10") 在 Redis 单次 Lua 执行中检查并更新 key counter:42，返回值按脚本声明类型转换；keys 与 argv 分开传入。
+```
+
+### `DefaultRedisScript`：构造带返回类型的脚本
+
+用途：用于声明 Lua 文本及其 Java 返回类型，便于复用和结果转换。
+
+```java
+DefaultRedisScript<Long> script = new DefaultRedisScript<>("return 1", Long.class);
+System.out.println(script.getResultType().getSimpleName());
+// 输出：Long
+// 说明：DefaultRedisScript<Long> 同时保存 Lua 文本和 Long 返回类型，因此 Redis 整数回复被转换为 Java Long；脚本本身应作为单例 Bean 复用 SHA 缓存。
+```
+
+### `StringRedisSerializer`：构造字符串序列化器
+
+用途：用于把 Redis key 或字符串值编码为稳定 UTF-8 字节。
+
+```java
+StringRedisSerializer serializer = new StringRedisSerializer(StandardCharsets.UTF_8);
+System.out.println(new String(serializer.serialize("user:7"), StandardCharsets.UTF_8));
+// 输出：user:7
+// 说明：StringRedisSerializer 把 "user:42" 编码为 UTF-8 字节并可无损还原；它不负责把 User 对象序列化为 JSON。
+```
+
 ### RedisTemplate.opsForValue：读写带前缀的值
 
 用途：用于存放计数器、短文本或序列化后的单对象，并显式设置命名空间和过期时间。
@@ -50,23 +128,49 @@ redis.opsForValue().set(key, "active", Duration.ofMinutes(5));
 String value = redis.opsForValue().get(key);
 System.out.println(value);
 // 输出：active
+// 说明：opsForValue 对带业务前缀的 key（如 session:42）写入单个值，并按示例 TTL 自动过期；读取不存在或已过期 key 返回 null。
 ```
 
 字符串 key 要包含业务前缀和版本；`get` 返回 `null` 时要走缓存未命中路径，不能把空值误当作异常或直接拼接进 SQL。
 
-### Hash/List/Set：按访问形状选结构
+### Redis Hash：按字段更新对象
 
-用途：用于分别表达字段集合、顺序队列和去重集合，避免用一个 JSON 字符串承担所有局部更新需求。
+用途：用于在同一 key 下按 field 读写对象的局部属性。
 
 ```java
 redis.opsForHash().put("app:user:7", "status", "ACTIVE");
-redis.opsForList().rightPush("app:jobs", "job-1");
-redis.opsForSet().add("app:roles:7", "reader", "writer");
 System.out.println(redis.opsForHash().get("app:user:7", "status"));
 // 输出：ACTIVE
+// 说明：Hash key=user:42 下可分别写 field=name/value=Alice 与 field=status/value=ACTIVE，更新 status 不会重写 name。
 ```
 
-List 需要设置长度上限并处理消费失败，Set 只保证成员唯一不保证业务顺序；跨结构更新不是自动事务，必要时用 Lua 或重新设计 key。
+Hash field 需要稳定命名和类型契约；多个 field 的跨 key 更新不是自动事务。
+
+### Redis List：维护有序元素
+
+用途：用于按插入顺序追加并消费简单队列元素。
+
+```java
+redis.opsForList().rightPush("app:jobs", "job-1");
+System.out.println(redis.opsForList().leftPop("app:jobs"));
+// 输出：job-1
+// 说明：List key=jobs 右端依次追加 job-1、job-2，左端弹出时先得到 job-1；该简单队列不提供确认或失败重投语义。
+```
+
+List 需要设置长度上限并处理消费失败；需要可靠消息时应评估 Redis Streams 或专用消息系统。
+
+### Redis Set：保存唯一成员
+
+用途：用于保存不需要业务顺序的去重成员集合。
+
+```java
+redis.opsForSet().add("app:roles:7", "reader", "reader");
+System.out.println(redis.opsForSet().size("app:roles:7"));
+// 输出：1
+// 说明：Set key=user:42:roles 添加 ADMIN 两次仍只有一个成员，isMember 精确判断 ADMIN 是否存在；集合迭代顺序不属于契约。
+```
+
+Set 只保证成员唯一，不保证顺序；集合过大时应限制基数并避免一次返回全部成员。
 
 ### TTL：让缓存拥有明确生命周期
 
@@ -79,6 +183,7 @@ redis.opsForValue().set("app:token:7", "opaque", Duration.ofSeconds(60));
 Long seconds = redis.getExpire("app:token:7");
 System.out.println(seconds != null && seconds > 0);
 // 输出：true
+// 作用：用于给缓存、验证码和短期会话设置过期时间，并在续期、删除和未设置 TTL 时做可观测判断。
 ```
 
 没有 TTL 的 key 可能长期占用内存；`-1` 表示没有过期时间，`-2` 通常表示 key 不存在。续期要防止把永久缓存误延长，批量 key 过期还要加入抖动以降低雪崩风险。
@@ -100,6 +205,7 @@ redis.setHashValueSerializer(text);
 redis.afterPropertiesSet();
 System.out.println(redis.getKeySerializer().getClass().getSimpleName());
 // 输出：StringRedisSerializer
+// 作用：用于让不同服务、版本和语言能够稳定读写 Redis，并避免 JDK 原生序列化带来的安全和兼容风险。
 ```
 
 这个模板把 key、value、Hash field 和 Hash value 都按字符串契约编码；如果 value 改成 JSON 或二进制，必须同时为对应字段选择明确 serializer，并记录版本。跨服务读取时不要默认相信类名和类型信息。序列化升级应通过双读、版本 key 或迁移脚本逐步切换，而不是直接让旧字节被新类强转。
@@ -124,6 +230,7 @@ String amount = "1";
 Long allowed = redis.execute(script, keys, amount);
 System.out.println(allowed);
 // 输出：1
+// 说明：Lua 在 Redis 服务端对 KEYS[1] 指定的限流/锁 key 比较当前值与 ARGV[1]，仅匹配时更新或删除；检查与写入不会被其他命令插入。
 ```
 
 `StringRedisTemplate` 使用字符串 serializer 编解码 `KEYS` 和 `ARGV`，`DefaultRedisScript<Long>` 把 Redis 的整数回复还原为 `Long`；自定义 `RedisTemplate` 时必须显式配置等价的 key/argument/result serializer。脚本必须限制执行时间和输入规模，KEYS 只传同一 Redis hash slot 可处理的 key；Lua 的原子性不覆盖数据库更新、消息发送或网络调用。
@@ -175,6 +282,7 @@ class UserCacheInvalidator {
         // 输出：true
     }
 }
+// 作用：用于在 Cache-Aside 中先写数据库、提交成功后删除缓存，降低旧值在缓存中长期存在的概率。
 ```
 
 只有数据库事务提交成功后，`AFTER_COMMIT` 监听器才会删除缓存；事务回滚时不会触发该监听器。监听器中的删除失败要记录并通过消息或重试补偿；并发读可能在删除前回填旧值，需要通过延迟双删、版本号或短 TTL 等策略按业务风险取舍。该事件依赖事务上下文，不能把发布事件当成跨资源事务提交。
@@ -191,6 +299,7 @@ if (cached == null) {
 }
 System.out.println("negative-cache");
 // 输出：negative-cache
+// 作用：用于把不存在数据、热点 key 同时失效和大量 key 同时过期分开治理，避免一个“加缓存”方案掩盖不同根因。
 ```
 
 穿透可用参数校验、布隆过滤器或短期空值；击穿可用互斥锁、single-flight 或逻辑过期；雪崩可用 TTL 抖动、分批预热和限流。空值缓存也必须防止把真实新数据永久挡住。
@@ -208,6 +317,7 @@ if (count != null && count == 1) {
 boolean accepted = count != null && count <= 100;
 System.out.println(accepted);
 // 输出：true
+// 作用：用于限制同一主体在固定时间窗内的请求次数，并在超限、Redis 超时和降级时给出明确策略。
 ```
 
 `increment` 与首个 `expire` 之间可能发生进程崩溃，严格限流应使用 Lua 一次完成；Redis 超时是可用性与安全性的取舍，不能无条件放行敏感操作。
@@ -225,6 +335,7 @@ try {
     System.out.println("degraded");
     // 输出：degraded
 }
+// 作用：用于让 Redis 调用在网络抖动、连接池耗尽和重复重试时保持可控，并避免把缓存故障放大成线程堆积。
 ```
 
 客户端要设置连接与命令超时、限制连接池等待、区分可重试读与不可重复写，并记录命中率和错误率。RedisTemplate 通常复用连接池资源，不要在业务代码中手动关闭由框架管理的连接；降级结果必须经过权限和数据新鲜度评估。

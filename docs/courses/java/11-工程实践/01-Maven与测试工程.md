@@ -1,6 +1,6 @@
 ---
 title: Maven、JUnit 与日志工程
-date: 2026-09-22
+date: 2026-09-22T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -22,7 +22,148 @@ description: 用 Maven 管理依赖与生命周期，使用 JUnit 和日志建�
 
 Maven 坐标由 groupId、artifactId、version 组成，依赖树和 dependencyManagement 用来治理版本；生命周期阶段通常经历 validate、compile、test、package、verify、install。测试应隔离时间、网络和数据库，优先验证公开行为。JUnit 5 的 `@Test`、`@ParameterizedTest`、`assertThrows` 和扩展机制覆盖主要场景。日志用 SLF4J API，避免字符串拼接和敏感信息，使用请求 ID、级别与结构化参数。
 
-## 实践任务
+## 常用用法
+
+### Maven 生命周期：运行测试与工程校验
+
+在项目根目录先运行测试，再执行包含集成检查的验证阶段。
+
+```java
+// 说明：Maven 生命周期：运行测试与工程校验 的具体调用为 String[] lifecycle = {"mvn", "test", "&&", "mvn", "verify"};
+String[] lifecycle = {"mvn", "test", "&&", "mvn", "verify"};
+System.out.println(String.join(" ", lifecycle));
+// 命令：mvn test
+// 命令：mvn verify
+// 输出：构建成功时显示 BUILD SUCCESS，失败时进程返回非零退出码。
+```
+
+### `@Test`：声明单元测试
+
+用 `@Test` 标记可由 JUnit 5 独立执行的测试方法。
+
+```java
+// 说明：@Test：声明单元测试 的具体调用为 class PriceTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+
+class PriceTest {
+    @Test
+    void totalsTwoItems() {
+        assertEquals(30, 10 + 20);
+    }
+}
+// 输出：断言成立，测试通过。
+```
+
+### `assertThrows`：验证异常路径
+
+用 `assertThrows` 同时验证异常类型并取得异常对象供后续断言。
+
+```java
+// 说明：assertThrows：验证异常路径 的具体调用为 var error = assertThrows(IllegalArgumentException.class,
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+var error = assertThrows(IllegalArgumentException.class,
+        () -> Integer.parseInt("x"));
+// 输出：error 的类型是 NumberFormatException。
+```
+
+### SLF4J 参数化日志：记录结构化上下文
+
+用占位符记录业务字段，避免不必要的字符串拼接并保留日志上下文。
+
+```java
+// 说明：SLF4J 参数化日志：记录结构化上下文 的具体调用为 logger.info("order accepted, orderId={}", orderId);
+logger.info("order accepted, orderId={}", orderId);
+// 输出：INFO order accepted, orderId=42（前提：orderId 为 42 且 INFO 级别已启用）。
+```
+
+### `@PreDestroy`：在容器销毁前释放资源
+
+容器管理的 Bean 可用它声明关闭回调；不要依赖它处理必须立即提交的业务数据。
+
+```java
+// 说明：@PreDestroy：在容器销毁前释放资源 的具体调用为 class Worker {
+import jakarta.annotation.PreDestroy;
+class Worker {
+    private boolean closed;
+    @PreDestroy void close() { closed = true; }
+    boolean isClosed() { return closed; }
+}
+// 结果：Spring/Jakarta 容器销毁 Worker 前调用 close()
+```
+
+### `@Resource`：按名称或类型注入依赖
+
+它是 Jakarta 标准注解；显式指定 `name` 可把注入点与 Bean 名称对齐。
+
+```java
+// 说明：@Resource：按名称或类型注入依赖 的具体调用为 class ReportService {
+import jakarta.annotation.Resource;
+class ReportService {
+    @Resource(name = "auditClock")
+    java.time.Clock clock;
+    long now() { return clock.millis(); }
+}
+// 结果：容器把名为 auditClock 的 Bean 注入 clock
+```
+
+### `Charset.forName`：按规范名称查找字符集
+
+名称来自外部配置时可能抛出不支持异常；固定 UTF-8 优先使用 `StandardCharsets.UTF_8`。
+
+```java
+// 说明：Charset.forName：按规范名称查找字符集 的具体调用为 Charset utf8 = Charset.forName("UTF-8");
+import java.nio.charset.Charset;
+Charset utf8 = Charset.forName("UTF-8");
+System.out.println(utf8.name());
+System.out.println(utf8.equals(Charset.forName("utf8")));
+System.out.println(utf8.newEncoder().canEncode('中'));
+// 输出：UTF-8、true、true
+```
+
+### `Charset.defaultCharset`：读取平台默认字符集
+
+默认值由运行环境决定，协议与持久化格式不应依赖它。
+
+```java
+// 说明：Charset.defaultCharset：读取平台默认字符集 的具体调用为 Charset current = Charset.defaultCharset();
+import java.nio.charset.Charset;
+Charset current = Charset.defaultCharset();
+System.out.println(current != null);
+System.out.println(current.name().isBlank());
+System.out.println(Charset.isSupported(current.name()));
+// 输出：true、false、true
+```
+
+### `Random.nextInt`：生成有上界的伪随机整数
+
+`nextInt(bound)` 返回 `[0, bound)`；它不适合密码、令牌等安全用途。
+
+```java
+// 说明：Random.nextInt：生成有上界的伪随机整数 的具体调用为 var random = new Random(42);
+import java.util.Random;
+var random = new Random(42);
+int value = random.nextInt(10);
+System.out.println(value >= 0);
+System.out.println(value < 10);
+System.out.println(value);
+// 输出：true、true、0
+```
+
+### `UUID.randomUUID`：生成随机 UUID
+
+它适合非连续标识符；文本形式固定为带连字符的 36 个字符。
+
+```java
+// 说明：UUID.randomUUID：生成随机 UUID 的具体调用为 UUID id = UUID.randomUUID();
+import java.util.UUID;
+UUID id = UUID.randomUUID();
+System.out.println(id.version());
+System.out.println(id.toString().length());
+System.out.println(UUID.fromString(id.toString()).equals(id));
+// 结果：版本 4、长度 36、true
+```
 
 把一个 Java 程序改成 Maven 项目：配置编译版本、测试插件和 Checkstyle；为核心服务补单元测试、参数化测试和一个集成测试，加入带请求 ID 的日志，并用 `mvn test`、`mvn verify` 验证。
 

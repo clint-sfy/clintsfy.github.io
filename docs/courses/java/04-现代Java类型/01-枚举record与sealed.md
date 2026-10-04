@@ -1,6 +1,6 @@
 ---
 title: 枚举、record 与 sealed 总览
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -40,9 +40,11 @@ enum 表达“只能从这几个值中选一个”，record 表达“这些字�
 
 ### 用 enum 表达固定状态
 
-enum 实例数量和身份由类型定义控制，适合订单状态、权限级别、月份等稳定集合。ordinal 只适合展示，不要把它持久化为业务编号。
+需要表达订单状态或权限级别等固定集合时使用 enum，并应使用稳定业务字段而不是 `ordinal` 进行持久化。
 
 ```java
+// 语义：需要表达订单状态或权限级别等固定集合时使用 enum，并应使用稳定业务字段而不是 ordinal 进行持久化。
+// 初始状态：status 初始为 OrderStatus.PAID。
 enum OrderStatus {
     CREATED, PAID, CANCELLED
 }
@@ -61,6 +63,8 @@ public class EnumOverviewDemo {
 需要校验、规范化或保护可变组件时，跳转到 record 数据载体页面查看完整写法。
 
 ```java
+// 语义：需要校验、规范化或保护可变组件时，跳转到 record 数据载体页面查看完整写法。
+// 调用参数：代码依次使用 "CNY"、1999。
 record Money(String currency, long cents) {}
 
 public class RecordOverviewDemo {
@@ -76,6 +80,8 @@ public class RecordOverviewDemo {
 sealed 让新增结果分支变成显式的类型变更，适合编译器帮助检查有限状态模型。
 
 ```java
+// 语义：sealed 让新增结果分支变成显式的类型变更，适合编译器帮助检查有限状态模型。
+// 初始状态：result 初始为 new LoginSuccess("u-1")。
 sealed interface LoginResult permits LoginSuccess, LoginFailure {}
 record LoginSuccess(String userId) implements LoginResult {}
 record LoginFailure(String reason) implements LoginResult {}
@@ -91,9 +97,11 @@ public class SealedOverviewDemo {
 
 ### 使用 record pattern 拆出 record 组件（JDK 20 预览）
 
-这是 JDK 20 预览语法，保存为 PatternOverviewDemo.java 后成对运行：
+需要在 JDK 20 中直接拆出 record 组件时可使用预览版 record pattern，并为编译与运行同时启用预览特性。
 
 ```java
+// 语义：需要在 JDK 20 中直接拆出 record 组件时可使用预览版 record pattern，并为编译与运行同时启用预览特性。
+// 调用参数：代码依次使用 ":"、"unknown"、"Alice"、20。
 record User(String name, int age) {}
 
 public class PatternOverviewDemo {

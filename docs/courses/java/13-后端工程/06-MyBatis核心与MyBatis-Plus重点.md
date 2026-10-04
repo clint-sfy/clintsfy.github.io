@@ -1,6 +1,6 @@
 ---
 title: MyBatis 核心与 MyBatis-Plus 重点
-date: 2026-10-01
+date: 2026-10-01T00:00:00.000Z
 category: Java后端工程
 tags:
   - Java
@@ -38,45 +38,142 @@ MyBatis-Plus 减少简单 CRUD 的样板，但它仍然需要正确的表映射�
 
 ## 常用用法
 
-### XML &lt;select&gt;/&lt;insert&gt;：声明基础 CRUD
+### `@MapperScan`：批量注册 Mapper 接口
 
-用途：用于把查询和写入 SQL 放在可审查的 mapper XML 中，并用 `namespace` 与 Mapper 接口方法建立稳定映射。
+用途：用于指定 Mapper 接口包，让 Spring 批量创建 MyBatis 代理。
 
-```sql
--- XML 元素名称：<select> / <insert>
+```java
+import org.mybatis.spring.annotation.MapperScan;
+
+@MapperScan("example.persistence")
+class PersistenceConfig {}
+// 输出：example.persistence 下的 Mapper 接口可被依赖注入。
+// 说明：@MapperScan("com.example.mapper") 为该包下的 Mapper 接口注册代理 Bean；接口无需实现类，直接 new 配置类不会创建 Mapper 代理。
+```
+
+### `@Param`：命名 Mapper 方法参数
+
+用途：用于给多个 Mapper 参数提供稳定名称，供 XML 中的 `#{}` 引用。
+
+```java
+import org.apache.ibatis.annotations.Param;
+
+interface UserMapper {
+    User find(@Param("tenantId") long tenantId, @Param("userId") long userId);
+}
+// 输出：XML 可分别使用 #{tenantId} 与 #{userId}。
+// 说明：@Param("status") 与 @Param("limit") 让 XML 用 #{status}、#{limit} 取值；二者作为 PreparedStatement 参数绑定，不是字符串拼接。
+```
+
+### `PageHelper.startPage`：开启一次分页查询
+
+用途：用于在当前线程的下一条查询前设置页码和每页条数。
+
+```java
+PageHelper.startPage(2, 20);
+List<User> users = userMapper.selectAll();
+System.out.println(users.size() <= 20);
+// 输出：true
+// 说明：PageHelper.startPage(2, 20) 把当前线程随后第一条 SELECT 改写为第 2 页、每页 20 行并查询总数；它不会永久修改 Mapper。
+```
+
+### `PageHelper.orderBy`：设置受控排序
+
+用途：用于给分页查询附加经过白名单选择的排序表达式。
+
+```java
+String orderBy = switch (sortKey) {
+    case "createdAt" -> "created_at DESC";
+    default -> "id ASC";
+};
+PageHelper.orderBy(orderBy);
+// 输出：排序字段只能来自代码白名单。
+// 说明：白名单把请求 sort=name 映射为数据库表达式 user_name asc，再交给 PageHelper.orderBy；原始请求参数不能直接拼入 ORDER BY。
+```
+
+### `PageHelper.clearPage`：清理线程分页状态
+
+用途：用于在查询未正常消费分页状态时主动清理 ThreadLocal，防止影响同线程后续查询。
+
+```java
+try {
+    PageHelper.startPage(1, 10);
+    userMapper.selectAll();
+} finally {
+    PageHelper.clearPage();
+}
+// 输出：当前线程不再保留本次分页参数。
+// 说明：finally 中 PageHelper.clearPage() 删除尚未消费的分页参数，避免线程池复用时把后续 SELECT 误限制为旧页码。
+```
+
+### `PageInfo`：构造分页元数据
+
+用途：用于从一次分页结果构造总数、页码和列表等响应元数据。
+
+```java
+PageInfo<User> page = new PageInfo<>(users);
+System.out.println(page.getPageNum() + "/" + page.getTotal());
+// 输出：当前页码/符合条件的总记录数。
+// 说明：new PageInfo<>(users) 从 PageHelper 结果读取 pageNum、pageSize、total 和当前页列表；普通 List 本身没有总行数元数据。
+```
+
+### XML `<select>`：声明查询
+
+用途：用于在 mapper XML 中声明查询并把结果映射到明确类型。
+
+```xml
 <mapper namespace="example.UserMapper">
   <select id="findById" resultType="example.User">
     SELECT id, username FROM app_user WHERE id = #{id}
   </select>
+</mapper>
+<!-- 作用：用于在 mapper XML 中声明查询并把结果映射到明确类型。 -->
+<!-- 结果：XML 配置由 MyBatis 加载 -->
+```
+结果：`findById(7)` 在数据存在时返回一个 `User`。
+
+`id` 应与接口方法名和参数契约一致；SQL 仍应用真实数据分布检查执行计划。
+
+### XML `<insert>`：声明写入
+
+用途：用于在 mapper XML 中声明写入语句并回填数据库生成的主键。
+
+```xml
+<mapper namespace="example.UserMapper">
   <insert id="insert" useGeneratedKeys="true" keyProperty="id">
     INSERT INTO app_user(username) VALUES (#{username})
   </insert>
 </mapper>
--- 输出：findById(7) 返回一行，insert 返回影响行数 1
+<!-- 作用：用于在 mapper XML 中声明写入语句并回填数据库生成的主键。 -->
+<!-- 结果：XML 配置由 MyBatis 加载 -->
 ```
+结果：写入成功时返回影响行数 `1`，并把生成主键回填到 `id`。
 
-`id` 应与接口方法名和参数契约一致；SQL 仍应在数据库中用执行计划验证，XML 不是绕过数据库约束的办法。
+主键回填依赖 JDBC 驱动和表的主键生成策略；写入失败应由事务边界决定回滚。
 
 ### #{}：安全参数绑定
 
 用途：用于把用户或业务值作为预编译参数传给 JDBC，避免把值直接拼进 SQL 文本；动态表名不能靠它替换。
 
-```sql
+```xml
+<!-- 说明：select 是本段配置的具体入口 -->
 <select id="findActive" resultType="example.User">
   SELECT id, username FROM app_user
   WHERE status = #{status} AND username = #{username}
 </select>
--- 输出：status 与 username 作为绑定参数传入，不改变 SQL 结构
+<!-- 作用：用于把用户或业务值作为预编译参数传给 JDBC，避免把值直接拼进 SQL 文本；动态表名不能靠它替换。 -->
+<!-- 结果：select 配置由 MyBatis 加载 -->
 ```
+结果：`status` 与 `username` 作为绑定参数传入，不改变 SQL 结构。
 
 `${column}` 会做文本替换，只能接收代码控制的白名单，例如 `created_at` 或 `id`；外部输入必须先映射成枚举或固定字典，不能直接透传。
 
-### 动态 &lt;if&gt;/&lt;foreach&gt;：组合条件与批量操作
+### 按可选 ID 集合构建查询
 
 用途：用于按可选条件拼接查询或生成受控批量语句，并在空集合时避免产生非法 SQL。
 
-```sql
--- 动态元素名称：<if> / <foreach>
+```xml
+<!-- 说明：ID 是本段配置的具体入口 -->
 <select id="search" resultType="example.User">
   SELECT id, username FROM app_user
   <where>
@@ -91,8 +188,10 @@ MyBatis-Plus 减少简单 CRUD 的样板，但它仍然需要正确的表映射�
     </if>
   </where>
 </select>
--- 输出：有 ids 时生成 IN (?, ?)，空 ids 时不生成 IN ()
+<!-- 作用：用于按可选条件拼接查询或生成受控批量语句，并在空集合时避免产生非法 SQL。 -->
+<!-- 结果：ID 配置由 MyBatis 加载 -->
 ```
+结果：有 `ids` 时生成 `IN (?, ?)`，空 `ids` 时不生成 `IN ()`。
 
 `&lt;where&gt;` 会处理首个 `AND`，但不会替业务决定空条件是否允许全表查询；写入批量要控制集合大小和事务时长。
 
@@ -100,7 +199,8 @@ MyBatis-Plus 减少简单 CRUD 的样板，但它仍然需要正确的表映射�
 
 用途：用于把数据库列、别名和嵌套关系明确映射到 Java 对象，避免依赖不稳定的自动命名猜测。
 
-```sql
+```xml
+<!-- 说明：resultMap 是本段配置的具体入口 -->
 <resultMap id="userMap" type="example.User">
   <id property="id" column="user_id"/>
   <result property="name" column="user_name"/>
@@ -108,8 +208,10 @@ MyBatis-Plus 减少简单 CRUD 的样板，但它仍然需要正确的表映射�
 <select id="find" resultMap="userMap">
   SELECT id AS user_id, username AS user_name FROM app_user WHERE id = #{id}
 </select>
--- 输出：列 user_id/user_name 映射到 User.id/name
+<!-- 作用：用于把数据库列、别名和嵌套关系明确映射到 Java 对象，避免依赖不稳定的自动命名猜测。 -->
+<!-- 结果：resultMap 配置由 MyBatis 加载 -->
 ```
+结果：列 `user_id` 和 `user_name` 分别映射到 `User.id` 和 `User.name`。
 
 一对多映射需要谨慎处理重复行和分页；如果联表结果复杂，拆成多次查询或在 Service 聚合通常比深层嵌套映射更容易观测。
 
@@ -158,6 +260,7 @@ class UserReader {
         // 输出：ann
     }
 }
+// 说明：UserMapper extends BaseMapper<User> 后，MyBatis-Plus 代理提供 selectById、insert、updateById、deleteById；接口本身不能直接 new。
 ```
 
 `UserMapper` 的实现由 MP 代理生成，`UserReader` 由容器注入 Mapper 后调用。`@TableId(type = IdType.AUTO)` 表示数据库自增主键；插入成功后 MP 通过 JDBC generated keys 调用 `setId` 回填实体，后续代码才能读取 `getId()`。复杂联表、数据库特性或强审计 SQL 仍应回到 XML/注解 SQL，不要为了少写几行而牺牲可读性。
@@ -188,11 +291,12 @@ class UserFacade {
         return saved;
     }
 }
+// 说明：UserService extends IService<User> 暴露 getById/save 等 CRUD 契约，通常由 ServiceImpl Bean 实现；只声明接口不会自动产生实例。
 ```
 
 `UserService` 的实现通常由 `ServiceImpl<UserMapper, User>` 提供；`save` 成功后 `entity.getId()` 能读到数据库生成的主键，前提是表的主键确实自增且实体标注了 `IdType.AUTO`。`IService` 不是事务声明本身，写入多个表时仍要在明确的 Service 方法上配置事务，并验证异常、回滚和幂等行为。
 
-### QueryWrapper/LambdaQueryWrapper：表达条件查询
+### LambdaQueryWrapper：表达类型安全的条件查询
 
 用途：用于组合等值、范围和排序条件；Lambda 版本通过方法引用减少字符串列名拼写错误。
 
@@ -204,6 +308,7 @@ LambdaQueryWrapper<User> query = new LambdaQueryWrapper<User>()
     .orderByDesc(User::getCreatedAt);
 System.out.println(query.getSqlSegment().contains("status"));
 // 输出：true
+// 说明：wrapper.eq(User::getStatus, "ACTIVE").ge(User::getAge, 18) 生成 status = ? AND age >= ?，绑定值为 ACTIVE 与 18。
 ```
 
 Wrapper 只表达 SQL 条件，不自动替代输入校验、索引设计或业务授权；复杂子查询、窗口函数和方言 SQL 要评估 XML 是否更清晰。
@@ -231,6 +336,7 @@ class UserPager {
         // 输出：2/20
     }
 }
+// 作用：用于把页码、排序白名单和总数查询封装到分页请求中，避免一次读取不受控的大结果集。
 ```
 
 MP 分页需要注册对应拦截器，并限制最大页大小；深分页应考虑 keyset/游标方案。总数查询、排序字段和过滤条件要与数据库索引一起审查。
@@ -248,6 +354,7 @@ MP 分页需要注册对应拦截器，并限制最大页大小；深分页应�
   LIMIT #{limit}
 </select>
 -- 输出：复杂排序和 LIMIT 的 SQL 结构在 XML 中完整可审查
+-- 作用：用于在联表、窗口函数、数据库方言或性能敏感场景保留完整 SQL，并与 Wrapper 的简单 CRUD 形成可解释对照。
 ```
 
 选择原生 XML 不表示放弃类型安全：接口参数、`#{}` 绑定、结果映射和测试仍应保持明确。反过来，简单单表 CRUD 用 MP 可降低重复代码，关键是按查询复杂度取舍。

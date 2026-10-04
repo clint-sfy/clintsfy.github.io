@@ -1,6 +1,6 @@
 ---
 title: JVM 诊断命令与 JFR
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -42,6 +42,7 @@ description: 用 jps、jcmd、jstack、jmap、jstat 和 JFR 采集 JVM 现场证
 拿到 PID 后，jcmd、jstack、jmap、jstat 和 JFR 命令才能定位到目标 JVM；PID 会变化，复制命令前再次确认进程名和启动时间。
 
 ```java
+// 说明：ProcessHandle：取得当前进程 PID。
 public class ProcessIdDemo {
     public static void main(String[] args) {
         System.out.println("pid=" + ProcessHandle.current().pid());
@@ -55,6 +56,7 @@ public class ProcessIdDemo {
 `jps -lv` 适合快速发现 PID、主类和 JVM 参数；容器、远程或权限隔离场景可能看不到全部进程，应配合操作系统进程工具。
 
 ```java
+// 说明：jps -lv：列出 Java 进程。
 public class JpsHintDemo {
     public static void main(String[] args) {
         System.out.println("jps -lv");
@@ -68,6 +70,7 @@ public class JpsHintDemo {
 先确认目标确实是预期 JDK 版本，再解释 GC 参数或 API 行为；不同发行版的诊断输出字段可能不同。
 
 ```java
+// 说明：jcmd VM.version：确认目标 JVM。
 public class JcmdVersionHintDemo {
     public static void main(String[] args) {
         System.out.println("jcmd <pid> VM.version");
@@ -76,11 +79,12 @@ public class JcmdVersionHintDemo {
 }
 ```
 
-### jcmd Thread.print -l：线程和锁快照
+### 捕获线程快照：同时记录线程与锁信息
 
-重点观察 RUNNABLE、BLOCKED、WAITING、锁拥有者、等待对象和调用栈。连续采集多份并按时间对比，能区分短暂竞争与长期卡住。
+重点观察 RUNNABLE、BLOCKED、WAITING、锁拥有者、等待对象和调用栈。
 
 ```java
+// 说明：捕获线程快照：同时记录线程与锁信息。
 public class ThreadPrintHintDemo {
     public static void main(String[] args) {
         System.out.println("jcmd <pid> Thread.print -l");
@@ -89,11 +93,14 @@ public class ThreadPrintHintDemo {
 }
 ```
 
+连续采集多份并按时间对比，能区分短暂竞争与长期卡住。
+
 ### jstack -l：线程转储兼容入口
 
-`-l` 请求更详细的锁信息；如果目标 JVM 被阻塞、权限不够或平台限制，命令可能失败。不要因一次空输出就判断没有线程问题。
+`-l` 请求更详细的锁信息；如果目标 JVM 被阻塞、权限不够或平台限制，命令可能失败。
 
 ```java
+// 说明：jstack -l：线程转储兼容入口。
 public class JstackHintDemo {
     public static void main(String[] args) {
         System.out.println("jstack -l <pid>");
@@ -102,11 +109,14 @@ public class JstackHintDemo {
 }
 ```
 
+不要因一次空输出就判断没有线程问题。
+
 ### jmap -histo:live：类直方图
 
 类直方图能帮助定位数量异常的 String、数组、集合和业务对象；live 选项可能触发 GC 或停顿，线上应先评估成本。
 
 ```java
+// 说明：jmap -histo:live：类直方图。
 public class JmapHistogramHintDemo {
     public static void main(String[] args) {
         System.out.println("jmap -histo:live <pid>");
@@ -117,9 +127,10 @@ public class JmapHistogramHintDemo {
 
 ### jmap -dump：生成堆转储
 
-堆转储通常很大且可能包含业务数据，目录、权限、加密和保留周期要提前规划。OOM 自动转储与 jcmd GC.heap_dump 也是常见替代方案。
+堆转储通常很大且可能包含业务数据，目录、权限、加密和保留周期要提前规划。
 
 ```java
+// 说明：jmap -dump：生成堆转储。
 public class JmapDumpHintDemo {
     public static void main(String[] args) {
         System.out.println("jmap -dump:live,format=b,file=app.hprof <pid>");
@@ -128,11 +139,14 @@ public class JmapDumpHintDemo {
 }
 ```
 
+OOM 自动转储与 jcmd GC.heap_dump 也是常见替代方案。
+
 ### jstat -gcutil：采样 GC 利用率
 
 这个命令每秒采样一次、共十次；结果适合快速看趋势，不替代统一 GC 日志，也不应只根据某一列百分比调整参数。
 
 ```java
+// 说明：jstat -gcutil：采样 GC 利用率。
 public class JstatGcHintDemo {
     public static void main(String[] args) {
         System.out.println("jstat -gcutil <pid> 1000 10");
@@ -141,11 +155,12 @@ public class JstatGcHintDemo {
 }
 ```
 
-### jcmd JFR.start/dump/stop：记录运行时事件
+### 完成一次 JFR 记录：启动、导出并停止
 
-JFR.start 可以用 default/profile 配置和 duration 限制范围；先短时记录，发现问题后再 dump。文件包含线程、类、分配和业务事件，保存和共享前要审查敏感字段。
+JFR.start 可以用 default/profile 配置和 duration 限制范围；先短时记录，发现问题后再 dump。
 
 ```java
+// 说明：完成一次 JFR 记录：启动、导出并停止。
 public class JfrCommandHintDemo {
     public static void main(String[] args) {
         System.out.println("jcmd <pid> JFR.start name=diag settings=profile duration=60s filename=diag.jfr");
@@ -158,11 +173,14 @@ public class JfrCommandHintDemo {
 }
 ```
 
+文件包含线程、类、分配和业务事件，保存和共享前要审查敏感字段。
+
 ### Recording API：在代码中控制 JFR
 
-Recording API 适合应用自己围绕一次请求或测试控制记录，但必须设置时长、事件和文件目录，避免无界记录。JFR 记录结束后用 JDK Mission Control 等工具分析事件时间线。
+Recording API 适合应用自己围绕一次请求或测试控制记录，但必须设置时长、事件和文件目录，避免无界记录。
 
 ```java
+// 说明：Recording API：在代码中控制 JFR。
 import jdk.jfr.Recording;
 import java.nio.file.Path;
 
@@ -178,9 +196,11 @@ public class JfrApiDemo {
     }
 }
 ```
+
+JFR 记录结束后用 JDK Mission Control 等工具分析事件时间线。
 ## 不常用但需要知道
 
-### jcmd GC.class_histogram：不生成完整 hprof 的对象概览
+### 获取对象直方图：不生成完整堆转储
 
 它比完整堆转储轻量但仍可能触发较重操作；适合先粗看对象数量，再决定是否采集 hprof。
 
@@ -198,6 +218,7 @@ public class JcmdHistogramHintDemo {
 Native Memory Tracking 必须在启动时启用，不能事后补开；它有运行时开销，适合专门诊断元空间、线程栈、代码缓存和本地分配的异常。
 
 ```java
+// 说明：先用 -XX:NativeMemoryTracking=summary 启动 app.jar，再将 <pid> 替换为该 JVM 进程号查询线程栈、元空间和代码缓存等本地内存分类。
 public class NativeMemoryHintDemo {
     public static void main(String[] args) {
         System.out.println("java -XX:NativeMemoryTracking=summary -jar app.jar");
@@ -213,6 +234,7 @@ public class NativeMemoryHintDemo {
 按需开启事件、设置阈值和采样周期可以减少文件大小；事件名称和字段以目标 JDK 文档为准，不能把某一版本的事件集合当成永久稳定清单。
 
 ```java
+// 说明：recording 只启用 jdk.CPULoad 事件并设为每 1 秒记录；start/stop 之间没有长工作负载，此例只验证事件配置。
 import jdk.jfr.Recording;
 
 public class JfrEventSettingDemo {
@@ -233,6 +255,7 @@ public class JfrEventSettingDemo {
 编译队列适合调查热方法迟迟未优化或启动抖动，但解释 JIT 问题还要结合 JFR ExecutionSample、编译日志和实际 CPU。
 
 ```java
+// 说明：将 <pid> 替换为目标 JVM 进程号，Compiler.queue 输出当前等待 C1/C2 JIT 编译的方法，不会生成转储文件。
 public class CompilerQueueHintDemo {
     public static void main(String[] args) {
         System.out.println("jcmd <pid> Compiler.queue");

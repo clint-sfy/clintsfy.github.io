@@ -126,7 +126,11 @@ const EXPECTED_ARTICLES_BY_CHAPTER = {
     '04-JVM诊断命令与JFR.md',
     '05-GC日志与问题定位.md',
   ],
-  '11-工程实践': ['01-Maven与测试工程.md', '02-JDBC与事务.md'],
+  '11-工程实践': [
+    '01-Maven与测试工程.md',
+    '02-JDBC与事务.md',
+    '04-Velocity代码生成.md',
+  ],
   '12-设计与项目': ['01-设计原则模式与综合复习.md'],
   '13-后端工程': [
     '01-Spring-Boot启动与配置.md',
@@ -156,6 +160,110 @@ const EXPECTED_JAVA_PATHS = [
 ].sort()
 
 const ARTICLE_PATHS = EXPECTED_JAVA_PATHS.filter((file) => file !== JAVA_INDEX_PATH)
+
+// Snapshot of the RuoYi external-call audit used for this course revision.
+// It deliberately lives in the test instead of depending on uncommitted audit reports:
+// every manifest entry with status=body, every missing entry with frequency >= 3,
+// plus the three review batches' explicit P0/P1 items must remain searchable in H3 titles.
+const REQUIRED_EXTERNAL_API_HEADINGS = {
+  'docs/courses/java/02-数组与文本/02-String与文本处理.md': ['String.substring'],
+  'docs/courses/java/02-数组与文本/03-常用类与包装类型.md': [
+    'IOUtils.close', 'ArrayUtils.contains', 'RegExUtils.replaceAll', 'Validate.notBlank',
+  ],
+  'docs/courses/java/02-数组与文本/04-正则表达式与文本匹配.md': [
+    'Matcher.appendReplacement', 'Matcher.appendTail', 'Matcher.quoteReplacement', 'Pattern.matcher',
+  ],
+  'docs/courses/java/03-面向对象/06-Object方法与对象相等.md': ['ToStringBuilder'],
+  'docs/courses/java/05-泛型与集合/04-List常用API.md': [
+    'ArrayList.add', 'Collection.size', 'Iterator.hasNext', 'Iterator.next', 'List.add',
+    'List.addAll', 'List.contains', 'List.get', 'List.iterator', 'List.remove', 'List.size',
+    'List.stream', 'List.toArray',
+  ],
+  'docs/courses/java/05-泛型与集合/05-Set去重与集合运算.md': ['HashSet', 'Set.add'],
+  'docs/courses/java/05-泛型与集合/03-Map与集合选择.md': [
+    'Map.computeIfAbsent', 'Map.merge',
+  ],
+  'docs/courses/java/05-泛型与集合/07-Map常用API.md': [
+    'Map.containsKey', 'Map.containsValue', 'Map.entrySet', 'Map.get', 'Map.keySet',
+    'Map.put', 'Map.remove', 'Map.size', 'Map.values',
+  ],
+  'docs/courses/java/06-函数式与时间/02-Stream流式处理.md': [
+    'Collectors.groupingBy', 'Collectors.joining', 'Collectors.toList',
+    'Collectors.toMap', 'Collectors.toSet',
+  ],
+  'docs/courses/java/06-函数式与时间/07-日期格式化与解析.md': [
+    'SimpleDateFormat', 'Duration.of', 'LocalDateTime.of', 'LocalTime.of',
+  ],
+  'docs/courses/java/06-函数式与时间/03-日期时间API.md': ['Date'],
+  'docs/courses/java/07-IO与网络/04-字节流字符流与缓冲.md': [
+    'BufferedReader', 'BufferedReader.close', 'ByteArrayInputStream', 'ByteArrayOutputStream', 'File.exists',
+    'FileOutputStream', 'InputStreamReader', 'IOException', 'PrintWriter',
+    'StringWriter', 'StringWriter.toString', 'Paths.get', 'ZipOutputStream',
+  ],
+  'docs/courses/java/07-IO与网络/06-HTTP-Client常用API.md': [
+    'URL', 'URL.openConnection', 'URLEncoder.encode',
+  ],
+  'docs/courses/java/08-反射与模块/04-注解定义与运行时读取.md': [
+    'Field.get', 'Field.set', 'AnnotationUtils.findAnnotation',
+  ],
+  'docs/courses/java/09-并发编程/02-并发工具与线程安全.md': [
+    'ThreadPoolExecutor.CallerRunsPolicy',
+  ],
+  'docs/courses/java/11-工程实践/01-Maven与测试工程.md': [
+    '@PreDestroy', '@Resource', 'Charset.defaultCharset', 'Charset.forName',
+    'Random.nextInt', 'UUID.randomUUID',
+  ],
+  'docs/courses/java/11-工程实践/04-Velocity代码生成.md': [
+    'Properties', 'Template.merge', 'VelocityContext.put',
+  ],
+  'docs/courses/java/13-后端工程/01-Spring-Boot启动与配置.md': ['@Configuration'],
+  'docs/courses/java/13-后端工程/02-Spring-IoC与Bean生命周期.md': [
+    '@Autowired', '@Value', '@ConditionalOnProperty', 'SpringApplication.run',
+    'FilterRegistrationBean', 'FilterRegistrationBean.addUrlPatterns',
+  ],
+  'docs/courses/java/13-后端工程/03-Spring-AOP与声明式事务.md': [
+    '@Transactional', 'AopContext.currentProxy',
+  ],
+  'docs/courses/java/13-后端工程/04-Spring-MVC与Servlet边界.md': [
+    '@DeleteMapping', '@ExceptionHandler', '@GetMapping', '@PathVariable', '@PostMapping',
+    '@PutMapping', '@RequestMapping', '@RequestParam', '@ResponseBody', '@RestController',
+    '@RestControllerAdvice', 'FilterChain.doFilter', 'HttpServletResponse.addHeader',
+  ],
+  'docs/courses/java/13-后端工程/05-Spring-Security与JWT.md': [
+    '@EnableMethodSecurity', '@PreAuthorize', 'Claims.get', 'Jwts.parser', 'BCryptPasswordEncoder',
+  ],
+  'docs/courses/java/13-后端工程/06-MyBatis核心与MyBatis-Plus重点.md': [
+    '@Param', '@MapperScan', 'PageHelper.startPage', 'PageHelper.orderBy',
+    'PageHelper.clearPage', 'PageInfo',
+  ],
+  'docs/courses/java/13-后端工程/07-Jackson与Fastjson2-JSON.md': [
+    '@JSONField', '@JsonSerialize', 'JSONObject.containsKey', 'JSONObject.parseObject',
+    '@JsonProperty', '@JsonIgnore', '@JacksonAnnotationsInside', 'Jwts.builder', 'Claims.put',
+  ],
+  'docs/courses/java/13-后端工程/08-Bean-Validation参数校验.md': [
+    '@Constraint', '@Email', '@NotNull', '@Pattern',
+  ],
+  'docs/courses/java/13-后端工程/09-SLF4J与Logback日志.md': ['Logger.debug', 'Logger.warn'],
+  'docs/courses/java/13-后端工程/11-Apache-POI-Excel导入导出.md': [
+    'Row.createCell', 'Sheet.addMergedRegion', 'Sheet.createRow',
+    'Workbook.createCellStyle', 'Workbook.createDataFormat', 'Workbook.createFont',
+    'Workbook.createSheet', 'WorkbookFactory.create', 'CellRangeAddress',
+    'IOUtils.closeQuietly', 'SXSSFWorkbook.write', 'CellStyle.cloneStyleFrom',
+    'DataValidationHelper.createValidation', 'DataValidation.createPromptBox',
+    'Sheet.addValidationData', 'CellRangeAddressList', 'IOUtils.toByteArray',
+  ],
+  'docs/courses/java/13-后端工程/12-Quartz定时任务.md': [
+    'CronExpression', 'CronScheduleBuilder.cronSchedule', 'JobBuilder.newJob', 'JobDataMap',
+    'JobDataMap.put', 'JobKey.jobKey', 'Scheduler.checkExists', 'Scheduler.deleteJob',
+    'Scheduler.pauseJob', 'Scheduler.resumeJob', 'Scheduler.scheduleJob',
+    'TriggerBuilder.newTrigger',
+  ],
+  'docs/courses/java/13-后端工程/14-Redis.md': [
+    'RedisTemplate.delete', 'RedisTemplate.execute', 'RedisTemplate.keys',
+    'RedisTemplate.opsForHash', 'RedisTemplate.opsForList', 'DefaultRedisScript',
+    'StringRedisSerializer',
+  ],
+}
 // Chapters 01-10 are the completed quality-gated learning path. Chapters
 // 11-12 remain the unchanged follow-up roadmap and are covered only by the
 // global path/frontmatter/navigation guards.
@@ -188,6 +296,15 @@ const BACKEND_CROSS_LINKS = [
 ]
 
 const BACKEND_FORBIDDEN_TERMS = ['若依', 'RuoYi', '实践任务', '练习题', '面试常问']
+const FORBIDDEN_TEMPLATE_PHRASES = [
+  '本例演示',
+  '本段示例的具体调用入口',
+  '下方结果',
+  '示例所需依赖',
+  '受控输入与运行上下文',
+  '结果：执行后',
+  '示例执行到' + '预期分支',
+]
 
 function createBackendArticleSpec({ path, title, keywords, commonUsage, uncommonUsage }) {
   return {
@@ -216,91 +333,91 @@ const BACKEND_ARTICLE_SPECS = [
     path: 'docs/courses/java/13-后端工程/02-Spring-IoC与Bean生命周期.md',
     title: 'Spring IoC 与 Bean 生命周期',
     keywords: ['@Component', '@Service', '@Bean', '构造器注入', '@PostConstruct', '作用域', '代理对象'],
-    commonUsage: ['@Component/@Service', '@Bean', '构造器注入', '@PostConstruct', '作用域', '代理对象'],
+    commonUsage: ['@Component', '@Service', '@Bean', '构造器注入', '@PostConstruct', '作用域', '代理对象'],
     uncommonUsage: ['ObjectProvider', '@Lazy', '@Primary'],
   }),
   createBackendArticleSpec({
     path: 'docs/courses/java/13-后端工程/03-Spring-AOP与声明式事务.md',
     title: 'Spring AOP 与声明式事务',
     keywords: ['@Aspect', '@Pointcut', '@Around', 'proceed', '@Transactional', '传播', '隔离', '回滚', '只读', '自调用'],
-    commonUsage: ['@Aspect/@Pointcut', '@Around', 'proceed', '@Transactional', '传播/隔离/回滚/只读', '自调用'],
+    commonUsage: ['@Aspect', '@Pointcut', '@Around', 'proceed', '@Transactional', '配置只读查询的事务策略', '自调用'],
     uncommonUsage: ['@Order', 'TransactionTemplate', '回滚规则'],
   }),
   createBackendArticleSpec({
     path: 'docs/courses/java/13-后端工程/04-Spring-MVC与Servlet边界.md',
     title: 'Spring MVC 与 Servlet 边界',
     keywords: ['@RestController', '@RequestMapping', '@GetMapping', '@RequestBody', '响应体', '异常处理', 'Filter', 'Interceptor'],
-    commonUsage: ['@RestController', '@RequestMapping/@GetMapping', '@RequestBody', '响应体', '异常处理', 'Filter/Interceptor'],
-    uncommonUsage: ['ResponseEntity', 'OncePerRequestFilter', '拦截器顺序', 'Servlet request/response 生命周期'],
+    commonUsage: ['@RestController', '@RequestMapping', '@GetMapping', '@RequestBody', '响应体', '异常处理', 'Filter', 'HandlerInterceptor'],
+    uncommonUsage: ['ResponseEntity', 'OncePerRequestFilter', '拦截器顺序', 'HttpServletResponse.flushBuffer'],
   }),
   createBackendArticleSpec({
     path: 'docs/courses/java/13-后端工程/05-Spring-Security与JWT.md',
     title: 'Spring Security 与 JWT',
     keywords: ['SecurityFilterChain', 'authorizeHttpRequests', '@PreAuthorize', 'BCrypt', 'Bearer', 'claims', '过期', '401', '403'],
-    commonUsage: ['SecurityFilterChain', 'authorizeHttpRequests', '@PreAuthorize', 'BCrypt', 'Bearer token', 'claims/过期'],
+    commonUsage: ['SecurityFilterChain', 'authorizeHttpRequests', '@PreAuthorize', 'BCrypt', 'Bearer token', 'JWT claims', 'JWT exp'],
     uncommonUsage: ['AuthenticationEntryPoint', 'AccessDeniedHandler', '测试替身'],
   }),
   createBackendArticleSpec({
     path: 'docs/courses/java/13-后端工程/06-MyBatis核心与MyBatis-Plus重点.md',
     title: 'MyBatis 核心与 MyBatis-Plus 重点',
-    keywords: ['<select>', '<insert>', '#{}', '<if>', '<foreach>', '结果映射', 'BaseMapper', 'IService', 'QueryWrapper', '分页'],
-    commonUsage: ['XML <select>/<insert>', '#{}', '动态 <if>/<foreach>', '结果映射'],
-    uncommonUsage: ['BaseMapper', 'IService', 'QueryWrapper/LambdaQueryWrapper', '分页', '原生 XML 对照'],
+    keywords: ['<select', '<insert', '#{}', '<if ', '<foreach ', '结果映射', 'BaseMapper', 'IService', 'QueryWrapper', '分页'],
+    commonUsage: ['XML <select>', 'XML <insert>', '#{}', '按可选 ID 集合构建查询', '结果映射'],
+    uncommonUsage: ['BaseMapper', 'IService', 'LambdaQueryWrapper', '分页', '原生 XML 对照'],
   }),
   createBackendArticleSpec({
     path: 'docs/courses/java/13-后端工程/07-Jackson与Fastjson2-JSON.md',
     title: 'Jackson 与 Fastjson2 JSON',
-    keywords: ['ObjectMapper', 'Jackson Databind', '@JsonFormat', '@JsonInclude', 'toJSONString', 'parseObject', '自定义序列化', 'Redis 序列化'],
-    commonUsage: ['ObjectMapper/Jackson Databind', '@JsonFormat/@JsonInclude', 'Fastjson2 toJSONString/parseObject'],
+    keywords: ['ObjectMapper', 'Jackson', '@JsonFormat', '@JsonInclude', 'toJSONString', 'parseObject', '自定义序列化', 'Redis 序列化'],
+    commonUsage: ['ObjectMapper.writeValueAsString', 'ObjectMapper.readValue', '@JsonFormat', '@JsonInclude', 'JSON.toJSONString', 'JSON.parseObject'],
     uncommonUsage: ['自定义序列化', 'Redis 序列化'],
   }),
   createBackendArticleSpec({
     path: 'docs/courses/java/13-后端工程/08-Bean-Validation参数校验.md',
     title: 'Bean Validation 参数校验',
     keywords: ['@NotBlank', '@Size', '@Valid', '@Validated', '级联', '分组', 'ConstraintValidator', '字段错误响应'],
-    commonUsage: ['@NotBlank/@Size', '@Valid/@Validated', '级联', '分组'],
+    commonUsage: ['@NotBlank', '@Size', '@Valid', '@Validated', '级联', '分组'],
     uncommonUsage: ['ConstraintValidator', '字段错误响应', '转换/校验/授权职责'],
   }),
   createBackendArticleSpec({
     path: 'docs/courses/java/13-后端工程/09-SLF4J与Logback日志.md',
     title: 'SLF4J 与 Logback 日志',
     keywords: ['LoggerFactory', 'info', 'error', 'Logback', 'appender', '滚动', 'MDC', '脱敏', 'AOP 操作日志'],
-    commonUsage: ['LoggerFactory', '参数化 info/error', 'Logback appender/滚动', 'MDC'],
+    commonUsage: ['LoggerFactory', 'Logger.info', 'Logger.error', 'Logback 滚动文件', 'MDC'],
     uncommonUsage: ['脱敏', 'AOP 操作日志', '采样/异常堆栈'],
   }),
   createBackendArticleSpec({
     path: 'docs/courses/java/13-后端工程/10-文件上传下载与资源安全.md',
     title: '文件上传下载与资源安全',
     keywords: ['MultipartFile', 'transferTo', '扩展名', '大小白名单', '路径规范化', '路径穿越', 'Content-Disposition', '流式下载'],
-    commonUsage: ['MultipartFile', 'transferTo', '扩展名/大小白名单', '路径规范化', 'Content-Disposition', '流式下载'],
+    commonUsage: ['MultipartFile', 'transferTo', '执行上传白名单校验', '路径规范化', 'Content-Disposition', '流式下载'],
     uncommonUsage: ['路径穿越', '临时文件', '拒绝路径'],
   }),
   createBackendArticleSpec({
     path: 'docs/courses/java/13-后端工程/11-Apache-POI-Excel导入导出.md',
     title: 'Apache POI Excel 导入导出',
     keywords: ['WorkbookFactory', 'SXSSFWorkbook', '注解列映射', 'importExcel', 'exportExcel', '大文件', '日期', '公式', '资源释放'],
-    commonUsage: ['WorkbookFactory', 'SXSSFWorkbook', '注解列映射', 'importExcel/exportExcel'],
+    commonUsage: ['WorkbookFactory', 'SXSSFWorkbook', '注解列映射', 'importExcel', 'exportExcel'],
     uncommonUsage: ['大文件', '日期/公式', '资源释放'],
   }),
   createBackendArticleSpec({
     path: 'docs/courses/java/13-后端工程/12-Quartz定时任务.md',
     title: 'Quartz 定时任务',
     keywords: ['Job', 'JobDetail', 'CronTrigger', 'Cron 表达式', 'misfire', '暂停/恢复', '@DisallowConcurrentExecution', '持久化表', '失败重试'],
-    commonUsage: ['Job', 'JobDetail', 'CronTrigger', 'Cron 表达式', 'misfire', '暂停/恢复'],
+    commonUsage: ['Job', 'JobDetail', 'CronTrigger', 'Cron 表达式', 'misfire', '维护期间控制调度启停'],
     uncommonUsage: ['@DisallowConcurrentExecution', '持久化表', '失败重试', 'ScheduledExecutorService'],
   }),
   createBackendArticleSpec({
     path: 'docs/courses/java/13-后端工程/13-MySQL-8.0.md',
     title: 'MySQL 8.0',
-    keywords: ['MySQL 8.0', 'DDL', '常用类型', '字符集', '索引', 'EXPLAIN', '事务', '行锁', 'CTE', '窗口函数'],
-    commonUsage: ['MySQL 8.0', 'DDL/常用类型/字符集', '索引与 EXPLAIN'],
-    uncommonUsage: ['事务/行锁', 'CTE/窗口函数', '时间类型与 JDBC 驱动', 'offset/keyset 分页', '批量写入'],
+    keywords: ['MySQL 8.0', 'ALTER TABLE', 'DECIMAL', 'utf8mb4', '索引', 'EXPLAIN', '事务', '行锁', 'CTE', '窗口函数'],
+    commonUsage: ['MySQL 8.0', 'ALTER TABLE', 'DECIMAL', 'utf8mb4', '索引与 EXPLAIN'],
+    uncommonUsage: ['事务/行锁', 'CTE/窗口函数', '时间类型与 JDBC 驱动', 'keyset 分页', '批量写入'],
   }),
   createBackendArticleSpec({
     path: 'docs/courses/java/13-后端工程/14-Redis.md',
     title: 'Redis',
     keywords: ['RedisTemplate', 'opsForValue', 'Hash', 'List', 'Set', 'TTL', '序列化', 'Lua', '缓存一致性', '限流'],
-    commonUsage: ['RedisTemplate.opsForValue', 'Hash/List/Set', 'TTL', '序列化'],
+    commonUsage: ['RedisTemplate.opsForValue', 'Redis Hash', 'Redis List', 'Redis Set', 'TTL', '序列化'],
     uncommonUsage: ['Lua', '缓存一致性', '穿透/击穿/雪崩', '限流', '并发失败边界'],
   }),
 ]
@@ -326,13 +443,10 @@ const EXPECTED_JDK20_PREVIEW_ARTICLES = [
 ]
 
 const QUICK_REFERENCE_SECTIONS = {
-  'docs/courses/java/02-数组与文本/01-数组与多维数组.md': ['常用 API 速查'],
-  'docs/courses/java/02-数组与文本/02-String与文本处理.md': [
-    'String API 速查',
-    '项目常用：Hutool JSONUtil',
-  ],
-  'docs/courses/java/05-泛型与集合/02-集合框架与数据结构.md': ['常用 API 速查'],
-  'docs/courses/java/05-泛型与集合/03-Map与集合选择.md': ['常用 API 速查'],
+  'docs/courses/java/02-数组与文本/01-数组与多维数组.md': ['常用用法'],
+  'docs/courses/java/02-数组与文本/02-String与文本处理.md': ['常用用法'],
+  'docs/courses/java/05-泛型与集合/02-集合框架与数据结构.md': ['常用用法'],
+  'docs/courses/java/05-泛型与集合/03-Map与集合选择.md': ['常用用法'],
 }
 
 const NEW_LOCK_ARTICLE_PATHS = [
@@ -413,7 +527,10 @@ function getSectionsByLabel(body, label) {
 
 function subsectionMatches(line, label) {
   const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const normalizedLine = line.replaceAll('&lt;', '<').replaceAll('&gt;', '>')
+  const normalizedLine = line
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('`', '')
   return new RegExp(`^###\\s+${escapedLabel}(?:\\s|[:：，,（(]|$)`).test(normalizedLine)
 }
 
@@ -488,6 +605,177 @@ function inspectUsageSubsection(content, { requireExplanation = false } = {}) {
   return []
 }
 
+const ATOMIC_USAGE_HEADING_ALLOWLIST = new Set([
+  // These headings describe one inseparable Stream collector/pipeline expression;
+  // splitting either stage would no longer demonstrate the documented operation.
+  '`flatMap` + `distinct`：展开后去重',
+  '`groupingBy` + `mapping`：分组后提取字段',
+  '`groupingBy` + `summingInt`：分组求和',
+  '`groupingBy` + `summarizingInt`：分组统计摘要',
+  '`groupingBy` + `reducing`：每组按规则归约',
+  '`javac` 与 `java`：编译并运行类',
+  '`&&` 与 `||`：使用短路逻辑',
+  '`final` 与 `static final`：表达稳定值',
+  '`class`/`new`：声明类并创建对象',
+  '`interface`/`implements`：声明并实现能力契约',
+  '`wait`/`notifyAll`：对象监视器协作',
+  '自动装箱/拆箱：在基本值与对象间转换',
+  '`Collection.stream`/`Stream.of`：创建顺序流',
+  '`onClose`/`close`：管理特殊流资源',
+  '`LocalDate.parse`/`format`：处理日期文本',
+  '`LocalTime.parse`/`format`：处理时间文本',
+  '`LocalDateTime.parse`/`format`：处理本地日期时间',
+  '`ZoneId`/`ZonedDateTime`：按地区显示同一时刻',
+  '`Instant.parse`/`ofEpochMilli`：创建时间线时刻',
+  'BlockingQueue.put、take：阻塞式生产消费',
+  '`shutdownInput`/`shutdownOutput`：TCP 半关闭',
+  '`META-INF/services`：classpath 提供方配置',
+  '完成一次 JFR 记录：启动、导出并停止',
+  '序列化：固定 key 与 value 字节契约',
+  '资源释放：关闭输入流、Workbook 与临时文件',
+])
+
+function getExactH2Sections(body, label) {
+  const lines = body.split(/\r?\n/u)
+  const heading = `## ${label}`
+  const starts = lines.flatMap((line, index) => line === heading ? [index] : [])
+  return starts.map((start) => {
+    const relativeEnd = lines.slice(start + 1).findIndex((line) => /^##\s+/u.test(line))
+    const end = relativeEnd < 0 ? lines.length : start + 1 + relativeEnd
+    return lines.slice(start + 1, end).join('\n')
+  })
+}
+
+function getH3Subsections(section) {
+  const lines = section.split(/\r?\n/u)
+  const starts = lines.flatMap((line, index) => {
+    const match = line.match(/^###\s+(\S.*)$/u)
+    return match ? [{ index, heading: match[1].trim() }] : []
+  })
+  return starts.map((start, index) => ({
+    heading: start.heading,
+    content: lines.slice(start.index + 1, starts[index + 1]?.index ?? lines.length).join('\n'),
+  }))
+}
+
+function getAllH3Subsections(body) {
+  const lines = body.split(/\r?\n/u)
+  const starts = []
+  let inFence = false
+  lines.forEach((line, index) => {
+    if (/^\s*```/u.test(line)) {
+      inFence = !inFence
+      return
+    }
+    const match = !inFence && line.match(/^###\s+(\S.*)$/u)
+    if (match) starts.push({ index, heading: match[1].trim() })
+  })
+  return starts.map((start, index) => ({
+    heading: start.heading,
+    content: lines.slice(start.index + 1, starts[index + 1]?.index ?? lines.length).join('\n'),
+  }))
+}
+
+function isExplicitApiHeading(heading) {
+  const label = heading.split(/[：:]/u, 1)[0].trim()
+  const normalized = label.replaceAll('`', '')
+  const apiToken = '@?[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*(?:\([^)]*\))?'
+  return new RegExp(`^${apiToken}(?:\\s*(?:\\+|/|、|与|和|及|以及)\\s*${apiToken})*$`, 'u').test(normalized)
+}
+
+function isCombinedApiHeading(heading) {
+  const label = heading.split(/[：:]/u, 1)[0].replaceAll('`', '').trim()
+  const apiToken = '@?[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*(?:\([^)]*\))?'
+  return new RegExp(`^${apiToken}\\s*(?:\\+|/|、|与|和|及|以及)\\s*${apiToken}`, 'u').test(label)
+}
+
+function getSupportedApiH3Subsections(body) {
+  return getAllH3Subsections(body).filter(({ heading, content }) =>
+    isExplicitApiHeading(heading) &&
+    /```(?:java|sql|xml|properties|yaml|shell)(?:\s|$)/iu.test(content),
+  )
+}
+
+function getExternalApiHeadingTokens(body) {
+  const tokens = new Set()
+  for (const match of body.matchAll(/^###\s+(\S.*)$/gmu)) {
+    const label = match[1].split(/[：:]/u, 1)[0].trim()
+    if (/不存在|不是\s*API|不可用/u.test(label)) continue
+
+    for (const tokenMatch of label.matchAll(/@?[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*/gu)) {
+      tokens.add(tokenMatch[0])
+    }
+  }
+  return tokens
+}
+
+function inspectApiHeadingFormat(body) {
+  const violations = []
+  const sections = getExactH2Sections(body, '常用用法')
+  if (sections.length !== 1) {
+    return [`expected exactly one exact \"## 常用用法\" heading, found ${sections.length}`]
+  }
+
+  const commonSubsections = getH3Subsections(sections[0])
+  if (commonSubsections.length === 0) violations.push('常用用法 needs at least one H3 API subsection')
+  const subsections = commonSubsections
+
+  for (const { heading, content } of subsections) {
+    const prefix = `[${heading}]`
+    const lines = content.split(/\r?\n/u)
+    const first = lines.findIndex((line) => line.trim() !== '')
+    if (first < 0 || /^(?:```|[-*+]\s|\d+[.)]\s|>|#{1,6}\s)/u.test(lines[first].trim())) {
+      violations.push(`${prefix} first non-empty block must be a purpose sentence`)
+      continue
+    }
+
+    const fence = lines.findIndex((line, index) => index > first && /^```(?:java|sql|xml)\s*$/u.test(line.trim()))
+    if (fence < 0) {
+      violations.push(`${prefix} purpose sentence must be followed by a java/sql/xml fence`)
+      continue
+    }
+    const explanationLines = lines.slice(first, fence).filter((line) => line.trim() !== '')
+    const explanation = stripMarkdown(explanationLines.join(' '))
+    if (explanationLines.length !== 1 || explanation.length < 10 || !/[。！？]$/u.test(explanation) || (explanation.match(/[。！？]/gu)?.length ?? 0) !== 1) {
+      violations.push(`${prefix} purpose must be one complete sentence of at least 10 characters`)
+    }
+
+    const language = lines[fence].trim().slice(3)
+    const closingOffset = lines.slice(fence + 1).findIndex((line) => line.trim() === '```')
+    if (closingOffset < 0) {
+      violations.push(`${prefix} code fence is not closed`)
+      continue
+    }
+    const close = fence + 1 + closingOffset
+    const codeLines = lines.slice(fence + 1, close)
+    const realCode = codeLines.some((line) => {
+      const trimmed = line.trim()
+      if (!trimmed) return false
+      if (language === 'java') return !/^(?:\/\/|\/\*|\*|\*\/)/u.test(trimmed)
+      if (language === 'sql') return !/^--/u.test(trimmed)
+      return !/^(?:<!--|-->|--)/u.test(trimmed)
+    })
+    if (!realCode) violations.push(`${prefix} example needs real non-comment code`)
+
+    const standaloneResult = language === 'java'
+      ? codeLines.some((line) => /^\s*\/\/\s*(?:输出|结果|效果)：\s*\S/u.test(line))
+      : codeLines.some((line) => /^\s*--\s*(?:输出|结果|效果)：\s*\S/u.test(line))
+        || lines.slice(close + 1).some((line) => /^\s*(?:输出|结果|效果)：\s*\S/u.test(line))
+    if (!standaloneResult) violations.push(`${prefix} example needs a standalone output/result line`)
+
+    if (isCombinedApiHeading(heading) && !ATOMIC_USAGE_HEADING_ALLOWLIST.has(heading)) {
+      violations.push(`${prefix} combined API heading is not in the atomic-operation allowlist`)
+    }
+  }
+  for (const { heading } of getSupportedApiH3Subsections(body)) {
+    if (isCombinedApiHeading(heading) && !ATOMIC_USAGE_HEADING_ALLOWLIST.has(heading)) {
+      const issue = `[${heading}] combined API heading is not in the atomic-operation allowlist`
+      if (!violations.includes(issue)) violations.push(issue)
+    }
+  }
+  return violations
+}
+
 function removeFencedCode(text) {
   const lines = text.split(/\r?\n/)
   const visibleLines = []
@@ -548,7 +836,7 @@ function getJavaBlocks(text) {
 }
 
 function getBackendCodeBlocks(text) {
-  return [...text.matchAll(/```(java|sql)[^\r\n]*\r?\n([\s\S]*?)```/gi)].map((match) => ({
+  return [...text.matchAll(/```(java|sql|xml)[^\r\n]*\r?\n([\s\S]*?)```/gi)].map((match) => ({
     language: match[1].toLowerCase(),
     code: match[2],
   }))
@@ -567,14 +855,90 @@ function hasStandaloneOutputComment(code) {
 }
 
 function hasStandaloneBackendOutputComment(code) {
-  return /^\s*(?:\/\/|--)\s*输出\s*[:：]\s*\S.*$/mu.test(code)
+  return /^\s*(?:\/\/|--)\s*(?:输出|结果)\s*[:：]\s*\S.*$/mu.test(code)
+}
+
+const COMMON_USAGE_CODE_LANGUAGES = new Set([
+  'java', 'sql', 'xml', 'properties', 'yaml', 'shell',
+])
+const EXPLANATION_COMMENT_LABEL = /(?:输入|初始(?:状态)?|前置(?:条件)?|作用|关键变化|当前状态|说明)\s*[:：]/u
+const RESULT_COMMENT_LABEL = /(?:输出|结果)\s*[:：]/u
+const FORBIDDEN_EXAMPLE_COMMENT_PATTERN = /关键输入或调用是|执行后[^\r\n]*(?:完成|进入|得到|产生)|本例演示|示例完成/u
+
+const WEAK_EXPLANATION_ANCHORS = new Set([
+  'abstract', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const',
+  'continue', 'default', 'do', 'double', 'else', 'enum', 'extends', 'false', 'final',
+  'finally', 'float', 'for', 'goto', 'if', 'implements', 'import', 'instanceof', 'int',
+  'interface', 'Java', 'long', 'native', 'new', 'null', 'package', 'private', 'protected',
+  'public', 'record', 'Redis', 'return', 'sealed', 'short', 'static', 'String', 'super',
+  'switch', 'synchronized', 'this', 'throw', 'throws', 'transient', 'true', 'try', 'var',
+  'void', 'volatile', 'while', 'yield',
+])
+
+function isMeaningfulExplanationAnchor(token) {
+  return !WEAK_EXPLANATION_ANCHORS.has(token) && !WEAK_EXPLANATION_ANCHORS.has(token.toLowerCase())
+}
+
+function getExplanationAnchors(heading, code) {
+  const headingLabel = heading.split(/[：:]/u, 1)[0].replaceAll('`', '')
+  const headingTokens = [...headingLabel.matchAll(/@?[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*/gu)]
+    .map((match) => match[0])
+  const codeWithoutComments = code
+    .replace(/\/\*[\s\S]*?\*\//gu, ' ')
+    .replace(/^\s*(?:\/\/|--|#).*$/gmu, ' ')
+  const codeAnchors = [
+    ...[...codeWithoutComments.matchAll(/\b[A-Za-z_$][\w$]*\b/gu)].map((match) => match[0]),
+    ...[...codeWithoutComments.matchAll(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\b\d+(?:\.\d+)?\b/gu)].map((match) => match[0]),
+  ]
+  return [...new Set([...headingTokens, ...codeAnchors])]
+    .filter((token) => token.length > 1 && isMeaningfulExplanationAnchor(token))
+}
+
+function getLanguageComments(language, code) {
+  if (language === 'xml') {
+    return [...code.matchAll(/<!--[\s\S]*?-->/gu)].map((match) =>
+      match[0].replace(/^<!--|-->$/gu, '').trim(),
+    )
+  }
+
+  const marker = ['java'].includes(language) ? '//' : language === 'sql' ? '--' : '#'
+  return code
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith(marker))
+    .map((line) => line.slice(marker.length).trim())
+}
+
+function inspectApiExampleComments(body) {
+  const issues = []
+  for (const { heading, content } of getSupportedApiH3Subsections(body)) {
+    const blocks = [...content.matchAll(/```([^\s`]+)[^\r\n]*\r?\n([\s\S]*?)```/gu)]
+    const firstSupportedBlock = blocks.find((match) =>
+      COMMON_USAGE_CODE_LANGUAGES.has(match[1].toLowerCase()),
+    )
+    const language = firstSupportedBlock[1].toLowerCase()
+    const comments = getLanguageComments(language, firstSupportedBlock[2])
+    const explanationComments = comments.filter((comment) => EXPLANATION_COMMENT_LABEL.test(comment))
+    if (explanationComments.length === 0) {
+      issues.push(`[${heading}] first ${language} block needs an explanation comment`)
+    } else if (!['properties', 'yaml', 'xml'].includes(language)) {
+      const anchors = getExplanationAnchors(heading, firstSupportedBlock[2])
+      if (!explanationComments.some((comment) => anchors.some((anchor) => comment.includes(anchor)))) {
+        issues.push(`[${heading}] first ${language} block explanation must name its API or a real code identifier/literal`)
+      }
+    }
+    if (!comments.some((comment) => RESULT_COMMENT_LABEL.test(comment))) {
+      issues.push(`[${heading}] first ${language} block needs a result/output comment`)
+    }
+  }
+  return issues
 }
 
 function inspectBackendUsage(content, { requireOutput = true } = {}) {
   if (typeof content !== 'string' || content.trim() === '') return ['usage subsection is empty']
 
   const lines = content.split(/\r?\n/)
-  const firstCodeIndex = lines.findIndex((line) => /^\s*```(?:java|sql)(?:\s|$)/iu.test(line))
+  const firstCodeIndex = lines.findIndex((line) => /^\s*```(?:java|sql|xml)(?:\s|$)/iu.test(line))
   const purposeIndex = lines.findIndex((line) => /^\s*用途\s*[:：]\s*\S/u.test(line))
   const blocks = getBackendCodeBlocks(content)
   const issues = []
@@ -593,17 +957,21 @@ function inspectBackendUsage(content, { requireOutput = true } = {}) {
   }
 
   if (firstCodeIndex < 0 || blocks.length === 0) {
-    issues.push('needs a java or sql code block')
+    issues.push('needs a java, sql, or xml code block')
   } else {
     for (const { code } of blocks) {
       if (stripBackendComments(code) === '') {
-        issues.push('java/sql code block must contain at least one real code line')
+        issues.push('java/sql/xml code block must contain at least one real code line')
       }
     }
   }
 
-  if (requireOutput && !blocks.some(({ code }) => hasStandaloneBackendOutputComment(code))) {
-    issues.push('needs a standalone // 输出： or -- 输出： comment')
+  if (
+    requireOutput &&
+    !blocks.some(({ code }) => hasStandaloneBackendOutputComment(code)) &&
+    !/^\s*结果\s*[:：]\s*\S.*$/mu.test(content)
+  ) {
+    issues.push('needs a standalone output/result comment')
   }
 
   return issues
@@ -1124,7 +1492,7 @@ test('persistence backend batch keeps MyBatis source boundary and database keywo
 
   const myBatisBody = articles.get('docs/courses/java/13-后端工程/06-MyBatis核心与MyBatis-Plus重点.md') ?? ''
   for (const requiredText of [
-    '<select>', '<insert>', '#{}', '<if>', '<foreach>', '结果映射',
+    '<select', '<insert', '#{}', '<if ', '<foreach ', '结果映射',
     'BaseMapper', 'QueryWrapper', '分页', '原生 XML',
     '@TableId', 'IdType.AUTO', 'getId', 'setId', 'getStatus', 'setStatus',
     'getCreatedAt', 'setCreatedAt', 'useGeneratedKeys', 'keyProperty',
@@ -1325,6 +1693,18 @@ test('Task4 review regressions lock version, proxy, package, and response detail
     /io\.jsonwebtoken[\s\S]*?<artifactId>jjwt<\/artifactId>[\s\S]*?<version>0\.9\.1<\/version>/u,
     'JJWT 0.9.1 must document its legacy monolithic dependency',
   )
+  for (const artifact of ['jjwt-api', 'jjwt-impl', 'jjwt-jackson']) {
+    assert.match(
+      securityBody,
+      new RegExp(`<artifactId>${artifact}<\\/artifactId>[\\s\\S]{0,120}<version>0\\.12\\.6<\\/version>`, 'u'),
+      `JJWT 0.12.6 must version the ${artifact} module explicitly`,
+    )
+  }
+  assert.doesNotMatch(
+    securityBody,
+    /<artifactId>jjwt<\/artifactId>[\s\S]{0,120}<version>0\.12/u,
+    'the legacy jjwt monolith must not be presented as a modern 0.12.x dependency',
+  )
   assert.match(
     securityBody,
     /Jwts\.parser\(\)\s*\.setSigningKey\([\s\S]*?\.parseClaimsJws\(/u,
@@ -1431,8 +1811,10 @@ test('final backend review regressions close Jackson 3, upload, and transfer fai
   for (const { content } of helperSections) {
     const blocks = getBackendCodeBlocks(content)
     assert.equal(blocks.length, 1, 'each file helper heading should expose one focused code snippet')
-    const lineCount = blocks[0].code.split(/\r?\n/u).filter((line) => line.trim()).length
-    assert.ok(lineCount >= 8 && lineCount <= 25, 'file helper snippets should keep 8-25 non-empty code lines')
+    const codeLineCount = stripBackendComments(blocks[0].code)
+      .split(/\r?\n/u)
+      .filter((line) => line.trim()).length
+    assert.ok(codeLineCount >= 8 && codeLineCount <= 25, 'file helper snippets should keep 8-25 non-comment code lines')
   }
 
   const transferBlocks = getBackendCodeBlocks(transferSection).map(({ code }) => code)
@@ -1616,7 +1998,7 @@ test('Task5 review regressions lock versions, input safety, cleanup, bytes, and 
   assert.match(poiBody, /new BufferedInputStream\(input\)/u)
   assert.match(poiBody, /MissingCellPolicy|DataFormatter/u)
   assert.match(poiBody, /workbook\.write\((?:out|output)\)/u)
-  assert.match(poiBody, /return bytes/u)
+  assert.match(poiBody, /return output\.toByteArray\(\)/u)
   assert.doesNotMatch(poiBody, /return new byte\[0\]/u)
   const formulaSection = getSubsection(getSection(poiBody, '不常用但需要知道'), '日期/公式') ?? ''
   assert.ok(
@@ -1686,13 +2068,13 @@ test('Java course keeps the expected Markdown files, article counts, chapters, a
 
   assert.equal(
     markdownPaths.length,
-    94,
-    'rule java-markdown-count: expected 94 Markdown files',
+    95,
+    'rule java-markdown-count: expected 95 Markdown files',
   )
   assert.equal(
     markdownPaths.filter((file) => file !== JAVA_INDEX_PATH).length,
-    93,
-    'rule java-article-count: expected 93 course articles',
+    94,
+    'rule java-article-count: expected 94 course articles',
   )
   assert.equal(
     chapterDirectories.length,
@@ -1733,6 +2115,329 @@ test('Java articles keep the required frontmatter fields', () => {
   }
 
   assert.deepEqual(violations, [], `rule java-frontmatter${formatViolations(violations)}`)
+})
+
+test('Java API heading format guard rejects malformed fixture content', () => {
+  const valid = `
+## 常用用法
+
+### \`first\`：读取第一个值
+
+需要读取第一个结果时使用这个入口。
+
+\`\`\`java
+int first = 1;
+// 输出：1
+\`\`\`
+`
+  assert.deepEqual(inspectApiHeadingFormat(valid), [])
+
+  const cases = [
+    ['', 'expected exactly one exact "## 常用用法" heading, found 0'],
+    [valid + '\n## 常用用法\n', 'expected exactly one exact "## 常用用法" heading, found 2'],
+    [valid.replace('需要读取第一个结果时使用这个入口。', '- 先看列表'), 'first non-empty block must be a purpose sentence'],
+    [valid.replace('需要读取第一个结果时使用这个入口。', '太短。'), 'purpose must be one complete sentence of at least 10 characters'],
+    [valid.replace('```java', '```text'), 'purpose sentence must be followed by a java/sql/xml fence'],
+    [valid.replace('int first = 1;', '// 只有注释'), 'example needs real non-comment code'],
+    [valid.replace('// 输出：1', '// 普通注释'), 'example needs a standalone output/result line'],
+    [valid.replace('`first`：读取第一个值', '`first`/`second`：两个独立入口'), 'combined API heading is not in the atomic-operation allowlist'],
+  ]
+  for (const [fixture, expected] of cases) {
+    assert.ok(inspectApiHeadingFormat(fixture).some((issue) => issue.includes(expected)), expected)
+  }
+})
+
+test('external API heading tokens require an exact positive H3 API label', () => {
+  const fixture = `
+### \`List.add\`：追加元素
+
+### \`List.put\` 不存在：列表按索引替换应使用 \`List.set\`
+
+### File.transferTo 不存在：文件复制应使用 Files.copy
+`
+
+  assert.deepEqual(
+    getExternalApiHeadingTokens(fixture),
+    new Set(['List.add']),
+    'negative or explanatory H3 titles must not masquerade as external API headings',
+  )
+})
+
+test('List iterator and remove examples show calls, state, and output', () => {
+  const body = readMarkdown('docs/courses/java/05-泛型与集合/04-List常用API.md').body
+  const commonUsage = getSection(body, '常用用法')
+  const iteratorExample = getSubsection(commonUsage, 'List.iterator') ?? ''
+  const removeExample = getSubsection(commonUsage, 'List.remove') ?? ''
+
+  assert.match(iteratorExample, /\.iterator\(\)[\s\S]*\.hasNext\(\)[\s\S]*\.next\(\)/u)
+  assert.match(iteratorExample, /\/\/ names：\[Alice, Bob\][\s\S]*\/\/ 输出：Alice、Bob/u)
+  assert.match(removeExample, /\/\/ numbers：\[10, 20, 30\][\s\S]*remove\(1\)[\s\S]*remove\(Integer\.valueOf\(30\)\)[\s\S]*\/\/ 输出：\[10\]/u)
+})
+
+test('all 94 Java articles keep the unified API heading format', () => {
+  const violations = []
+  for (const relativePath of ARTICLE_PATHS) {
+    const { body } = readMarkdown(relativePath)
+    for (const issue of inspectApiHeadingFormat(body)) {
+      violations.push(`${relativePath} ${issue}`)
+    }
+  }
+  assert.deepEqual(violations, [], `rule java-api-heading-format${formatViolations(violations)}`)
+})
+
+test('combined API headings reject plus signs, Chinese connectors, and trailing bare method names', () => {
+  const fixture = `
+## 常用用法
+
+### \`JSONUtil.toJsonStr\` + \`toBean\`：复制对象
+
+用途说明必须完整且具体。
+
+\`\`\`java
+// 作用：JSONUtil.toJsonStr 先序列化 source
+String json = JSONUtil.toJsonStr(source);
+// 输出：json
+\`\`\`
+
+### \`JSONUtil.toBean\` 与 \`TypeReference\`：转换泛型
+
+用途说明必须完整且具体。
+
+\`\`\`java
+// 作用：TypeReference 保留 grouped 的泛型参数
+Object grouped = JSONUtil.toBean(json, typeReference, false);
+// 输出：grouped
+\`\`\`
+
+### Collections.rotate、swap 和 frequency：集合工具
+
+用途说明必须完整且具体。
+
+\`\`\`java
+// 作用：Collections.rotate 调整 list 的元素位置
+Collections.rotate(list, 1);
+// 输出：list
+\`\`\`
+`
+  assert.deepEqual(inspectApiHeadingFormat(fixture), [
+    '[`JSONUtil.toJsonStr` + `toBean`：复制对象] combined API heading is not in the atomic-operation allowlist',
+    '[`JSONUtil.toBean` 与 `TypeReference`：转换泛型] combined API heading is not in the atomic-operation allowlist',
+    '[Collections.rotate、swap 和 frequency：集合工具] combined API heading is not in the atomic-operation allowlist',
+  ])
+})
+
+test('reviewed JSON, regex, and Collections APIs keep one operation per H3', () => {
+  const expectations = {
+    'docs/courses/java/02-数组与文本/04-正则表达式与文本匹配.md': [
+      '`Matcher.appendReplacement`', '`Matcher.quoteReplacement`', '`Matcher.appendTail`',
+    ],
+    'docs/courses/java/02-数组与文本/05-JSON与Java对象转换.md': [
+      '`TypeReference`', '`JSONUtil.toBean`', '`JSONUtil.toJsonStr`',
+    ],
+    'docs/courses/java/05-泛型与集合/04-List常用API.md': [
+      '`Collections.rotate`', '`Collections.swap`', '`Collections.frequency`',
+    ],
+  }
+
+  for (const [relativePath, requiredLabels] of Object.entries(expectations)) {
+    const headings = getAllH3Subsections(readMarkdown(relativePath).body)
+      .map(({ heading }) => heading.split(/[：:]/u, 1)[0].trim())
+    for (const label of requiredLabels) assert.ok(headings.includes(label), `${relativePath} needs ${label}`)
+  }
+})
+
+test('@Primary example proves Spring container selection instead of direct construction', () => {
+  const body = readMarkdown('docs/courses/java/13-后端工程/02-Spring-IoC与Bean生命周期.md').body
+  const primary = getSubsection(getSection(body, '不常用但需要知道'), '@Primary') ?? ''
+  assert.match(primary, /AnnotationConfigApplicationContext/u)
+  assert.match(primary, /@Primary[\s\S]*Notifier systemClockNotifier/u)
+  assert.match(primary, /Notifier backupClockNotifier/u)
+  assert.match(primary, /AlertService alertService\(Notifier notifier\)/u)
+  assert.match(primary, /getBean\(Notifier\.class\)[\s\S]*getBean\(AlertService\.class\)/u)
+  assert.match(primary, /直接 `new`[^。]*不能证明 `@Primary` 生效/u)
+})
+
+test('common-usage first examples require explanation and result comments in their own language', () => {
+  const valid = `
+## 常用用法
+
+### \`List.get\`：读取元素
+
+\`\`\`java
+// 初始状态：List.get 将读取列表中的 first
+int first = 1;
+// 输出：1
+\`\`\`
+
+### \`SELECT\`：读取一行
+
+\`\`\`sql
+-- 作用：SELECT 按主键 id 读取用户
+SELECT * FROM sys_user WHERE id = 1;
+-- 结果：返回一行用户数据
+\`\`\`
+
+### \`select\`：声明映射查询
+
+\`\`\`xml
+<!--
+  前置：已经声明 Mapper 命名空间
+-->
+<select id="findById">SELECT 1</select>
+<!-- 结果：映射为一个整数 -->
+\`\`\`
+
+### \`spring.profiles.active\`：选择环境
+
+\`\`\`properties
+# 说明：启用开发环境配置
+spring.profiles.active=dev
+# 结果：dev 配置生效
+\`\`\`
+
+### \`server.port\`：配置端口
+
+\`\`\`yaml
+# 输入：服务监听端口
+server:
+  port: 8080
+# 结果：应用监听 8080 端口
+\`\`\`
+
+### \`java\`：运行类
+
+\`\`\`shell
+# 当前状态：java 将运行 Demo
+java Demo
+# 输出：hello
+\`\`\`
+`
+
+  assert.deepEqual(inspectApiExampleComments(valid), [])
+
+  const onlyOutput = valid.replace('// 初始状态：List.get 将读取列表中的 first\n', '')
+  assert.deepEqual(
+    inspectApiExampleComments(onlyOutput),
+    ['[`List.get`：读取元素] first java block needs an explanation comment'],
+    'an output comment alone must not satisfy the explanation requirement',
+  )
+
+  const onlyExplanation = valid.replace('// 输出：1\n', '')
+  assert.deepEqual(
+    inspectApiExampleComments(onlyExplanation),
+    ['[`List.get`：读取元素] first java block needs a result/output comment'],
+  )
+
+  const wrongLanguageMarker = valid.replace('-- 作用：SELECT 按主键 id 读取用户', '// 作用：SELECT 按主键 id 读取用户')
+  assert.deepEqual(
+    inspectApiExampleComments(wrongLanguageMarker),
+    ['[`SELECT`：读取一行] first sql block needs an explanation comment'],
+  )
+
+  const fencedPseudoHeading = `
+## 常用用法
+### \`run-demo\`：运行 Shell 示例
+\`\`\`shell
+### this is shell content, not a Markdown heading
+echo ready
+# 输出：ready
+\`\`\`
+`
+  assert.deepEqual(
+    inspectApiExampleComments(fencedPseudoHeading),
+    ['[`run-demo`：运行 Shell 示例] first shell block needs an explanation comment'],
+  )
+
+  const conceptHeading = `
+## 简单案例
+### 事务传播与回滚边界
+\`\`\`java
+service.save();
+\`\`\`
+`
+  assert.deepEqual(inspectApiExampleComments(conceptHeading), [], 'pure concept H3 headings are not API subsections')
+
+  const vagueExplanation = `
+## 常用用法
+### \`List.get\`：读取元素
+\`\`\`java
+// 说明：读取需要的内容
+int first = numbers.get(0);
+// 输出：1
+\`\`\`
+`
+  assert.deepEqual(
+    inspectApiExampleComments(vagueExplanation),
+    ['[`List.get`：读取元素] first java block explanation must name its API or a real code identifier/literal'],
+  )
+
+  const concreteExplanation = vagueExplanation.replace('读取需要的内容', 'List.get 从 numbers 读取索引 0')
+  assert.deepEqual(inspectApiExampleComments(concreteExplanation), [])
+
+  const keywordOnlyExplanation = vagueExplanation.replace(
+    '读取需要的内容',
+    'import public private protected static final class String try var return new true false Java Redis',
+  )
+  assert.deepEqual(
+    inspectApiExampleComments(keywordOnlyExplanation),
+    ['[`List.get`：读取元素] first java block explanation must name its API or a real code identifier/literal'],
+  )
+})
+
+test('all 94 Java articles explain and report the first supported example under every API H3', () => {
+  const violations = []
+  for (const relativePath of ARTICLE_PATHS) {
+    const { body } = readMarkdown(relativePath)
+    for (const issue of inspectApiExampleComments(body)) {
+      violations.push(`${relativePath} ${issue}`)
+    }
+  }
+  assert.deepEqual(violations, [], `rule java-common-usage-example-comments${formatViolations(violations)}`)
+})
+
+test('all Java course prose stays free of known generated template filler', () => {
+  const badResultFixture = '// 结果：执行后，注册静态资源 URL。'
+  const badBranchFixture = '// 结果：import 示例执行到' + '预期分支'
+  assert.ok(
+    FORBIDDEN_TEMPLATE_PHRASES.some((phrase) => badResultFixture.includes(phrase)),
+    'generic 结果：执行后 comments must remain a locked bad fixture',
+  )
+  assert.ok(
+    FORBIDDEN_TEMPLATE_PHRASES.some((phrase) => badBranchFixture.includes(phrase)),
+    'generic expected-branch comments must remain a locked bad fixture',
+  )
+
+  const violations = []
+  for (const relativePath of ARTICLE_PATHS) {
+    const { body } = readMarkdown(relativePath)
+    for (const phrase of FORBIDDEN_TEMPLATE_PHRASES) {
+      if (body.includes(phrase)) violations.push(`${relativePath} [template-filler:${phrase}]`)
+    }
+    if (FORBIDDEN_EXAMPLE_COMMENT_PATTERN.test(body)) {
+      violations.push(`${relativePath} [template-filler:generic-example-comment]`)
+    }
+  }
+  assert.deepEqual(violations, [], `rule java-template-filler${formatViolations(violations)}`)
+})
+
+test('RuoYi common external calls remain directly searchable in API H3 headings', () => {
+  const violations = []
+  let requiredCount = 0
+
+  for (const [relativePath, requiredApis] of Object.entries(REQUIRED_EXTERNAL_API_HEADINGS)) {
+    const { body } = readMarkdown(relativePath)
+    const headingTokens = getExternalApiHeadingTokens(body)
+    requiredCount += requiredApis.length
+
+    for (const api of requiredApis) {
+      if (!headingTokens.has(api)) {
+        violations.push(`${relativePath} [external-api-heading:${api}] heading is missing`)
+      }
+    }
+  }
+
+  assert.equal(requiredCount, 159, 'rule java-external-api-heading-count: audit snapshot changed')
+  assert.deepEqual(violations, [], `rule java-external-api-headings${formatViolations(violations)}`)
 })
 
 test('01-10 Java articles use the shared quality structure and runnable examples', () => {

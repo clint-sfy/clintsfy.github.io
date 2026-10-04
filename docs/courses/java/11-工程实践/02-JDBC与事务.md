@@ -1,6 +1,6 @@
 ---
 title: JDBC 与事务
-date: 2026-09-22
+date: 2026-09-22T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -22,7 +22,59 @@ description: 使用 JDBC 安全访问数据库，理解连接、预编译、事�
 
 PreparedStatement 参数绑定可防止 SQL 注入，并帮助数据库复用执行计划。Connection 默认是否自动提交要明确设置；一组业务更新必须在同一事务中，失败时回滚。隔离级别影响脏读、不可重复读和幻读；连接池管理的是连接生命周期，不是事务边界。ResultSet 映射应处理 null、时区、精度和资源关闭，批量操作需控制批次大小。
 
-## 实践任务
+## 常用用法
+
+### `PreparedStatement`：绑定查询参数
+
+用 `PreparedStatement` 把数据作为参数绑定，避免把不可信输入拼进 SQL。
+
+```java
+// 说明：PreparedStatement：绑定查询参数 的具体调用为 String sql = "select name from account where id = ?";
+String sql = "select name from account where id = ?";
+try (var ps = connection.prepareStatement(sql)) {
+    ps.setLong(1, 42L);
+    try (var rs = ps.executeQuery()) {
+        if (rs.next()) System.out.println(rs.getString("name"));
+    }
+}
+// 输出：存在 id=42 的账户时输出其 name；不存在时无输出。
+```
+
+### JDBC 事务：提交或回滚一组更新
+
+把必须共同成功的数据库更新放在同一连接上，并在失败时回滚。
+
+```java
+// 说明：JDBC 事务：提交或回滚一组更新 的具体调用为 connection.setAutoCommit(false);
+connection.setAutoCommit(false);
+try {
+    debit(connection, 1L, 100);
+    credit(connection, 2L, 100);
+    connection.commit();
+    // 输出：两条更新共同提交。
+} catch (Exception error) {
+    connection.rollback();
+    // 输出：任一步失败时两条更新均不生效。
+    throw error;
+}
+```
+
+### try-with-resources：关闭 JDBC 资源
+
+用 try-with-resources 按逆序关闭结果集、语句和连接，确保连接归还连接池。
+
+```java
+// 说明：try-with-resources：关闭 JDBC 资源 的具体调用为 try (var connection = dataSource.getConnection();
+try (var connection = dataSource.getConnection();
+     var statement = connection.prepareStatement("select 1");
+     var result = statement.executeQuery()) {
+    result.next();
+    System.out.println(result.getInt(1));
+}
+// 输出：1（前提：数据库支持 select 1）。
+```
+
+## 综合练习
 
 实现转账仓储：锁定并校验两账户余额，更新后提交，任一步失败回滚；用 Testcontainers 或本地数据库测试并发转账、重复提交、死锁重试和 SQL 注入输入。
 

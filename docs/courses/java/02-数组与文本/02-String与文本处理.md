@@ -1,6 +1,6 @@
 ---
 title: String 与文本处理
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -35,11 +35,15 @@ description: 掌握不可变字符串、字符编码、StringBuilder 和常用�
 
 `String.length()` 返回 UTF-16 码元数量，不一定等于 Unicode 码点数量，更不等于用户看到的字素簇数量。正则适合字段级清洗；嵌套语法或需要精确错误位置的格式应使用专门解析器。JSON 转换已拆到[JSON 与 Java 对象转换](/courses/java/02-数组与文本/05-JSON与Java对象转换)，大数运算已拆到[大数与精确计算](/courses/java/02-数组与文本/06-大数与精确计算)。
 
-## String API 速查
+## 常用用法
 
 ### String API：快速入口
 
+需要快速完成文本清理与规范化时使用这段最小示例。
+
 ```java
+// 语义：需要快速完成文本清理与规范化时使用这段最小示例。
+// 初始状态：value 初始为 " Java "；normalized 初始为 value.strip().toLowerCase()。
 String value = " Java ";
 String normalized = value.strip().toLowerCase();
 System.out.println(normalized);
@@ -48,11 +52,13 @@ System.out.println(normalized);
 
 按字面查找和替换先看本页；需要正则捕获组时转到[正则表达式与文本匹配](/courses/java/02-数组与文本/04-正则表达式与文本匹配)。
 
-## 项目常用：Hutool JSONUtil
-
 ### `JSONUtil`：JSON 转换专题入口
 
+需要把 Java 对象序列化为 JSON 文本时使用 `JSONUtil.toJsonStr`，完整边界转到 JSON 专题查阅。
+
 ```java
+// 语义：需要把 Java 对象序列化为 JSON 文本时使用 JSONUtil.toJsonStr，完整边界转到 JSON 专题查阅。
+// 初始状态：json 初始为 JSONUtil.toJsonStr(Map.of("name", "Ann"))。
 import cn.hutool.json.JSONUtil;
 import java.util.Map;
 
@@ -63,251 +69,584 @@ System.out.println(json);
 
 JSON 的完整依赖、Bean、数组和泛型边界见[JSON 与 Java 对象转换](/courses/java/02-数组与文本/05-JSON与Java对象转换)。
 
-## 常用用法
+### 字符串字面量：创建字符串
 
-### 字面量/`new String`：创建字符串
-
-优先使用字面量或已有值；只有在字节解码、明确复制等边界才使用构造器。`new String("Java")` 不会带来内容上的收益。
+已知文本内容时优先使用字符串字面量；`new String("Java")` 不会带来内容收益。
 
 ```java
-import java.nio.charset.StandardCharsets;
-
+// 语义：已知文本内容时优先使用字符串字面量。
+// 初始状态：literal 初始为 "Java"；same 初始为 "Java"。
 String literal = "Java";
-byte[] bytes = literal.getBytes(StandardCharsets.UTF_8);
-String decoded = new String(bytes, StandardCharsets.UTF_8);
-System.out.println(literal + " / " + decoded);
-// 输出：Java / Java
+String same = "Java";
+boolean sameContent = literal.equals(same);
+System.out.println(literal);
+System.out.println(sameContent);
+// 输出：Java
+// 输出：true
 ```
 
-### `isEmpty`/`isBlank`：判断空字符串或空白
+### `new String`：按字符集解码字节
 
-`isEmpty()` 只判断长度为零，`isBlank()` 还把空格、换行等 Unicode 空白视为空；两者都不接受 `null`，外部输入要先决定 `null` 的业务含义。
+已有外部字节时用带字符集的构造器解码，并显式指定字符集。
 
 ```java
+// 语义：已有外部字节时用带字符集的构造器解码，并显式指定字符集。
+// 初始状态：bytes 初始为 {74, 97, 118, 97}；decoded 初始为 new String(bytes, StandardCharsets.UTF_8)。
+import java.nio.charset.StandardCharsets;
+
+byte[] bytes = {74, 97, 118, 97};
+String decoded = new String(bytes, StandardCharsets.UTF_8);
+System.out.println(decoded);
+System.out.println(decoded.length());
+// 输出：Java
+// 输出：4
+```
+
+### `isEmpty`：判断空字符串
+
+`isEmpty()` 只判断长度是否为零，不会把空格或换行视为空字符串。
+
+```java
+// 语义：isEmpty() 只判断长度是否为零，不会把空格或换行视为空字符串。
+// 初始状态：empty 初始为 ""；spaces 初始为 " \n"。
 String empty = "";
 String spaces = "  \n";
 System.out.println(empty.isEmpty());
+System.out.println(spaces.isEmpty());
 // 输出：true
-System.out.println(spaces.isBlank());
-// 输出：true
+// 输出：false
 ```
 
-### `length()`：获取 UTF-16 码元长度
+### `isBlank`：判断空白字符串
 
-返回 `char` 码元数量，不是 Unicode 码点或用户看到的字符数；表情等补充平面字符通常占两个码元。
+`isBlank()` 判断空串或仅包含 Unicode 空白的字符串；调用前仍需单独处理 `null`。
 
 ```java
-String text = "Java🙂";
-System.out.println(text.length());
-// 输出：6
-System.out.println(text.codePointCount(0, text.length()));
-// 输出：5
+// 语义：isBlank() 判断空串或仅包含 Unicode 空白的字符串。
+// 初始状态：spaces 初始为 " \n"；word 初始为 " Java "。
+String spaces = "  \n";
+String word = " Java ";
+boolean blank = spaces.isBlank();
+boolean wordBlank = word.isBlank();
+System.out.println(blank);
+System.out.println(wordBlank);
+// 输出：true
+// 输出：false
 ```
 
-### `charAt`/`codePointAt`/`codePoints`：访问码元与码点
+### `charAt`：访问 UTF-16 码元
 
-`charAt` 取一个 UTF-16 码元，完整 Unicode 字符应使用 `codePointAt` 或 `codePoints`；索引仍按码元位置计算。
+`charAt` 按 UTF-16 索引返回一个 `char` 码元，可能只取得补充平面字符的一半。
 
 ```java
+// 语义：charAt 按 UTF-16 索引返回一个 char 码元，可能只取得补充平面字符的一半。
+// 初始状态：text 初始为 "A🙂B"；first 初始为 text.charAt(0)。
 String text = "A🙂B";
-char unit = text.charAt(1);
+char first = text.charAt(0);
+char surrogate = text.charAt(1);
+int surrogateValue = surrogate;
+System.out.println(first);
+System.out.println(surrogateValue);
+// 输出：A
+// 输出：55357
+```
+
+### `codePointAt`：访问 Unicode 码点
+
+`codePointAt` 从指定 UTF-16 索引读取完整码点，适合处理表情等补充平面字符。
+
+```java
+// 语义：codePointAt 从指定 UTF-16 索引读取完整码点，适合处理表情等补充平面字符。
+// 初始状态：text 初始为 "A🙂B"；point 初始为 text.codePointAt(1)。
+String text = "A🙂B";
 int point = text.codePointAt(1);
-long points = text.codePoints().count();
-System.out.println((int) unit + ", " + point + ", " + points);
-// 输出：55357, 128578, 3
+String hex = Integer.toHexString(point);
+String restored = new String(Character.toChars(point));
+System.out.println(hex);
+System.out.println(restored);
+// 输出：1f642
+// 输出：🙂
 ```
 
-### `equals`/`equalsIgnoreCase`：比较字符串内容
+### `codePoints`：遍历 Unicode 码点
 
-用 `equals` 比较内容，不用 `==`；可能为 `null` 时让常量调用方法，忽略大小写前先确认业务是否允许。
+`codePoints()` 生成码点流，避免按 `char` 遍历时拆开补充平面字符。
 
 ```java
+// 语义：codePoints() 生成码点流，避免按 char 遍历时拆开补充平面字符。
+// 初始状态：text 初始为 "A🙂B"；count 初始为 text.codePoints().count()。
+String text = "A🙂B";
+long count = text.codePoints().count();
+String joined = text.codePoints()
+        .mapToObj(cp -> new String(Character.toChars(cp)))
+        .reduce("", String::concat);
+System.out.println(count);
+System.out.println(joined);
+// 输出：3
+// 输出：A🙂B
+```
+
+### `equals`：比较字符串内容
+
+`equals` 区分大小写地比较内容，不能用 `==` 代替；可能为 `null` 时可让常量调用。
+
+```java
+// 语义：equals 区分大小写地比较内容，不能用 == 代替。
+// 初始状态：input 初始为 new String("Java")；sameContent 初始为 "Java".equals(input)。
+String input = new String("Java");
+boolean sameContent = "Java".equals(input);
+boolean sameObject = "Java" == input;
+System.out.println(sameContent);
+System.out.println(sameObject);
+// 输出：true
+// 输出：false
+```
+
+### `equalsIgnoreCase`：忽略大小写比较内容
+
+业务规则明确允许忽略大小写时使用 `equalsIgnoreCase`，它不负责完整的语言区域规范化。
+
+```java
+// 语义：业务规则明确允许忽略大小写时使用 equalsIgnoreCase，它不负责完整的语言区域规范化。
+// 初始状态：input 初始为 "JAVA"；exact 初始为 "java".equals(input)。
 String input = "JAVA";
-boolean same = "java".equals(input);
-boolean sameIgnoreCase = "java".equalsIgnoreCase(input);
-System.out.println(same + ", " + sameIgnoreCase);
-// 输出：false, true
-```
-
-### `compareTo`/`compareToIgnoreCase`：按字典序比较
-
-返回负数、零或正数，适合排序和范围判断，不应把返回值当成固定的 `-1` 或 `1`。
-
-```java
-String left = "Java";
-String right = "java";
-int order = left.compareTo(right);
-int ignoreCaseOrder = left.compareToIgnoreCase(right);
-System.out.println(order < 0);
-// 输出：true
-System.out.println(ignoreCaseOrder == 0);
+boolean exact = "java".equals(input);
+boolean relaxed = "java".equalsIgnoreCase(input);
+System.out.println(exact);
+System.out.println(relaxed);
+// 输出：false
 // 输出：true
 ```
 
-### `indexOf`/`lastIndexOf`/`contains`：查找文本
+### `indexOf`：查找首次出现位置
 
-`indexOf` 找首次位置，`lastIndexOf` 找最后位置，找不到返回 `-1`；`contains` 只返回布尔值，三者都按字面文本查找而不是正则。
+`indexOf` 按字面文本返回首次匹配的 UTF-16 索引，找不到时返回 `-1`。
 
 ```java
+// 语义：indexOf 按字面文本返回首次匹配的 UTF-16 索引，找不到时返回 -1。
+// 初始状态：path 初始为 "/api/users/api"；first 初始为 path.indexOf("/api")。
 String path = "/api/users/api";
-System.out.println(path.indexOf("/api"));
+int first = path.indexOf("/api");
+int missing = path.indexOf("orders");
+System.out.println(first);
+System.out.println(missing);
 // 输出：0
-System.out.println(path.lastIndexOf("/api"));
+// 输出：-1
+```
+
+### `lastIndexOf`：查找最后出现位置
+
+`lastIndexOf` 按字面文本返回最后一次匹配的位置，适合定位最后一个分隔符。
+
+```java
+// 语义：lastIndexOf 按字面文本返回最后一次匹配的位置，适合定位最后一个分隔符。
+// 初始状态：path 初始为 "/api/users/api"；lastApi 初始为 path.lastIndexOf("/api")。
+String path = "/api/users/api";
+int lastApi = path.lastIndexOf("/api");
+int lastSlash = path.lastIndexOf('/');
+System.out.println(lastApi);
+System.out.println(lastSlash);
 // 输出：10
-System.out.println(path.contains("users"));
+// 输出：10
+```
+
+### `contains`：判断是否包含文本
+
+只关心有无字面子串时使用 `contains`，它不把参数解释为正则表达式。
+
+```java
+// 语义：只关心有无字面子串时使用 contains，它不把参数解释为正则表达式。
+// 初始状态：path 初始为 "/api/users"；hasUsers 初始为 path.contains("users")。
+String path = "/api/users";
+boolean hasUsers = path.contains("users");
+boolean hasPattern = path.contains(".*");
+System.out.println(hasUsers);
+System.out.println(hasPattern);
 // 输出：true
+// 输出：false
 ```
 
-### `startsWith`/`endsWith`：判断前后缀
+### `String.join`：按分隔符拼接
 
-适合协议、文件名或路由前后缀判断，可传起始偏移；它们不做路径规范化或大小写自动转换。
-
-```java
-String fileName = "backup/data.json";
-boolean json = fileName.endsWith(".json");
-boolean backup = fileName.startsWith("backup/");
-System.out.println(json + ", " + backup);
-// 输出：true, true
-```
-
-### `substring`：截取字符串区间
-
-区间是左闭右开 `[begin, end)`，越界会抛 `StringIndexOutOfBoundsException`；索引按 UTF-16 码元计算，不能把一个补充平面字符拆开。
+需要用同一分隔符连接多个元素时使用 `String.join`。
 
 ```java
-String text = "Java速查";
-String prefix = text.substring(0, 4);
-String suffix = text.substring(4);
-System.out.println(prefix + " / " + suffix);
-// 输出：Java / 速查
-```
-
-### `replace`：按字面替换
-
-`replace(char, char)` 和 `replace(CharSequence, CharSequence)` 都按字面匹配，不把参数当正则；原字符串不变。
-
-```java
-String text = "JAVA，Java";
-String normalized = text.replace('，', ',').replace("JAVA", "Java");
-System.out.println(normalized);
-// 输出：Java,Java
-```
-
-### `split`：按正则分割简单文本
-
-参数是正则表达式，默认丢弃末尾空字段；需要保留时传负 `limit`，元字符要转义。复杂引用、转义和嵌套格式应使用专门解析器。
-
-```java
-String csv = "Java,,SQL,";
-String[] fields = csv.split(",", -1);
-System.out.println(java.util.Arrays.toString(fields));
-// 输出：[Java, , SQL, ]
-```
-
-### `String.join`/`concat`：带分隔符拼接
-
-`String.join` 适合分隔符和多个元素，`concat` 只拼接一个非 `null` 字符串；循环拼接不要反复使用 `+`。
-
-```java
+// 语义：需要用同一分隔符连接多个元素时使用 String.join。
+// 初始状态：id 初始为 "42"；path 初始为 String.join("/", "api", "users", id)。
 String id = "42";
 String path = String.join("/", "api", "users", id);
-String label = "Java".concat("速查");
-System.out.println(path + " / " + label);
-// 输出：api/users/42 / Java速查
+String csv = String.join(",", "Java", "SQL");
+System.out.println(path);
+System.out.println(csv);
+// 输出：api/users/42
+// 输出：Java,SQL
 ```
 
-### `formatted`/`String.format`：格式化字符串
+### `concat`：拼接一个字符串
 
-格式说明符和参数类型必须匹配；日志拼接还要考虑性能和敏感信息，不能把密码、令牌直接格式化进日志。
+`concat` 把一个非 `null` 字符串追加到末尾并返回新字符串，循环拼接仍应使用 `StringBuilder`。
 
 ```java
+// 语义：concat 把一个非 null 字符串追加到末尾并返回新字符串，循环拼接仍应使用 StringBuilder。
+// 初始状态：prefix 初始为 "Java"；result 初始为 prefix.concat("速查")。
+String prefix = "Java";
+String result = prefix.concat("速查");
+boolean unchanged = prefix.equals("Java");
+System.out.println(result);
+System.out.println(unchanged);
+// 输出：Java速查
+// 输出：true
+```
+
+### `formatted`：用模板实例格式化
+
+已有格式模板时使用实例方法 `formatted` 代入参数，格式说明符必须和参数类型匹配。
+
+```java
+// 语义：已有格式模板时使用实例方法 formatted 代入参数，格式说明符必须和参数类型匹配。
+// 初始状态：id 初始为 7；name 初始为 "Ann"。
 int id = 7;
 String name = "Ann";
-String line = "id=%d, name=%s".formatted(id, name);
-String same = String.format("id=%d, name=%s", id, name);
+String template = "id=%d, name=%s";
+String line = template.formatted(id, name);
 System.out.println(line);
+System.out.println(template);
 // 输出：id=7, name=Ann
-System.out.println(same);
-// 输出：id=7, name=Ann
+// 输出：id=%d, name=%s
 ```
 
-### `toUpperCase`/`toLowerCase`：转换大小写
+### `String.format`：静态格式化字符串
 
-协议字段、键名等稳定文本应指定 `Locale.ROOT`；转换会返回新字符串，不能当作原地修改。
+动态选择模板或语言区域时使用 `String.format`，稳定协议文本宜显式指定 `Locale`。
 
 ```java
+// 语义：动态选择模板或语言区域时使用 String.format，稳定协议文本宜显式指定 Locale。
+// 初始状态：rate 初始为 0.25；line 初始为 String.format(Locale.ROOT, "rate=%.2f", rate)。
+import java.util.Locale;
+
+double rate = 0.25;
+String line = String.format(Locale.ROOT, "rate=%.2f", rate);
+System.out.println(line);
+System.out.println(rate);
+// 输出：rate=0.25
+// 输出：0.25
+```
+
+### `toUpperCase`：转换为大写
+
+协议字段或键名转大写时指定 `Locale.ROOT`，方法会返回新字符串。
+
+```java
+// 语义：协议字段或键名转大写时指定 Locale.ROOT，方法会返回新字符串。
+// 初始状态：text 初始为 "Java Api"；upper 初始为 text.toUpperCase(Locale.ROOT)。
 import java.util.Locale;
 
 String text = "Java Api";
 String upper = text.toUpperCase(Locale.ROOT);
-String lower = text.toLowerCase(Locale.ROOT);
-System.out.println(upper + " / " + lower);
-// 输出：JAVA API / java api
+System.out.println(upper);
+System.out.println(text);
+// 输出：JAVA API
+// 输出：Java Api
 ```
 
-### `trim`/`strip`：去除两端空白
+### `toLowerCase`：转换为小写
 
-`trim` 主要按较旧的 `U+0020` 范围处理，`strip` 按 Unicode 空白处理；两者都不修改原字符串。
+协议字段或键名转小写时指定 `Locale.ROOT`，避免依赖默认语言区域。
 
 ```java
-String input = "  Java速查  ";
-String trimResult = input.trim();
-String stripResult = input.strip();
-System.out.println(trimResult + " / " + stripResult);
-// 输出：Java速查 / Java速查
+// 语义：协议字段或键名转小写时指定 Locale.ROOT，避免依赖默认语言区域。
+// 初始状态：text 初始为 "Java API"；lower 初始为 text.toLowerCase(Locale.ROOT)。
+import java.util.Locale;
+
+String text = "Java API";
+String lower = text.toLowerCase(Locale.ROOT);
+System.out.println(lower);
+System.out.println(text);
+// 输出：java api
+// 输出：Java API
+```
+
+### `trim`：去除旧式两端空白
+
+兼容旧代码时用 `trim` 去除两端不大于 `U+0020` 的字符，新代码处理 Unicode 空白通常选 `strip`。
+
+```java
+// 语义：兼容旧代码时用 trim 去除两端不大于 U+0020 的字符，新代码处理 Unicode 空白通常选 strip。
+// 初始状态：input 初始为 " Java "；result 初始为 input.trim()。
+String input = "  Java  ";
+String result = input.trim();
+int length = result.length();
+System.out.println(result);
+System.out.println(length);
+// 输出：Java
+// 输出：4
+```
+
+### `strip`：去除 Unicode 两端空白
+
+使用 `strip` 按 Unicode 空白规则清理字符串两端，原字符串不会改变。
+
+```java
+// 语义：使用 strip 按 Unicode 空白规则清理字符串两端，原字符串不会改变。
+// 初始状态：input 初始为 "\u2003Java\u2003"；result 初始为 input.strip()。
+String input = "\u2003Java\u2003";
+String result = input.strip();
+boolean originalChanged = input.equals(result);
+System.out.println(result);
+System.out.println(originalChanged);
+// 输出：Java
+// 输出：false
+```
+
+### `toCharArray`：转换为字符数组
+
+需要可修改的 UTF-16 码元副本时用 `toCharArray`，它不保证每项都是完整 Unicode 字符。
+
+```java
+// 语义：需要可修改的 UTF-16 码元副本时用 toCharArray，它不保证每项都是完整 Unicode 字符。
+// 初始状态：text 初始为 "Java"；chars 初始为 text.toCharArray()。
+String text = "Java";
+char[] chars = text.toCharArray();
+chars[0] = 'L';
+String changed = new String(chars);
+System.out.println(changed);
+System.out.println(text);
+// 输出：Lava
+// 输出：Java
+```
+
+### `getBytes`：按字符集编码为字节
+
+跨文件或网络边界时用 `getBytes` 并显式指定字符集，避免平台默认编码差异。
+
+```java
+// 语义：跨文件或网络边界时用 getBytes 并显式指定字符集，避免平台默认编码差异。
+// 初始状态：text 初始为 "Java"；bytes 初始为 text.getBytes(StandardCharsets.UTF_8)。
+import java.nio.charset.StandardCharsets;
+
+String text = "Java";
+byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+String decoded = new String(bytes, StandardCharsets.UTF_8);
+System.out.println(bytes.length);
+System.out.println(decoded);
+// 输出：4
+// 输出：Java
+```
+
+### `StringBuilder.append`：追加内容
+
+循环构建文本时用 `append` 追加内容，最后调用 `toString` 取得不可变字符串。
+
+```java
+// 语义：循环构建文本时用 append 追加内容，最后调用 toString 取得不可变字符串。
+// 初始状态：builder 初始为 new StringBuilder()；result 初始为 builder.toString()。
+StringBuilder builder = new StringBuilder();
+builder.append("Java");
+builder.append(' ');
+builder.append(21);
+String result = builder.toString();
+System.out.println(result);
+// 输出：Java 21
+```
+
+### `StringBuilder.insert`：在指定位置插入内容
+
+需要在已有可变文本中间插入内容时使用 `insert`，索引按 UTF-16 码元计算。
+
+```java
+// 语义：需要在已有可变文本中间插入内容时使用 insert，索引按 UTF-16 码元计算。
+// 初始状态：builder 初始为 new StringBuilder("Java速查")；result 初始为 builder.toString()。
+StringBuilder builder = new StringBuilder("Java速查");
+builder.insert(0, '《');
+builder.insert(builder.length(), '》');
+String result = builder.toString();
+System.out.println(result);
+System.out.println(builder.length());
+// 输出：《Java速查》
+// 输出：8
+```
+
+### `StringBuilder.delete`：删除指定区间
+
+使用 `delete` 删除左闭右开的码元区间，调用会直接修改当前构建器。
+
+```java
+// 语义：使用 delete 删除左闭右开的码元区间，调用会直接修改当前构建器。
+// 初始状态：builder 初始为 new StringBuilder("Java--速查")；start 初始为 builder.indexOf("--")。
+StringBuilder builder = new StringBuilder("Java--速查");
+int start = builder.indexOf("--");
+builder.delete(start, start + 2);
+String result = builder.toString();
+System.out.println(result);
+System.out.println(builder.length());
+// 输出：Java速查
+// 输出：6
+```
+
+### `length()`：获取 UTF-16 码元长度
+
+`length()` 返回 UTF-16 码元数量，不等同于 Unicode 码点数或用户看到的字符数。
+
+```java
+// 语义：length() 返回 UTF-16 码元数量，不等同于 Unicode 码点数或用户看到的字符数。
+// 初始状态：text 初始为 "Java🙂"；units 初始为 text.length()。
+String text = "Java🙂";
+int units = text.length();
+int points = text.codePointCount(0, units);
+boolean differs = units != points;
+System.out.println(units);
+System.out.println(points);
+System.out.println(differs);
+// 输出：6
+// 输出：5
+// 输出：true
+```
+
+### `compareTo`：区分大小写地按字典序比较
+
+`compareTo` 返回负数、零或正数，适合排序，不应假定非零结果一定是 `-1` 或 `1`。
+
+```java
+// 语义：compareTo 返回负数、零或正数，适合排序，不应假定非零结果一定是 -1 或 1。
+// 初始状态：left 初始为 "Java"；right 初始为 "java"。
+String left = "Java";
+String right = "java";
+int order = left.compareTo(right);
+boolean before = order < 0;
+System.out.println(before);
+System.out.println(order == 0);
+// 输出：true
+// 输出：false
+```
+
+### `compareToIgnoreCase`：忽略大小写地按字典序比较
+
+排序规则允许忽略大小写时使用 `compareToIgnoreCase`，复杂本地化排序应改用 `Collator`。
+
+```java
+// 语义：排序规则允许忽略大小写时使用 compareToIgnoreCase，复杂本地化排序应改用 Collator。
+// 初始状态：left 初始为 "Java"；right 初始为 "java"。
+String left = "Java";
+String right = "java";
+int order = left.compareToIgnoreCase(right);
+boolean sameOrder = order == 0;
+System.out.println(order);
+System.out.println(sameOrder);
+// 输出：0
+// 输出：true
+```
+
+### `startsWith`：判断字符串前缀
+
+`startsWith` 按字面内容判断开头，可用偏移重载从指定位置开始匹配。
+
+```java
+// 语义：startsWith 按字面内容判断开头，可用偏移重载从指定位置开始匹配。
+// 初始状态：path 初始为 "backup/data.json"；backup 初始为 path.startsWith("backup/")。
+String path = "backup/data.json";
+boolean backup = path.startsWith("backup/");
+boolean dataAtSeven = path.startsWith("data", 7);
+System.out.println(backup);
+System.out.println(dataAtSeven);
+// 输出：true
+// 输出：true
+```
+
+### `endsWith`：判断字符串后缀
+
+`endsWith` 按字面内容判断结尾，适合已完成大小写和路径规范化后的扩展名检查。
+
+```java
+// 语义：endsWith 按字面内容判断结尾，适合已完成大小写和路径规范化后的扩展名检查。
+// 初始状态：fileName 初始为 "data.json"；json 初始为 fileName.endsWith(".json")。
+String fileName = "data.json";
+boolean json = fileName.endsWith(".json");
+boolean xml = fileName.endsWith(".xml");
+System.out.println(json);
+System.out.println(xml);
+// 输出：true
+// 输出：false
+```
+
+### `String.substring`：截取字符串区间
+
+`substring` 按左闭右开区间截取文本，索引按 UTF-16 码元计算。
+
+```java
+// 语义：substring 按左闭右开区间截取文本，索引按 UTF-16 码元计算。
+// 初始状态：text 初始为 "Java速查"；prefix 初始为 text.substring(0, 4)。
+String text = "Java速查";
+String prefix = text.substring(0, 4);
+String suffix = text.substring(4);
+System.out.println(prefix);
+System.out.println(suffix);
+// 输出：Java
+// 输出：速查
+```
+
+### `replace`：按字面替换
+
+`replace` 按字面匹配字符或字符序列并返回新字符串，不把参数解释为正则。
+
+```java
+// 语义：replace 按字面匹配字符或字符序列并返回新字符串，不把参数解释为正则。
+// 初始状态：text 初始为 "JAVA，Java"；punctuation 初始为 text.replace('，', ',')。
+String text = "JAVA，Java";
+String punctuation = text.replace('，', ',');
+String normalized = punctuation.replace("JAVA", "Java");
+System.out.println(normalized);
+System.out.println(text);
+// 输出：Java,Java
+// 输出：JAVA，Java
+```
+
+### `split`：按正则分割文本
+
+`split` 的参数是正则表达式；传负 `limit` 可保留末尾空字段。
+
+```java
+// 语义：split 的参数是正则表达式。
+// 初始状态：csv 初始为 "Java,,SQL,"；fields 初始为 csv.split(",", -1)。
+String csv = "Java,,SQL,";
+String[] fields = csv.split(",", -1);
+int count = fields.length;
+System.out.println(java.util.Arrays.toString(fields));
+System.out.println(count);
+// 输出：[Java, , SQL, ]
+// 输出：4
 ```
 
 ### `repeat`：重复字符串
 
-重复次数不能为负，零次返回空字符串；大次数可能造成内存压力。
+`repeat` 返回重复指定次数的新字符串，次数为零时返回空串，负数会抛异常。
 
 ```java
+// 语义：repeat 返回重复指定次数的新字符串，次数为零时返回空串，负数会抛异常。
+// 初始状态：level 初始为 3；unit 初始为 " "。
 int level = 3;
-String indent = "  ".repeat(level);
-System.out.println(indent.length());
+String unit = "  ";
+String indent = unit.repeat(level);
+int length = indent.length();
+System.out.println(length);
+System.out.println(indent.isEmpty());
 // 输出：6
-```
-
-### `toCharArray`/`getBytes`：转换为字符数组与字节
-
-`toCharArray` 得到 UTF-16 码元数组；`getBytes` 跨边界时必须显式指定字符集，避免平台默认编码。
-
-```java
-import java.nio.charset.StandardCharsets;
-
-String text = "Java";
-char[] chars = text.toCharArray();
-byte[] utf8 = text.getBytes(StandardCharsets.UTF_8);
-System.out.println(chars.length + ", " + utf8.length);
-// 输出：4, 4
+// 输出：false
 ```
 
 ### `String.valueOf`：把值转换为字符串
 
-传入 `null` 对象会得到字符串 `"null"`；不要把它与 `null.toString()` 混用。
+`String.valueOf` 可统一转换基本值或对象，传入 `null` 对象时返回文本 `"null"`。
 
 ```java
+// 语义：String.valueOf 可统一转换基本值或对象，传入 null 对象时返回文本 "null"。
+// 初始状态：maybeNull 初始为 null；label 初始为 String.valueOf(maybeNull)。
 Object maybeNull = null;
 String label = String.valueOf(maybeNull);
 String number = String.valueOf(42);
-System.out.println(label + " / " + number);
-// 输出：null / 42
-```
-
-### `StringBuilder.append/insert/delete`：高效拼接
-
-单线程循环拼接优先使用可变的 `StringBuilder`，最后调用 `toString()`；它不是线程安全容器，初始容量可按估算设置。
-
-```java
-StringBuilder builder = new StringBuilder("Java");
-builder.append("速查");
-builder.insert(0, "《");
-builder.append("》");
-builder.delete(builder.length() - 1, builder.length());
-builder.append("》");
-String result = builder.toString();
-System.out.println(result);
-// 输出：《Java速查》
+System.out.println(label);
+System.out.println(number);
+// 输出：null
+// 输出：42
 ```
 ## 不常用但需要知道
 
@@ -316,6 +655,7 @@ System.out.println(result);
 区间仍是左闭右开，返回接口类型 `CharSequence`；只需要 `String` 时优先使用 `substring`。
 
 ```java
+// 作用：通过 subSequence 以 CharSequence 截取。
 String text = "Java速查";
 CharSequence suffix = text.subSequence(4, text.length());
 System.out.println(suffix);
@@ -327,6 +667,7 @@ System.out.println(suffix);
 它可直接比较 `StringBuilder` 等 `CharSequence`，与 `equals` 的参数类型和对称性语义不同。
 
 ```java
+// 作用：通过 contentEquals 与其他字符序列比较。
 String text = "Java";
 StringBuilder builder = new StringBuilder("Java");
 System.out.println(text.contentEquals(builder));
@@ -338,6 +679,7 @@ System.out.println(text.contentEquals(builder));
 适合避免创建临时子串的局部比较；参数多且容易写错，普通场景优先 `startsWith` 或 `substring`。
 
 ```java
+// 作用：通过 regionMatches 比较局部区域。
 String text = "Java速查";
 boolean matched = text.regionMatches(true, 0, "java", 0, 4);
 System.out.println(matched);
@@ -349,6 +691,7 @@ System.out.println(matched);
 按 UTF-16 码元复制到已有数组，目标空间和区间必须足够；新代码通常用 `toCharArray` 更直观。
 
 ```java
+// 作用：通过 getChars 复制指定码元区间。
 String text = "Java速查";
 char[] target = new char[4];
 text.getChars(0, 4, target, 0);
@@ -361,6 +704,7 @@ System.out.println(new String(target));
 返回字符串池中的规范引用，但会影响池和内存行为；业务代码不要用它替代 `equals`。
 
 ```java
+// 作用：通过 intern 访问字符串池。
 String dynamic = new String("Java");
 String pooled = dynamic.intern();
 System.out.println(pooled == "Java");
@@ -372,21 +716,41 @@ System.out.println(pooled == "Java");
 返回按换行符拆分的 `Stream<String>`，流只能消费一次；大量文本仍要考虑内存占用。
 
 ```java
+// 作用：通过 lines 按行流式处理。
 String text = "Java\n\nString\n集合";
 long nonEmpty = text.lines().filter(line -> !line.isBlank()).count();
 System.out.println(nonEmpty);
 // 输出：3
 ```
 
-### `indent`/`stripIndent`：整理多行缩进
+### `indent`：调整每行缩进
 
-用于文本块整理，正数缩进增加、负数尝试删除；它不是 Java 代码格式化器。
+`indent` 用于给每行增加或尝试删除指定数量的前导空格，并统一行结束符。
 
 ```java
-String text = "    one\n      two\n";
-String normalized = text.stripIndent().indent(2);
-System.out.println(normalized.replace("\n", "|").stripTrailing());
-// 输出：  one|    two
+// 作用：通过 indent 调整每行缩进。
+String text = "one\ntwo";
+String indented = text.indent(2);
+String visible = indented.replace("\n", "|");
+System.out.println(visible);
+System.out.println(indented.lines().count());
+// 输出：  one|  two|
+// 输出：2
+```
+
+### `stripIndent`：删除多行公共缩进
+
+`stripIndent` 按文本块规则删除各非空行共有的前导空白，适合规范化多行文本。
+
+```java
+// 作用：通过 stripIndent 删除多行公共缩进。
+String text = "    one\n      two";
+String normalized = text.stripIndent();
+String visible = normalized.replace("\n", "|");
+System.out.println(visible);
+System.out.println(normalized.lines().count());
+// 输出：one|  two
+// 输出：2
 ```
 
 ### `translateEscapes`：解析 Java 转义文本
@@ -394,6 +758,7 @@ System.out.println(normalized.replace("\n", "|").stripTrailing());
 将字符串中的 `\\n`、`\\t` 等转义变成对应字符，不等同于 JSON 解析；非法转义会抛异常。
 
 ```java
+// 作用：通过 translateEscapes 解析 Java 转义文本。
 String escaped = "Java\\nString\\t速查";
 String actual = escaped.translateEscapes();
 System.out.println(actual.replace("\n", "|").replace("\t", "→"));
@@ -405,6 +770,7 @@ System.out.println(actual.replace("\n", "|").replace("\t", "→"));
 提供与 `StringBuilder` 类似的同步方法，只有确实需要共享可变字符缓冲区时才考虑；普通局部拼接优先 `StringBuilder`。
 
 ```java
+// 作用：通过 StringBuffer 同步的可变字符序列。
 StringBuffer shared = new StringBuffer("Java");
 shared.append("速查");
 System.out.println(shared);

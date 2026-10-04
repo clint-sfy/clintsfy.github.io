@@ -1,6 +1,6 @@
 ---
 title: Jackson 与 Fastjson2 JSON
-date: 2026-10-01
+date: 2026-10-01T00:00:00.000Z
 category: Java后端工程
 tags:
   - Java
@@ -43,9 +43,112 @@ Jackson 2 的核心依赖通常包含 `com.fasterxml.jackson.core:jackson-databi
 
 ## 常用用法
 
-### ObjectMapper/Jackson Databind：对象与 JSON 互转
+### `@JSONField`：控制 Fastjson2 字段名称
 
-用途：用于在 HTTP 或消息边界把 JSON 映射到明确 DTO，并显式决定未知字段、模块和错误策略；不要把内部持久化实体直接作为外部协议。
+用途：用于声明 Fastjson2 序列化和反序列化时使用的字段名。
+
+```java
+record User(@com.alibaba.fastjson2.annotation.JSONField(name = "user_name") String name) {}
+System.out.println(JSON.toJSONString(new User("Ann")));
+// 输出：{"user_name":"Ann"}
+// 说明：Java 字段 userName 在 Fastjson2 输入输出中使用 user_name；直接 new 对象不会验证注解，需调用 JSON 序列化/反序列化 API。
+```
+
+### `JSONObject.containsKey`：判断动态字段是否存在
+
+用途：用于区分 JSON 字段缺失与字段存在但值为 `null`。
+
+```java
+JSONObject object = JSON.parseObject("{\"enabled\":null}");
+System.out.println(object.containsKey("enabled"));
+// 输出：true
+// 作用：用于区分 JSON 字段缺失与字段存在但值为 `null`。
+```
+
+### `JSONObject.parseObject`：把 JSON 文本解析为动态对象
+
+用途：用于在字段结构尚不固定时把 JSON 文本解析为可按键读取的对象。
+
+```java
+JSONObject object = JSONObject.parseObject("{\"mode\":\"safe\"}");
+System.out.println(object.getString("mode"));
+// 输出：safe
+// 说明：JSONObject.parseObject 解析 {"user_id":7}，getLong("user_id") 返回 7；未知结构仍需限制输入大小并检查字段类型。
+```
+
+### `@JsonProperty`：重命名 Jackson 协议字段
+
+用途：用于让 Java 属性名与对外 JSON 字段名保持显式映射。
+
+```java
+record User(@com.fasterxml.jackson.annotation.JsonProperty("user_name") String name) {}
+System.out.println(new ObjectMapper().writeValueAsString(new User("Ann")));
+// 输出：{"user_name":"Ann"}
+// 说明：Jackson 把 Java 属性 userId 写成协议字段 user_id，也从 user_id 读回；直接 new record 不经过 ObjectMapper，因此不验证注解。
+```
+
+### `@JsonIgnore`：忽略内部字段
+
+用途：用于阻止内部字段参与 Jackson 序列化和反序列化。
+
+```java
+record Session(String id, @com.fasterxml.jackson.annotation.JsonIgnore String secret) {}
+System.out.println(new ObjectMapper().writeValueAsString(new Session("s-1", "token")));
+// 输出：{"id":"s-1"}
+// 说明：标注 @JsonIgnore 的 passwordHash 不会出现在输出，也不会从输入赋值；它不是访问控制，字段仍存在于 Java 对象内。
+```
+
+### `@JacksonAnnotationsInside`：组合 Jackson 注解
+
+用途：用于把多个 Jackson 元注解封装成一个可复用的领域注解。
+
+```java
+@com.fasterxml.jackson.annotation.JacksonAnnotationsInside
+@com.fasterxml.jackson.annotation.JsonIgnore
+@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+@interface InternalOnly {}
+// 输出：标注 @InternalOnly 的属性按 @JsonIgnore 处理。
+// 说明：@JacksonAnnotationsInside 让 @InternalOnly 汇总其上的 @JsonIgnore；Jackson 会忽略被标注属性，直接反射读取则不会执行映射规则。
+```
+
+### `@JsonSerialize`：指定自定义序列化器
+
+用途：用于把字段或类型交给明确的 Jackson 序列化器处理。
+
+```java
+record Contact(@tools.jackson.databind.annotation.JsonSerialize(using = MaskSerializer.class)
+               String phone) {}
+System.out.println("Contact.phone 使用 MaskSerializer 写出");
+// 输出：Contact.phone 使用 MaskSerializer 写出
+// 说明：@JsonSerialize(using = MaskingSerializer.class) 让 Jackson 输出该字段时调用 MaskingSerializer；直接 getter 或字符串拼接不会脱敏。
+```
+
+### `Jwts.builder`：创建待签名 JWT
+
+用途：用于建立 JWT 构建器并设置必要声明，最终必须使用受控密钥签名。
+
+```java
+String token = Jwts.builder().subject("user-7").signWith(signingKey).compact();
+System.out.println(token.split("\\.").length);
+// 输出：3
+// 说明：Jwts.builder() 写入 subject=user-42 和签发/过期时间，signWith(key) 后 compact 才产生可传输令牌；未签名构建器不是可接受的访问令牌。
+```
+
+### `Claims.put`：写入自定义 JWT 声明
+
+用途：用于向声明集合写入最少且非敏感的业务属性。
+
+```java
+Claims claims = Jwts.claims().add("tenant", "acme").build();
+claims.put("role", "reader");
+System.out.println(claims.get("role"));
+// 输出：reader
+// 说明：claims.put("tenant_id", "t-7") 写入自定义声明 tenant_id=t-7；解析端必须在验签后按 String 读取，且不能把密码或密钥放进 claim。
+```
+
+### `ObjectMapper.writeValueAsString`：序列化对象
+
+用途：用于在 HTTP 或消息边界把明确 DTO 序列化为 JSON。
 
 ```java
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,37 +157,65 @@ record UserView(String name, int age) {}
 
 ObjectMapper mapper = new ObjectMapper();
 String json = mapper.writeValueAsString(new UserView("Ann", 18));
-UserView view = mapper.readValue(json, UserView.class);
-System.out.println(view.name() + "/" + view.age());
-// 输出：Ann/18
+System.out.println(json);
+// 输出：{"name":"Ann","age":18}
+// 说明：ObjectMapper.writeValueAsString(user) 生成包含协议字段的 JSON 文本；输出字段名、null 策略和日期格式由 UserDto 注解及 mapper 配置共同决定。
 ```
 
-Jackson 2 示例使用 `com.fasterxml.jackson.databind.ObjectMapper`；Jackson 3 对应类型是 `tools.jackson.databind.ObjectMapper`，应依据依赖版本替换整组 import 和模块。生产 mapper 通常是共享、不可随请求修改的组件，输入错误应在边界翻译为稳定的 400 响应。
+Jackson 2 示例使用 `com.fasterxml.jackson.databind.ObjectMapper`；Jackson 3 对应类型是 `tools.jackson.databind.ObjectMapper`，不要混用两组 import。
 
-### @JsonFormat/@JsonInclude：用注解约定字段表现
+### `ObjectMapper.readValue`：反序列化 JSON
 
-用途：用于为日期和可选字段建立可读的协议契约；注解只控制表示层，不负责判断字段是否必填、是否可修改或是否有权限。
+用途：用于把受控大小的 JSON 输入转换为明确 DTO。
+
+```java
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+record UserInput(String name, int age) {}
+UserInput input = new ObjectMapper().readValue("{\"name\":\"Ann\",\"age\":18}", UserInput.class);
+System.out.println(input.name() + "/" + input.age());
+// 输出：Ann/18
+// 说明：ObjectMapper.readValue(json, UserDto.class) 把输入字段绑定到 UserDto；未知字段、类型错误或构造约束会按 mapper 配置报错，而不是静默成为可信对象。
+```
+
+生产 mapper 通常是共享、不可随请求修改的组件；输入错误应在边界翻译为稳定的 400 响应。
+
+### `@JsonFormat`：约定日期表现
+
+用途：用于给日期时间字段声明明确的 JSON 文本格式。
 
 ```java
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.OffsetDateTime;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-record EventView(
-    String id,
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX") OffsetDateTime occurredAt,
-    String note) {}
+record EventView(@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX") OffsetDateTime occurredAt) {}
 
-System.out.println(new EventView("e-1", OffsetDateTime.parse("2026-10-01T09:00:00+08:00"), null).id());
-// 输出：e-1
+System.out.println(new EventView(OffsetDateTime.parse("2026-10-01T09:00:00+08:00")).occurredAt());
+// 输出：2026-10-01T09:00+08:00
+// 说明：@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX") 约定 occurredAt 的 JSON 文本包含日期、时间和数值时区偏移；直接调用 record 访问器不会触发序列化格式化。
 ```
 
-`@JsonFormat` 的 pattern、时区和序列化模块要与客户端协议一起测试；如果只写 `LocalDateTime`，无法从文本推断真实时区。`@JsonInclude` 省略 null 可能改变兼容性，新增字段应考虑旧客户端。
+pattern、时区和 Java Time 模块要与客户端协议一起测试；`LocalDateTime` 本身不含时区。
 
-### Fastjson2 toJSONString/parseObject：轻量 JSON 转换
+### `@JsonInclude`：省略可选字段
 
-用途：用于在明确边界内用 Fastjson2 快速生成和解析 JSON；统一项目应选择一种默认 mapper，并对特性、日期和未知字段策略做集中配置。
+用途：用于声明 null 或空值字段是否出现在 JSON 中。
+
+```java
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+record ResultView(String id, String note) {}
+System.out.println(new ResultView("e-1", null).note() == null);
+// 输出：true
+// 说明：@JsonInclude(NON_NULL) 省略值为 null 的 optionalField，但保留空字符串和空集合；字段缺失与显式 null 的协议语义需另行约定。
+```
+
+省略 null 会改变响应字段形状，必须与客户端兼容策略一起评估。
+
+### `JSON.toJSONString`：用 Fastjson2 序列化
+
+用途：用于在明确边界内用 Fastjson2 把对象序列化为 JSON。
 
 ```java
 import com.alibaba.fastjson2.JSON;
@@ -92,12 +223,28 @@ import com.alibaba.fastjson2.JSON;
 record UserView(String name, int age) {}
 
 String json = JSON.toJSONString(new UserView("Ann", 18));
-UserView view = JSON.parseObject(json, UserView.class);
-System.out.println(view.name() + "/" + view.age());
-// 输出：Ann/18
+System.out.println(json.contains("\"name\":\"Ann\"") && json.contains("\"age\":18"));
+// 输出：true
+// 作用：用于在明确边界内用 Fastjson2 把对象序列化为 JSON。
 ```
 
-Fastjson2 的 `JSONReader`/`JSONWriter` 特性可以细化读取和写出，但不要把兼容旧版本的宽松开关当作安全策略。外部输入仍应做大小、类型和字段白名单检查；转换成功后继续进入校验和授权流程。
+统一项目应选择一种默认 mapper，并集中配置写出特性。
+
+### `JSON.parseObject`：用 Fastjson2 反序列化
+
+用途：用于把受控大小的 JSON 输入解析为指定类型。
+
+```java
+import com.alibaba.fastjson2.JSON;
+
+record UserInput(String name, int age) {}
+UserInput input = JSON.parseObject("{\"name\":\"Ann\",\"age\":18}", UserInput.class);
+System.out.println(input.name() + "/" + input.age());
+// 输出：Ann/18
+// 作用：用于把受控大小的 JSON 输入解析为指定类型。
+```
+
+不要把宽松兼容特性当作安全策略；转换成功后仍要继续校验和授权。
 
 ## 不常用但需要知道
 
@@ -154,6 +301,7 @@ System.out.println(json);
 String singleCharLocal = mapper.writeValueAsString(new PublicUser("a@example.test", "Ann"));
 System.out.println(singleCharLocal);
 // 输出：{"email":"*@example.test","displayName":"Ann"}
+// 作用：用于把领域类型映射成稳定的公开协议，或在输出前遮蔽敏感值；自定义代码必须有反向解析、版本兼容和脱敏测试。
 ```
 
 `@JsonSerialize` 和 `@JsonDeserialize` 把具体实现绑定到字段或类型，示例中的 `EmailDeserializer` 代表项目自己的反序列化器；这里使用字段级 serializer 并由 `ObjectMapper.writeValueAsString` 实际调用，不会全局替换所有 `String` 的序列化。脱敏条件从 `at > 0` 开始：单字符本地部（如 `a@example.test`）输出 `*@example.test`，更长本地部保留首字符；不含 `@` 或缺少域部分的值安全透传，未绑定 serializer 的 `displayName` 也保持 `Ann`。这个代码块使用 Jackson 2 API，因此 serializer 的 core/databind 类型来自 `com.fasterxml.jackson.*`；迁移 Jackson 3 时分别改为 `tools.jackson.core.*`、`tools.jackson.databind.*` 与 `tools.jackson.databind.annotation.*`，而 `@JsonFormat`/`@JsonInclude` 仍保留 `com.fasterxml.jackson.annotation.*`。敏感字段还应在日志、错误响应和缓存 key 中分别检查，单一注解覆盖不了所有输出路径。
@@ -186,6 +334,7 @@ record PublicUserOutputV3(
     String email) {}
 
 // 输出：ann@example.test 序列化为 a***@example.test
+// 作用：用于在 Jackson 3.1.4 中为单个协议字段实现脱敏和反向解析；Jackson 3 的自定义 handler 已将 Jackson 2 的 `JsonSerializer`/`JsonDeserializer` 更名为 `ValueSerializer`/`ValueDeserializer`。
 ```
 
 Jackson 3.1.4 的 `ValueSerializer.serialize` 使用 `SerializationContext`，异常统一从 `tools.jackson.core.JacksonException` 传播。`@JsonSerialize` 将它限定在 `email` 字段，不会全局改写所有 `String`。
@@ -214,6 +363,7 @@ record PublicUserV3(
     String email) {}
 
 // 输出：" ann@example.test " 反序列化为 ann@example.test
+// 作用：用于在 Jackson 3.1.4 中将单个 JSON 字段转换成领域值；字段规范化后仍要继续执行业务校验。
 ```
 
 `ValueDeserializer.deserialize` 使用 `DeserializationContext`，`JsonParser.getString()` 是 3.x 的文本访问 API。Jackson 2 的对照仍使用上一个片段中的 `JsonSerializer`/`JsonDeserializer` 和 `com.fasterxml.jackson.*` 包，不能混用两代类型。实际项目通过 3.x `ObjectMapper`/`JsonMapper` 注册 DTO，并用 BOM 锁定整组版本。
@@ -247,6 +397,7 @@ class RedisSerializationConfig {
 
 System.out.println("redis=StringSerializer");
 // 输出：redis=StringSerializer
+// 说明：key/hashKey 使用 StringRedisSerializer，value/hashValue 使用限定 DTO 的 JSON 序列化器；例如 user:42 的字节 key 稳定，缓存 value 只能反序列化为约定类型，不能接受任意类元数据。
 ```
 
 这是一个由 Spring 容器提供 `RedisConnectionFactory` 的配置片段，需在容器中创建 Bean，不是可独立运行的单文件程序；`afterPropertiesSet()` 确保 serializer 设置完成后再使用。JSON 值 serializer 要锁定 DTO 类型、版本和未知字段策略，避免对不可信数据开启任意类型反序列化。Redis key 要有命名空间和长度边界，缓存 miss、旧版本值和 serializer 不兼容都应按 miss 或可观测失败处理；不要把访问授权完全交给缓存里的 claims。

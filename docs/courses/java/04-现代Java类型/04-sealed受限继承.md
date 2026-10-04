@@ -1,6 +1,6 @@
 ---
 title: sealed 受限继承
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -41,6 +41,8 @@ sealed 检查的是直接继承关系，子类仍需满足访问级别、同一�
 实现类型必须出现在 permits 列表中；record 默认是 final，正好适合表示不会继续扩展的数据结果。
 
 ```java
+// 语义：实现类型必须出现在 permits 列表中。
+// 调用参数：代码依次使用 "paid:"、"declined:"、"unreachable"、"p-1"、-1。
 sealed interface PaymentResult permits Paid, Declined {}
 
 record Paid(String id) implements PaymentResult {}
@@ -69,6 +71,8 @@ public class SealedInterfaceDemo {
 sealed class 适合共享少量受保护行为或状态的有限层次；如果实现只承载数据，sealed interface 加 record 往往更轻量。
 
 ```java
+// 语义：sealed class 适合共享少量受保护行为或状态的有限层次。
+// 调用参数：代码依次使用 "create"、"delete"。
 sealed abstract class Command permits CreateUser, DeleteUser {
     abstract String name();
 }
@@ -100,6 +104,8 @@ public class SealedClassDemo {
 final 表示该直接子类型不能再被继承，编译器可以把这一支视为稳定叶子节点。
 
 ```java
+// 语义：final 表示该直接子类型不能再被继承，编译器可以把这一支视为稳定叶子节点。
+// 调用参数：代码依次使用 "ok"。
 sealed interface Result permits Success {}
 
 final class Success implements Result {
@@ -121,6 +127,8 @@ public class SealedFinalDemo {
 中间层声明 sealed 后，必须继续列出自己的直接子类；这适合“文件节点—文件—具体文件类型”这类有层次的领域模型。
 
 ```java
+// 语义：中间层声明 sealed 后，必须继续列出自己的直接子类。
+// 调用参数：代码依次使用 true。
 sealed interface FileNode permits File, Directory {}
 
 sealed class File implements FileNode permits TextFile, ImageFile {}
@@ -142,6 +150,8 @@ public class NestedSealedDemo {
 non-sealed 只放开这一支，不影响同一 sealed 层次的其他分支；常用于核心事件集合中预留外部扩展点。
 
 ```java
+// 语义：non-sealed 只放开这一支，不影响同一 sealed 层次的其他分支。
+// 调用参数：代码依次使用 true。
 sealed interface Event permits OpenEvent, ExternalEvent {}
 
 record OpenEvent() implements Event {}
@@ -162,6 +172,8 @@ public class NonSealedDemo {
 编译器知道 sealed 的已知分支，但普通 if 仍需要显式覆盖或转换；JDK 20 预览的模式 switch 可以把穷尽性表达得更直接。
 
 ```java
+// 语义：编译器知道 sealed 的已知分支，但普通 if 仍需要显式覆盖或转换。
+// 初始状态：rectangle 初始为 (Rectangle) shape。
 sealed interface Shape permits Circle, Rectangle {}
 record Circle(double radius) implements Shape {}
 record Rectangle(double width, double height) implements Shape {}

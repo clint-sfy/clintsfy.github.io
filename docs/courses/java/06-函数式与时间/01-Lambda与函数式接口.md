@@ -1,6 +1,6 @@
 ---
 title: Lambda 与函数式接口
-date: 2026-09-22
+date: 2026-09-22T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -40,6 +40,8 @@ Lambda 不是“自动多线程”，只是把一段行为交给一个有唯一�
 `test` 返回布尔值，适合过滤、校验和权限判断；不要在谓词里偷偷修改共享状态。
 
 ```java
+// 语义：test 返回布尔值，适合过滤、校验和权限判断。
+// 初始状态：longName 初始为 name -> name.length() >= 4。
 import java.util.function.Predicate;
 
 Predicate<String> longName = name -> name.length() >= 4;
@@ -47,17 +49,54 @@ System.out.println(longName.test("Java"));
 // 输出：true
 ```
 
-### `Predicate.and/or/negate`：组合条件
+### `Predicate.and`：要求两个条件同时成立
 
-组合顺序会影响短路和可读性；条件复杂时应拆成有名字的谓词。
+`and` 会先检查左侧条件，左侧为 `false` 时短路，不再执行右侧条件。
 
 ```java
+// 语义：and 会先检查左侧条件，左侧为 false 时短路，不再执行右侧条件。
+// 初始状态：notBlank 初始为 text -> !text.isBlank()；startsWithJava 初始为 text -> text.startsWith("Java")。
 import java.util.function.Predicate;
 
 Predicate<String> notBlank = text -> !text.isBlank();
-Predicate<String> javaName = text -> text.startsWith("Java");
-Predicate<String> valid = notBlank.and(javaName).or(text -> text.equals("JDK"));
-System.out.println(valid.test("Java 20"));
+Predicate<String> startsWithJava = text -> text.startsWith("Java");
+Predicate<String> valid = notBlank.and(startsWithJava);
+
+System.out.println(valid.test("Java 21"));
+// 输出：true
+```
+
+### `Predicate.or`：允许任一条件成立
+
+`or` 适合表达候选条件，左侧为 `true` 时会短路，不再执行右侧条件。
+
+```java
+// 语义：or 适合表达候选条件，左侧为 true 时会短路，不再执行右侧条件。
+// 初始状态：isJava 初始为 "Java"::equals；isKotlin 初始为 "Kotlin"::equals。
+import java.util.function.Predicate;
+
+Predicate<String> isJava = "Java"::equals;
+Predicate<String> isKotlin = "Kotlin"::equals;
+Predicate<String> supported = isJava.or(isKotlin);
+
+System.out.println(supported.test("Kotlin"));
+// 输出：true
+```
+
+### `Predicate.negate`：反转一个条件
+
+`negate` 用于复用已有条件的反义逻辑，避免再写一份容易漂移的判断。
+
+```java
+// 语义：negate 用于复用已有条件的反义逻辑，避免再写一份容易漂移的判断。
+// 初始状态：blank 初始为 String::isBlank；notBlank 初始为 blank.negate()。
+import java.util.function.Predicate;
+
+Predicate<String> blank = String::isBlank;
+Predicate<String> notBlank = blank.negate();
+String input = "Java";
+
+System.out.println(notBlank.test(input));
 // 输出：true
 ```
 
@@ -66,6 +105,8 @@ System.out.println(valid.test("Java 20"));
 `Function` 适合 `map`、字段提取和格式转换；转换失败时要明确是返回默认值还是抛出异常。
 
 ```java
+// 语义：Function 适合 map、字段提取和格式转换。
+// 初始状态：length 初始为 String::length。
 import java.util.function.Function;
 
 Function<String, Integer> length = String::length;
@@ -73,18 +114,37 @@ System.out.println(length.apply("Java"));
 // 输出：4
 ```
 
-### `Function.compose/andThen`：串联转换步骤
+### `Function.compose`：先执行参数函数
 
-`compose` 先执行参数函数，`andThen` 先执行当前函数；阅读时要确认数据流方向。
+`compose` 先把输入交给参数函数，再把中间结果交给当前函数。
 
 ```java
+// 语义：compose 先把输入交给参数函数，再把中间结果交给当前函数。
+// 初始状态：trim 初始为 String::trim；length 初始为 String::length。
+import java.util.function.Function;
+
+Function<String, String> trim = String::trim;
+Function<String, Integer> length = String::length;
+Function<String, Integer> trimmedLength = length.compose(trim);
+
+System.out.println(trimmedLength.apply(" Java "));
+// 输出：4
+```
+
+### `Function.andThen`：随后执行下一个函数
+
+`andThen` 先执行当前函数，再把结果传给参数函数，适合按阅读顺序组织转换。
+
+```java
+// 语义：andThen 先执行当前函数，再把结果传给参数函数，适合按阅读顺序组织转换。
+// 初始状态：trim 初始为 String::trim；upper 初始为 String::toUpperCase。
 import java.util.function.Function;
 
 Function<String, String> trim = String::trim;
 Function<String, String> upper = String::toUpperCase;
-System.out.println(upper.compose(trim).apply(" java "));
-// 输出：JAVA
-System.out.println(trim.andThen(upper).apply(" java "));
+Function<String, String> normalize = trim.andThen(upper);
+
+System.out.println(normalize.apply(" java "));
 // 输出：JAVA
 ```
 
@@ -93,6 +153,8 @@ System.out.println(trim.andThen(upper).apply(" java "));
 `Consumer` 没有返回值，常用于日志、通知和写入；并行流中使用它修改普通集合通常不安全。
 
 ```java
+// 语义：Consumer 没有返回值，常用于日志、通知和写入。
+// 初始状态：log 初始为 new ArrayList<>()；record 初始为 log::add。
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -109,6 +171,8 @@ System.out.println(log);
 组合的两个动作按顺序执行；前一个动作抛异常时，后一个动作不会执行。
 
 ```java
+// 语义：组合的两个动作按顺序执行。
+// 初始状态：output 初始为 new ArrayList<>()；print 初始为 text -> output.add("value=" + text)。
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -126,6 +190,8 @@ System.out.println(output);
 `Supplier` 不接收参数，可用于延迟构造默认值；只有调用 `get()` 才会计算。
 
 ```java
+// 语义：Supplier 不接收参数，可用于延迟构造默认值。
+// 初始状态：requestId 初始为 () -> "REQ-20"。
 import java.util.function.Supplier;
 
 Supplier<String> requestId = () -> "REQ-20";
@@ -138,6 +204,8 @@ System.out.println(requestId.get());
 它是 `Function<T, T>` 的语义别名，适合原类型变换，如规范化、递增和复制。
 
 ```java
+// 语义：它是 Function<T, T> 的语义别名，适合原类型变换，如规范化、递增和复制。
+// 初始状态：normalize 初始为 String::trim。
 import java.util.function.UnaryOperator;
 
 UnaryOperator<String> normalize = String::trim;
@@ -150,6 +218,8 @@ System.out.println(normalize.apply(" Java "));
 它是 `BiFunction<T, T, T>` 的语义别名，常用于 `reduce`；合并操作最好满足结合律，便于并行处理。
 
 ```java
+// 语义：它是 BiFunction<T, T, T> 的语义别名，常用于 reduce。
+// 初始状态：add 初始为 Integer::sum。
 import java.util.function.BinaryOperator;
 
 BinaryOperator<Integer> add = Integer::sum;
@@ -162,6 +232,8 @@ System.out.println(add.apply(20, 22));
 方法引用必须放在目标函数式接口的上下文中；有重载或额外分支时，显式 Lambda 往往更清楚。
 
 ```java
+// 语义：方法引用必须放在目标函数式接口的上下文中。
+// 初始状态：names 初始为 List.of("Bob", "Ann")。
 import java.util.List;
 
 List<String> names = List.of("Bob", "Ann");
@@ -171,11 +243,12 @@ names.stream().map(String::toUpperCase).forEach(System.out::println);
 ```
 ## 不常用但需要知道
 
-### `BiPredicate`/`BiFunction`/`BiConsumer`：处理两个输入
+### `BiPredicate`：用两个输入判断条件
 
 三参数以上通常应使用自定义类型，避免把参数顺序藏在 Lambda 里。
 
 ```java
+// 作用：通过 BiPredicate 用两个输入判断条件。
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 
@@ -187,17 +260,44 @@ System.out.println(join.apply("id", "20"));
 // 输出：id:20
 ```
 
+### `BiFunction`：将两个输入转换为一个结果
+
+上例的 `join` 接收 `"id"` 和 `"20"`，按 `left + ":" + right` 返回 `"id:20"`；两个参数的类型可不同。
+
+```java
+// 输入：左值为 id，右值为 20
+BiFunction<String, Integer, String> join = (left, right) -> left + ":" + right;
+String text = join.apply("id", 20);
+// 结果：text 为 "id:20"
+```
+
+### `BiConsumer`：接收两个输入并执行动作
+
+`BiConsumer` 没有返回值，适合把键和值一起交给日志、填充或输出操作。
+
+```java
+// 语义：printer.accept 把键 "id" 和值 20 交给同一个无返回值动作。
+// 初始状态：printer 由两参数 Lambda 初始化，输出格式为 key=value。
+import java.util.function.BiConsumer;
+
+BiConsumer<String, Integer> printer = (key, value) -> System.out.println(key + "=" + value);
+printer.accept("id", 20);
+// 输出：id=20
+```
+
 ### `Function.identity()`：原样返回元素
 
 只在收集器需要一个“键就是元素本身”的函数时使用；直接写 `name -> name` 也完全可以。
 
 ```java
+// 作用：通过 Function.identity() 原样返回元素。
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 List<String> names = List.of("Ann", "Bob");
-var same = names.stream().collect(Collectors.toMap(Function.identity(), String::length));
+var same = names.stream().collect(
+        Collectors.toMap(Function.identity(), String::length));
 System.out.println(same);
 // 输出：{Ann=3, Bob=3}
 ```
@@ -222,6 +322,7 @@ System.out.println(memberRule.priceAfterDiscount(80));
 局部变量创建 Lambda 后不能再次赋值；需要变化的状态应显式传参或使用受控的对象。
 
 ```java
+// 初始状态：limit=10 且后续没有重新赋值，因此 underLimit Lambda 可以捕获它并测试 value=8。
 int limit = 10;
 java.util.function.Predicate<Integer> underLimit = value -> value < limit;
 System.out.println(underLimit.test(8));

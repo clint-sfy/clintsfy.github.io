@@ -1,6 +1,6 @@
 ---
 title: ReentrantLock 与 Condition
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -35,11 +35,12 @@ description: 使用 ReentrantLock 的超时、可中断、公平锁和 Condition
 
 ## 常用用法
 
-### lock/unlock：finally 释放锁
+### 使用显式锁：获得后在 `finally` 释放
 
-`lock()` 返回后代表当前线程已经持有锁；即使临界区抛异常也必须释放。不要把 unlock 放在可能未成功加锁的路径上。
+`lock()` 返回后代表当前线程已经持有锁；即使临界区抛异常也必须释放。
 
 ```java
+// 说明：使用显式锁：获得后在 finally 释放。
 import java.util.concurrent.locks.ReentrantLock;
 
 public class LockFinallyDemo {
@@ -56,11 +57,14 @@ public class LockFinallyDemo {
 }
 ```
 
+不要把 unlock 放在可能未成功加锁的路径上。
+
 ### tryLock：有界地尝试获得锁
 
 tryLock 能避免无限等待，适合降级、重试或按锁顺序获取；超时分支必须有业务策略，不能静默丢请求。
 
 ```java
+// 说明：tryLock：有界地尝试获得锁。
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -87,6 +91,7 @@ public class TryLockDemo {
 与不可中断的 `lock()` 相比，它允许上层取消等待；捕获 InterruptedException 后应决定退出、恢复中断或转成业务异常。
 
 ```java
+// 说明：lockInterruptibly：可响应中断地等待锁。
 import java.util.concurrent.locks.ReentrantLock;
 
 public class InterruptibleLockDemo {
@@ -103,11 +108,12 @@ public class InterruptibleLockDemo {
 }
 ```
 
-### Condition.await/signalAll：条件队列
+### 等待锁条件：释放锁并广播唤醒
 
-await 必须在持有绑定 Lock 时调用；醒来后要 while 检查条件。多个 Condition 可以分别表示 notEmpty、notFull 等状态，减少无关线程唤醒。
+await 必须在持有绑定 Lock 时调用；醒来后要 while 检查条件。
 
 ```java
+// 说明：等待锁条件：释放锁并广播唤醒。
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -147,11 +153,14 @@ public class ConditionDemo {
 }
 ```
 
+多个 Condition 可以分别表示 notEmpty、notFull 等状态，减少无关线程唤醒。
+
 ### ReentrantLock(boolean fair)：创建公平锁
 
 公平锁减少插队机会，但会增加排队和调度成本；默认非公平锁往往吞吐更好，先用指标证明需要公平性。
 
 ```java
+// 说明：ReentrantLock(boolean fair)：创建公平锁。
 import java.util.concurrent.locks.ReentrantLock;
 
 public class FairLockDemo {
@@ -170,9 +179,10 @@ public class FairLockDemo {
 
 ### getHoldCount：查看当前线程的重入次数
 
-重入次数只用于诊断或断言，不能作为业务状态。每次成功 lock 都必须对应一次 unlock。
+重入次数只用于诊断或断言，不能作为业务状态。
 
 ```java
+// 说明：getHoldCount：查看当前线程的重入次数。
 import java.util.concurrent.locks.ReentrantLock;
 
 public class HoldCountDemo {
@@ -193,6 +203,8 @@ public class HoldCountDemo {
     }
 }
 ```
+
+每次成功 lock 都必须对应一次 unlock。
 ## 不常用但需要知道
 
 ### Condition.awaitNanos：带剩余时间的等待
@@ -200,6 +212,7 @@ public class HoldCountDemo {
 超时等待可能被提前 signal 或中断，返回值只是剩余时间提示。业务条件仍需要在循环中检查，不应只依据返回值判定成功。
 
 ```java
+// 作用：通过 Condition.awaitNanos 带剩余时间的等待。
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -224,6 +237,7 @@ public class ConditionTimeoutDemo {
 读锁并行不等于一定更快；写频繁、读临界区很短或升级路径复杂时，普通锁可能更清晰。不要在持有读锁时直接申请写锁形成升级死锁。
 
 ```java
+// 说明：当前线程获得 lock.readLock() 后只读共享快照，finally 释放读锁，避免后续写线程一直被阻塞。
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ReadWriteLockLowFrequencyDemo {
@@ -245,6 +259,7 @@ public class ReadWriteLockLowFrequencyDemo {
 StampedLock 不可重入，乐观读必须 validate，失败后回退到读锁。只有读多写少且基准显示收益时才使用。
 
 ```java
+// 说明：tryOptimisticRead() 产生 stamp；若 validate(stamp) 发现期间有写锁，就持有 readLock 重读 result。
 import java.util.concurrent.locks.StampedLock;
 
 public class StampedLockLowFrequencyDemo {

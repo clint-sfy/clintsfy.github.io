@@ -1,6 +1,6 @@
 ---
 title: Socket 与网络边界
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -38,6 +38,7 @@ Socket 只解决“连接和字节传输”，不会定义一条消息什么时�
 传入 0 让操作系统分配临时端口，适合测试；生产服务要明确绑定地址、端口占用、backlog 和防火墙边界。
 
 ```java
+//说明： 说明：ServerSocket：监听端口。
 import java.net.ServerSocket;
 
 public class ServerSocketBindDemo {
@@ -50,11 +51,12 @@ public class ServerSocketBindDemo {
 }
 ```
 
-### `accept` 与 `Socket`：接收 TCP 连接
+### 接收 TCP 连接：从监听套接字得到通信端点
 
 `accept` 会阻塞直到有连接；真实服务通常为每个连接提交任务或使用 NIO，且要限制连接数、空闲时间和输入大小。
 
 ```java
+// 说明：接收 TCP 连接：从监听套接字得到通信端点。
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.Executors;
@@ -79,11 +81,12 @@ public class SocketAcceptDemo {
 }
 ```
 
-### `getInputStream` 与 `getOutputStream`：交换字节
+### 交换 TCP 字节：取得双向流端点
 
 示例用换行定义消息边界；真实二进制协议通常使用长度前缀，不能把 `readLine` 当作通用 TCP 解包器。
 
 ```java
+// 说明：交换 TCP 字节：取得双向流端点。
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -122,6 +125,7 @@ public class SocketTextDemo {
 `SoTimeout` 限制一次阻塞读取，不会自动关闭 Socket，也不等于连接超时；捕获后要决定重试、断开还是继续读取。
 
 ```java
+// 说明：setSoTimeout：限制读取阻塞。
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -152,6 +156,7 @@ public class SocketTimeoutDemo {
 地址对象可以用于绑定和连接；主机名解析可能阻塞或返回多个地址，生产代码要考虑 DNS 超时、IPv4/IPv6 和 SSRF 校验。
 
 ```java
+// 说明：InetSocketAddress：明确主机与端口。
 import java.net.InetSocketAddress;
 
 public class SocketAddressDemo {
@@ -163,11 +168,12 @@ public class SocketAddressDemo {
 }
 ```
 
-### `DatagramSocket.send/receive`：发送 UDP 数据报
+### 交换 UDP 数据报：发送并接收报文
 
 UDP 一次 receive 对应一个数据报，但过大的数据可能被截断；应用仍需处理丢失、重复、乱序和伪造来源。
 
 ```java
+// 说明：交换 UDP 数据报：发送并接收报文。
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -195,6 +201,7 @@ public class UdpLoopbackDemo {
 客户端关闭输出后，服务端读到 EOF，但连接的另一方向仍可能可用；只有协议定义了结束方向时才使用半关闭。
 
 ```java
+// 说明：shutdownOutput：TCP 半关闭。
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -223,6 +230,7 @@ public class SocketHalfCloseDemo {
 选项要在 bind 前设置才更有机会生效；端口重用不是绕过端口冲突的万能开关，平台语义也可能不同。
 
 ```java
+// 作用：通过 setReuseAddress 端口重用选项。
 import java.net.ServerSocket;
 
 public class SocketOptionDemo {
@@ -242,6 +250,7 @@ public class SocketOptionDemo {
 低延迟小消息可能需要 `TCP_NODELAY`，但它会增加包数量和网络开销；必须用真实延迟和吞吐数据验证。
 
 ```java
+// 作用：通过 setTcpNoDelay 禁用 Nagle 合并。
 import java.net.Socket;
 
 public class TcpNoDelayDemo {
@@ -260,6 +269,7 @@ public class TcpNoDelayDemo {
 Keep-alive 不能替代应用心跳、请求超时和连接池空闲淘汰；内核探测周期也通常不是业务可控的。
 
 ```java
+// 作用：通过 setKeepAlive 内核级保活。
 import java.net.Socket;
 
 public class TcpKeepAliveDemo {
@@ -278,6 +288,7 @@ public class TcpKeepAliveDemo {
 backlog 是内核等待队列的建议值，不等于应用能同时处理的连接数；服务端仍需线程池、连接上限和过载策略。
 
 ```java
+// 说明：0 让内核分配本地端口，32 是尚未 accept 连接的排队建议值，不会创建 32 个处理线程。
 import java.net.ServerSocket;
 
 public class BacklogDemo {
@@ -295,6 +306,7 @@ public class BacklogDemo {
 非阻塞 Channel 必须配合 Selector 或连接状态机处理 `finishConnect`、部分读写和 `OP_*` 事件；不能只把 blocking 改成 false 就得到高性能服务。
 
 ```java
+// 作用：通过 SocketChannel 从阻塞 Socket 迁移到 NIO。
 import java.nio.channels.SocketChannel;
 
 public class SocketChannelDemo {
@@ -308,7 +320,7 @@ public class SocketChannelDemo {
 }
 ```
 
-### `URL` 与 `URI`：地址值和旧式访问
+### 表达网络地址：区分结构化标识与旧式访问入口
 
 `URI` 适合解析和构造地址，`URL` 搭配 `URLConnection` 是旧式访问入口；标准 HTTP 请求优先使用 `HttpClient`。
 

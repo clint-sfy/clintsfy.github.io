@@ -1,6 +1,6 @@
 ---
 title: ReadWriteLock 读写锁
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -44,6 +44,7 @@ description: 使用 ReentrantReadWriteLock 分离读写临界区，掌握锁降�
 默认构造器适合先验证读多写少的并发模型；非公平策略通常吞吐更高，但不保证等待顺序。
 
 ```java
+// 说明：ReentrantReadWriteLock()：创建非公平读写锁。
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ReadWriteLockCreateDemo {
@@ -62,6 +63,7 @@ public class ReadWriteLockCreateDemo {
 只读临界区需要允许多个线程并行访问时使用读锁；读取必须短小，不能把未知 I/O 长时间放在锁内。
 
 ```java
+// 说明：readLock()：用读锁保护只读临界区。
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ReadLockDemo {
@@ -92,6 +94,7 @@ public class ReadLockDemo {
 更新共享状态或维护多个字段不变式时适合使用写锁；成功获取后必须在 `finally` 中释放。
 
 ```java
+// 说明：writeLock()：用写锁保护独占更新。
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class WriteLockDemo {
@@ -123,6 +126,7 @@ public class WriteLockDemo {
 写入后还要继续读取同一份状态时使用锁降级；先取得读锁再释放写锁，避免中间被其他写者插入。
 
 ```java
+// 说明：锁降级：写锁转为读锁。
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class LockDowngradeDemo {
@@ -160,6 +164,7 @@ public class LockDowngradeDemo {
 等待顺序和饥饿风险需要更可控时选择公平构造器；公平策略会增加排队成本，不能替代超时和取消。
 
 ```java
+// 说明：ReentrantReadWriteLock(boolean fair)：创建公平读写锁。
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class FairReadWriteLockDemo {
@@ -253,6 +258,7 @@ public class WriteLockInterruptibleDemo {
 需要观测当前读者数量时使用该方法做诊断；返回值是瞬时估计，不能作为业务同步条件。
 
 ```java
+// 作用：通过 getReadLockCount() 只用于诊断当前读者数量。
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ReadLockCountDemo {

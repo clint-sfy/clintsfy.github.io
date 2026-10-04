@@ -1,6 +1,6 @@
 ---
 title: I/O 与 NIO 文件处理
-date: 2026-09-22
+date: 2026-09-22T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -33,33 +33,60 @@ description: 从 I/O 类型选择开始，串起 Path、Files、字节流、字�
 
 ## 常用用法
 
-### `Path`、`Files` 与流 API 如何选择
+### `Path.of`：构造文件系统路径
 
-短文本用 `readString`/`writeString` 简洁；需要按行处理或文件可能很大时，使用 `Files.lines` 并关闭返回的流。完整 API 见 [Path 与 Files 常用 API](/courses/java/07-IO与网络/03-Path与Files常用API)。
+需要用多个路径片段构造与操作系统分隔符兼容的文件路径时使用 `Path.of`。
 
 ```java
-import java.io.IOException;
-import java.nio.file.Files;
+// 说明：Path.of：构造文件系统路径。
 import java.nio.file.Path;
 
-public class IoChoiceDemo {
-    public static void main(String[] args) throws IOException {
-        Path file = Files.createTempFile("java-io-", ".txt");
-        Files.writeString(file, "java\napi\n");
-        try (var lines = Files.lines(file)) {
-            System.out.println(lines.count());
-            // 输出：2
-        }
-        Files.deleteIfExists(file);
-    }
-}
+Path path = Path.of("docs", "guide.txt");
+System.out.println(path.getFileName());
+// 输出：guide.txt
 ```
+
+### `Files.writeString`：写入短文本文件
+
+需要一次写入能够放进内存的短文本时使用 `Files.writeString`，并应显式选择业务所需字符集。
+
+```java
+// 说明：Files.writeString：写入短文本文件。
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+
+var file = Files.createTempFile("java-io-", ".txt");
+Files.writeString(file, "java api", StandardCharsets.UTF_8);
+System.out.println(Files.size(file) > 0);
+// 输出：true
+Files.deleteIfExists(file);
+```
+
+### `Files.lines`：按行流式读取文本
+
+需要按行处理文本或避免一次载入整个文件时使用 `Files.lines`，并用 try-with-resources 关闭返回的流。
+
+```java
+// 说明：Files.lines：按行流式读取文本。
+import java.nio.file.Files;
+
+var file = Files.createTempFile("java-lines-", ".txt");
+Files.writeString(file, "java\napi\n");
+try (var lines = Files.lines(file)) {
+    System.out.println(lines.count());
+    // 输出：2
+}
+Files.deleteIfExists(file);
+```
+
+完整 API 见 [Path 与 Files 常用 API](/courses/java/07-IO与网络/03-Path与Files常用API)。
 
 ### 字节、字符与缓冲层的组合
 
-二进制协议从 `InputStream`/`OutputStream` 开始，文本再叠加 `Charset` 和 `Reader`/`Writer`；缓冲层只改善访问方式，不会替你修正错误编码。详见 [字节流、字符流与缓冲](/courses/java/07-IO与网络/04-字节流字符流与缓冲)。
+二进制协议从 `InputStream`/`OutputStream` 开始，文本再叠加 `Charset` 和 `Reader`/`Writer`；缓冲层只改善访问方式，不会替你修正错误编码。
 
 ```java
+// 说明：字节、字符与缓冲层的组合。
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -79,30 +106,53 @@ public class IoLayerChoiceDemo {
 }
 ```
 
-### Buffer 与 Channel 的配合
+详见 [字节流、字符流与缓冲](/courses/java/07-IO与网络/04-字节流字符流与缓冲)。
 
-`Channel` 负责和文件或网络交换数据，`Buffer` 负责承载这批数据；写入 Buffer 后要 `flip()` 再读取。需要控制 position、limit 和零拷贝传输时阅读 [NIO Buffer 与 Channel](/courses/java/07-IO与网络/05-NIO-Buffer与Channel)。
+### `ByteBuffer`：承载分块读写的数据
+
+需要为 NIO 分块读写准备内存区域时使用 `ByteBuffer`，写入数据后必须调用 `flip()` 才能按有效范围读取。
 
 ```java
+// 说明：ByteBuffer：承载分块读写的数据。
 import java.nio.ByteBuffer;
 
-public class BufferChannelChoiceDemo {
-    public static void main(String[] args) {
-        ByteBuffer buffer = ByteBuffer.allocate(4);
-        buffer.put((byte) 7).put((byte) 8);
-        buffer.flip();
-        System.out.println(buffer.get() + ", " + buffer.get());
-        // 输出：7, 8
-    }
-}
+ByteBuffer buffer = ByteBuffer.allocate(4);
+buffer.put((byte) 7).put((byte) 8);
+buffer.flip();
+System.out.println(buffer.get() + ", " + buffer.get());
+// 输出：7, 8
 ```
+
+### `FileChannel`：在文件与缓冲区之间交换数据
+
+需要通过 NIO 通道分块读取文件时使用 `FileChannel`，并在资源边界关闭通道和处理未读完的数据。
+
+```java
+// 说明：FileChannel：在文件与缓冲区之间交换数据。
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
+
+var file = Files.createTempFile("java-channel-", ".txt");
+Files.writeString(file, "OK");
+try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
+    ByteBuffer buffer = ByteBuffer.allocate(2);
+    System.out.println(channel.read(buffer));
+    // 输出：2
+}
+Files.deleteIfExists(file);
+```
+
+需要控制 position、limit 和零拷贝传输时阅读 [NIO Buffer 与 Channel](/courses/java/07-IO与网络/05-NIO-Buffer与Channel)。
 ## 不常用但需要知道
 
-### `File` 与 `Path` 的兼容边界
+### `File.toPath`：转换到 Path API
 
 `File` 仍存在于旧库和旧签名中，但它的异常、属性和符号链接表达能力较弱；新代码从 `Path` 开始，需要兼容旧 API 时用 `toPath()` 或 `toFile()` 做边界转换。
 
 ```java
+// 说明：legacy 指向当前工作目录下的 notes.txt；toPath() 只转换路径表示，不会读取文件字节。
 import java.io.File;
 import java.nio.file.Path;
 

@@ -1,6 +1,6 @@
 ---
 title: Quartz 定时任务
-date: 2026-10-01
+date: 2026-10-01T00:00:00.000Z
 category: Java后端工程
 tags:
   - Java
@@ -44,6 +44,144 @@ Cron 表达式通常包含秒、分、时、日、月、星期（可选年），
 
 ## 常用用法
 
+### `JobBuilder.newJob`：创建 JobDetail 构建器
+
+用途：用于从 Job 实现类开始构建具有稳定身份的任务定义。
+
+```java
+JobDetail detail = JobBuilder.newJob(CleanupJob.class)
+    .withIdentity("cleanup", "maintenance").build();
+System.out.println(detail.getKey());
+// 输出：maintenance.cleanup
+// 说明：以 CleanupJob.class 构建 JobDetail，任务键固定为组 maintenance、名称 cleanup，打印 maintenance.cleanup；这里只构造定义，尚未注册 Scheduler。
+```
+
+### `TriggerBuilder.newTrigger`：创建 Trigger 构建器
+
+用途：用于创建触发器并显式绑定任务身份与调度规则。
+
+```java
+Trigger trigger = TriggerBuilder.newTrigger()
+    .withIdentity("cleanup-trigger", "maintenance").forJob(detail).startNow().build();
+System.out.println(trigger.getJobKey());
+// 输出：maintenance.cleanup
+// 说明：TriggerKey 为 maintenance.cleanup-trigger，forJob(detail) 绑定 JobKey maintenance.cleanup，startNow 表示注册后尽快首次触发。
+```
+
+### `CronScheduleBuilder.cronSchedule`：创建 Cron 调度规则
+
+用途：用于把经过校验的 Quartz Cron 表达式转换为调度构建器。
+
+```java
+CronScheduleBuilder schedule = CronScheduleBuilder.cronSchedule("0 0 2 * * ?");
+System.out.println(schedule != null);
+// 输出：true
+// 说明："0 0 2 * * ?" 表示每天 02:00:00；cronSchedule 解析失败会抛异常，创建 builder 本身还没有向 Scheduler 注册 Trigger。
+```
+
+### `CronExpression`：校验 Cron 表达式
+
+用途：用于在保存调度配置前解析并校验 Quartz Cron 表达式。
+
+```java
+CronExpression expression = new CronExpression("0 0/5 * * * ?");
+System.out.println(expression.getNextValidTimeAfter(new Date()) != null);
+// 输出：true
+// 说明："0 0/5 * * * ?" 是 Quartz 六字段表达式，表示每 5 分钟的第 0 秒；getNextValidTimeAfter 从当前 Date 计算下一次触发时间。
+```
+
+### `JobDataMap`：构造任务参数映射
+
+用途：用于创建只包含可序列化小型参数的任务数据容器。
+
+```java
+JobDataMap data = new JobDataMap();
+data.put("batchSize", 100);
+System.out.println(data.getInt("batchSize"));
+// 输出：100
+// 说明：JobDataMap 以 key=batchSize 保存整数 100，getInt("batchSize") 返回 100；持久化 JobStore 下该值必须可序列化且不应包含服务对象。
+```
+
+### `JobDataMap.put`：写入任务参数
+
+用途：用于按明确键写入任务执行所需的轻量参数，避免放入连接或服务对象。
+
+```java
+JobDataMap data = new JobDataMap();
+data.put("tenantId", "acme");
+System.out.println(data.getString("tenantId"));
+// 输出：acme
+// 说明：put("tenantId", "acme") 写入任务参数 tenantId=acme，执行端用同一键 getString 读取；键名是任务数据契约的一部分。
+```
+
+### `JobKey.jobKey`：构造任务身份
+
+用途：用于由任务名和组名构造稳定的调度器查找键。
+
+```java
+JobKey key = JobKey.jobKey("cleanup", "maintenance");
+System.out.println(key);
+// 输出：maintenance.cleanup
+// 说明：JobKey.jobKey("cleanup", "maintenance") 构造组 maintenance、名称 cleanup 的身份，toString 输出 maintenance.cleanup，供暂停、恢复和删除精确定位。
+```
+
+### `Scheduler.checkExists`：检查任务是否存在
+
+用途：用于在创建或更新前判断指定 JobKey 是否已注册。
+
+```java
+boolean exists = scheduler.checkExists(JobKey.jobKey("cleanup", "maintenance"));
+System.out.println(exists);
+// 输出：true 或 false。
+// 作用：用于在创建或更新前判断指定 JobKey 是否已注册。
+```
+
+### `Scheduler.deleteJob`：删除指定任务
+
+用途：用于显式删除任务及其关联触发器，并检查是否确实找到目标。
+
+```java
+boolean deleted = scheduler.deleteJob(JobKey.jobKey("cleanup", "maintenance"));
+System.out.println(deleted);
+// 输出：找到并删除时为 true。
+// 说明：deleteJob(maintenance.cleanup) 返回 true 表示 JobDetail 及关联 Trigger 已删除，false 表示该 key 不存在；不会撤销已经开始的执行。
+```
+
+### `Scheduler.scheduleJob`：注册任务与触发器
+
+用途：用于把 JobDetail 与匹配的 Trigger 原子地交给调度器注册。
+
+```java
+Date firstFireTime = scheduler.scheduleJob(detail, trigger);
+System.out.println(firstFireTime != null);
+// 输出：true
+// 说明：scheduleJob(detail, trigger) 注册 maintenance.cleanup 及其绑定触发器，返回首次计划触发 Date；键冲突通常抛 ObjectAlreadyExistsException。
+```
+
+### `Scheduler.pauseJob`：暂停任务触发
+
+用途：用于维护窗口暂时阻止指定任务产生新的触发。
+
+```java
+scheduler.pauseJob(JobKey.jobKey("cleanup", "maintenance"));
+System.out.println("paused");
+// 输出：paused
+// 说明：pauseJob(maintenance.cleanup) 阻止该 JobKey 后续触发，但不会中断正在运行的 CleanupJob；恢复时如何处理错过时间由 Trigger 的 misfire 策略决定。
+// 结果：目标任务停止产生新的触发，已开始的执行不会被该操作中断。
+```
+
+### `Scheduler.resumeJob`：恢复任务触发
+
+用途：用于结束维护窗口后恢复指定任务，并遵循既定 misfire 策略。
+
+```java
+scheduler.resumeJob(JobKey.jobKey("cleanup", "maintenance"));
+System.out.println("resumed");
+// 输出：resumed
+// 说明：resumeJob(maintenance.cleanup) 重新允许后续触发；暂停期间错过的运行不会无条件全部补跑，而按绑定 Trigger 的 misfire 策略处理。
+// 结果：目标任务恢复接受后续触发，并继续遵循既定调度策略。
+```
+
 ### Job：实现一次执行单元
 
 用途：用于实现一段可被 Quartz 调度的工作，并从 `JobExecutionContext` 读取受控参数、输出稳定结果。
@@ -61,6 +199,7 @@ final class CleanupJob implements Job {
 }
 
 // 输出：job=cleanup:done
+// 作用：用于实现一段可被 Quartz 调度的工作，并从 `JobExecutionContext` 读取受控参数、输出稳定结果。
 ```
 
 `execute` 运行时可能由 Quartz 工作线程调用，不能依赖请求线程、ThreadLocal 或未传播的 MDC。任务应设置超时、记录关联 ID，并对重复执行和部分成功设计幂等处理；抛出异常要让调度层看见，而不是悄悄吞掉。
@@ -81,6 +220,7 @@ JobDetail detail = JobBuilder.newJob(CleanupJob.class)
 
 System.out.println(detail.getKey());
 // 输出：maintenance.cleanup
+// 说明：JobDetail 的 key 为 maintenance.cleanup，JobDataMap 含 batch=nightly，storeDurably 允许它暂时没有 Trigger 仍保留；尚未调用 Scheduler 注册。
 ```
 
 `JobDataMap` 适合小型、可序列化配置，不适合放大对象、密码或实时状态；持久化 JobStore 会序列化数据，升级类结构时要考虑兼容。JobKey 是运维操作的身份，不要用用户可控文本直接构造未经校验的 key。
@@ -104,6 +244,7 @@ CronTrigger trigger = TriggerBuilder.newTrigger()
 
 System.out.println(trigger.getCronExpression());
 // 输出：0 0/5 * * * ?
+// 说明：CronTrigger 键为 maintenance.cleanup-trigger，绑定 maintenance.cleanup，在 Asia/Shanghai 时区按 "0 0/5 * * * ?" 每 5 分钟触发。
 ```
 
 CronTrigger 只表达触发计划，实际任务仍可能失败或超时；时区、开始时间和 misfire 策略要在同一 Trigger 上显式配置。修改计划应使用稳定 TriggerKey，并先确认旧 Trigger 是否仍被其他运维操作依赖。
@@ -118,6 +259,7 @@ import org.quartz.CronExpression;
 String expression = "0 30 9 ? * MON-FRI";
 System.out.println(CronExpression.isValidExpression(expression));
 // 输出：true
+// 说明："0 30 9 ? * MON-FRI" 表示周一至周五 09:30:00，isValidExpression 返回 true；是否符合本地业务时间仍取决于 Trigger 时区。
 ```
 
 Quartz 的秒字段位于最前面，星期和日期字段通常一个使用 `?`；它与 Unix 五字段 Cron 不完全相同。生产规则应固定时区并测试夏令时、月底和闰日，不要把“每五分钟”误写成每五秒。
@@ -127,17 +269,19 @@ Quartz 的秒字段位于最前面，星期和日期字段通常一个使用 `?`
 用途：用于决定 Scheduler 恢复或资源不足后如何处理错过的 Cron 触发，避免默认策略与业务语义不符。
 
 ```java
+// 说明：CronScheduleBuilder 为 "0 0/5 * * * ?" 配置 DoNothing misfire 策略，恢复后跳过过期触发点。
 import org.quartz.CronScheduleBuilder;
 
 var schedule = CronScheduleBuilder.cronSchedule("0 0/5 * * * ?")
     .withMisfireHandlingInstructionDoNothing();
 System.out.println("misfire=skip-old-run");
 // 输出：misfire=skip-old-run
+// 结果：控制台输出 misfire=skip-old-run；Scheduler 恢复时不会集中补跑错过的 5 分钟触发。
 ```
 
 `DoNothing` 适合过期即无意义的刷新任务，`FireAndProceed` 适合恢复后补一次，`IgnoreMisfirePolicy` 则可能带来集中执行压力。misfire 只影响触发器补偿，不会自动重试已经抛异常的业务步骤；每种策略都要有可观测指标。
 
-### 暂停/恢复：运维控制调度
+### 维护期间控制调度启停
 
 用途：用于在维护或下游故障时暂停 Job/Trigger，再在条件满足后恢复计划，而不误以为暂停会停止正在执行的实例。
 
@@ -155,6 +299,7 @@ void maintenance(Scheduler scheduler) throws Exception {
 
 // 输出：state=paused
 // 输出：state=resumed
+// 作用：用于在维护或下游故障时暂停 Job/Trigger，再在条件满足后恢复计划，而不误以为暂停会停止正在执行的实例。
 ```
 
 暂停只阻止后续触发，已进入 `execute` 的任务仍需自己完成、超时或取消；恢复后是否产生 misfire 由 Trigger 策略决定。运维接口要限制权限并记录操作者、原因和恢复时间。
@@ -177,6 +322,7 @@ final class RebuildJob implements Job {
         // 输出：overlap=blocked
     }
 }
+// 作用：用于禁止同一 `JobKey` 的多个实例并发执行，适合非幂等或会竞争同一资源的任务。
 ```
 
 注解的作用范围是同一个 JobKey；使用不同 key、不同调度器或外部进程仍可能并发。它也不替代数据库唯一约束、分布式锁和幂等写入，长任务要配合 misfire 和超时策略评估排队效果。
@@ -205,6 +351,7 @@ quartz.setProperty("org.quartz.dataSource.main.password", Objects.requireNonNull
 System.out.println("store=" + quartz.getProperty("org.quartz.jobStore.class")
     + ",prefix=" + quartz.getProperty("org.quartz.jobStore.tablePrefix"));
 // 输出：store=org.quartz.impl.jdbcjobstore.JobStoreTX,prefix=QRTZ_
+// 作用：用于在进程重启和多节点部署中保存 Job/Trigger 状态，让调度器依靠 Quartz 表恢复和协调，而不是依靠内存快照。
 ```
 
 JDBCJobStore 需要先执行与数据库方言匹配的 Quartz 建表脚本，并配置真实的 `jobStore.class`、`driverDelegateClass`、`dataSource`、`tablePrefix`、`isClustered`、`instanceId` 与数据源 URL/账号属性。密码只能来自受控密钥或环境变量，不能写进 `JobDataMap` 或日志；上例也不打印数据源凭据。还要观察锁等待与时钟偏差。JobDataMap 的序列化内容应可迁移且不含机密；持久化成功不代表业务数据库事务自动和 Job 执行处于同一事务。
@@ -228,6 +375,8 @@ void executeWithBound(JobExecutionContext context) throws JobExecutionException 
     System.err.println("retry=exhausted, job=" + context.getJobDetail().getKey());
     throw new JobExecutionException("retry limit exceeded");
 }
+// 作用：用于限制 Quartz 立即 refire 的次数，并把需要延迟的重试用有界指数退避显式建成新的 Trigger，避免把两种语义混成一个开关。
+// 结果：refireCount 为 0 或 1 时任务立即重试；达到 2 时输出 retry=exhausted 并以 JobExecutionException 失败结束
 ```
 
 `setRefireImmediately(true)` 只是请求 Quartz 立即再次执行，不是退避；不能无条件设置，否则会形成紧密重试环。达到 `maxRefires` 后必须记录失败告警并抛出异常，让 Job 以失败结束，不能打印成功。需要延迟时使用新的 `SimpleTrigger`，按 attempt 计算有上限的指数退避：
@@ -286,6 +435,7 @@ try {
     scheduler.shutdown();
 }
 // 输出：memory=once
+// 说明：ScheduledExecutorService 以进程内存保存任务，示例 initialDelay 与 period 只在当前 JVM 存活时有效；重启后不会恢复 task key、历史触发或 misfire 状态。
 ```
 
 `ScheduledExecutorService` 的任务状态只在当前 JVM 内存中，进程重启会丢失计划，周期任务抛出未捕获异常后还可能停止后续执行。单机清理、短延迟和测试可选它；需要 Cron 日历、暂停恢复、持久化和多节点协调时应选择 Quartz 或其他持久调度系统。

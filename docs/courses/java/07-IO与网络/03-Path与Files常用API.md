@@ -1,6 +1,6 @@
 ---
 title: Path 与 Files 常用 API
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -33,11 +33,12 @@ description: 直接用 Java 案例速查 Path 与 Files 的路径、读写、复
 
 ## 常用用法
 
-### `Path.of` 与 `Paths.get`：创建路径
+### 创建路径：从字符串得到 `Path`
 
-JDK 11 以后优先写 `Path.of`；`Paths.get` 在旧代码和重载阅读中仍常见。相对路径的基准是当前工作目录，不是源码文件所在目录。
+JDK 11 以后优先写 `Path.of`；`Paths.get` 在旧代码和重载阅读中仍常见。
 
 ```java
+// 说明：创建路径：从字符串得到 Path。
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -51,11 +52,14 @@ public class PathCreateDemo {
 }
 ```
 
+相对路径的基准是当前工作目录，不是源码文件所在目录。
+
 ### `resolve`：拼接子路径
 
 `resolve` 适合把受控的子路径接到根目录；如果参数是绝对路径，结果可能直接采用该绝对路径，因此用户输入仍需做根目录校验。
 
 ```java
+// 说明：resolve：拼接子路径。
 import java.nio.file.Path;
 
 public class PathResolveDemo {
@@ -68,11 +72,12 @@ public class PathResolveDemo {
 }
 ```
 
-### `normalize` 与 `toAbsolutePath`：规范化路径
+### 规范化路径：得到无冗余的绝对路径
 
 `normalize` 只处理 `.` 和 `..`，不会检查文件是否存在，也不会解析符号链接；需要真实路径时使用 `toRealPath`，并准备处理 `IOException`。
 
 ```java
+// 说明：规范化路径：得到无冗余的绝对路径。
 import java.nio.file.Path;
 
 public class PathNormalizeDemo {
@@ -89,6 +94,7 @@ public class PathNormalizeDemo {
 两个路径必须都为绝对或都为相对，并且通常来自同一文件系统；跨盘符或不同根时可能抛 `IllegalArgumentException`。
 
 ```java
+// 说明：relativize：计算相对路径。
 import java.nio.file.Path;
 
 public class PathRelativizeDemo {
@@ -101,11 +107,12 @@ public class PathRelativizeDemo {
 }
 ```
 
-### `getFileName`、`getParent` 与 `getName`
+### 查询路径组成：读取文件名、父路径或名称元素
 
 这些方法只拆路径字符串结构，不访问磁盘；根路径可能没有父路径，调用结果要允许为 `null`。
 
 ```java
+// 说明：查询路径组成：读取文件名、父路径或名称元素。
 import java.nio.file.Path;
 
 public class PathPartsDemo {
@@ -117,11 +124,12 @@ public class PathPartsDemo {
 }
 ```
 
-### `Files.exists` 与类型、权限检查
+### 检查路径状态：确认存在性、类型与权限
 
 检查结果可能在返回后立即失效，不能替代真正操作时的异常处理；`exists` 默认跟随符号链接，需要不跟随时传 `LinkOption.NOFOLLOW_LINKS`。
 
 ```java
+// 说明：检查路径状态：确认存在性、类型与权限。
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -135,11 +143,12 @@ public class FilesCheckDemo {
 }
 ```
 
-### `createDirectories` 与 `createFile`
+### 创建文件系统节点：按需建立目录或文件
 
-`createDirectories` 会按需创建中间目录；`createFile` 要求目标不存在，避免无意覆盖。并发场景仍需处理“检查后被其他进程创建”的异常。
+`createDirectories` 会按需创建中间目录；`createFile` 要求目标不存在，避免无意覆盖。
 
 ```java
+// 说明：创建文件系统节点：按需建立目录或文件。
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -159,11 +168,14 @@ public class FilesCreateDemo {
 }
 ```
 
-### `readString` 与 `writeString`
+并发场景仍需处理“检查后被其他进程创建”的异常。
 
-这两个方法适合小文本；显式传 `Charset`，避免依赖平台默认编码。大文件使用它们会增加内存峰值。
+### 读写短文本文件：使用明确字符集
+
+这两个方法适合小文本；显式传 `Charset`，避免依赖平台默认编码。
 
 ```java
+// 说明：读写短文本文件：使用明确字符集。
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -179,11 +191,14 @@ public class FilesTextDemo {
 }
 ```
 
-### `readAllBytes` 与 `write`
+大文件使用它们会增加内存峰值。
+
+### 读写短二进制文件：一次处理全部字节
 
 二进制小文件可以一次处理；文件大小不受控时改用 `InputStream` 或 `FileChannel` 分块读取。
 
 ```java
+// 说明：读写短二进制文件：一次处理全部字节。
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -199,11 +214,12 @@ public class FilesBytesDemo {
 }
 ```
 
-### `newBufferedReader` 与 `newBufferedWriter`
+### 流式读写文本：创建带缓冲的字符端点
 
 缓冲字符流适合逐行或逐段处理；关闭 writer 才能保证缓冲数据真正写出。
 
 ```java
+// 说明：流式读写文本：创建带缓冲的字符端点。
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -231,6 +247,7 @@ public class FilesBufferedTextDemo {
 默认不覆盖已存在目标；复制目录只复制目录项本身，不会自动递归复制内容，需要配合 `walk`。
 
 ```java
+// 说明：copy：复制文件或目录项。
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -253,6 +270,7 @@ public class FilesCopyDemo {
 同一文件系统内移动通常比复制再删除更合适；`ATOMIC_MOVE` 是请求，不保证所有文件系统都支持，失败时应决定是否降级。
 
 ```java
+// 说明：move：移动或重命名。
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -269,11 +287,12 @@ public class FilesMoveDemo {
 }
 ```
 
-### `delete` 与 `deleteIfExists`
+### 删除路径：选择严格或幂等语义
 
 `delete` 目标不存在会抛异常，`deleteIfExists` 返回是否实际删除；非空目录不能直接删除，要先删除其中内容。
 
 ```java
+// 说明：删除路径：选择严格或幂等语义。
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -292,6 +311,7 @@ public class FilesDeleteDemo {
 `lines` 不会在创建 Stream 时一次读完文件，且 Stream 必须关闭；异常发生在终端操作或关闭阶段时也要按 I/O 处理。
 
 ```java
+// 说明：lines：按行流式处理。
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -308,11 +328,12 @@ public class FilesLinesDemo {
 }
 ```
 
-### `list`、`walk`：遍历目录
+### 遍历目录：选择单层或递归范围
 
 `list` 只看一层，`walk` 递归遍历；两者都返回持有目录句柄的 Stream，必须关闭，并注意深目录和符号链接循环。
 
 ```java
+// 说明：遍历目录：选择单层或递归范围。
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -332,11 +353,12 @@ public class FilesWalkDemo {
 }
 ```
 
-### `getAttribute` 与 `readAttributes`
+### 读取文件属性：选择单项或批量查询
 
 需要多个属性时批量读取通常更清楚；属性可能在读取后变化，业务一致性不能靠多次属性查询保证。
 
 ```java
+// 说明：读取文件属性：选择单项或批量查询。
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -358,6 +380,7 @@ public class FilesAttributesDemo {
 涉及权限、归档或上传目录时，要明确是否跟随链接；不跟随链接能减少把检查目标偷偷切换到其他目录的风险，但不是完整安全方案。
 
 ```java
+// 作用：通过 LinkOption.NOFOLLOW_LINKS 不跟随符号链接。
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -376,6 +399,7 @@ public class NoFollowLinksDemo {
 该方法可能访问文件系统并解析符号链接，和 `Path.equals` 的字符串结构比较不是一回事。
 
 ```java
+// 作用：通过 Files.isSameFile 判断两个路径是否指向同一文件。
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -394,6 +418,7 @@ public class SameFileDemo {
 返回 `-1` 表示内容相同，否则返回首个不同位置；它仍需读取文件，不能当作恒定时间的安全比较。
 
 ```java
+// 作用：通过 Files.mismatch 查找首个不同字节。
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -416,6 +441,7 @@ public class FilesMismatchDemo {
 文件系统的时间精度和可写性因平台而异，时间戳不能单独作为版本或并发控制依据。
 
 ```java
+// 作用：通过 FileTime 读写文件时间。
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -437,6 +463,7 @@ public class FileTimeDemo {
 Zip 文件系统适合批处理压缩包内容；必须关闭 FileSystem，且不要把不可信压缩包直接展开到未校验的目录。
 
 ```java
+// 说明：zip 是新建的 .zip 路径；create=true 让 Zip FileSystem 创建容器，writeString 以 UTF-8 写入 /inside.txt 的 3 个 ASCII 字节。
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;

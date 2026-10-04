@@ -1,6 +1,6 @@
 ---
 title: Spring Boot 启动与配置
-date: 2026-10-01
+date: 2026-10-01T00:00:00.000Z
 category: Java后端工程
 tags:
   - Java
@@ -40,7 +40,7 @@ Spring Boot 启动像组装一座工厂：先准备环境和属性，再扫描�
 
 ## 常用用法
 
-### @SpringBootApplication：启动入口
+### `@SpringBootApplication`：声明启动入口
 
 用途：用于声明应用配置、组件扫描和自动配置的根入口；启动类应放在业务包的共同父包。
 
@@ -56,11 +56,35 @@ public class BackendApplication {
         // 输出：true
     }
 }
+// 说明：SpringApplication.run 以 BackendApplication 为主配置源创建 ApplicationContext；打印 true。@SpringBootApplication 让容器从该类所在包向下扫描并导入自动配置，直接调用 main 之外的普通 new 不会产生这些容器行为。
 ```
 
 如果启动类放在过深的子包，扫描范围可能漏掉配置或控制器；也可以用 `scanBasePackages` 明确范围，但要同步考虑第三方自动配置和测试包。
 
-### application.yml：声明外部配置
+### `@Configuration`：声明配置类
+
+用途：用于把一组 Bean 定义交给 Spring 容器；下例注册名为 `systemClock` 的 UTC `Clock`，业务 Bean 可通过构造器按类型注入。
+
+```java
+// 作用：通过 @Configuration 声明配置类。
+import java.time.Clock;
+import java.time.ZoneOffset;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+class TimeConfiguration {
+    @Bean("systemClock")
+    Clock systemClock() {
+        return Clock.system(ZoneOffset.UTC);
+    }
+}
+// 结果：容器中存在名为 systemClock、时区为 Z 的 Clock Bean
+```
+
+只有 Spring 扫描或显式导入 `TimeConfiguration` 时，`@Configuration` 与 `@Bean` 才会参与容器注册；直接 `new TimeConfiguration().systemClock()` 只是普通 Java 方法调用，不会建立 Bean 生命周期或依赖注入关系。
+
+### `application.yml`：声明外部配置
 
 用途：用于按环境层级表达端口、超时和业务开关；文件中的值最终会进入 Spring `Environment`。
 
@@ -69,11 +93,12 @@ String yml = "server:\n  port: 8080\nclient:\n  timeout: 2s\n";
 boolean hasPort = yml.contains("port: 8080");
 System.out.println(hasPort);
 // 输出：true
+// 说明：这段 application.yml 文本声明 server.port=8080、client.timeout=2s；这里只用 contains 验证文本，未启动 Spring，因此没有加载 Environment 或绑定配置。
 ```
 
 实际项目把上面的内容保存为 `application.yml`，再用 profile 文件或环境变量覆盖差异项。YAML 缩进属于语法，键名统一使用小写短横线可减少绑定歧义；不要把令牌直接提交到仓库。
 
-### @ConfigurationProperties：类型安全绑定
+### `@ConfigurationProperties`：实现类型安全绑定
 
 用途：用于把同一前缀下的多项配置绑定到不可变或可校验的类型，避免在业务代码散落字符串键。
 
@@ -91,6 +116,7 @@ public record ClientProperties(String baseUrl, int timeoutSeconds) {
 
 System.out.println(new ClientProperties("https://api.example.test", 2).timeoutSeconds());
 // 输出：2
+// 说明：直接 new 得到 baseUrl=https://api.example.test、timeoutSeconds=2 并打印 2；只有容器启用配置属性扫描后，才会把 client.* 外部属性绑定为 ClientProperties Bean。
 ```
 
 要让类型进入容器，还需使用 `@ConfigurationPropertiesScan` 或 `@EnableConfigurationProperties(ClientProperties.class)`。绑定解决类型转换，不会自动替代业务校验；缺失值、单位和默认值必须在契约中写清楚。
@@ -117,6 +143,7 @@ class MetricsConfiguration {
 
 System.out.println("metrics.enabled=true");
 // 输出：metrics.enabled=true
+// 作用：用于让可选组件只在类、属性或 Bean 条件满足时创建，避免开发环境和生产环境硬编码两套启动逻辑。
 ```
 
 `@ConditionalOnMissingBean` 常用于给使用方留下替换默认 Bean 的空间；条件没有满足时不是异常，而是该配置被跳过。属性条件的键名和默认行为要写进部署说明。
@@ -133,6 +160,7 @@ FailureAnalysis analysis = new FailureAnalysis(
     "端口已被占用", "server.port", new IllegalStateException("bind failed"));
 System.out.println(analysis.getDescription());
 // 输出：端口已被占用
+// 作用：用于把“启动失败”拆成配置解析、Bean 创建、端口占用和条件不匹配等可验证原因。
 ```
 
 先读最内层 `Caused by`，再确认 profile、环境变量和端口；需要自动配置原因时使用 `--debug` 或开启条件评估报告。不要只复制最后一行异常，也不要在未确认根因时增加全局排除项。
@@ -154,6 +182,7 @@ class WarmupRunner implements ApplicationRunner {
         // 输出：cache warmup
     }
 }
+// 说明：组件扫描注册 warmupRunner Bean，Spring Boot 在 ApplicationContext 刷新后调用 run，并打印 cache warmup；直接 new WarmupRunner().run(...) 只是普通调用，不验证 Runner 启动时序。
 ```
 
 多个 Runner 可用 `@Order` 排序；如果初始化失败，默认会阻止应用正常启动。耗时任务应转成可观测的异步作业，并明确失败是否允许服务继续提供流量。
@@ -174,6 +203,7 @@ class PropertyProbe {
         // 输出：8080
     }
 }
+// 说明：Spring 注入最终 Environment，读取键 server.port；键缺失时使用默认字符串 8080。PropertyProbe 必须由容器创建，直接 new 需要手工传入 Environment，不验证属性源合并。
 ```
 
 `Environment` 会合并多个 property source，具体优先级由 Spring Boot 配置规则决定。读取敏感属性后不要打印原值；如果属性必须有范围约束，仍应在绑定类型或启动检查中验证。
@@ -209,6 +239,7 @@ class FeatureConfiguration {
         // 输出：true/3
     }
 }
+// 结果：容器中注册名为 systemClock 的 UTC Clock Bean
 ```
 
 框架片段需容器运行：`application.yml` 可以提供 `feature.enabled: true` 和 `feature.retry-limit: 3`，绑定器负责把短横线键映射到 record 组件。生产部署应把 profile、环境变量和默认值写成可审计的配置清单；启动校验失败时让服务保持不可用，避免用错误默认值继续运行。

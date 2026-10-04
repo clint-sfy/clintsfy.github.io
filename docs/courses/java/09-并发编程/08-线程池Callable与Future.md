@@ -1,6 +1,6 @@
 ---
 title: 线程池、Callable 与 Future
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -36,11 +36,12 @@ Future 只代表一个结果，不会自动完成超时后的清理。与直接�
 
 ## 常用用法
 
-### Callable 与 submit：获取任务结果
+### 获取任务结果：提交 `Callable` 并持有 `Future`
 
 Callable 适合需要结果或声明异常的任务；执行异常会在 `get()` 时包装为 ExecutionException，调用方要区分任务失败、等待被中断和调用方超时。
 
 ```java
+// 说明：获取任务结果：提交 Callable 并持有 Future。
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 
@@ -58,9 +59,10 @@ public class CallableFutureDemo {
 
 ### Future.get：观察任务异常
 
-`submit` 不会把任务异常直接抛到提交线程；只有读取对应 Future 时才会以 `ExecutionException` 观察到。生产代码应记录 cause，并区分可重试失败和编程错误。
+`submit` 不会把任务异常直接抛到提交线程；只有读取对应 Future 时才会以 `ExecutionException` 观察到。
 
 ```java
+// 说明：Future.get：观察任务异常。
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -85,11 +87,14 @@ public class FutureExceptionDemo {
 }
 ```
 
+生产代码应记录 cause，并区分可重试失败和编程错误。
+
 ### Future.get(timeout)：有界等待
 
-超时是观察边界，不等于任务已停止。真正的线程池任务还应在超时后决定 cancel(true)、继续后台运行或交给补偿队列。
+`Future.get(timeout)` 用于限制等待时间，但超时只表示观察边界，不等于任务已停止。
 
 ```java
+// 说明：Future.get(timeout)：有界等待。
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -111,11 +116,14 @@ public class FutureTimeoutDemo {
 }
 ```
 
+真正的线程池任务还应在超时后决定 cancel(true)、继续后台运行或交给补偿队列。
+
 ### Future.cancel：请求取消
 
-尚未运行时 `cancel(false)` 可以取消任务；运行中使用 `cancel(true)` 只发送中断请求。任务如果忽略中断，资源仍可能继续占用。
+尚未运行时 `cancel(false)` 可以取消任务；运行中使用 `cancel(true)` 只发送中断请求。
 
 ```java
+// 说明：Future.cancel：请求取消。
 import java.util.concurrent.FutureTask;
 
 public class FutureTaskCancelDemo {
@@ -128,11 +136,14 @@ public class FutureTaskCancelDemo {
 }
 ```
 
+任务如果忽略中断，资源仍可能继续占用。
+
 ### FutureTask：把任务当作 Runnable 执行
 
 FutureTask 可被 Thread 或 Executor 执行，也能被多个调用方等待同一个结果；它只执行一次，适合简单的可复用异步计算句柄。
 
 ```java
+// 说明：FutureTask：把任务当作 Runnable 执行。
 import java.util.concurrent.FutureTask;
 
 public class FutureTaskDemo {
@@ -148,9 +159,10 @@ public class FutureTaskDemo {
 
 ### ThreadPoolExecutor：显式配置边界
 
-核心线程数控制常驻处理能力，最大线程数处理队列满后的短时扩展，keepAlive 回收多余线程，ArrayBlockingQueue 给堆积设置上限。参数应根据 CPU、阻塞比例和下游容量用基准测试确定。
+核心线程数控制常驻处理能力，最大线程数处理队列满后的短时扩展，keepAlive 回收多余线程，ArrayBlockingQueue 给堆积设置上限。
 
 ```java
+// 说明：ThreadPoolExecutor：显式配置边界。
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -172,11 +184,14 @@ public class ThreadPoolConfigDemo {
 }
 ```
 
+参数应根据 CPU、阻塞比例和下游容量用基准测试确定。
+
 ### RejectedExecutionHandler：AbortPolicy 拒绝
 
-AbortPolicy 直接抛异常，适合不能静默丢任务的边界。CallerRunsPolicy 会让提交者执行任务形成背压，Discard/DiscardOldest 只有在明确允许丢弃或淘汰任务时才使用。
+AbortPolicy 直接抛异常，适合不能静默丢任务的边界。
 
 ```java
+// 说明：RejectedExecutionHandler：AbortPolicy 拒绝。
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -197,11 +212,14 @@ public class AbortPolicyDemo {
 }
 ```
 
-### ThreadFactory：统一线程名与异常边界
+CallerRunsPolicy 会让提交者执行任务形成背压，Discard/DiscardOldest 只有在明确允许丢弃或淘汰任务时才使用。
+
+### 创建工作线程：统一名称和异常策略
 
 统一命名方便线程转储和日志定位；还可以在 ThreadFactory 中设置 daemon、UncaughtExceptionHandler，但不要因为 daemon 而省略有序关闭。
 
 ```java
+// 说明：创建工作线程：统一名称和异常策略。
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
@@ -229,6 +247,7 @@ public class ThreadFactoryDemo {
 invokeAll 会等待全部任务完成或被中断；带超时版本返回时可能有未完成 Future，需要逐个取消或处理失败。
 
 ```java
+// 说明：invokeAll：等待一批 Callable。
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -251,6 +270,7 @@ public class InvokeAllDemo {
 完成顺序由调度决定，上例两行的先后是可能变化的；需要输入顺序时保留 Future 列表并按索引读取。CompletionService 适合“谁先完成先处理”的批量任务。
 
 ```java
+// 说明：completion 把两个 Future 按完成时间入队；take() 会阻塞到下一个任务完成，因此结果不保持提交顺序。
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
 
@@ -274,6 +294,7 @@ public class CompletionServiceDemo {
 invokeAny 返回第一个成功结果，并取消其他未完成任务；“最快”不等于“最可靠”，超时、异常和副作用要在任务层设计。
 
 ```java
+// 说明：invokeAny 在两个工作线程中竞速 replica-a 与 replica-b，返回第一个正常完成值并取消其余任务。
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -295,6 +316,7 @@ public class InvokeAnyDemo {
 第一个任务占住唯一工作线程后，第二个任务会触发 CallerRunsPolicy 并在提交线程同步执行。它能形成背压但会拖慢请求线程，不能用于不允许阻塞的事件循环。
 
 ```java
+// 说明：唯一工作线程被 releaseWorker 占用且 SynchronousQueue 不存储任务，第二次 execute 因此在 main 线程运行。
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -334,6 +356,7 @@ public class CallerRunsPolicyDemo {
 提前创建线程可以减少第一次请求的冷启动抖动，但会增加空闲资源；仅在启动延迟目标明确时使用。
 
 ```java
+// 说明：fixedThreadPool 的 corePoolSize 为 2，prestartAllCoreThreads() 在未提交任务时就创建两个空闲工作线程。
 import java.util.concurrent.Executors;
 
 public class PrestartThreadsDemo {

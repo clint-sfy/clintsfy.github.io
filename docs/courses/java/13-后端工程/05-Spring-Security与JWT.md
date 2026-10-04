@@ -1,6 +1,6 @@
 ---
 title: Spring Security 与 JWT
-date: 2026-10-01
+date: 2026-10-01T00:00:00.000Z
 category: Java后端工程
 tags:
   - Java
@@ -42,12 +42,41 @@ JWT 签名验证可以不查询会话表，因此适合横向扩展的无状态 
 
 JJWT 0.9.1 是旧版单体依赖，坐标为 `io.jsonwebtoken:jjwt:0.9.1`；0.11.x/0.12.x 通常拆成 `jjwt-api`、运行时 `jjwt-impl` 和 JSON 实现 `jjwt-jackson`。示例只从 `System.getenv("JWT_SECRET")` 或密钥管理系统读取 Base64URL 密钥；既然环境变量约定为 Base64URL，代码统一使用 `Base64.getUrlDecoder()`，不与标准 Base64 解码器混用。`<base64url-secret>` 只是占位符，仓库和日志中都不应出现生产密钥。JJWT 0.12.x 的解析器写法不能与 JJWT 0.11.x 混用。
 
+旧版 `0.9.1` 示例只能配套下面的单体依赖：
+
 ```xml
+<!-- 前置：仅供仍使用 JJWT 0.9.1 parser().setSigningKey(...) 的旧项目。 -->
 <dependency>
     <groupId>io.jsonwebtoken</groupId>
     <artifactId>jjwt</artifactId>
     <version>0.9.1</version>
 </dependency>
+<!-- 结果：该坐标提供 0.9.1 单体 API；不能用来编译 0.12.x 的 verifyWith/parseSignedClaims。 -->
+```
+
+现代 `0.12.6` 示例使用三个同版本模块，`jjwt-api` 参与编译，另外两个只在运行时提供实现和 Jackson JSON 支持：
+
+```xml
+<!-- 前置：下面三个模块必须使用同一个 0.12.6 版本。 -->
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-api</artifactId>
+    <version>0.12.6</version>
+</dependency>
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-impl</artifactId>
+    <version>0.12.6</version>
+    <scope>runtime</scope>
+</dependency>
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-jackson</artifactId>
+    <version>0.12.6</version>
+    <scope>runtime</scope>
+</dependency>
+<!-- 作用：0.12.6 的 Jwts.parser().verifyWith(key).build() 由 API 与运行时实现协作完成。 -->
+<!-- 结果：应用可解析并验签 0.12.6 token；三个模块版本不一致时不保证二进制兼容。 -->
 ```
 
 JJWT 0.9.1 的旧代码需要在迁移前单独锁定依赖和测试：
@@ -102,6 +131,7 @@ SecurityFilterChain apiSecurity(HttpSecurity http) throws Exception {
 
 System.out.println("policy=" + SessionCreationPolicy.STATELESS);
 // 输出：policy=STATELESS
+// 说明：名为 securityFilterChain 的 Bean 把 /public/** 放行、其余请求要求认证，并将会话设为 STATELESS；直接调用方法未让 Servlet 容器应用该链。
 ```
 
 过滤链只负责安全管道配置；登录凭据的业务校验、令牌签发和用户查询仍由认证服务负责。不要因为启用了 `STATELESS` 就把 refresh token 或撤销策略省略掉。
@@ -121,6 +151,7 @@ void configure(HttpSecurity http) throws Exception {
     System.out.println("/admin requires ROLE_ADMIN");
     // 输出：/admin requires ROLE_ADMIN
 }
+// 说明：/login permitAll，/admin/** 要求 ROLE_ADMIN，anyRequest 只要求已认证；规则按声明顺序匹配，所以兜底通配规则放最后。
 ```
 
 `hasRole("ADMIN")` 默认按 `ROLE_` 前缀匹配，而 `hasAuthority("report:read")` 使用完整权限名。规则顺序、通配符和默认分支应通过请求级测试固定，避免先写宽泛规则导致后续窄规则永远不可达。
@@ -171,6 +202,7 @@ try (var context = new AnnotationConfigApplicationContext(MethodSecurityConfig.c
 }
 // 输出：授权成功=report-for-user-7
 // 输出：denied=403
+// 作用：用于把依赖方法参数或细粒度权限的授权放在服务方法入口；它需要 `@EnableMethodSecurity` 和 Spring 容器创建的 Bean 代理，不能代替 URL 层的粗粒度防护。
 ```
 
 `context.getBean(ReportService.class)` 取得的是由 Spring 创建的代理，调用它才会进入方法授权拦截器；直接 `new ReportService()` 会绕过代理。示例中的 `denied=403` 是方法授权拒绝的概念映射：这里捕获 `AccessDeniedException` 便于展示失败路径，真正 HTTP 请求的 403 响应由 `AccessDeniedHandler` 生成。`#ownerId` 通过 `@P("ownerId")` 显式绑定；如果不使用 `@P`，就要在编译时开启 `-parameters` 保留方法参数名。方法授权要与数据查询的租户边界一起设计；只在 Controller 上检查角色，不能保证内部异步调用或其他入口也经过同样的限制。表达式中不应拼接用户输入来生成规则。
@@ -186,6 +218,7 @@ var encoder = new BCryptPasswordEncoder();
 String storedHash = encoder.encode("correct-horse");
 System.out.println(encoder.matches("correct-horse", storedHash));
 // 输出：true
+// 作用：用于让密码只以带盐哈希形式持久化，并用 `matches` 验证登录输入；密码哈希不是可逆加密，也不应写入日志。
 ```
 
 每次 `encode` 产生的哈希通常不同，这是随机盐的效果；数据库字段要有足够长度并记录必要的升级策略。用户不存在和密码错误应尽量返回相同的外部错误，避免泄露账号是否存在。
@@ -200,27 +233,42 @@ boolean bearer = authorization.regionMatches(true, 0, "Bearer ", 0, 7)
     && authorization.length() > 7;
 System.out.println("bearer=" + bearer);
 // 输出：bearer=true
+// 说明：客户端发送 Authorization: Bearer eyJ...；认证过滤器提取 Bearer 后的 token。这个字符串示例未验签，不会仅因请求头存在就建立 SecurityContext。
 ```
 
 这个片段只展示 header 形状，不代表已完成认证；不要把 `<access-token>` 当作已可信 claims。应使用框架的资源服务器过滤器或经过审查的 JWT 验证器，并限制 token 大小和算法集合。
 
-### claims/过期：读取主体和时间声明
+### JWT claims：读取已验签主体
 
-用途：用于把 JWT 的 `sub`、`iat`、`exp`、`jti` 解释为明确的身份和生命周期；时间判断要使用统一时钟并允许经过评估的时钟偏差。
+用途：用于从已完成签名、算法、发行者和受众校验的 JWT 中读取主体。
 
 ```java
-import java.time.Instant;
 import java.util.Map;
 
 Map<String, Object> claims = Map.of(
-    "sub", "user-7", "iat", 1_735_689_600L,
-    "exp", 4_102_444_800L, "jti", "token-7");
-boolean active = Instant.now().getEpochSecond() < (Long) claims.get("exp");
-System.out.println(claims.get("sub") + "/active=" + active);
-// 输出：user-7/active=true
+    "sub", "user-7", "jti", "token-7");
+System.out.println(claims.get("sub"));
+// 输出：user-7
+// 作用：用于从已完成签名、算法、发行者和受众校验的 JWT 中读取主体。
 ```
 
-解析 claims 只是读取已验签的载荷；不要在验签前据此授权。`exp` 过期应进入认证失败路径，`jti` 可用于撤销集合和审计关联，`aud`/`iss` 等声明要按服务契约检查。
+不要在验签前据 claims 授权；`jti` 可用于撤销集合和审计关联。
+
+### JWT `exp`：判断令牌过期
+
+用途：用于把已验签 JWT 的过期时间与统一时钟比较并进入认证失败路径。
+
+```java
+import java.time.Instant;
+
+long expiresAt = 4_102_444_800L;
+boolean active = Instant.now().getEpochSecond() < expiresAt;
+System.out.println("active=" + active);
+// 输出：active=true
+// 作用：用于把已验签 JWT 的过期时间与统一时钟比较并进入认证失败路径。
+```
+
+时间判断可允许经过评估的时钟偏差，但不应用过大容差掩盖客户端时钟或令牌刷新缺陷。
 
 ## 不常用但需要知道
 
@@ -235,6 +283,7 @@ AuthenticationEntryPoint entryPoint = (request, response, exception) ->
     response.sendError(401, "unauthorized");
 System.out.println("entry-point=401");
 // 输出：entry-point=401
+// 作用：用于把缺少凭据、凭据无效或 JWT 已过期的请求统一映射为 HTTP 401；不要把未认证伪装成业务 403。
 ```
 
 响应体应使用稳定错误码而不是堆栈或验签异常细节。浏览器重定向登录页和纯 API 的 JSON 401 是不同边界，不能只依赖默认行为。
@@ -250,6 +299,7 @@ AccessDeniedHandler denied = (request, response, exception) ->
     response.sendError(403, "forbidden");
 System.out.println("access-denied=403");
 // 输出：access-denied=403
+// 作用：用于把已通过认证但不满足角色或权限规则的请求统一映射为 HTTP 403；这能区分“需要登录”和“登录后仍无权”。
 ```
 
 403 响应不要泄露资源是否存在、内部角色列表或数据库信息。对象级授权还需要检查资源所有者，不能只返回一个看似正确的状态码。
@@ -265,9 +315,93 @@ var request = SecurityMockMvcRequestPostProcessors.jwt()
     .jwt(jwt -> jwt.subject("user-7").claim("scope", "report:read"));
 System.out.println(request != null ? "scope=report:read" : "missing");
 // 输出：scope=report:read
+// 作用：用于在安全测试中注入明确的主体和权限，验证 401/403/成功三条路径；它是测试替身，不是生产认证实现。
 ```
 
 测试应覆盖过期 token、错误 audience、撤销后的 `jti`、无权限角色以及跨用户资源访问。只测 Controller 返回 200 不能证明过滤链和方法授权真实生效。
+
+## 常用调用标题补齐
+
+### `@EnableMethodSecurity`：启用方法级授权
+
+`@EnableMethodSecurity` 让 `@PreAuthorize` 等注解生效；它不代替 URL 层的请求授权和对象所有权检查。
+
+```java
+// 作用：通过 @EnableMethodSecurity 启用方法级授权。
+// 结果：服务方法上的 `@PreAuthorize` 在调用目标方法前执行。
+@Configuration
+@EnableMethodSecurity
+class MethodSecurityConfiguration {
+    @Bean
+    MethodSecurityExpressionHandler expressionHandler() {
+        return new DefaultMethodSecurityExpressionHandler();
+    }
+    String layer() { return "service"; }
+}
+```
+
+输出：服务方法上的 `@PreAuthorize` 在调用目标方法前执行。
+
+### `Claims.get`：按类型读取已验签声明
+
+`Claims.get` 应只用于已完成签名、过期和签发者校验的 claims；类型不匹配时要拒绝令牌。
+
+```java
+// 作用：通过 Claims.get 按类型读取已验签声明。
+// 结果：声明 `userId=42` 时返回 `42`；缺失或非法时拒绝认证。
+long readUserId(Claims claims) {
+    Long userId = claims.get("userId", Long.class);
+    if (userId == null || userId <= 0) {
+        throw new BadCredentialsException("invalid userId claim");
+    }
+    return userId;
+}
+
+String claimName() { return "userId"; }
+```
+
+输出：声明 `userId=42` 时返回 `42`；缺失或非法时拒绝认证。
+
+### `Jwts.parser`：构建 JWT 解析验证器
+
+`Jwts.parser` 属于旧版 JJWT API；维护旧项目时必须先配置验签密钥，不能只 Base64 解码 payload。
+
+```java
+// 作用：通过 Jwts.parser 构建 JWT 解析验证器。
+// 结果：签名正确时返回 `Claims`；签名错误或过期时抛出 JWT 异常。
+Claims parseLegacy(String token, String secret) {
+    Objects.requireNonNull(token, "token");
+    return Jwts.parser()
+        .setSigningKey(secret)
+        .parseClaimsJws(token)
+        .getBody();
+}
+
+String inputKind() { return "signed JWT"; }
+```
+
+输出：签名正确时返回 `Claims`；签名错误或过期时抛出 JWT 异常。
+
+### `BCryptPasswordEncoder`：创建密码哈希器
+
+`BCryptPasswordEncoder` 使用自带 salt 的慢哈希；验证时必须调用 `matches`，不能重新 `encode` 后比较字符串。
+
+```java
+// 作用：通过 BCryptPasswordEncoder 创建密码哈希器。
+// 结果：`matches` 对正确密码返回 `true`，不正确密码返回 `false`。
+PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder(12);
+}
+
+boolean verify(String raw, String encoded) {
+    PasswordEncoder encoder = passwordEncoder();
+    return encoder.matches(raw, encoded);
+}
+
+String algorithm() { return "bcrypt"; }
+```
+
+输出：`matches` 对正确密码返回 `true`，不正确密码返回 `false`。
 
 ## 继续阅读
 

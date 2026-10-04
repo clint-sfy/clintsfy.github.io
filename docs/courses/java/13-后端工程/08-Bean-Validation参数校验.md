@@ -1,6 +1,6 @@
 ---
 title: Bean Validation 参数校验
-date: 2026-10-01
+date: 2026-10-01T00:00:00.000Z
 category: Java后端工程
 tags:
   - Java
@@ -39,35 +39,45 @@ Bean Validation 只回答“输入是否满足声明的格式和规则”，不�
 
 ## 常用用法
 
-### @NotBlank/@Size：声明基础字段约束
+### `@NotBlank`：拒绝空白文本
 
-用途：用于限制文本的非空状态和长度范围；`@NotBlank` 处理 null、空串和空白串，`@Size` 只检查长度，不替代格式或权限检查。
+用途：用于拒绝 null、空串和只含空白字符的文本。
 
 ```java
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+record CreateNote(@NotBlank String title) {}
 
-record CreateNote(
-    @NotBlank String title,
-    @Size(min = 1, max = 200) String body) {}
-
-System.out.println(new CreateNote("hello", "text").title());
+System.out.println(new CreateNote("hello").title());
 // 输出：hello
+// 说明：name 为 null、"" 或 "   " 时 @NotBlank 产生约束违规；"Alice" 通过。直接 new DTO 不会自动校验，需 MVC 的 @Valid 或 Validator。
 ```
 
-约束只在验证器被触发时生效；直接调用 record 构造器不会自动抛出校验异常。消息模板可以本地化，但不要把内部堆栈、数据库值或授权判断写入客户端消息。
+约束只在验证器被触发时生效；直接调用 record 构造器不会自动抛出校验异常。
 
-### @Valid/@Validated：触发对象与分组校验
+### `@Size`：限制容器长度
 
-用途：用于在 Spring MVC 控制器或服务入口触发校验；`@Valid` 常用于默认组级联，`@Validated` 还能声明分组和启用方法校验。
+用途：用于限制字符序列、集合、Map 或数组的元素数量。
+
+```java
+import jakarta.validation.constraints.Size;
+
+record NoteBody(@Size(min = 1, max = 200) String body) {}
+System.out.println(new NoteBody("text").body().length());
+// 输出：4
+// 说明：@Size(min=2, max=20) 按字符序列长度检查 nickname，长度 1 或 21 失败；null 是否允许由 @NotNull/@NotBlank 另行决定。
+```
+
+`@Size` 不拒绝 null，需要非空契约时应叠加相应约束；它也不替代格式或权限检查。
+
+### `@Valid`：触发对象校验
+
+用途：用于在 Spring MVC 请求入口触发默认组校验和级联验证。
 
 ```java
 import jakarta.validation.Valid;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Validated
 class NoteController {
     @PostMapping("/notes")
     String create(@Valid @RequestBody CreateNote request) {
@@ -77,9 +87,27 @@ class NoteController {
 
 System.out.println("validation=enabled");
 // 输出：validation=enabled
+// 说明：@Valid 让 create 的 @RequestBody 在调用方法前执行默认组约束；失败通常抛 MethodArgumentNotValidException，直接调用 create 不触发框架校验。
 ```
 
-`@RequestBody` 负责 JSON 转换，`@Valid` 负责校验；它们不是同一个步骤。方法参数校验需要在对应 Spring 代理和配置下运行，不能因为单元测试直接 new 控制器就认为注解已生效。
+`@RequestBody` 负责 JSON 转换，`@Valid` 负责校验；它们不是同一个步骤。
+
+### `@Validated`：选择校验分组
+
+用途：用于在 Spring 管理的入口上选择校验分组或启用方法约束。
+
+```java
+import org.springframework.validation.annotation.Validated;
+
+interface OnCreate {}
+@Validated(OnCreate.class)
+class CreateNoteService {}
+System.out.println(CreateNoteService.class.isAnnotationPresent(Validated.class));
+// 输出：true
+// 说明：@Validated(Update.class) 只执行 Update 组及其继承组约束；控制器必须由 Spring 管理，直接 new 后调用不会通过方法校验代理。
+```
+
+方法参数校验需要在对应 Spring 代理和配置下运行；直接 `new` 对象不会经过代理。
 
 ### 级联：验证嵌套对象和集合元素
 
@@ -95,6 +123,7 @@ record Order(@Valid Address address, List<@Valid Address> stops) {}
 
 System.out.println(new Order(new Address("Shanghai"), List.of(new Address("Beijing"))).stops().size());
 // 输出：1
+// 作用：用于让父 DTO 的验证继续进入地址、明细和集合元素；没有 `@Valid` 时，嵌套对象上的约束可能不会被触发。
 ```
 
 容器元素约束需要兼容的 Bean Validation 版本和 value extractor；级联集合还要明确空集合是否允许。校验嵌套对象不等于检查对象是否属于当前用户，所有者授权仍由 Security 或领域服务完成。
@@ -114,6 +143,7 @@ record Account(
 
 System.out.println("groups=" + OnCreate.class.getSimpleName() + "/" + Default.class.getSimpleName());
 // 输出：groups=OnCreate/Default
+// 作用：用于让创建、更新等操作选择不同约束集合；分组解决校验时机，不应被用来模拟角色授权或业务状态机。
 ```
 
 调用方必须明确传入哪个分组；多个分组的组合顺序要有测试，避免新增约束后某个入口静默跳过。若规则有先后依赖，可以定义组序列，但跨字段业务条件仍放在服务层。
@@ -154,6 +184,7 @@ class StrongCodeValidator implements ConstraintValidator<StrongCode, String> {
 
 System.out.println(new StrongCodeValidator().isValid("AB-1234", null));
 // 输出：true
+// 说明：ConstraintValidator.isValid 对 null 按注解契约处理，并检查值是否满足示例前缀；同一验证器实例可能并发复用，不能保存每次请求状态。
 ```
 
 如果 null 应由 `@NotNull` 负责，就让自定义验证器返回 true；把空值和格式规则混在一起会影响组合约束。验证器不应查询当前登录用户、读取数据库后决定能否操作，那是授权或领域规则。
@@ -177,6 +208,7 @@ List<FieldViolation> fieldErrors(BindingResult result) {
 
 System.out.println(List.of(new FieldViolation("title", "must not be blank")));
 // 输出：[FieldViolation[field=title, message=must not be blank]]
+// 作用：用于把 `BindingResult` 中的 `FieldError` 转成只包含字段名和公开消息的响应，避免直接暴露内部对象、拒绝值和异常堆栈。
 ```
 
 实际异常处理器还应固定错误码、HTTP 状态和 trace id，并对嵌套路径、类型转换错误和方法参数错误分别归类。`FieldViolation` 只输出稳定字段名和 `defaultMessage`，不要把 `FieldError.getRejectedValue()` 原样写入日志或响应，尤其是密码、token 和大对象。
@@ -192,6 +224,7 @@ RequestBoundary boundary = new RequestBoundary("{...}", true, false);
 String result = boundary.authorized() ? "service-call" : "403";
 System.out.println(result);
 // 输出：403
+// 作用：用于在代码审查和故障排查时明确三层责任：转换器创建类型、Validation 检查输入、Security/领域策略决定权限；每层只返回自己的错误。
 ```
 
 JSON 文本不能因为“能解析”就直接写入数据库；校验通过也不能跳过对象所有者和权限判断；授权通过更不能替代字段类型转换。把三步拆开能让 400、401/403 与业务失败分别可观测、可测试。
@@ -218,9 +251,93 @@ class SearchController {
 
 System.out.println("7/0");
 // 输出：7/0
+// 作用：用于保护不在请求 body 中的查询参数和路径参数；方法级校验需要 `@Validated` 触发，且转换失败与约束失败应分别处理。
 ```
 
 字符串到 `long` 的转换失败通常先于 `@Min` 发生；不要把“类型转换成功”当作“值域合法”。路径参数、分页大小和排序字段仍要限制上限，授权要在确定资源主体后单独执行。
+
+## 常用调用标题补齐
+
+### `@NotNull`：拒绝 null 值
+
+`@NotNull` 只排除 `null`，不限制字符串空白或容器长度；要按值类型叠加其他约束。
+
+```java
+// 作用：通过 @NotNull 拒绝 null 值。
+// 结果：`dueDate=null` 产生约束违反，非 null 日期通过 `@NotNull`。
+record CreateTask(
+    @NotNull LocalDate dueDate,
+    @NotBlank String title) {}
+
+class TaskFactory {
+    CreateTask valid() {
+        return new CreateTask(LocalDate.of(2030, 1, 1), "ship");
+    }
+}
+```
+
+输出：`dueDate=null` 产生约束违反，非 null 日期通过 `@NotNull`。
+
+### `@Email`：检查邮箱形式
+
+`@Email` 检查形式而非邮箱真实存在；若不允许空值，需与 `@NotBlank` 组合。
+
+```java
+// 作用：通过 @Email 检查邮箱形式。
+// 结果：`dev@example.com` 通过形式校验，但是否可投递仍需验证邮件。
+record SignupRequest(
+    @NotBlank
+    @Email
+    String email) {}
+
+class SignupExample {
+    SignupRequest sample() {
+        return new SignupRequest("dev@example.com");
+    }
+}
+```
+
+输出：`dev@example.com` 通过形式校验，但是否可投递仍需验证邮件。
+
+### `@Pattern`：限制文本格式
+
+`@Pattern` 适合稳定的小型格式规则；复杂业务规则应使用自定义约束提供明确错误。
+
+```java
+// 作用：通过 @Pattern 限制文本格式。
+// 结果：`zh-CN` 通过，`zh_cn` 返回 `must be ll or ll-CC`。
+record LocaleRequest(
+    @Pattern(
+        regexp = "[a-z]{2}(-[A-Z]{2})?",
+        message = "must be ll or ll-CC")
+    String locale) {}
+
+class LocaleExample {
+    LocaleRequest sample() { return new LocaleRequest("zh-CN"); }
+}
+```
+
+输出：`zh-CN` 通过，`zh_cn` 返回 `must be ll or ll-CC`。
+
+### `@Constraint`：声明自定义约束
+
+`@Constraint` 将注解绑定到 `ConstraintValidator`；验证器应无状态，并把 null 策略交给 `@NotNull`。
+
+```java
+// 作用：通过 @Constraint 声明自定义约束。
+// 结果：标注 `@Slug` 的值由 `SlugValidator` 检查，失败时输出 `invalid slug`。
+@Documented
+@Constraint(validatedBy = SlugValidator.class)
+@Target({ ElementType.FIELD, ElementType.PARAMETER })
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Slug {
+    String message() default "invalid slug";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
+```
+
+输出：标注 `@Slug` 的值由 `SlugValidator` 检查，失败时输出 `invalid slug`。
 
 ## 继续阅读
 
@@ -252,7 +369,7 @@ System.out.println(new RegistrationService().accept(new RegisterRequest("Ann", "
 // 输出：created:Ann
 ```
 
-框架片段需容器运行：消息转换器先把 body 变成 `RegisterRequest`，Bean Validation 再检查约束，Security 决定主体是否有注册权限，服务层最后处理业务。案例没有把验证器当作授权器，也没有让 JSON 转换承担必填规则。
+这里直接 `new RegistrationService()` 只验证合法 DTO 会得到普通方法结果 `created:Ann`，不会触发 `@Valid`。真实调用必须经过 Spring 容器提供的方法校验代理或 MVC 参数解析边界，届时消息转换器先把 body 变成 `RegisterRequest`，Bean Validation 再检查约束，Security 决定主体是否有注册权限，服务层最后处理业务。案例没有把验证器当作授权器，也没有让 JSON 转换承担必填规则。
 
 ## 易混点
 

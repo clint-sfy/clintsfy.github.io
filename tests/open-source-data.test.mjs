@@ -110,7 +110,11 @@ const EXPECTED_JAVA_ARTICLES_BY_CHAPTER = {
     '04-JVM诊断命令与JFR.md',
     '05-GC日志与问题定位.md',
   ],
-  '11-工程实践': ['01-Maven与测试工程.md', '02-JDBC与事务.md'],
+  '11-工程实践': [
+    '01-Maven与测试工程.md',
+    '02-JDBC与事务.md',
+    '04-Velocity代码生成.md',
+  ],
   '12-设计与项目': ['01-设计原则模式与综合复习.md'],
   '13-后端工程': [
     '01-Spring-Boot启动与配置.md',
@@ -137,10 +141,11 @@ const EXPECTED_JAVA_PATHS = [
   ),
 ].sort()
 
-const EXPECTED_JAVA_CHAPTER_COUNTS = [7, 6, 7, 6, 8, 8, 7, 7, 15, 5, 2, 1, 14]
+const EXPECTED_JAVA_CHAPTER_COUNTS = [7, 6, 7, 6, 8, 8, 7, 7, 15, 5, 3, 1, 14]
 const EXPECTED_JAVA_ROADMAP_PATHS = [
   'docs/courses/java/11-工程实践/01-Maven与测试工程.md',
   'docs/courses/java/11-工程实践/02-JDBC与事务.md',
+  'docs/courses/java/11-工程实践/04-Velocity代码生成.md',
   'docs/courses/java/12-设计与项目/01-设计原则模式与综合复习.md',
 ]
 
@@ -456,7 +461,7 @@ test('Java learning path follows Python and covers the complete fundamentals-to-
     'Java should appear immediately after Python in the learning navigation',
   )
   assert.match(sidebar, /'\/courses\/java\/':\s*getItems\("courses\/java"\)/)
-  assert.equal(javaFiles.length, 94, 'the Java path should contain 94 Markdown files including the index')
+  assert.equal(javaFiles.length, 95, 'the Java path should contain 95 Markdown files including the index')
 
   const javaContent = javaFiles
     .map((file) => readFileSync(join(repoRoot, file), 'utf8'))
@@ -470,7 +475,7 @@ test('Java learning path follows Python and covers the complete fundamentals-to-
   }
 })
 
-test('Java course keeps the exact 94-page path set and 01-10 quality range', () => {
+test('Java course keeps the exact 95-page path set and 01-10 quality range', () => {
   const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
   const javaPaths = fg
     .sync('docs/courses/java/**/*.md', { cwd: repoRoot, onlyFiles: true })
@@ -488,11 +493,11 @@ test('Java course keeps the exact 94-page path set and 01-10 quality range', () 
   )
 
   assert.deepEqual(javaPaths, EXPECTED_JAVA_PATHS, 'the Java path set must stay exact')
-  assert.equal(javaPaths.length, 94, 'the Java path should contain 94 Markdown files')
+  assert.equal(javaPaths.length, 95, 'the Java path should contain 95 Markdown files')
   assert.equal(
     javaPaths.filter((file) => file !== 'docs/courses/java/index.md').length,
-    93,
-    'the Java path should contain 93 article pages',
+    94,
+    'the Java path should contain 94 article pages',
   )
   assert.deepEqual(actualChapterPaths, chapterPaths, 'the Java chapter directory range must stay exact')
   assert.deepEqual(actualChapterCounts, EXPECTED_JAVA_CHAPTER_COUNTS, 'the Java chapter counts must stay exact')
@@ -504,7 +509,7 @@ test('Java course keeps the exact 94-page path set and 01-10 quality range', () 
   assert.deepEqual(
     javaPaths.filter((file) => /^(?:docs\/courses\/java\/11-|docs\/courses\/java\/12-)/u.test(file)),
     EXPECTED_JAVA_ROADMAP_PATHS,
-    'chapters 11-12 must remain the three roadmap article paths',
+    'chapters 11-12 must retain the four roadmap article paths',
   )
 })
 

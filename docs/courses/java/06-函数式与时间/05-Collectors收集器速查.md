@@ -1,6 +1,6 @@
 ---
 title: Collectors 收集器速查
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -34,33 +34,78 @@ Stream 负责逐个处理元素，Collector 负责把处理结果装进目标结
 
 ## 常用用法
 
-### `toList`/`toSet`：收集列表或集合
+### `toList`：收集为列表
 
-`toList` 保留重复元素，`toSet` 去重但不保证迭代顺序；JDK 16 以后也可使用 `Stream.toList()`。
+`toList` 保留遇到顺序和重复元素，但不承诺结果列表的具体实现或不可变性。
 
 ```java
+// 作用：通过 toList 收集为列表。
+// 语义：toList 保留遇到顺序和重复元素，但不承诺结果列表的具体实现或不可变性。
+// 调用参数：代码依次使用 "java"、"sql"。
 import java.util.List;
 import java.util.stream.Collectors;
 
-var list = List.of("java", "java", "sql").stream().collect(Collectors.toList());
-var set = List.of("java", "java", "sql").stream().collect(Collectors.toSet());
-System.out.println(list);
+List<String> result = List.of("java", "java", "sql").stream()
+        .collect(Collectors.toList());
+
+System.out.println(result);
 // 输出：[java, java, sql]
-System.out.println(set.contains("sql") + ", " + set.size());
+```
+
+### `toSet`：收集为去重集合
+
+`toSet` 按相等性去重且不保证迭代顺序，需要稳定顺序时应明确指定集合类型。
+
+```java
+// 作用：通过 toSet 收集为去重集合。
+// 语义：toSet 按相等性去重且不保证迭代顺序，需要稳定顺序时应明确指定集合类型。
+// 调用参数：代码依次使用 "java"、"sql"、", "、true、2。
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+Set<String> result = List.of("java", "java", "sql").stream()
+        .collect(Collectors.toSet());
+
+System.out.println(result.contains("sql") + ", " + result.size());
 // 输出：true, 2
 ```
 
-### `toUnmodifiableList`/`toUnmodifiableSet`：收集不可变结果
+### `toUnmodifiableList`：收集不可变列表
 
-需要把结果作为只读快照交给调用方时使用；修改它会抛 `UnsupportedOperationException`。
+需要保留顺序和重复元素并把结果作为只读快照时使用，修改会抛异常。
 
 ```java
+// 作用：通过 toUnmodifiableList 收集不可变列表。
+// 语义：需要保留顺序和重复元素并把结果作为只读快照时使用，修改会抛异常。
+// 调用参数：代码依次使用 "java"、"sql"。
 import java.util.List;
 import java.util.stream.Collectors;
 
-var result = List.of("java", "sql").stream().collect(Collectors.toUnmodifiableList());
+List<String> result = List.of("java", "sql").stream()
+        .collect(Collectors.toUnmodifiableList());
+
 System.out.println(result);
 // 输出：[java, sql]
+```
+
+### `toUnmodifiableSet`：收集不可变集合
+
+需要去重并把结果作为只读快照时使用，结果同样不承诺迭代顺序。
+
+```java
+// 作用：通过 toUnmodifiableSet 收集不可变集合。
+// 语义：需要去重并把结果作为只读快照时使用，结果同样不承诺迭代顺序。
+// 调用参数：代码依次使用 "java"、"sql"、2。
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+Set<String> result = List.of("java", "java", "sql").stream()
+        .collect(Collectors.toUnmodifiableSet());
+
+System.out.println(result.size());
+// 输出：2
 ```
 
 ### `joining`：连接文本
@@ -68,6 +113,8 @@ System.out.println(result);
 `joining` 适合日志、标签和 CSV 片段；需要转义、引号或复杂协议时应使用专门序列化器。
 
 ```java
+// 语义：joining 适合日志、标签和 CSV 片段。
+// 初始状态：csv 初始为 List.of("Java", "SQL").stream().collect(Collectors.joining(", ", "[", "]"))。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -81,6 +128,8 @@ System.out.println(csv);
 默认值类型是 `Map<K, List<T>>`；一个键有多个元素时最自然，顺序与 Map 实现仍需单独确认。
 
 ```java
+// 语义：默认值类型是 Map<K, List<T>>。
+// 初始状态：users 初始为 List.of(new User("Ann", "A"), new User("Bob", "B"), new User("Kai", "A"))；byTeam 初始为 users.stream().collect(Collectors.groupingBy(User::team))。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -92,18 +141,42 @@ System.out.println(byTeam.get("A").size());
 // 输出：2
 ```
 
-### `groupingBy` + `counting`：统计每组数量
+### `counting`：统计元素数量
 
-下游收集器把每组的 List 换成计数结果；需要排序的 Map 时选择明确的 Map 工厂。
+`counting` 返回 `Long` 计数，作为 `groupingBy` 的下游时可把每组列表直接换成数量。
 
 ```java
+// 作用：通过 counting 统计元素数量。
+// 语义：counting 返回 Long 计数，作为 groupingBy 的下游时可把每组列表直接换成数量。
+// 调用参数：代码依次使用 "java"、"sql"、"http"、4、2。
 import java.util.List;
 import java.util.stream.Collectors;
 
-var words = List.of("java", "sql", "java");
-var counts = words.stream().collect(Collectors.groupingBy(String::length, Collectors.counting()));
-System.out.println(counts);
-// 输出：{3=3, 4=1}
+Long count = List.of("java", "sql", "http").stream()
+        .filter(word -> word.length() >= 4)
+        .collect(Collectors.counting());
+
+System.out.println(count);
+// 输出：2
+```
+
+### `summingInt`：汇总整数值
+
+`summingInt` 用于通过映射函数提取整数并求和，也可作为 `groupingBy` 的下游收集器。
+
+```java
+// 作用：通过 summingInt 汇总整数值。
+// 语义：summingInt 用于通过映射函数提取整数并求和，也可作为 groupingBy 的下游收集器。
+// 调用参数：代码依次使用 "Ann"、20、"Bob"、8、28。
+import java.util.List;
+import java.util.stream.Collectors;
+
+record Order(String user, int amount) { }
+
+int total = List.of(new Order("Ann", 20), new Order("Bob", 8)).stream()
+        .collect(Collectors.summingInt(Order::amount));
+System.out.println(total);
+// 输出：28
 ```
 
 ### `partitioningBy`：按真假分成两组
@@ -111,10 +184,13 @@ System.out.println(counts);
 `partitioningBy` 固定得到真假两个分区；只有一个布尔条件时比 `groupingBy` 更能表达意图。
 
 ```java
+// 语义：partitioningBy 固定得到真假两个分区。
+// 初始状态：numbers 初始为 List.of(1, 2, 3, 4)。
 import java.util.List;
 import java.util.stream.Collectors;
 
-var parts = List.of(1, 2, 3, 4).stream()
+List<Integer> numbers = List.of(1, 2, 3, 4);
+var parts = numbers.stream()
         .collect(Collectors.partitioningBy(number -> number % 2 == 0));
 System.out.println(parts);
 // 输出：{false=[1, 3], true=[2, 4]}
@@ -125,6 +201,8 @@ System.out.println(parts);
 `mapping` 适合下游先提取字段再连接、去重或继续聚合；它不是顶层 Stream 的 `map` 替代品。
 
 ```java
+// 语义：mapping 适合下游先提取字段再连接、去重或继续聚合。
+// 初始状态：users 初始为 List.of(new User("Ann", "A"), new User("Kai", "A"), new User("Bob", "B"))。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -142,6 +220,8 @@ System.out.println(names);
 默认 `toMap` 遇到重复键会抛 `IllegalStateException`；数据不保证唯一时必须提供合并函数。
 
 ```java
+// 语义：默认 toMap 遇到重复键会抛 IllegalStateException。
+// 初始状态：users 初始为 List.of(new User(1, "Ann"), new User(2, "Bob"))；byId 初始为 users.stream().collect(Collectors.toMap(User::id, Function.identity()))。
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -159,6 +239,8 @@ System.out.println(byId.get(2).name());
 合并函数应明确“保留、相加还是报错”；需要保留插入顺序时使用 `toMap` 的 Map 工厂重载。
 
 ```java
+// 语义：合并函数应明确“保留、相加还是报错”。
+// 初始状态：scores 初始为 List.of(new Score("java", 80), new Score("java", 95))。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -176,6 +258,8 @@ System.out.println(best);
 `reducing` 适合需要下游归约或自定义初始值的场景；普通数值求和也可直接使用 `mapToInt().sum()`。
 
 ```java
+// 语义：reducing 适合需要下游归约或自定义初始值的场景。
+// 初始状态：total 初始为 List.of(10, 20, 30).stream().collect(Collectors.reducing(0, Integer::sum))。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -189,6 +273,8 @@ System.out.println(total);
 `summarizingInt` 同时提供数量、总和、最小、最大和平均值；`summarizingLong`、`summarizingDouble` 对应其他数值类型。
 
 ```java
+// 语义：summarizingInt 同时提供数量、总和、最小、最大和平均值。
+// 初始状态：summary 初始为 List.of(10, 20, 30).stream().collect(Collectors.summarizingInt(Integer::intValue))。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -197,19 +283,42 @@ System.out.println(summary.getCount() + ", " + summary.getAverage() + ", " + sum
 // 输出：3, 20.0, 30
 ```
 
-### `counting`/`maxBy`/`minBy`：下游统计与极值
+### `maxBy`：按比较器收集最大元素
 
-极值收集器返回 `Optional`，空组不会伪造一个默认元素；需要简单数值极值时也可使用原始类型流。
+`maxBy` 返回 `Optional`，因此空流不会伪造默认元素；比较器必须对应业务极值规则。
 
 ```java
+// 作用：通过 maxBy 按比较器收集最大元素。
+// 语义：maxBy 返回 Optional，因此空流不会伪造默认元素。
+// 调用参数：代码依次使用 "java"、"stream"、"api"、"none"。
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-var max = List.of("java", "stream", "api").stream()
+var longest = List.of("java", "stream", "api").stream()
         .collect(Collectors.maxBy(Comparator.comparingInt(String::length)));
-System.out.println(max.orElse("none"));
+
+System.out.println(longest.orElse("none"));
 // 输出：stream
+```
+
+### `minBy`：按比较器收集最小元素
+
+`minBy` 同样返回 `Optional`，适合直接收集或作为分组后的下游极值计算。
+
+```java
+// 作用：通过 minBy 按比较器收集最小元素。
+// 语义：minBy 同样返回 Optional，适合直接收集或作为分组后的下游极值计算。
+// 调用参数：代码依次使用 "java"、"stream"、"api"、"none"。
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+var shortest = List.of("java", "stream", "api").stream()
+        .collect(Collectors.minBy(Comparator.comparingInt(String::length)));
+
+System.out.println(shortest.orElse("none"));
+// 输出：api
 ```
 ## 不常用但需要知道
 
@@ -218,6 +327,7 @@ System.out.println(max.orElse("none"));
 它适合把可变中间结果包装成不可变快照；转换函数应保持结果语义清晰。
 
 ```java
+// 作用：通过 collectingAndThen 收集完成后再转换。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -232,6 +342,7 @@ System.out.println(result);
 下游过滤可以保留空组；如果不需要空组，直接在顶层 `filter` 更简单。
 
 ```java
+// 作用：通过 filtering 在下游分组内过滤（Java 9+）。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -249,6 +360,7 @@ System.out.println(active);
 `flatMapping` 是下游版本的 `flatMap`；嵌套关系简单时直接先 `flatMap` 再收集更易读。
 
 ```java
+// 作用：通过 flatMapping 分组后摊平嵌套值（Java 9+）。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -266,6 +378,7 @@ System.out.println(skills);
 `teeing` 会同时维护两个下游结果，适合一个遍历需要多个统计值；逻辑过于复杂时拆成清晰的两次计算反而更容易维护。
 
 ```java
+// 作用：通过 teeing 同时计算两个结果再合并（Java 12+）。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -282,6 +395,7 @@ System.out.println(range);
 只有并行收集和共享并发 Map 的需求才使用；小数据或串行代码使用普通 `toMap` 更简单。
 
 ```java
+// 作用：通过 toConcurrentMap 并发收集到 ConcurrentHashMap。
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -297,6 +411,7 @@ System.out.println(lengths.get("java"));
 默认 `HashMap` 不承诺键顺序；只有输出协议依赖顺序时才指定 `LinkedHashMap` 或排序 Map。
 
 ```java
+// 输入：result 按 "b"、"a"、"b" 的首次出现顺序分组，LinkedHashMap::new 使键顺序保持为 b 后 a。
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.stream.Collectors;

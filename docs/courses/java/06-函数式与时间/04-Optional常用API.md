@@ -1,6 +1,6 @@
 ---
 title: Optional 常用 API
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -39,6 +39,8 @@ description: 用 Optional 表达可能缺失的返回值，掌握转换、兜底
 接收外部输入或旧 API 返回值时优先使用 `ofNullable`；它只包装非空值，不能替代业务校验。
 
 ```java
+// 语义：接收外部输入或旧 API 返回值时优先使用 ofNullable。
+// 初始状态：input 初始为 null；value 初始为 Optional.ofNullable(input)。
 import java.util.Optional;
 
 String input = null;
@@ -52,6 +54,8 @@ System.out.println(value.isEmpty());
 只有已经确认非空时才用 `of`；不确定时使用 `ofNullable`，否则 `null` 会在创建处抛异常。
 
 ```java
+// 语义：只有已经确认非空时才用 of。
+// 初始状态：value 初始为 Optional.of("Java")。
 import java.util.Optional;
 
 Optional<String> value = Optional.of("Java");
@@ -64,6 +68,8 @@ System.out.println(value.get());
 `map` 会在有值时执行函数，函数返回 `null` 时结果变为空 Optional；多个转换可以串联。
 
 ```java
+// 语义：map 会在有值时执行函数，函数返回 null 时结果变为空 Optional。
+// 初始状态：name 初始为 Optional.of(" java ")；length 初始为 name.map(String::trim).map(String::length)。
 import java.util.Optional;
 
 Optional<String> name = Optional.of(" java ");
@@ -77,6 +83,8 @@ System.out.println(length.orElse(0));
 `flatMap` 避免出现 `Optional<Optional<T>>`；如果转换函数返回普通值，使用 `map`。
 
 ```java
+// 语义：flatMap 避免出现 Optional<Optional<T>>。
+// 初始状态：text 初始为 Optional.of("42")；number 初始为 text.flatMap(value -> parseInt(value))。
 import java.util.Optional;
 
 Optional<String> text = Optional.of("42");
@@ -98,6 +106,9 @@ static Optional<Integer> parseInt(String value) {
 条件不满足时得到空 Optional，适合把校验接到查询或转换链中；复杂校验应提取成有名字的方法。
 
 ```java
+// 作用：通过 filter 值存在且满足条件才保留。
+// 语义：条件不满足时得到空 Optional，适合把校验接到查询或转换链中。
+// 调用参数：代码依次使用 "JAVA-20"、"JAVA-"、"invalid"、-20。
 import java.util.Optional;
 
 Optional<String> code = Optional.of("JAVA-20")
@@ -111,6 +122,8 @@ System.out.println(code.orElse("invalid"));
 默认值表达式会立即求值；默认值很简单或已经准备好时使用它。
 
 ```java
+// 语义：默认值表达式会立即求值。
+// 初始状态：label 初始为 Optional.<String>empty().orElse("unknown")。
 import java.util.Optional;
 
 String label = Optional.<String>empty().orElse("unknown");
@@ -123,6 +136,8 @@ System.out.println(label);
 默认值需要计算、查询或创建对象时使用 `orElseGet`，避免值已经存在时做无用工作。
 
 ```java
+// 语义：默认值需要计算、查询或创建对象时使用 orElseGet，避免值已经存在时做无用工作。
+// 初始状态：label 初始为 Optional.<String>empty().orElseGet(() -> "generated-20")。
 import java.util.Optional;
 
 String label = Optional.<String>empty().orElseGet(() -> "generated-20");
@@ -135,6 +150,9 @@ System.out.println(label);
 把“找不到就是错误”的边界明确转换为异常；异常类型和消息应符合调用方契约。
 
 ```java
+// 作用：通过 orElseThrow 缺失时抛出异常。
+// 语义：把“找不到就是错误”的边界明确转换为异常。
+// 调用参数：代码依次使用 "user not found"。
 import java.util.Optional;
 
 String user = Optional.<String>empty()
@@ -148,6 +166,9 @@ System.out.println(user);
 适合末端通知或记录日志，不要用多个嵌套 `ifPresent` 代替有清晰返回值的业务流程。
 
 ```java
+// 作用：通过 ifPresent 有值时执行动作。
+// 语义：适合末端通知或记录日志，不要用多个嵌套 ifPresent 代替有清晰返回值的业务流程。
+// 调用参数：代码依次使用 "saved"、"status="。
 import java.util.Optional;
 
 Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));
@@ -159,6 +180,8 @@ Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));
 当有值和无值都需要末端动作时使用；如果两个分支还要继续返回结果，应优先考虑 `map` 与兜底。
 
 ```java
+// 语义：当有值和无值都需要末端动作时使用。
+// 初始状态：output 初始为 new StringBuilder()。
 import java.util.Optional;
 
 StringBuilder output = new StringBuilder();
@@ -175,6 +198,7 @@ System.out.println(output);
 方法找不到结果时返回 `Optional.empty()` 比返回 `null` 更容易让调用方发现缺失路径。
 
 ```java
+// 作用：通过 empty 明确创建空结果。
 import java.util.Optional;
 
 Optional<String> missing = Optional.empty();
@@ -187,6 +211,7 @@ System.out.println(missing.isPresent());
 `or` 的备用函数也是惰性的，适合多个查询源按优先级回退；不要把异常吞掉后无条件回退。
 
 ```java
+// 作用：通过 or 缺失时切换到另一个 Optional（Java 9+）。
 import java.util.Optional;
 
 Optional<String> primary = Optional.empty();
@@ -200,6 +225,7 @@ System.out.println(result.get());
 `Optional.stream()` 在有值时产生一个元素、无值时产生空流，适合拼接批量转换管道。
 
 ```java
+// 作用：通过 stream 把 Optional 接入 Stream（Java 9+）。
 import java.util.List;
 
 List<String> values = List.of("java", "", "sql").stream()
@@ -215,6 +241,7 @@ System.out.println(values);
 `get()` 在空 Optional 上抛 `NoSuchElementException`；只有前面已经可靠判断存在时才使用，通常优先 `orElse` 或 `orElseThrow`。
 
 ```java
+// 作用：通过 get 直接取值（谨慎使用）。
 import java.util.Optional;
 
 Optional<String> value = Optional.of("Java");
@@ -227,6 +254,7 @@ System.out.println(value.get());
 大量数值流可以使用 `OptionalInt`、`OptionalLong` 或 `OptionalDouble`，普通对象结果仍使用 `Optional<T>`。
 
 ```java
+// 作用：通过 OptionalInt 避免基本类型装箱。
 import java.util.OptionalInt;
 
 OptionalInt result = OptionalInt.of(20);

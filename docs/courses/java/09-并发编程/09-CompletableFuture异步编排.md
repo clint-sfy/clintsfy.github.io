@@ -1,6 +1,6 @@
 ---
 title: CompletableFuture 异步编排
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -41,6 +41,7 @@ CompletableFuture 是一张异步依赖图，不是自动创建无限线程的�
 给 supplyAsync 传入执行器，能明确异步任务在哪个线程池运行；不传执行器会使用 commonPool，任务类型和阻塞比例不受当前方法控制。
 
 ```java
+// 说明：supplyAsync：启动异步供应任务。
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 
@@ -61,6 +62,7 @@ public class SupplyAsyncDemo {
 thenApply 的函数输入是前一阶段的结果，返回普通值；没有 `Async` 后缀时，阶段可能在完成前一阶段的线程上执行，函数应短小且不要阻塞。
 
 ```java
+// 说明：thenApply：转换上一步结果。
 import java.util.concurrent.CompletableFuture;
 
 public class ThenApplyDemo {
@@ -79,6 +81,7 @@ public class ThenApplyDemo {
 如果用 thenApply 返回 CompletableFuture，会得到嵌套的 `CompletableFuture&lt;CompletableFuture&lt;T&gt;&gt;`；thenCompose 会把它展平成一个阶段。
 
 ```java
+// 说明：thenCompose：串联两个异步阶段。
 import java.util.concurrent.CompletableFuture;
 
 public class ThenComposeDemo {
@@ -101,6 +104,7 @@ public class ThenComposeDemo {
 两个分支互不依赖时可以并行启动再 combine；任一分支失败时，合并阶段通常也会失败，需要统一的异常策略。
 
 ```java
+// 说明：thenCombine：汇合两个独立结果。
 import java.util.concurrent.CompletableFuture;
 
 public class ThenCombineDemo {
@@ -116,9 +120,10 @@ public class ThenCombineDemo {
 
 ### allOf：等待多个异步任务
 
-allOf 等待所有阶段完成但不直接返回结果列表；先等待再按原列表 join，可以保持输入顺序。任何一个阶段异常都要在 join 处观察并按业务处理。
+allOf 等待所有阶段完成但不直接返回结果列表；先等待再按原列表 join，可以保持输入顺序。
 
 ```java
+// 说明：allOf：等待多个异步任务。
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -135,11 +140,14 @@ public class AllOfDemo {
 }
 ```
 
+任何一个阶段异常都要在 join 处观察并按业务处理。
+
 ### exceptionally：失败时降级
 
 exceptionally 只在上游异常时执行，返回一个替代结果；不要把所有异常都吞成默认值，至少记录原异常并区分可恢复错误和编程错误。
 
 ```java
+// 说明：exceptionally：失败时降级。
 import java.util.concurrent.CompletableFuture;
 
 public class ExceptionallyDemo {
@@ -159,6 +167,7 @@ public class ExceptionallyDemo {
 handle 无论成功失败都会执行，适合统一转换结果或记录状态；若只想在失败时提供默认值，exceptionally 更直接。
 
 ```java
+// 说明：handle：同时处理成功和失败。
 import java.util.concurrent.CompletableFuture;
 
 public class HandleDemo {
@@ -178,6 +187,7 @@ public class HandleDemo {
 orTimeout 在期限内未完成时以 TimeoutException 异常完成阶段；它是结果协议的一部分，底层 I/O 是否真的取消要看连接客户端和任务实现。
 
 ```java
+// 说明：orTimeout：超时并让阶段失败。
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -197,6 +207,7 @@ public class OrTimeoutDemo {
 completeOnTimeout 以默认值完成阶段，适合允许降级的查询；它同样不保证取消底层任务，不能用默认值掩盖下游持续超载。
 
 ```java
+// 说明：completeOnTimeout：超时返回默认值。
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -216,6 +227,7 @@ public class CompleteOnTimeoutDemo {
 thenAccept 返回 `CompletableFuture<Void>`，适合通知、写日志等末端动作；需要返回新业务结果时使用 thenApply。
 
 ```java
+// 说明：thenAccept：异步流程末端消费结果。
 import java.util.concurrent.CompletableFuture;
 
 public class ThenAcceptDemo {
@@ -234,6 +246,7 @@ public class ThenAcceptDemo {
 Async 变体把阶段提交到执行器，适合隔离阻塞或 CPU 工作；线程池仍需有界，不能为了“异步”把所有任务都投向公共池。
 
 ```java
+// 说明：completedFuture("java") 已在 main 完成，thenApplyAsync 把 toUpperCase 明确调度到 executor 的单一工作线程。
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 
@@ -255,6 +268,7 @@ public class ThenApplyAsyncDemo {
 需要异步调用备用服务时用 exceptionallyCompose，避免在 exceptionally 中阻塞等待另一个 Future。
 
 ```java
+// 说明：failedFuture 以 RuntimeException 失败后，exceptionallyCompose 调用 backup() 并直接串联其 CompletableFuture<String>。
 import java.util.concurrent.CompletableFuture;
 
 public class ExceptionallyComposeDemo {
@@ -277,6 +291,7 @@ public class ExceptionallyComposeDemo {
 完成顺序由实际调度决定，结果是“可能”为 primary 或 backup；要把它用于竞速请求，必须取消慢分支并处理重复副作用。
 
 ```java
+// 说明：applyToEither 在 primary 与 backup 中任一正常完成时应用 value -> value；已完成的两个阶段不保证谁被选中。
 import java.util.concurrent.CompletableFuture;
 
 public class ApplyToEitherDemo {
@@ -295,6 +310,7 @@ public class ApplyToEitherDemo {
 minimalCompletionStage 可把内部可手动 complete 的 Future 以更窄的 CompletionStage 视图暴露给调用者，降低外部篡改完成状态的机会。
 
 ```java
+// 说明：source 仍可被内部 complete，view 只向调用方暴露 CompletionStage 操作；toCompletableFuture() 返回受限制的完成视图。
 import java.util.concurrent.CompletableFuture;
 
 public class MinimalStageDemo {

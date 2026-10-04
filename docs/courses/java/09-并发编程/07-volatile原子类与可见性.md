@@ -1,6 +1,6 @@
 ---
 title: volatile、原子类与可见性
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -38,9 +38,10 @@ CAS 失败时通常重试，竞争激烈会消耗 CPU。LongAdder 的总和适�
 
 ### volatile：可见的停止标志
 
-普通字段可能被编译器或处理器重排、缓存观察；volatile 读写建立跨线程可见性。停止线程仍需要任务定期检查标志，阻塞在 I/O 时还需要超时或中断。
+普通字段可能被编译器或处理器重排、缓存观察；volatile 读写建立跨线程可见性。
 
 ```java
+// 说明：main 线程将 volatile running 从 true 改为 false，读取该标志的工作线程不需额外锁即可看到停止请求。
 public class VolatileStopDemo {
     private static volatile boolean running = true;
 
@@ -52,11 +53,14 @@ public class VolatileStopDemo {
 }
 ```
 
+停止线程仍需要任务定期检查标志，阻塞在 I/O 时还需要超时或中断。
+
 ### AtomicInteger.incrementAndGet：原子计数
 
-incrementAndGet 把读、加一、写回封装为一个原子更新。不要先 `get()` 再独立 `set(get + 1)`，那样又把复合操作拆开了。
+`incrementAndGet` 用于把读、加一、写回封装为一个原子更新。
 
 ```java
+// 说明：AtomicInteger.incrementAndGet：原子计数。
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class AtomicIncrementDemo {
@@ -69,11 +73,14 @@ public class AtomicIncrementDemo {
 }
 ```
 
+不要先 `get()` 再独立 `set(get + 1)`，那样又把复合操作拆开了。
+
 ### AtomicInteger.compareAndSet：条件更新
 
-CAS 失败说明当前值已经被其他路径改变，调用方可以重试、放弃或走冲突处理。CAS 只保护它比较的变量，不会自动保护旁边的普通字段。
+CAS 失败说明当前值已经被其他路径改变，调用方可以重试、放弃或走冲突处理。
 
 ```java
+// 说明：AtomicInteger.compareAndSet：条件更新。
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class AtomicCompareDemo {
@@ -87,11 +94,14 @@ public class AtomicCompareDemo {
 }
 ```
 
+CAS 只保护它比较的变量，不会自动保护旁边的普通字段。
+
 ### AtomicReference：原子替换不可变快照
 
-用不可变对象整体替换引用，能避免读线程看到半更新状态。updateAndGet 的函数应无副作用，因为竞争时可能被重复计算。
+用不可变对象整体替换引用，能避免读线程看到半更新状态。
 
 ```java
+// 说明：AtomicReference：原子替换不可变快照。
 import java.util.concurrent.atomic.AtomicReference;
 
 public class AtomicReferenceDemo {
@@ -106,11 +116,14 @@ public class AtomicReferenceDemo {
 }
 ```
 
+updateAndGet 的函数应无副作用，因为竞争时可能被重复计算。
+
 ### AtomicLongArray：原子更新数组元素
 
-AtomicLongArray 保护每个索引的更新，不会把两个索引的组合关系变成一次原子事务。需要跨元素不变式时，改用锁或不可变快照。
+AtomicLongArray 保护每个索引的更新，不会把两个索引的组合关系变成一次原子事务。
 
 ```java
+// 说明：AtomicLongArray：原子更新数组元素。
 import java.util.concurrent.atomic.AtomicLongArray;
 
 public class AtomicArrayDemo {
@@ -124,11 +137,14 @@ public class AtomicArrayDemo {
 }
 ```
 
+需要跨元素不变式时，改用锁或不可变快照。
+
 ### LongAdder：并发统计总量
 
 LongAdder 把热点分散到多个槽，适合 QPS、命中次数等最终汇总；清零和读取期间如果还有并发更新，观察到的是近似时间点的统计。
 
 ```java
+// 说明：LongAdder：并发统计总量。
 import java.util.concurrent.atomic.LongAdder;
 
 public class LongAdderCounterDemo {
@@ -147,6 +163,7 @@ public class LongAdderCounterDemo {
 CAS 可以表达“只有第一个线程成功初始化”的状态迁移；初始化失败时要定义是否允许回滚或重试。
 
 ```java
+// 说明：AtomicBoolean：一次性状态转换。
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AtomicBooleanDemo {
@@ -161,7 +178,7 @@ public class AtomicBooleanDemo {
 ```
 ## 不常用但需要知道
 
-### AtomicStampedReference：处理版本号与 ABA
+### 防止 ABA：让引用与版本号共同更新
 
 版本号让调用方同时比较引用和值的版本，减少 A→B→A 被误判为“没有变化”的风险。它仍需要清晰的更新协议，不是所有锁自由算法的通用替代品。
 
@@ -183,6 +200,7 @@ public class StampedReferenceDemo {
 弱 CAS 允许无理由失败，必须放在循环算法里；简单业务代码优先使用 compareAndSet，语义更容易读懂。特定 JDK 文档对内存语义的说明优先于经验。
 
 ```java
+// 说明：weakCompareAndSet(0, 1) 可能假失败，do-while 会重试到 value 由 0 成功原子更新为 1。
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class WeakCasDemo {
@@ -203,6 +221,7 @@ public class WeakCasDemo {
 累积函数必须满足结合性，且初始值要合理；如果只统计加法，LongAdder 更直接。
 
 ```java
+// 说明：max 以 Long.MIN_VALUE 为单元值，多线程可并发 accumulate(7/3)，get() 合并分段状态得到 7。
 import java.util.concurrent.atomic.LongAccumulator;
 
 public class LongAccumulatorDemo {

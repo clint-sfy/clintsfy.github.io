@@ -1,6 +1,6 @@
 ---
 title: JMM 与并发内存模型
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -37,9 +37,10 @@ JMM 不是“每个线程都有一份永久独立内存”的实现承诺，而�
 
 ### volatile：发布状态标志
 
-volatile 读写具有可见性和有序性，适合停止标志、配置快照引用等单变量发布。它不提供互斥，也不能保护 `count++`、检查再写入等复合操作。
+volatile 读写具有可见性和有序性，适合停止标志、配置快照引用等单变量发布。
 
 ```java
+// 说明：main 线程对 volatile stopped 写入 true，其他线程后续读取该字段时能看到这个停止状态。
 public class VolatileFlagDemo {
     private static volatile boolean stopped;
 
@@ -54,11 +55,14 @@ public class VolatileFlagDemo {
 }
 ```
 
+它不提供互斥，也不能保护 `count++`、检查再写入等复合操作。
+
 ### synchronized：用锁建立可见性与互斥
 
-同一个监视器的 unlock→lock 建立 happens-before，并且临界区互斥。读写必须使用同一个锁对象；只给写方法加锁、读方法不加锁并不能形成完整的保护。
+`synchronized` 用于让同一个监视器的 unlock→lock 建立 happens-before，并保证临界区互斥。
 
 ```java
+// 说明：set() 退出 box 监视器先于 get() 再次获取它，所以 value=42 既互斥更新又对读线程可见。
 public class SynchronizedVisibilityDemo {
     private int value;
 
@@ -79,11 +83,14 @@ public class SynchronizedVisibilityDemo {
 }
 ```
 
-### Thread.start 与 join：线程之间的 happens-before
+读写必须使用同一个锁对象；只给写方法加锁、读方法不加锁并不能形成完整的保护。
 
-启动前的写入对新线程可见，线程完成前的写入对成功 join 的线程可见。`join(timeout)` 超时返回时不代表后续写入已经可见或任务已经完成。
+### 在线程间发布结果：启动后等待完成
+
+启动前的写入对新线程可见，线程完成前的写入对成功 join 的线程可见。
 
 ```java
+// 说明：在线程间发布结果：启动后等待完成。
 public class ThreadHappensBeforeDemo {
     private static int value;
 
@@ -98,11 +105,14 @@ public class ThreadHappensBeforeDemo {
 }
 ```
 
+`join(timeout)` 超时返回时不代表后续写入已经可见或任务已经完成。
+
 ### AtomicInteger：CAS 保证单变量更新
 
-CAS 会比较当前值，只有仍等于期望值才写入新值；失败时通常重试或走冲突路径。CAS 适合无锁更新独立状态，不代表任意多字段操作都能无锁完成。
+CAS 会比较当前值，只有仍等于期望值才写入新值；失败时通常重试或走冲突路径。
 
 ```java
+// 说明：AtomicInteger：CAS 保证单变量更新。
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class AtomicCasDemo {
@@ -115,11 +125,14 @@ public class AtomicCasDemo {
 }
 ```
 
+CAS 适合无锁更新独立状态，不代表任意多字段操作都能无锁完成。
+
 ### 安全发布：用不可变对象传递快照
 
-把不可变对象引用通过 volatile、锁、静态初始化或并发容器发布，可以让读取线程看到完整构造结果。只把普通可变对象引用放出去，仍可能被调用方绕过保护修改内部字段。
+把不可变对象引用通过 volatile、锁、静态初始化或并发容器发布，可以让读取线程看到完整构造结果。
 
 ```java
+// 说明：安全发布：用不可变对象传递快照。
 public class SafePublicationDemo {
     record Config(String host, int port) { }
     private static volatile Config config = new Config("localhost", 8080);
@@ -132,11 +145,14 @@ public class SafePublicationDemo {
 }
 ```
 
+只把普通可变对象引用放出去，仍可能被调用方绕过保护修改内部字段。
+
 ### Future.get：等待完成并取得可见结果
 
 Future 完成后调用 `get()` 能读取任务结果；如果只查询 `isDone()` 而不取结果，业务仍需要决定异常和取消如何传播。
 
 ```java
+// 说明：Future.get：等待完成并取得可见结果。
 import java.util.concurrent.Executors;
 
 public class FutureHappensBeforeDemo {
@@ -156,6 +172,7 @@ public class FutureHappensBeforeDemo {
 final 字段在构造器正常完成后有额外的初始化安全保证，但不等于整个对象天然线程安全；可变字段和 `this` 逃逸仍需同步。
 
 ```java
+// 说明：User 构造器在对象发布前把 final name 设为 "Ann"；前提是构造期间没有泄露 this。
 public class FinalFieldDemo {
     static final class User {
         private final String name;
@@ -181,6 +198,7 @@ public class FinalFieldDemo {
 VarHandle 可以精细选择普通、opaque、acquire/release 或 volatile 访问语义，常用于并发库和高性能底层组件。业务代码优先用 Atomic、Lock 和并发集合，避免自己组合错误的内存语义。
 
 ```java
+// 说明：handle 精确指向 VarHandleDemo.value；set/get 在 box 实例上以普通内存语义写入并读取 42。
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 
@@ -203,6 +221,7 @@ public class VarHandleDemo {
 `lazySet` 允许延迟传播，适合不需要立即同步观察的状态清理；若后续代码依赖写入马上对其他线程可见，使用普通 `set` 更直白。
 
 ```java
+// 说明：state.lazySet(1) 以 release 语义发布最终值；它不承诺另一线程立即观察到 1。
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LazySetDemo {

@@ -1,6 +1,6 @@
 ---
 title: Class 与反射常用 API
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -33,11 +33,12 @@ description: 直接用 Java 案例速查 Class、构造器、方法、字段、�
 
 ## 常用用法
 
-### `String.class`、`getClass` 与 `Class.forName`
+### 获取运行时类型：按已知类型、对象或类名选择入口
 
 类字面量适合已知类型，`getClass` 反映对象的实际运行时类型，`Class.forName` 按名称加载并可能初始化类；不要把外部输入的类名直接交给它。
 
 ```java
+// 说明：获取运行时类型：按已知类型、对象或类名选择入口。
 public class ClassGetDemo {
     public static void main(String[] args) throws Exception {
         Class<String> literal = String.class;
@@ -49,11 +50,12 @@ public class ClassGetDemo {
 }
 ```
 
-### `getName`、`getSimpleName` 与 `getPackageName`
+### 查询类型名称：选择完整名、简单名或包名
 
 日志和配置映射要明确使用哪种名称；内部类、数组和匿名类的 `getName` 可能包含特殊格式，不能简单当作展示文本。
 
 ```java
+// 说明：查询类型名称：选择完整名、简单名或包名。
 public class ClassNameDemo {
     public static void main(String[] args) {
         Class<?> type = java.util.ArrayList.class;
@@ -63,11 +65,12 @@ public class ClassNameDemo {
 }
 ```
 
-### `getSuperclass` 与 `getInterfaces`
+### 查询直接类型层次：读取父类与接口
 
 `getSuperclass` 只返回直接父类，接口没有父类对象；`getInterfaces` 只列出当前类直接声明的接口，完整层次要递归遍历。
 
 ```java
+// 说明：查询直接类型层次：读取父类与接口。
 import java.util.ArrayList;
 
 public class ClassHierarchyDemo {
@@ -81,11 +84,12 @@ public class ClassHierarchyDemo {
 }
 ```
 
-### `getDeclaredConstructor` 与 `newInstance`
+### 反射创建对象：取得构造器后实例化
 
 参数类型必须精确匹配构造器签名，基本类型和包装类型也不是同一个 Class；没有无参构造器时不能假设 `getDeclaredConstructor()` 存在。
 
 ```java
+// 说明：反射创建对象：取得构造器后实例化。
 import java.lang.reflect.Constructor;
 
 class User {
@@ -106,11 +110,12 @@ public class ConstructorReflectDemo {
 }
 ```
 
-### `getMethod` 与 `invoke`
+### 反射调用公共方法：查找后执行
 
 `getMethod` 只找 public 方法（含继承），`invoke` 的返回值是 Object；目标方法抛出的异常通常被包装在 `InvocationTargetException` 中。
 
 ```java
+// 说明：反射调用公共方法：查找后执行。
 import java.lang.reflect.Method;
 
 public class MethodInvokeDemo {
@@ -123,11 +128,12 @@ public class MethodInvokeDemo {
 }
 ```
 
-### `getDeclaredMethod` 与 `getDeclaredMethods`
+### 查询本类方法：按签名或批量读取
 
 `getDeclared*` 只看当前类声明，包括 private，但不自动包含父类成员；框架扫描时要明确是否需要递归父类。
 
 ```java
+// 说明：查询本类方法：按签名或批量读取。
 import java.lang.reflect.Method;
 
 class Commands {
@@ -145,11 +151,12 @@ public class DeclaredMethodDemo {
 }
 ```
 
-### `getDeclaredField`、`get` 与 `set`
+### 反射访问字段：查找后读取或写入
 
 修改 private 字段会破坏封装，也可能在强模块边界失败；已知对象应优先提供方法或构造器，反射字段只留给受控框架。
 
 ```java
+// 说明：反射访问字段：查找后读取或写入。
 import java.lang.reflect.Field;
 
 class Config {
@@ -170,11 +177,12 @@ public class FieldReflectDemo {
 }
 ```
 
-### `getFields` 与 `getDeclaredFields`
+### 查询字段集合：选择公共继承或本类声明范围
 
 `getFields` 返回 public 字段（含继承），`getDeclaredFields` 只返回当前类声明（含非 public）；字段顺序不应当作业务顺序依赖。
 
 ```java
+// 说明：查询字段集合：选择公共继承或本类声明范围。
 class Parent { public int parent; }
 class Child extends Parent { private int child; public int own; }
 
@@ -193,6 +201,7 @@ public class FieldScopeDemo {
 调用方向是“左侧能否接收右侧对象”；它比比较类名更可靠，适合插件注册和参数校验。
 
 ```java
+// 说明：isAssignableFrom：判断类型兼容。
 import java.util.ArrayList;
 import java.util.List;
 
@@ -211,6 +220,7 @@ public class AssignableDemo {
 `isInstance` 处理对象与 Class 的关系，空引用会返回 false；它不提供泛型参数的运行时判断。
 
 ```java
+// 说明：isInstance：判断对象运行时类型。
 import java.util.ArrayList;
 import java.util.List;
 
@@ -223,11 +233,12 @@ public class InstanceReflectDemo {
 }
 ```
 
-### `isArray`、`getComponentType` 与 `Array`
+### 操作反射数组：识别组件类型并读写元素
 
 `Array` 可创建运行时才知道组件类型的数组；基本类型数组和引用类型数组的反射读写规则不同，越界和类型不匹配会抛异常。
 
 ```java
+// 说明：操作反射数组：识别组件类型并读写元素。
 import java.lang.reflect.Array;
 
 public class ArrayReflectDemo {
@@ -247,6 +258,7 @@ public class ArrayReflectDemo {
 相比直接 `setAccessible(true)`，`trySetAccessible` 可以把当前访问是否成功作为结果处理；强模块边界下仍可能返回 false。
 
 ```java
+// 作用：通过 trySetAccessible 探测访问是否可打开。
 import java.lang.reflect.Field;
 
 class PrivateValue { private int value = 1; }
@@ -265,6 +277,7 @@ public class TryAccessibleDemo {
 只有声明位置的泛型签名可能保留在 class 文件中；普通 `new ArrayList<String>()` 的对象实例本身通常不知道 String。
 
 ```java
+// 作用：通过 getGenericSuperclass 读取部分泛型签名。
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 
@@ -284,6 +297,7 @@ public class GenericSuperclassDemo {
 record 组件提供名称、类型和访问器信息，但反射读取不改变 record 的浅不可变语义。
 
 ```java
+// 作用：通过 getRecordComponents 读取 record 组件。
 record Point(int x, int y) { }
 
 public class RecordComponentReflectDemo {
@@ -295,7 +309,7 @@ public class RecordComponentReflectDemo {
 }
 ```
 
-### `getNestHost` 与 `getNestMembers`
+### 查询嵌套关系：读取宿主与成员
 
 Nestmate 信息用于编译器和运行时表达嵌套类的访问关系；业务框架很少需要直接依赖它。
 
@@ -315,6 +329,7 @@ public class NestReflectDemo {
 框架日志和异常转换应优先记录 `getCause()`；只打印 InvocationTargetException 会丢失真正业务根因。
 
 ```java
+// 作用：通过 InvocationTargetException 还原目标异常。
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -338,6 +353,7 @@ public class InvocationTargetDemo {
 `AnnotatedType` 关注类型使用位置，而不是方法/字段声明本身；它通常服务于校验框架或静态/运行时类型工具。
 
 ```java
+// 作用：通过 getAnnotatedType 读取类型使用位置注解。
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

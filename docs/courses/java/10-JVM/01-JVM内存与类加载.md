@@ -1,6 +1,6 @@
 ---
 title: JVM 内存与类加载
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -36,11 +36,12 @@ description: 建立 JVM 运行时内存区、对象生命周期和类加载初�
 
 ## 常用用法
 
-### 堆与栈：对象引用和栈帧
+### 观察对象与栈帧边界：区分堆对象和线程调用状态
 
 局部变量 `value` 和 `sum` 属于当前线程的栈帧视角，String 对象通常在堆上；具体分配会受 JVM 优化影响，不能用这张图反推每个对象的物理位置。
 
 ```java
+// 说明：观察对象与栈帧边界：区分堆对象和线程调用状态。
 public class HeapStackDemo {
     static int add(int left, int right) {
         int sum = left + right;
@@ -60,6 +61,7 @@ public class HeapStackDemo {
 Runtime 的数值受启动参数和容器限制影响，适合做运行时观测，不能直接当成“应用实际可用内存”或据此盲目调大堆。
 
 ```java
+// 说明：Runtime：观察当前进程的内存上限。
 public class RuntimeMemoryDemo {
     public static void main(String[] args) {
         Runtime runtime = Runtime.getRuntime();
@@ -76,6 +78,7 @@ public class RuntimeMemoryDemo {
 使用 `Service.class` 取得 Class 通常不会触发 Service 的初始化；主动使用静态字段、静态方法或反射初始化时机要另行判断。
 
 ```java
+// 说明：类字面量：获取 Class 而不初始化。
 public class ClassLiteralDemo {
     static class Service {
         static {
@@ -94,9 +97,10 @@ public class ClassLiteralDemo {
 
 ### Class.forName：选择是否初始化
 
-`Class.forName(name, false, loader)` 只加载并链接，不主动初始化；传 true 或直接使用需要初始化的静态成员时才可能执行 `<clinit>`。动态类名错误会抛 ClassNotFoundException。
+`Class.forName(name, false, loader)` 只加载并链接，不主动初始化；传 true 或直接使用需要初始化的静态成员时才可能执行 `<clinit>`。
 
 ```java
+// 说明：Class.forName：选择是否初始化。
 public class ClassForNameDemo {
     static class Plugin {
         static {
@@ -113,11 +117,14 @@ public class ClassForNameDemo {
 }
 ```
 
+动态类名错误会抛 ClassNotFoundException。
+
 ### ClassLoader：查看类的定义加载器
 
-核心类通常由 bootstrap loader 定义，因此 `getClassLoader()` 返回 null；应用类通常由应用类加载器定义。类加载器层次与模块、容器和插件隔离有关。
+核心类通常由 bootstrap loader 定义，因此 `getClassLoader()` 返回 null；应用类通常由应用类加载器定义。
 
 ```java
+// 说明：ClassLoader：查看类的定义加载器。
 public class ClassLoaderDemo {
     public static void main(String[] args) {
         ClassLoader loader = String.class.getClassLoader();
@@ -127,11 +134,14 @@ public class ClassLoaderDemo {
 }
 ```
 
+类加载器层次与模块、容器和插件隔离有关。
+
 ### 静态初始化：类首次主动使用时执行
 
 初始化由 JVM 保证在类初始化期间串行执行一次；如果 `<clinit>` 抛错，后续主动使用可能得到 ExceptionInInitializerError 或 NoClassDefFoundError。
 
 ```java
+// 说明：静态初始化：类首次主动使用时执行。
 public class ClassInitializationDemo {
     static class Config {
         static final String VALUE = new String("ready");
@@ -154,6 +164,7 @@ public class ClassInitializationDemo {
 直接缓冲区的内容不在普通 Java 堆中，适合与本地 I/O 交互；它仍受本地内存和 `MaxDirectMemorySize` 等边界影响，忘记释放引用也会造成压力。
 
 ```java
+// 说明：DirectByteBuffer：堆外缓冲的边界。
 import java.nio.ByteBuffer;
 
 public class DirectMemoryDemo {
@@ -167,7 +178,7 @@ public class DirectMemoryDemo {
 ```
 ## 不常用但需要知道
 
-### Class.forName 初始化 true/false 对比
+### 控制类初始化：选择只加载或立即初始化
 
 反射加载的初始化开关适合框架启动和插件探测；不要在静态初始化块中执行不可控 I/O，否则类初始化失败可能阻断整个调用链。
 

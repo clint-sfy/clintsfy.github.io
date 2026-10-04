@@ -1,6 +1,6 @@
 ---
 title: LockSupport 与锁选择
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -41,11 +41,12 @@ description: 掌握 LockSupport 的许可语义、park/unpark 与中断边界，
 
 ## 常用用法
 
-### LockSupport.park()/unpark(thread)：阻塞并唤醒线程
+### 传递一次许可：阻塞并唤醒指定线程
 
 需要构造最小的线程阻塞与唤醒协议时使用 `park/unpark`；它只管理许可，不负责保护共享数据或判断业务条件。
 
 ```java
+// 说明：传递一次许可：阻塞并唤醒指定线程。
 import java.util.concurrent.locks.LockSupport;
 
 public class ParkUnparkDemo {
@@ -69,6 +70,7 @@ public class ParkUnparkDemo {
 通知可能早于等待发生时可依赖 `unpark` 的许可语义；每个线程最多保存一个许可，队列或信号量用于表达多个事件。
 
 ```java
+// 说明：unpark(thread) 先发生：许可不会累积。
 import java.util.concurrent.locks.LockSupport;
 
 public class PermitBeforeParkDemo {
@@ -88,6 +90,7 @@ public class PermitBeforeParkDemo {
 只需要限制等待上限时使用 `parkNanos`；返回后仍要循环检查条件，不能把超时返回当成业务成功。
 
 ```java
+// 说明：parkNanos(nanos)：限制阻塞时间。
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
@@ -107,6 +110,7 @@ public class ParkNanosDemo {
 等待协议需要观察取消信号时使用 `park` 并检查中断；它不会抛出 `InterruptedException`，调用方要决定传播或退出。
 
 ```java
+// 说明：park() 遇到中断：返回但保留中断状态。
 import java.util.concurrent.locks.LockSupport;
 
 public class ParkInterruptDemo {
@@ -127,6 +131,7 @@ public class ParkInterruptDemo {
 条件可能虚假返回或被多个线程竞争时必须在 `while` 中重查；先更新条件，再调用 `unpark` 唤醒等待者。
 
 ```java
+// 说明：worker 每次从 park() 返回都重读 AtomicBoolean ready；main 先设为 true 再 unpark(worker)，避免丢失条件变化。
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
@@ -154,11 +159,12 @@ public class ParkConditionLoopDemo {
 
 条件变量必须先更新，再唤醒；被唤醒后仍然要回到 `while` 重新读取条件。循环同时处理了虚假返回、多个线程竞争同一条件以及通知先于阻塞发生的情况。
 
-### park(Object blocker)/getBlocker(thread)：提供阻塞诊断对象
+### 诊断阻塞原因：携带并读取 blocker
 
 需要在线程转储中标识等待原因时传入 blocker；它只用于诊断，不是锁，也不会自动建立条件同步协议。
 
 ```java
+// 说明：诊断阻塞原因：携带并读取 blocker。
 import java.util.concurrent.locks.LockSupport;
 
 public class ParkBlockerDemo {
@@ -186,6 +192,7 @@ blocker 只用于线程转储和诊断，不是锁，也不会自动建立条件
 等待必须对齐一个绝对截止时间时使用 `parkUntil`；返回后仍需检查条件和中断状态，避免把提前唤醒当作完成。
 
 ```java
+// 作用：通过 parkUntil(deadline) 按绝对时间等待。
 import java.util.concurrent.locks.LockSupport;
 
 public class ParkUntilDemo {
@@ -204,6 +211,7 @@ public class ParkUntilDemo {
 临界区简单且只需互斥与可见性时适合优先使用 `synchronized`；它由语言自动管理释放，通常比手写锁更不易出错。
 
 ```java
+// 说明：synchronized increment() 在 counter 监视器下完成 count++，方法正常或异常退出都由 JVM 自动释放锁。
 public class SynchronizedChoiceDemo {
     private int count;
 
@@ -227,6 +235,7 @@ public class SynchronizedChoiceDemo {
 需要可中断、超时获取或多个条件队列时选择 `ReentrantLock`；每次成功 `lock` 都要在 `finally` 中 `unlock`。
 
 ```java
+// 说明：tryLock(1, MILLISECONDS) 让 main 最多等待 1 毫秒；只有获锁成功的分支才在 finally 调用 unlock()。
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -255,6 +264,7 @@ public class ReentrantLockChoiceDemo {
 读操作明显多于写操作且临界区值得并行时适合评估 `ReadWriteLock`；读写协议必须覆盖所有访问路径。
 
 ```java
+// 说明：main 线程持有 readLock 时允许其他读者并行，但写者需等待 finally 中的 unlock()。
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ReadWriteChoiceDemo {
@@ -278,6 +288,7 @@ public class ReadWriteChoiceDemo {
 低冲突的短读可能从乐观读受益时选择 `StampedLock`；它不可重入、没有 `Condition`，读取后必须校验 stamp。
 
 ```java
+// 说明：stamp 代表一次未加锁快照；validate(stamp) 只在乐观读期间没有写锁获取时返回 true。
 import java.util.concurrent.locks.StampedLock;
 
 public class StampedChoiceDemo {
@@ -298,6 +309,7 @@ public class StampedChoiceDemo {
 只有一个独立变量需要比较更新时使用 CAS；它没有持有与释放生命周期，不能保护多字段复合不变式。
 
 ```java
+// 说明：compareAndSet(0, 1) 仅当 count 当前仍为 0 时原子写入 1，updated 告诉调用线程这次竞争是否成功。
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CasChoiceDemo {
@@ -317,6 +329,7 @@ CAS 没有“持有者必须释放”的锁生命周期，也不能自动把多�
 需要限制并发名额或管理资源池时使用 `Semaphore`；许可证数量可大于一，获取成功后必须在释放路径归还。
 
 ```java
+// 说明：permits 初始为 2，acquire() 占用一个并发名额使剩余数为 1，finally 保证 release() 归还。
 import java.util.concurrent.Semaphore;
 
 public class SemaphoreChoiceDemo {
@@ -359,6 +372,7 @@ public class ImmutableChoiceDemo {
 业务只需要标准容器的并发操作时选择 `ConcurrentHashMap`；单次方法安全不等于跨多个操作或系统的不变式安全。
 
 ```java
+// 说明：cache.merge("java", 1, Integer::sum) 把单键的查找与更新合成一次原子操作，避免手写容器级锁。
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ConcurrentContainerChoiceDemo {

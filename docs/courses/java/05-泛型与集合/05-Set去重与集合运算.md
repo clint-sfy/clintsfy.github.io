@@ -1,6 +1,6 @@
 ---
 title: Set 去重与集合运算
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -35,23 +35,82 @@ description: 速查 HashSet、LinkedHashSet、TreeSet、EnumSet 的去重、排�
 
 ## 常用用法
 
-### HashSet.add、contains、remove：去重与查找
+### `HashSet()`：构造空的哈希集合
 
-add 返回是否真正新增；HashSet 平均查找快，但遍历顺序不属于契约。
+`HashSet()` 创建一个初始为空的可变集合，它依赖元素的 `hashCode` 和 `equals` 去重，但不保证迭代顺序。
 
 ```java
+// 语义：HashSet 初始为空；加入 "java" 和 "sql" 后保留两个不同元素。
+// 初始状态：tags 由 new HashSet<>() 构造，size 为 0。
 import java.util.HashSet;
 import java.util.Set;
 
-public class HashSetBasicDemo {
+Set<String> tags = new HashSet<>();
+tags.add("java");
+tags.add("sql");
+System.out.println(tags.size());
+// 输出：2
+```
+
+### `Set.add`：新增并判断是否重复
+
+add 在元素尚不存在时写入并返回 true，重复元素不会再次加入。
+
+```java
+// 语义：add 在元素尚不存在时写入并返回 true，重复元素不会再次加入。
+// 初始状态：set 初始为 new HashSet<>()。
+import java.util.HashSet;
+import java.util.Set;
+
+public class SetAddDemo {
+    public static void main(String[] args) {
+        Set<String> set = new HashSet<>();
+        System.out.println(set.add("java"));
+        System.out.println(set.add("java"));
+        // 输出：true
+        // 输出：false
+    }
+}
+```
+
+### Set.contains：判断元素是否存在
+
+contains 按集合的相等规则查询元素，HashSet 通常依赖 hashCode 和 equals。
+
+```java
+// 语义：contains 按集合的相等规则查询元素，HashSet 通常依赖 hashCode 和 equals。
+// 初始状态：set 初始为 new HashSet<>()；found 初始为 set.contains("java")。
+import java.util.HashSet;
+import java.util.Set;
+
+public class SetContainsDemo {
     public static void main(String[] args) {
         Set<String> set = new HashSet<>();
         set.add("java");
-        set.add("java");
         boolean found = set.contains("java");
-        set.remove("java");
-        System.out.println(found + ", " + set.isEmpty());
-        // 输出：true, true
+        System.out.println(found);
+        // 输出：true
+    }
+}
+```
+
+### Set.remove：删除元素
+
+remove 删除匹配元素并返回是否成功，目标不存在时集合保持不变。
+
+```java
+// 语义：remove 删除匹配元素并返回是否成功，目标不存在时集合保持不变。
+// 初始状态：set 初始为 new HashSet<>()；removed 初始为 set.remove("java")。
+import java.util.HashSet;
+import java.util.Set;
+
+public class SetRemoveDemo {
+    public static void main(String[] args) {
+        Set<String> set = new HashSet<>();
+        set.add("java");
+        boolean removed = set.remove("java");
+        System.out.println(removed + ", " + set);
+        // 输出：true, []
     }
 }
 ```
@@ -61,6 +120,8 @@ public class HashSetBasicDemo {
 LinkedHashSet 在 HashSet 的去重基础上维护插入顺序，适合去重后稳定展示；需要排序时改用 TreeSet。
 
 ```java
+// 语义：LinkedHashSet 在 HashSet 的去重基础上维护插入顺序，适合去重后稳定展示。
+// 初始状态：set 初始为 new LinkedHashSet<>()。
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -81,6 +142,8 @@ public class LinkedHashSetDemo {
 addAll 把另一个集合的元素加入当前集合，重复元素自动忽略；这是原地操作，需要保留原集合时先复制。
 
 ```java
+// 语义：addAll 把另一个集合的元素加入当前集合，重复元素自动忽略。
+// 初始状态：all 初始为 new LinkedHashSet<>(Set.of("java", "sql"))。
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -99,6 +162,8 @@ public class SetUnionDemo {
 retainAll 只保留当前集合和参数集合共有的元素，属于原地修改。
 
 ```java
+// 语义：retainAll 只保留当前集合和参数集合共有的元素，属于原地修改。
+// 初始状态：common 初始为 new LinkedHashSet<>(Set.of("java", "sql", "web"))。
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -117,6 +182,8 @@ public class SetIntersectionDemo {
 removeAll 删除当前集合中出现在参数集合里的元素；参数集合很大时可考虑它的查找复杂度。
 
 ```java
+// 语义：removeAll 删除当前集合中出现在参数集合里的元素。
+// 初始状态：onlyLeft 初始为 new LinkedHashSet<>(Set.of("java", "sql", "web"))。
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -130,22 +197,65 @@ public class SetDifferenceDemo {
 }
 ```
 
-### size、isEmpty、clear：查看与清空
+### Set.size：统计元素数量
 
-clear 清空当前集合，不会让其他引用自动切换到新集合。
+size 返回去重后的元素个数，而不是 add 的调用次数。
 
 ```java
+// 语义：size 返回去重后的元素个数，而不是 add 的调用次数。
+// 初始状态：set 初始为 new HashSet<>()。
 import java.util.HashSet;
 import java.util.Set;
 
-public class SetStateDemo {
+public class SetSizeDemo {
     public static void main(String[] args) {
-        Set<Integer> set = new HashSet<>(Set.of(1, 2));
-        System.out.println(set.size() + ", " + set.isEmpty());
-        // 输出：2, false
-        set.clear();
+        Set<Integer> set = new HashSet<>();
+        set.add(1);
+        set.add(1);
+        System.out.println(set.size());
+        // 输出：1
+    }
+}
+```
+
+### Set.isEmpty：判断集合是否为空
+
+isEmpty 直接表达“没有元素”，比比较 size 是否为 0 更清晰。
+
+```java
+// 语义：isEmpty 直接表达“没有元素”，比比较 size 是否为 0 更清晰。
+// 初始状态：set 初始为 new HashSet<>()。
+import java.util.HashSet;
+import java.util.Set;
+
+public class SetIsEmptyDemo {
+    public static void main(String[] args) {
+        Set<Integer> set = new HashSet<>();
+        System.out.println(set.isEmpty());
+        set.add(1);
         System.out.println(set.isEmpty());
         // 输出：true
+        // 输出：false
+    }
+}
+```
+
+### Set.clear：清空集合
+
+clear 删除当前集合的全部元素，但其他指向同一集合的引用仍指向它。
+
+```java
+// 语义：clear 删除当前集合的全部元素，但其他指向同一集合的引用仍指向它。
+// 初始状态：set 初始为 new HashSet<>(Set.of(1, 2))。
+import java.util.HashSet;
+import java.util.Set;
+
+public class SetClearDemo {
+    public static void main(String[] args) {
+        Set<Integer> set = new HashSet<>(Set.of(1, 2));
+        set.clear();
+        System.out.println(set);
+        // 输出：[]
     }
 }
 ```
@@ -155,6 +265,8 @@ public class SetStateDemo {
 Set.copyOf 复制当前元素结构并拒绝 null；结果不能 add、remove，元素本身如果可变仍不自动深复制。
 
 ```java
+// 语义：Set.copyOf 复制当前元素结构并拒绝 null。
+// 初始状态：source 初始为 new HashSet<>(Set.of("java"))；snapshot 初始为 Set.copyOf(source)。
 import java.util.HashSet;
 import java.util.Set;
 
@@ -169,11 +281,13 @@ public class SetCopyOfDemo {
 }
 ```
 
-### TreeSet：自动排序与边界元素
+### TreeSet：自动排序
 
-TreeSet 依靠自然顺序或 Comparator 排序，first/last 在空集合上会抛 NoSuchElementException。
+TreeSet 依靠自然顺序或 Comparator 排列元素，并用比较结果判断重复。
 
 ```java
+// 语义：TreeSet 依靠自然顺序或 Comparator 排列元素，并用比较结果判断重复。
+// 初始状态：set 初始为 new TreeSet<>()。
 import java.util.TreeSet;
 
 public class TreeSetOrderDemo {
@@ -182,53 +296,133 @@ public class TreeSetOrderDemo {
         set.add(30);
         set.add(10);
         set.add(20);
-        System.out.println(set.first() + ", " + set.last());
-        // 输出：10, 30
+        System.out.println(set);
+        // 输出：[10, 20, 30]
     }
 }
 ```
 
-### TreeSet.ceiling、floor：邻近元素
+### TreeSet.first：读取最小元素
 
-ceiling 找大于等于目标的最小值，floor 找小于等于目标的最大值；找不到时返回 null。
+first 返回排序后的第一个元素，空集合调用会抛 NoSuchElementException。
 
 ```java
+// 语义：first 返回排序后的第一个元素，空集合调用会抛 NoSuchElementException。
+// 初始状态：set 初始为 new TreeSet<>()。
 import java.util.TreeSet;
 
-public class TreeSetNearestDemo {
+public class TreeSetFirstDemo {
+    public static void main(String[] args) {
+        TreeSet<Integer> set = new TreeSet<>();
+        set.add(30);
+        set.add(10);
+        System.out.println(set.first());
+        // 输出：10
+    }
+}
+```
+
+### TreeSet.last：读取最大元素
+
+last 返回排序后的最后一个元素，调用前要确认集合不为空。
+
+```java
+// 语义：last 返回排序后的最后一个元素，调用前要确认集合不为空。
+// 初始状态：set 初始为 new TreeSet<>()。
+import java.util.TreeSet;
+
+public class TreeSetLastDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>();
         set.add(10);
-        set.add(20);
         set.add(30);
-        System.out.println(set.ceiling(15) + ", " + set.floor(15));
-        // 输出：20, 10
+        System.out.println(set.last());
+        // 输出：30
+    }
+}
+```
+
+### TreeSet.ceiling：查询大于等于目标的最小元素
+
+ceiling 返回不小于目标的最近元素，不存在时返回 null。
+
+```java
+// 语义：ceiling 返回不小于目标的最近元素，不存在时返回 null。
+// 初始状态：set 初始为 new TreeSet<>(java.util.Set.of(10, 20, 30))。
+import java.util.TreeSet;
+
+public class TreeSetCeilingDemo {
+    public static void main(String[] args) {
+        TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
+        System.out.println(set.ceiling(15));
+        System.out.println(set.ceiling(31));
+        // 输出：20
+        // 输出：null
+    }
+}
+```
+
+### TreeSet.floor：查询小于等于目标的最大元素
+
+floor 返回不大于目标的最近元素，不存在时返回 null。
+
+```java
+// 语义：floor 返回不大于目标的最近元素，不存在时返回 null。
+// 初始状态：set 初始为 new TreeSet<>(java.util.Set.of(10, 20, 30))。
+import java.util.TreeSet;
+
+public class TreeSetFloorDemo {
+    public static void main(String[] args) {
+        TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
+        System.out.println(set.floor(15));
+        System.out.println(set.floor(9));
+        // 输出：10
+        // 输出：null
     }
 }
 ```
 ## 不常用但需要知道
 
-### TreeSet.lower、higher：严格邻近元素
+### TreeSet.lower：查询严格小于目标的最大元素
 
-lower 和 higher 排除等于目标的元素，边界不存在时返回 null。
+lower 排除等于目标的元素，较小元素不存在时返回 null。
 
 ```java
+// 作用：通过 TreeSet.lower 查询严格小于目标的最大元素。
 import java.util.TreeSet;
 
-public class TreeSetStrictNearestDemo {
+public class TreeSetLowerDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
-        System.out.println(set.lower(20) + ", " + set.higher(20));
-        // 输出：10, 30
+        System.out.println(set.lower(20));
+        // 输出：10
     }
 }
 ```
 
-### TreeSet.subSet、headSet、tailSet：范围视图
+### TreeSet.higher：查询严格大于目标的最小元素
 
-范围方法返回排序集合的视图，参数的包含边界要看重载；需要独立结果时复制到新集合。
+higher 排除等于目标的元素，较大元素不存在时返回 null。
 
 ```java
+// 作用：通过 TreeSet.higher 查询严格大于目标的最小元素。
+import java.util.TreeSet;
+
+public class TreeSetHigherDemo {
+    public static void main(String[] args) {
+        TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
+        System.out.println(set.higher(20));
+        // 输出：30
+    }
+}
+```
+
+### TreeSet.subSet：查询区间视图
+
+subSet 返回指定上下界之间的动态视图，需要独立结果时再复制。
+
+```java
+// 作用：通过 TreeSet.subSet 查询区间视图。
 import java.util.TreeSet;
 
 public class TreeSetRangeDemo {
@@ -240,11 +434,46 @@ public class TreeSetRangeDemo {
 }
 ```
 
+### TreeSet.headSet：查询小于上界的视图
+
+headSet 返回上界之前的动态视图，布尔参数决定是否包含上界。
+
+```java
+// 作用：通过 TreeSet.headSet 查询小于上界的视图。
+import java.util.TreeSet;
+
+public class TreeSetHeadSetDemo {
+    public static void main(String[] args) {
+        TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));
+        System.out.println(set.headSet(3, true));
+        // 输出：[1, 2, 3]
+    }
+}
+```
+
+### TreeSet.tailSet：查询大于下界的视图
+
+tailSet 返回下界之后的动态视图，布尔参数决定是否包含下界。
+
+```java
+// 作用：通过 TreeSet.tailSet 查询大于下界的视图。
+import java.util.TreeSet;
+
+public class TreeSetTailSetDemo {
+    public static void main(String[] args) {
+        TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));
+        System.out.println(set.tailSet(3, false));
+        // 输出：[4]
+    }
+}
+```
+
 ### EnumSet.of：枚举状态集合
 
 EnumSet 只能保存同一种枚举，适合权限或标志集合；它通常比 HashSet 更紧凑。
 
 ```java
+// 作用：通过 EnumSet.of 枚举状态集合。
 import java.util.EnumSet;
 
 public class EnumSetDemo {
@@ -263,6 +492,7 @@ public class EnumSetDemo {
 补集只在同一个枚举类型内有意义；空集合需要用 EnumSet.noneOf(Permission.class) 提供类型。
 
 ```java
+// 作用：通过 EnumSet.complementOf 枚举补集。
 import java.util.EnumSet;
 
 public class EnumSetComplementDemo {
@@ -282,6 +512,7 @@ public class EnumSetComplementDemo {
 disjoint 只回答是否相交，不会生成交集；需要结果集合时使用 retainAll 的副本。
 
 ```java
+// 作用：通过 Collections.disjoint 判断两个集合是否没有交集。
 import java.util.Collections;
 import java.util.Set;
 

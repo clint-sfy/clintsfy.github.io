@@ -1,6 +1,6 @@
 ---
 title: Stream 流式处理
-date: 2026-09-22
+date: 2026-09-22T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -35,11 +35,13 @@ Stream 像一条尚未开机的流水线：中间操作只描述步骤，遇到�
 
 ## 常用用法
 
-### `Collection.stream`/`Stream.of`：创建顺序流
+### `Collection.stream`：从集合创建顺序流
 
 流是数据源的处理视图，不会复制或持久化集合；同一条流消费后不能再次使用。
 
 ```java
+// 语义：流是数据源的处理视图，不会复制或持久化集合。
+// 初始状态：names 初始为 List.of("Ann", "Bob")；fromCollection 初始为 names.stream().count()。
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -50,11 +52,24 @@ System.out.println(fromCollection + ", " + fromValues);
 // 输出：2, 2
 ```
 
+### `Stream.of`：从显式元素创建顺序流
+
+`Stream.of("Java", "SQL")` 把两个给定值作为流元素，不依赖外部集合；上例的 `fromValues` 因此为 2。
+
+```java
+// 输入：Stream.of 把显式字符串 "Java" 和 "SQL" 作为两个流元素，count() 将它们计入 fromValues。
+long fromValues = Stream.of("Java", "SQL").count();
+// 结果：fromValues 为 2
+```
+
 ### `filter`：保留满足条件的元素
 
 `filter` 不改变源集合，多个条件可以串联；谓词应尽量无副作用。
 
 ```java
+// 作用：通过 filter 保留满足条件的元素。
+// 语义：filter 不改变源集合，多个条件可以串联。
+// 调用参数：代码依次使用 1、2、3、4、0。
 import java.util.List;
 
 List<Integer> result = List.of(1, 2, 3, 4).stream()
@@ -69,6 +84,9 @@ System.out.println(result);
 每个输入对应一个输出，适合字段提取和类型转换；一对多转换不要硬塞进 `map`。
 
 ```java
+// 作用：通过 map 一进一出的转换。
+// 语义：每个输入对应一个输出，适合字段提取和类型转换。
+// 调用参数：代码依次使用 "java"、"sql"。
 import java.util.List;
 
 List<String> labels = List.of("java", "sql").stream()
@@ -83,6 +101,8 @@ System.out.println(labels);
 `flatMap` 把每个元素产生的子流合并成一层；子流为 `null` 时应改成 `Stream.empty()`，不要让管道抛异常。
 
 ```java
+// 语义：flatMap 把每个元素产生的子流合并成一层。
+// 初始状态：groups 初始为 List.of(List.of("java", "sql"), List.of("http"))；all 初始为 groups.stream().flatMap(List::stream).toList()。
 import java.util.List;
 
 List<List<String>> groups = List.of(List.of("java", "sql"), List.of("http"));
@@ -96,6 +116,8 @@ System.out.println(all);
 去重依赖元素的 `equals`/`hashCode` 契约，并保持顺序流中首次出现的顺序。
 
 ```java
+// 语义：去重依赖元素的 equals/hashCode 契约，并保持顺序流中首次出现的顺序。
+// 初始状态：unique 初始为 List.of("java", "sql", "java").stream().distinct().toList()。
 import java.util.List;
 
 List<String> unique = List.of("java", "sql", "java").stream().distinct().toList();
@@ -108,6 +130,9 @@ System.out.println(unique);
 排序是有状态操作，可能需要缓存全部元素；比较器必须与业务排序规则一致。
 
 ```java
+// 作用：通过 sorted 排序流元素。
+// 语义：排序是有状态操作，可能需要缓存全部元素。
+// 调用参数：代码依次使用 "Java"、"C"、"Go"。
 import java.util.Comparator;
 import java.util.List;
 
@@ -118,16 +143,40 @@ System.out.println(sorted);
 // 输出：[C, Go, Java]
 ```
 
-### `limit`/`skip`：截取流的一段
+### `limit`：只取前 N 个元素
 
-`skip` 先跳过前 N 个，`limit` 再取最多 N 个；分页前要明确排序，否则数据源顺序变化会导致结果漂移。
+`limit` 截断流并保留最多 N 个元素，依赖“前几个”语义时要先确定稳定顺序。
 
 ```java
-import java.util.stream.IntStream;
+// 作用：通过 limit 只取前 N 个元素。
+// 语义：limit 截断流并保留最多 N 个元素，依赖“前几个”语义时要先确定稳定顺序。
+// 调用参数：代码依次使用 1、2、3、4、5。
+import java.util.List;
 
-var page = IntStream.rangeClosed(1, 10).skip(3).limit(4).boxed().toList();
-System.out.println(page);
-// 输出：[4, 5, 6, 7]
+List<Integer> firstThree = List.of(1, 2, 3, 4, 5).stream()
+        .limit(3)
+        .toList();
+
+System.out.println(firstThree);
+// 输出：[1, 2, 3]
+```
+
+### `skip`：跳过前 N 个元素
+
+`skip` 丢弃前 N 个元素，常用于偏移读取；用于分页时仍需先建立稳定排序。
+
+```java
+// 作用：通过 skip 跳过前 N 个元素。
+// 语义：skip 丢弃前 N 个元素，常用于偏移读取。
+// 调用参数：代码依次使用 1、2、3、4、5。
+import java.util.List;
+
+List<Integer> remaining = List.of(1, 2, 3, 4, 5).stream()
+        .skip(2)
+        .toList();
+
+System.out.println(remaining);
+// 输出：[3, 4, 5]
 ```
 
 ### `peek`：调试流水线中的元素
@@ -135,6 +184,8 @@ System.out.println(page);
 `peek` 仍然是惰性的，只有终止操作触发才会执行；生产逻辑不要依赖它完成关键副作用。
 
 ```java
+// 语义：peek 仍然是惰性的，只有终止操作触发才会执行。
+// 初始状态：trace 初始为 new ArrayList<>()。
 import java.util.ArrayList;
 import java.util.List;
 
@@ -154,6 +205,8 @@ System.out.println(result);
 并行归约要求累加器满足结合律、尽量无副作用；复杂可变聚合优先考虑 `collect`。
 
 ```java
+// 语义：并行归约要求累加器满足结合律、尽量无副作用。
+// 初始状态：total 初始为 List.of(1, 2, 3, 4).stream().reduce(0, Integer::sum)。
 import java.util.List;
 
 int total = List.of(1, 2, 3, 4).stream().reduce(0, Integer::sum);
@@ -161,45 +214,126 @@ System.out.println(total);
 // 输出：10
 ```
 
-### `anyMatch`/`allMatch`/`noneMatch`：匹配并短路
+### `allMatch`：检查所有元素是否满足条件
 
-匹配操作可能提前结束，适合存在性和约束检查；空流对 `allMatch`/`noneMatch` 的结果分别是 `true`。
+`allMatch` 遇到第一个不匹配元素就短路，空流会返回 `true`。
 
 ```java
+// 语义：allMatch 遇到第一个不匹配元素就短路，空流会返回 true。
+// 初始状态：numbers 初始为 List.of(2, 4, 6)。
 import java.util.List;
 
-var numbers = List.of(2, 4, 6);
-System.out.println(numbers.stream().anyMatch(number -> number > 5));
-// 输出：true
-System.out.println(numbers.stream().allMatch(number -> number % 2 == 0));
-// 输出：true
-System.out.println(numbers.stream().noneMatch(number -> number < 0));
+List<Integer> numbers = List.of(2, 4, 6);
+boolean allEven = numbers.stream()
+        .allMatch(number -> number % 2 == 0);
+
+System.out.println(allEven);
 // 输出：true
 ```
 
-### `findFirst`/`findAny`：查找元素
+### `anyMatch`：检查是否存在匹配元素
 
-`findFirst` 保留顺序语义，`findAny` 更适合并行流且不保证具体元素；结果为空时通过 `Optional` 表达。
+`anyMatch` 遇到第一个匹配元素就短路，适合存在性检查。
 
 ```java
+// 语义：anyMatch 遇到第一个匹配元素就短路，适合存在性检查。
+// 初始状态：numbers 初始为 List.of(2, 4, 6)。
 import java.util.List;
 
-var first = List.of("a", "b").stream().findFirst().orElse("none");
-var any = List.of("a", "b").parallelStream().findAny().orElse("none");
-System.out.println(first + ", " + any);
-// 输出：a, a 或 b
+List<Integer> numbers = List.of(2, 4, 6);
+boolean hasLargeValue = numbers.stream()
+        .anyMatch(number -> number > 5);
+
+System.out.println(hasLargeValue);
+// 输出：true
 ```
 
-### `forEach`/`forEachOrdered`：遍历并执行动作
+### `noneMatch`：检查是否没有元素匹配
 
-`forEach` 适合末端通知或打印；需要并行流中的遇到顺序时才用 `forEachOrdered`，不要用它代替收集。
+`noneMatch` 遇到第一个匹配元素就返回 `false`，空流会返回 `true`。
 
 ```java
+// 语义：noneMatch 遇到第一个匹配元素就返回 false，空流会返回 true。
+// 初始状态：numbers 初始为 List.of(2, 4, 6)。
 import java.util.List;
 
-List.of("a", "b").stream().forEach(System.out::println);
+List<Integer> numbers = List.of(2, 4, 6);
+boolean hasNoNegative = numbers.stream()
+        .noneMatch(number -> number < 0);
+
+System.out.println(hasNoNegative);
+// 输出：true
+```
+
+### `findFirst`：查找遇到顺序中的首个元素
+
+`findFirst` 保留流的遇到顺序，并用 `Optional` 表达空流没有结果。
+
+```java
+// 作用：通过 findFirst 查找遇到顺序中的首个元素。
+// 语义：findFirst 保留流的遇到顺序，并用 Optional 表达空流没有结果。
+// 调用参数：代码依次使用 "a"、"b"、"c"、"none"。
+import java.util.List;
+
+String first = List.of("a", "b", "c").stream()
+        .filter(text -> !text.isBlank())
+        .findFirst()
+        .orElse("none");
+System.out.println(first);
 // 输出：a
-// 输出：b
+```
+
+### `findAny`：查找任意一个元素
+
+`findAny` 不承诺返回哪个匹配元素，更适合不关心顺序的并行查询。
+
+```java
+// 作用：通过 findAny 查找任意一个元素。
+// 语义：findAny 不承诺返回哪个匹配元素，更适合不关心顺序的并行查询。
+// 调用参数：代码依次使用 "a"、"b"、"c"、"none"、true。
+import java.util.List;
+
+String any = List.of("a", "b", "c").parallelStream()
+        .filter(text -> !text.isBlank())
+        .findAny()
+        .orElse("none");
+System.out.println(List.of("a", "b", "c").contains(any));
+// 输出：true
+```
+
+### `forEach`：对每个元素执行动作
+
+`forEach` 适合末端通知或打印；并行流中不要依赖顺序，也不要修改非线程安全共享状态。
+
+```java
+// 语义：forEach 适合末端通知或打印。
+// 初始状态：names 初始为 List.of("Ann", "Bob")。
+import java.util.List;
+
+List<String> names = List.of("Ann", "Bob");
+names.stream()
+        .map(String::toUpperCase)
+        .forEach(System.out::println);
+// 输出：ANN
+// 输出：BOB
+```
+
+### `forEachOrdered`：按遇到顺序执行动作
+
+`forEachOrdered` 在并行流中仍保留遇到顺序，但顺序约束可能降低并行收益。
+
+```java
+// 语义：forEachOrdered 在并行流中仍保留遇到顺序，但顺序约束可能降低并行收益。
+// 初始状态：numbers 初始为 List.of(1, 2, 3)。
+import java.util.List;
+
+List<Integer> numbers = List.of(1, 2, 3);
+numbers.parallelStream()
+        .map(number -> number * 10)
+        .forEachOrdered(System.out::println);
+// 输出：10
+// 输出：20
+// 输出：30
 ```
 
 ### `toList`：得到不可变结果列表
@@ -207,6 +341,8 @@ List.of("a", "b").stream().forEach(System.out::println);
 JDK 16 的 `Stream.toList()` 返回不可修改列表；需要可变列表时使用 `collect(Collectors.toCollection(ArrayList::new))`。
 
 ```java
+// 语义：JDK 16 的 Stream.toList() 返回不可修改列表。
+// 初始状态：result 初始为 List.of("a", "b").stream().map(String::toUpperCase).toList()。
 import java.util.List;
 
 List<String> result = List.of("a", "b").stream().map(String::toUpperCase).toList();
@@ -214,18 +350,91 @@ System.out.println(result);
 // 输出：[A, B]
 ```
 
-### `collect`：使用收集器汇总结果
+### `Collectors.toList`：收集为可变列表
 
-`collect` 适合把流变成列表、Map、分组或统计结果，具体收集器可查 [Collectors 收集器速查](./05-Collectors收集器速查)。
+需要继续增删结果时，用它收集元素；不要把可变性当作接口契约。
 
 ```java
+// 作用：通过 Collectors.toList 收集为可变列表。
+// 语义：需要继续增删结果时，用它收集元素。
+// 调用参数：代码依次使用 "a"、"b"、"c"。
 import java.util.List;
 import java.util.stream.Collectors;
-
-var result = List.of("java", "sql").stream().collect(Collectors.joining(", "));
-System.out.println(result);
-// 输出：java, sql
+var values = List.of("a", "b").stream()
+        .collect(Collectors.toList());
+values.add("c");
+System.out.println(values);
+// 输出：[a, b, c]
 ```
+
+### `Collectors.toSet`：收集并去重
+
+它按 `equals`/`hashCode` 去重，结果集合的具体实现与顺序不保证。
+
+```java
+// 作用：通过 Collectors.toSet 收集并去重。
+// 语义：它按 equals/hashCode 去重，结果集合的具体实现与顺序不保证。
+// 调用参数：代码依次使用 "a"、"b"、2、true。
+import java.util.List;
+import java.util.stream.Collectors;
+var values = List.of("a", "a", "b").stream()
+        .collect(Collectors.toSet());
+System.out.println(values.size());
+System.out.println(values.containsAll(List.of("a", "b")));
+// 输出：2、true
+```
+
+### `Collectors.toMap`：按键和值构造映射
+
+键可能重复时必须提供合并函数，否则收集会抛出异常。
+
+```java
+// 作用：通过 Collectors.toMap 按键和值构造映射。
+// 语义：键可能重复时必须提供合并函数，否则收集会抛出异常。
+// 调用参数：代码依次使用 "aa"、"ab"、"b"、","、1。
+import java.util.List;
+import java.util.stream.Collectors;
+var lengths = List.of("aa", "ab", "b").stream()
+        .collect(Collectors.toMap(String::length, s -> s,
+                (left, right) -> left + "," + right));
+System.out.println(lengths);
+// 输出：{1=b, 2=aa,ab}
+```
+
+### `Collectors.joining`：拼接文本
+
+它适合把字符序列按分隔符汇总，也可一次指定前缀和后缀。
+
+```java
+// 作用：通过 Collectors.joining 拼接文本。
+// 语义：它适合把字符序列按分隔符汇总，也可一次指定前缀和后缀。
+// 调用参数：代码依次使用 "java"、"sql"、", "、"["、"]"。
+import java.util.List;
+import java.util.stream.Collectors;
+String text = List.of("java", "sql").stream()
+        .collect(Collectors.joining(", ", "[", "]"));
+System.out.println(text);
+// 输出：[java, sql]
+```
+
+### `Collectors.groupingBy`：按分类键分组
+
+它把相同分类键的元素收进列表，适合构造一对多索引。
+
+```java
+// 作用：通过 Collectors.groupingBy 按分类键分组。
+// 语义：它把相同分类键的元素收进列表，适合构造一对多索引。
+// 调用参数：代码依次使用 "a"、"bb"、"c"、1、2。
+import java.util.List;
+import java.util.stream.Collectors;
+var groups = List.of("a", "bb", "c").stream()
+        .collect(Collectors.groupingBy(String::length));
+System.out.println(groups.get(1));
+System.out.println(groups.get(2));
+// 输出：[a, c]、[bb]
+```
+
+具体收集器的更多组合可查 [Collectors 收集器速查](./05-Collectors收集器速查)。
 ## 不常用但需要知道
 
 ### 流不可复用：终止操作后必须重新创建
@@ -261,11 +470,12 @@ System.out.println(target.size());
 // 输出：3
 ```
 
-### `parallel()`/`parallelStream()`：显式并行边界
+### `Collection.parallelStream`：从集合创建并行流
 
 并行不等于更快；小数据、阻塞 I/O、顺序敏感和共享状态场景通常应保持串行，并用基准测试验证收益。
 
 ```java
+// 作用：通过 Collection.parallelStream 从集合创建并行流。
 import java.util.List;
 
 long count = List.of(1, 2, 3, 4).parallelStream()
@@ -275,11 +485,22 @@ System.out.println(count);
 // 输出：2
 ```
 
+### `BaseStream.parallel`：将已有流切换为并行模式
+
+`stream.parallel()` 返回并行模式的流管道，它与 `parallelStream()` 的并行成本和无副作用要求相同；不会自动保证更快。
+
+```java
+// 关键变化：Stream.of(1, 2, 3) 初始为顺序流，parallel() 把管道标记为并行，所以 isParallel() 写入 true。
+boolean parallel = Stream.of(1, 2, 3).parallel().isParallel();
+// 结果：parallel 为 true
+```
+
 ### `unordered`：声明不需要遇到顺序
 
 只有业务确实不关心顺序时才使用，否则可能破坏 `findFirst`、排序或分页语义。
 
 ```java
+// 作用：通过 unordered 声明不需要遇到顺序。
 import java.util.List;
 
 long count = List.of("a", "b", "c").parallelStream().unordered().distinct().count();
@@ -287,11 +508,12 @@ System.out.println(count);
 // 输出：3
 ```
 
-### `onClose`/`close`：管理特殊流资源
+### `BaseStream.onClose`：注册流关闭处理器
 
 普通集合流不需要手动关闭；读取文件等拥有资源的流才应使用 try-with-resources。
 
 ```java
+// 作用：通过 BaseStream.onClose 注册流关闭处理器。
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -304,6 +526,18 @@ try (Stream<String> stream = Stream.of("a").onClose(() -> events.add("closed")))
 System.out.println(events);
 // 输出：[closed]
 ```
+
+### `BaseStream.close`：关闭拥有外部资源的流
+
+try-with-resources 在代码块结束时调用 `close()`，因此上例注册的处理器向 `events` 追加 `"closed"`；普通集合流本身不持有需关闭资源。
+
+```java
+// 输入：Files.lines(Path.of("data.txt")) 打开文件并返回 lines，try-with-resources 在离开块时调用 lines.close()。
+try (Stream<String> lines = Files.lines(Path.of("data.txt"))) {
+    lines.findFirst();
+}
+// 结果：离开 try 块时流已关闭
+```
 ## 专题导航
 
 - 需要分组、聚合、扁平化嵌套数据，查看 [Stream 分组聚合与扁平化](./06-Stream分组聚合与扁平化)。
@@ -312,6 +546,7 @@ System.out.println(events);
 ## 简单案例
 
 ```java
+// 作用：通过 BaseStream.close 关闭拥有外部资源的流。
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;

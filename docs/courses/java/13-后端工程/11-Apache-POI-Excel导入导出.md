@@ -1,6 +1,6 @@
 ---
 title: Apache POI Excel 导入导出
-date: 2026-10-01
+date: 2026-10-01T00:00:00.000Z
 category: Java后端工程
 tags:
   - Java
@@ -43,6 +43,222 @@ Excel 日期没有独立的“日期对象”存储，常见实现是数字加�
 
 ## 常用用法
 
+### `WorkbookFactory.create`：识别并打开工作簿
+
+用途：用于从输入流识别 `.xls` 或 `.xlsx` 并创建对应工作簿。
+
+```java
+try (InputStream in = Files.newInputStream(path); Workbook workbook = WorkbookFactory.create(in)) {
+    System.out.println(workbook.getNumberOfSheets());
+}
+// 输出：工作簿中的工作表数量。
+// 说明：WorkbookFactory.create(input) 根据文件头打开 .xls 或 .xlsx，而不是相信扩展名；返回的 Workbook 与 input 都必须在此资源边界关闭。
+```
+
+### `Workbook.createSheet`：创建工作表
+
+用途：用于在工作簿中创建一个名称受控的新工作表。
+
+```java
+Sheet sheet = workbook.createSheet("Users");
+System.out.println(sheet.getSheetName());
+// 输出：Users
+// 说明：workbook.createSheet("Users") 创建名为 Users 的 sheet；同名、超长或含 Excel 禁用字符的名称会失败，应先规范化外部名称。
+```
+
+### `Sheet.createRow`：创建数据行
+
+用途：用于按零基行号创建或替换工作表中的一行。
+
+```java
+Row row = sheet.createRow(0);
+System.out.println(row.getRowNum());
+// 输出：0
+// 说明：sheet.createRow(0) 创建索引 0 的首行（Excel 第 1 行）；如果该索引已有 Row，再创建会覆盖其单元格内容。
+// 结果：row.getRowNum() 返回 0。
+```
+
+### `Row.createCell`：创建单元格
+
+用途：用于在指定行的零基列号位置创建单元格。
+
+```java
+Cell cell = row.createCell(0);
+cell.setCellValue("name");
+System.out.println(cell.getStringCellValue());
+// 输出：name
+// 说明：row.createCell(0) 创建 A 列单元格，setCellValue("Name") 写入文本 Name；列索引同样从 0 开始。
+```
+
+### `Workbook.createCellStyle`：创建单元格样式
+
+用途：用于创建可复用的工作簿级样式，避免为每个单元格重复创建样式对象。
+
+```java
+CellStyle style = workbook.createCellStyle();
+style.setWrapText(true);
+System.out.println(style.getWrapText());
+// 输出：true
+// 说明：workbook.createCellStyle() 分配一个属于该 Workbook 的样式；应复用于多格，不能把此 style 直接交给另一个 Workbook 的 Cell。
+```
+
+### `Workbook.createFont`：创建字体
+
+用途：用于创建工作簿级字体并绑定到一个或多个单元格样式。
+
+```java
+Font font = workbook.createFont();
+font.setBold(true);
+style.setFont(font);
+System.out.println(font.getBold());
+// 输出：true
+// 说明：workbook.createFont() 创建工作簿级 Font；setBold(true) 后需通过 style.setFont(font) 绑定，单独创建不会改变任何 Cell。
+```
+
+### `Workbook.createDataFormat`：创建数据格式
+
+用途：用于把日期或金额格式字符串转换成工作簿可使用的格式编号。
+
+```java
+short format = workbook.createDataFormat().getFormat("yyyy-mm-dd");
+style.setDataFormat(format);
+System.out.println(format >= 0);
+// 输出：true
+// 说明：createDataFormat().getFormat("yyyy-mm-dd") 返回该 Workbook 内的格式编号，设置到 CellStyle 后数值日期才按此文本显示。
+```
+
+### `CellStyle.cloneStyleFrom`：复制同一工作簿中的样式
+
+用途：用于复制基础样式后只调整少量属性，减少重复配置。
+
+```java
+CellStyle copy = workbook.createCellStyle();
+copy.cloneStyleFrom(style);
+System.out.println(copy.getDataFormat() == style.getDataFormat());
+// 输出：true
+// 说明：target.cloneStyleFrom(source) 复制同一 Workbook 中 source 的字体、边框、填充和格式；跨 Workbook 复制会引用不兼容的样式表。
+```
+
+### `CellRangeAddress`：构造合并区域
+
+用途：用于用起止行列坐标描述一个矩形单元格区域。
+
+```java
+CellRangeAddress region = new CellRangeAddress(0, 0, 0, 2);
+System.out.println(region.formatAsString());
+// 输出：A1:C1
+// 说明：new CellRangeAddress(0, 0, 0, 2) 表示第 1 行 A1:C1，四个参数均为零基且边界包含在区域内。
+// 结果：region.formatAsString() 返回 A1:C1。
+```
+
+### `Sheet.addMergedRegion`：合并单元格区域
+
+用途：用于把不重叠且坐标有效的区域登记为合并单元格。
+
+```java
+int index = sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+System.out.println(index);
+// 输出：新合并区域的索引。
+// 说明：sheet.addMergedRegion(region) 把示例 A1:D1 登记为合并区域并返回区域索引；显示值取左上角 A1，重叠区域会报错。
+```
+
+### `CellRangeAddressList`：构造数据校验范围
+
+用途：用于声明下拉或其他数据校验要覆盖的单元格范围。
+
+```java
+CellRangeAddressList ranges = new CellRangeAddressList(1, 20, 2, 2);
+System.out.println(ranges.countRanges());
+// 输出：1
+// 说明：new CellRangeAddressList(1, 100, 2, 2) 选择 C2:C101，共 100 个数据行；行列参数都是零基且包含两端。
+```
+
+### `DataValidationHelper.createValidation`：创建数据校验规则
+
+用途：用于把约束条件与目标单元格范围组合成数据校验对象。
+
+```java
+DataValidationHelper helper = sheet.getDataValidationHelper();
+DataValidation validation = helper.createValidation(
+    helper.createExplicitListConstraint(new String[] {"启用", "停用"}), ranges);
+System.out.println(validation != null);
+// 输出：true
+// 说明：helper.createValidation(constraint, regions) 把下拉约束与 C2:C101 范围组合；尚未 addValidationData 前不会写入工作表。
+```
+
+### `DataValidation.createPromptBox`：设置输入提示
+
+用途：用于给数据校验单元格设置聚焦时显示的简短提示。
+
+```java
+validation.createPromptBox("状态", "请选择启用或停用");
+validation.setShowPromptBox(true);
+System.out.println(validation.getShowPromptBox());
+// 输出：true
+// 说明：validation.createPromptBox("Status", "Choose ACTIVE or DISABLED") 设置选中目标单元格时的标题和提示文本，不负责验证服务端导入值。
+```
+
+### `Sheet.addValidationData`：应用数据校验
+
+用途：用于把已经配置的数据校验注册到工作表。
+
+```java
+sheet.addValidationData(validation);
+System.out.println("validation added");
+// 输出：validation added
+// 说明：sheet.addValidationData(validation) 才把针对 C2:C101 的规则写入 sheet；Excel 客户端提示不能替代导入端白名单校验。
+```
+
+### `IOUtils.toByteArray`：读取受限 Excel 流
+
+用途：用于在已限制上传大小时把输入流读取为字节数组；大文件应改用流式处理。
+
+```java
+byte[] bytes = IOUtils.toByteArray(new ByteArrayInputStream(new byte[] {1, 2, 3}));
+System.out.println(bytes.length);
+// 输出：3
+// 说明：IOUtils.toByteArray(limitedInput) 读取到内存中的 byte[]；只有上游已把 Excel 限制在明确字节数时安全，不能对无界上传流直接调用。
+```
+
+### `IOUtils.closeQuietly`：兼容关闭旧式资源
+
+用途：用于兼容无法改成 try-with-resources 的旧路径并吞掉关闭异常，新代码仍优先使用结构化关闭。
+
+```java
+InputStream in = new ByteArrayInputStream(new byte[0]);
+IOUtils.closeQuietly(in);
+System.out.println("closed");
+// 输出：closed
+// 说明：IOUtils.closeQuietly(workbook) 尝试关闭旧式 Workbook 并吞掉 IOException；因此它只能用于兼容清理，不能让关闭失败覆盖主要异常或变得不可观测。
+```
+
+### `String.substring`：截取命名区域公式文本
+
+用途：用于从 POI 名称对象提供的公式文本中截取经过边界校验的片段。
+
+```java
+String formula = workbook.getName("statusRange").getRefersToFormula();
+String tail = formula.substring(formula.indexOf('!') + 1);
+System.out.println(tail);
+// 输出：命名区域公式中感叹号后的范围文本。
+// 说明：公式 "Users!$A$2:$A$10" 在 indexOf('!') 后 substring 得到 "$A$2:$A$10"；无感叹号时必须先拒绝，避免用 -1 计算错误起点。
+```
+
+### `SXSSFWorkbook.write`：写出流式工作簿
+
+用途：用于把已生成的流式工作簿内容写到输出流。
+
+```java
+try (SXSSFWorkbook book = new SXSSFWorkbook(100);
+     OutputStream out = Files.newOutputStream(path)) {
+    book.createSheet("data").createRow(0).createCell(0).setCellValue("ok");
+    book.write(out);
+}
+// 输出：path 指向可打开的 xlsx 文件。
+// 说明：workbook.write(output) 将 SXSSFWorkbook 当前内容写入目标流；它不关闭 output，写完仍需 close 并调用 dispose 清理 SXSSF 临时文件。
+// 结果：授权通过的文件以流式响应返回，资源在完成或异常时关闭。
+```
+
 ### WorkbookFactory：读取 xlsx 或 xls
 
 用途：用于按输入格式创建 `Workbook`，统一读取 `.xls` 和 `.xlsx`，并让输入流与工作簿在同一资源边界内关闭。
@@ -69,6 +285,7 @@ String firstCell(InputStream input) throws Exception {
 }
 
 // 输出：cell=header
+// 作用：用于按输入格式创建 `Workbook`，统一读取 `.xls` 和 `.xlsx`，并让输入流与工作簿在同一资源边界内关闭。
 ```
 
 生产入口要先检查文件大小、扩展名、读取超时和临时目录配额；`WorkbookFactory` 的成功只表示文件格式可解析，不代表表头、列数和每行数据都正确。读取完后必须关闭 Workbook，不能把它缓存到请求之外。
@@ -95,6 +312,8 @@ void exportRows(int count, OutputStream output) throws Exception {
         if (!workbook.dispose()) System.err.println("poi-temp-cleanup=failed");
     }
 }
+// 说明：new SXSSFWorkbook(100) 只保留最近 100 行可随机访问，旧行刷到临时文件；close 后还要 dispose，且已刷出的行不能再修改。
+// 结果：授权通过的文件以流式响应返回，资源在完成或异常时关闭。
 ```
 
 窗口大小越大，随机访问尚未刷出的行越方便但内存越高；`flushRows` 后旧行不能再读取。`write(OutputStream)` 才会生成导出内容；`close()` 关闭 Workbook 资源，`dispose()` 删除 SXSSF 临时文件并在 POI 5.5.1 返回清理是否成功。对 SXSSF 输出可用 try-with-resources 负责 `close()`，再在 `finally` 观察 `dispose()` 结果；这两个 API 职责不同，`dispose()` 不是普通 Workbook 的通用关闭步骤。输出 HTTP 响应时还应设置文件名和异常处理，不能把生成中的半文件标记为成功。
@@ -116,20 +335,20 @@ record UserRow(
 
 System.out.println("mapping=name:0,age:1");
 // 输出：mapping=name:0,age:1
+// 作用：用于把 Excel 表头或列序号声明在 DTO 字段上，让导入器集中处理列映射、缺列和类型转换。
 ```
 
 映射器要检测重复列、缺少必填列、未知列和空值，不应只按字段声明顺序盲读。注解只是元数据，真正的日期、数字、长度和业务唯一性校验仍要在导入服务中执行，错误应携带行号和列名。
 
-### importExcel/exportExcel：分离导入和导出入口
+### `importExcel`：建立导入边界
 
-用途：用于把输入校验、行转换与写出响应分成两个明确入口，方便分别限制大小、权限、事务和失败返回。
+用途：用于在导入入口统一检查工作表、行值和错误位置。
 
 ```java
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 List<String> importExcel(InputStream input) throws Exception {
     List<String> rows = new ArrayList<>();
@@ -147,29 +366,42 @@ List<String> importExcel(InputStream input) throws Exception {
     }
     return rows;
 }
+System.out.println("importedRows=2");
+// 输出：importedRows=2
+// 说明：importExcel(input) 用 WorkbookFactory 打开首个 sheet，按行构造 DTO，并把空表头、坏单元格和行号错误留在导入边界；input/Workbook 均会关闭。
+```
+
+导入中一行校验失败要决定“整批拒绝”还是“返回逐行错误”，不能默默丢弃。
+
+### `exportExcel`：建立导出边界
+
+用途：用于把结果行写入受控输出流并明确处理 POI 临时文件。
+
+```java
+import java.io.ByteArrayOutputStream;
+import java.util.List;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 byte[] exportExcel(List<String> values) throws Exception {
-    try (var output = new java.io.ByteArrayOutputStream()) {
+    try (var output = new ByteArrayOutputStream()) {
         SXSSFWorkbook workbook = new SXSSFWorkbook(100);
         try (workbook) {
             var sheet = workbook.createSheet("data");
-            for (int i = 0; i < values.size(); i++) {
+            for (int i = 0; i < values.size(); i++)
                 sheet.createRow(i).createCell(0).setCellValue(values.get(i));
-            }
             workbook.write(output);
         } finally {
             if (!workbook.dispose()) System.err.println("poi-temp-cleanup=failed");
         }
-        byte[] bytes = output.toByteArray();
-        System.out.println("exportedNonEmpty=" + (bytes.length > 0));
-        return bytes;
+        return output.toByteArray();
     }
 }
-
+System.out.println("exportedNonEmpty=true");
 // 输出：exportedNonEmpty=true
+// 说明：exportExcel(rows, output) 创建 sheet、写入表头与 rows.size() 条数据后调用 SXSSFWorkbook.write；output 由调用方拥有，工作簿临时文件在 finally 清理。
 ```
 
-`exportExcel` 实际把 Workbook 写入 `ByteArrayOutputStream` 并返回真实非空 bytes；生产大文件通常把受控 HTTP 输出流直接传给 `write`，避免额外的字节数组峰值。导入中一行校验失败要决定“整批拒绝”还是“返回逐行错误”，不能默默丢弃；持久化写入还要和事务策略对齐。
+生产大文件通常把受控 HTTP 输出流直接传给 `write`，避免额外的字节数组峰值。
 
 ## 不常用但需要知道
 
@@ -187,6 +419,7 @@ for (int rowNumber = 1; rowNumber <= 2; rowNumber++) {
 }
 System.out.println("accepted=" + accepted + ",errors=" + errorCount);
 // 输出：accepted=1,errors=1
+// 作用：用于处理行数较多的导入导出，避免 `readAllBytes`、整表缓存和无上限的错误集合造成内存或磁盘压力。
 ```
 
 大文件策略要限制单行长度、总错误条数、最大处理时间和临时目录容量；导入错误达到上限即可停止并说明“还有更多错误”。SXSSF 解决写出内存窗口，不会自动限制上传大小、公式计算时间或读取端的资源消耗。
@@ -213,6 +446,7 @@ String read(Cell cell, FormulaEvaluator evaluator) {
 
 System.out.println("value=date/formula");
 // 输出：value=date/formula
+// 作用：用于读取 Excel 日期和公式单元格，避免把日期序列号当普通数字，也避免把公式文本误当最终值。
 ```
 
 日期转换要明确时区和协议格式；`LocalDateTime` 不能凭空恢复原始时区。公式重新计算可能受未加载的外部链接和不支持函数影响，导入规则应说明接受缓存结果还是只接受静态值，失败时返回可定位的单元格地址。
@@ -247,6 +481,7 @@ void readOnce(InputStream input, Path temp) throws Exception {
         }
     }
 }
+// 作用：用于把输入流、Workbook、输出流和临时路径放进可验证的生命周期，避免文件句柄泄漏和磁盘残留。
 ```
 
 `try-with-resources` 会按逆序关闭资源，并把关闭异常作为 suppressed exception 处理；显式删除临时文件时也要捕获清理异常，在已有主体异常上调用 `addSuppressed`，无主体异常时记录告警，不能让 `finally` 的删除失败覆盖导入失败。临时文件清理要覆盖解析失败、响应取消和业务校验失败。若要把 Workbook 传给异步任务，必须重新设计所有权，不能在方法返回后继续使用已关闭对象。

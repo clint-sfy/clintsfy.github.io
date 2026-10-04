@@ -1,6 +1,6 @@
 ---
 title: SLF4J 与 Logback 日志
-date: 2026-10-01
+date: 2026-10-01T00:00:00.000Z
 category: Java后端工程
 tags:
   - Java
@@ -55,6 +55,7 @@ static String safeContextId(String raw) {
             || !CONTEXT_ID.matcher(raw).matches()) return "invalid";
     return raw;
 }
+// 结果：safeContextId("trace-01") 返回 "trace-01"，传入换行符或超过 64 个字符时返回 "invalid"
 ```
 
 ## 常用用法
@@ -79,33 +80,52 @@ final class ImportService {
 
 new ImportService().run("job-1");
 // 输出：logged=job-1
+// 作用：用于按类获取 SLF4J `Logger`，让业务代码只依赖门面并保留统一级别和字段约定。
+// 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
 ```
 
 同一个类只保留一个静态 logger 即可；日志级别由配置决定，不能把 `System.out` 当作生产日志通道。输出的事件名和字段名应稳定，便于检索和统计。
 
-### 参数化 info/error：延迟格式化与异常
+这里直接 `new ImportService().run("job-1")` 只展示方法输出 `logged=job-1` 和 logger 的普通调用；若日志字段、脱敏或审计由 Spring AOP 代理补充，手工 `new` 不会触发这些切面，必须调用容器中的代理 Bean。
 
-用途：用于在日志级别开启时才格式化参数，并把失败分支的 `Throwable` 放在最后保留异常堆栈。
+### `Logger.info`：记录参数化事件
+
+用途：用于在 info 级别开启时才用占位符格式化业务事件。
 
 ```java
 import org.slf4j.Logger;
 
 void process(Logger log, String taskId) {
     log.info("task={} state={}", taskId, "running");
-    try {
-        throw new IllegalStateException("temporary failure");
-    } catch (RuntimeException ex) {
-        log.error("task={} failed", taskId, ex);
-        System.out.println("handled=" + ex.getClass().getSimpleName());
-    }
+    System.out.println("logged=" + taskId);
 }
 
-// 输出：handled=IllegalStateException
+// 输出：logged=task-7
+// 作用：用于在 info 级别开启时才用占位符格式化业务事件。
+// 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
 ```
 
-`log.error("failed: " + ex.getMessage())` 只保留文本，排查时无法看到调用栈；不要把异常作为 `{}` 的普通参数放在最后之前，否则实现可能只把它格式化成字符串。低成本热点路径可以先用 `log.isDebugEnabled()`，但不要为了省一次拼接而跳过关键失败日志。
+参数不应包含令牌、密码或未脱敏的个人数据。
 
-### Logback appender/滚动：控制输出目标与文件边界
+### `Logger.error`：保留异常堆栈
+
+用途：用于记录失败分支并把 `Throwable` 作为最后参数保留调用栈。
+
+```java
+try {
+    throw new IllegalStateException("temporary failure");
+} catch (RuntimeException ex) {
+    log.error("task={} failed", "task-7", ex);
+    System.out.println("handled=" + ex.getClass().getSimpleName());
+}
+// 输出：handled=IllegalStateException
+// 说明：log.error("order {} failed", orderId, ex) 用 orderId 填充 {}，并把末尾 ex 作为 Throwable 输出完整堆栈；写成 ex.getMessage() 会丢失调用链。
+// 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
+```
+
+只记录 `ex.getMessage()` 会丢失调用栈；异常应位于占位符参数之后。
+
+### Logback 滚动文件：限制日志占用
 
 用途：用于把应用日志写入滚动文件，并同时按时间和大小限制单文件、保留周期与磁盘占用。
 
@@ -115,6 +135,8 @@ String policy = "SizeAndTimeBasedRollingPolicy";
 String pattern = "%d %-5level [%X{traceId}] %logger - %msg%n";
 System.out.println(appender + "/" + policy + ":" + pattern);
 // 输出：RollingFileAppender/SizeAndTimeBasedRollingPolicy:%d %-5level [%X{traceId}] %logger - %msg%n
+// 说明：appender=RollingFileAppender 配合 policy=SizeAndTimeBasedRollingPolicy；pattern 中的 %X{traceId} 从 MDC 读取请求标识。真实文件名、单卷大小和保留周期应在 logback-spring.xml 中配置。
+// 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
 ```
 
 Logback XML 中通常把 `RollingFileAppender` 配合 `SizeAndTimeBasedRollingPolicy`，设置 `fileNamePattern`、`maxFileSize`、`maxHistory` 和 `totalSizeCap`。开发环境可以同时使用控制台 Appender；生产环境要确认归档目录权限、时区、压缩和清理策略，不能只设置单文件上限而不设置总量上限。
@@ -135,6 +157,8 @@ void handle(String traceId) {
         MDC.remove("traceId");
     }
 }
+// 作用：用于让同一请求的日志带上 `traceId`，并在复用线程返回池前清理上下文。
+// 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
 ```
 
 Logback pattern 中用 `%X{traceId}` 读取 MDC；没有 `finally` 清理时，线程池中的后续请求可能继承旧值。跨线程执行应显式复制允许的键并在目标线程结束后清理，不能把 MDC 当作可靠的业务参数或授权依据。`safeContextId` 的返回值才允许进入 MDC 或日志模板，不能先记录原始 `traceId`/`jobId` 再“事后脱敏”。
@@ -153,6 +177,8 @@ String maskToken(String token) {
 
 System.out.println(maskToken("token-123456"));
 // 输出：to***56
+// 作用：用于在写日志前遮蔽令牌、邮箱和长文本，避免调试便利变成敏感信息泄露。
+// 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
 ```
 
 脱敏应按字段语义而不是按全局 `String` 类型替换；日志白名单优先于黑名单，尤其要避免把整个请求对象通过 `toString()` 写出。脱敏函数也要覆盖空值、短值和异常路径，不能因为日志级别较低就输出原始机密。
@@ -181,6 +207,8 @@ class OperationLogAspect {
 }
 
 // 输出：audit=success:update
+// 说明：@Around 匹配标注 @OperationLog 的业务方法，proceed() 前后记录操作名和耗时，异常路径保留 Throwable；目标对象直接 new 或自调用不会经过该 Spring AOP 通知。
+// 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
 ```
 
 切点只表示候选边界，代理必须真正创建且调用要经过代理；同类自调用、`private` 方法和某些异步切换可能绕过切面。真实审计需要区分业务提交成功、业务拒绝和异常失败，并只提取字段白名单；不要在切面中替代授权或吞掉异常。
@@ -199,9 +227,57 @@ void record(Logger log, boolean sampled, Throwable failure) {
 }
 
 // 输出：diagnostic=stack
+// 作用：用于对高频成功事件采样，同时对异常保留堆栈，避免日志洪水掩盖真正的故障。
+// 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
 ```
 
 采样规则应按事件类型和关联 ID 可配置，并保留计数指标；不要采样掉支付、权限变更等必须审计的事件。异常堆栈应写入受控日志并设定保留期限，向客户端返回稳定错误码而不是把堆栈直接回显。
+
+## 常用调用标题补齐
+
+### `Logger.debug`：记录可按需开启的调试细节
+
+`Logger.debug` 适合诊断路径和中间状态；使用 `{}` 参数化，避免级别关闭时仍构造字符串。
+
+```java
+// 作用：通过 Logger.debug 记录可按需开启的调试细节。
+final class CacheReader {
+    private static final Logger log =
+        LoggerFactory.getLogger(CacheReader.class);
+    String read(String key) {
+        log.debug("reading cache key={}", key);
+        String value = "hit";
+        log.debug("cache result key={} present={}", key, value != null);
+        return value;
+    }
+}
+// 结果：日志事件按级别和字段约定记录，敏感信息不会以原值输出。
+```
+
+输出（DEBUG 开启）：`reading cache key=user:42`，随后记录 `present=true`。
+
+### `Logger.warn`：记录可恢复的异常状态
+
+`Logger.warn` 表示当前请求可继续但需关注；不要把每次正常分支或敏感数据记为警告。
+
+```java
+// 作用：通过 Logger.warn 记录可恢复的异常状态。
+final class RemoteLookup {
+    private static final Logger log =
+        LoggerFactory.getLogger(RemoteLookup.class);
+    String lookup(String id) {
+        try {
+            return callRemote(id);
+        } catch (TimeoutException ex) {
+            log.warn("remote timeout id={}; using fallback", id, ex);
+            return "fallback";
+        }
+    }
+}
+// 结果：`callRemote(id)` 超时时记录 `remote timeout id={}` 与异常堆栈，并向调用方返回 `fallback`。
+```
+
+输出：超时时保留异常堆栈并返回 `fallback`。
 
 ## 继续阅读
 

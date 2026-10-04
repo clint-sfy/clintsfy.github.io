@@ -1,6 +1,6 @@
 ---
 title: synchronized 互斥锁
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -37,9 +37,10 @@ synchronized 同时提供互斥和释放/获得锁之间的内存可见性。实
 
 ### synchronized 块：锁住指定对象
 
-使用私有 final 锁对象可以避免外部代码意外锁住或替换锁。临界区只放共享状态读写，不要把未知代码和慢 I/O 放进去。
+使用私有 final 锁对象可以避免外部代码意外锁住或替换锁。
 
 ```java
+// 说明：两次 increment() 都必须先持有私有 final lock，因此不同线程对 count++ 的读-改-写不会丢失更新。
 public class SynchronizedBlockDemo {
     private final Object lock = new Object();
     private int count;
@@ -60,11 +61,14 @@ public class SynchronizedBlockDemo {
 }
 ```
 
+临界区只放共享状态读写，不要把未知代码和慢 I/O 放进去。
+
 ### synchronized 实例方法：保护对象状态
 
-实例 synchronized 方法锁住当前对象。若两个账户对象彼此独立，它们的操作可以并行；若共享转账需要同时保护两个账户，必须规定锁顺序或改用更高层的协调方式。
+实例 synchronized 方法锁住当前对象。
 
 ```java
+// 说明：withdraw() 和 balance() 共用 account 监视器，amount<=balance 的检查与扣减在同一临界区内完成。
 public class SynchronizedMethodDemo {
     private int balance = 100;
 
@@ -87,11 +91,14 @@ public class SynchronizedMethodDemo {
 }
 ```
 
+若两个账户对象彼此独立，它们的操作可以并行；若共享转账需要同时保护两个账户，必须规定锁顺序或改用更高层的协调方式。
+
 ### synchronized 静态方法：保护类级状态
 
-静态 synchronized 方法锁住 `SynchronizedStaticDemo.class`，所有实例共享这把类锁。它不会自动和某个实例方法互斥，因为实例方法锁的是 `this`。
+静态 synchronized 方法锁住 `SynchronizedStaticDemo.class`，所有实例共享这把类锁。
 
 ```java
+// 说明：record() 每次获取 SynchronizedStaticDemo.class 的监视器，使所有实例对 static created 的递增串行化。
 public class SynchronizedStaticDemo {
     private static int created;
 
@@ -108,11 +115,14 @@ public class SynchronizedStaticDemo {
 }
 ```
 
+它不会自动和某个实例方法互斥，因为实例方法锁的是 `this`。
+
 ### 类锁与对象锁：明确锁的身份
 
 对象锁保护实例状态，类锁保护静态状态；不要只看 synchronized 关键字，要确认实际锁住的是谁。
 
 ```java
+// 说明：类锁与对象锁：明确锁的身份。
 public class ClassAndObjectLockDemo {
     private int value;
 
@@ -139,9 +149,10 @@ public class ClassAndObjectLockDemo {
 
 ### 可重入：同一线程可以再次获得同一把锁
 
-如果 synchronized 不可重入，outer 调用 inner 会把自己永久阻塞。可重入不代表锁可以随意嵌套；跨对象嵌套仍可能形成死锁。
+如果 synchronized 不可重入，outer 调用 inner 会把自己永久阻塞。
 
 ```java
+// 说明：可重入：同一线程可以再次获得同一把锁。
 public class ReentrantMonitorDemo {
     synchronized void outer() {
         inner();
@@ -158,11 +169,14 @@ public class ReentrantMonitorDemo {
 }
 ```
 
-### wait 与 notifyAll：在监视器内等待条件
+可重入不代表锁可以随意嵌套；跨对象嵌套仍可能形成死锁。
 
-`wait()` 释放当前监视器，醒来后重新竞争锁；`notifyAll()` 只唤醒等待者，并不把锁交给它们。条件状态必须在同一把锁内读写。
+### 等待监视器条件：释放锁并广播唤醒
+
+`wait()` 释放当前监视器，醒来后重新竞争锁；`notifyAll()` 只唤醒等待者，并不把锁交给它们。
 
 ```java
+// 说明：等待监视器条件：释放锁并广播唤醒。
 public class WaitNotifyDemo {
     private final Object lock = new Object();
     private boolean ready;
@@ -192,11 +206,14 @@ public class WaitNotifyDemo {
 }
 ```
 
-### notify 与 notifyAll：选择唤醒范围
+条件状态必须在同一把锁内读写。
+
+### 唤醒监视器等待者：选择单个或全部通知
 
 多个条件共用一个监视器时优先 `notifyAll()`，让每个线程重新检查自己的条件；只有能证明任意一个等待者都能继续、且误唤醒成本可接受时才用 `notify()`。
 
 ```java
+// 说明：唤醒监视器等待者：选择单个或全部通知。
 public class NotifyChoiceDemo {
     public static void main(String[] args) {
         Object lock = new Object();
@@ -215,6 +232,7 @@ public class NotifyChoiceDemo {
 超时返回只说明等待结束，不说明条件已经满足；醒来后仍要在 while 中检查状态。纳秒级重载适合精细超时，但通常要把剩余时间重新计算。
 
 ```java
+// 作用：通过 wait(long) 带超时的条件等待。
 public class TimedWaitDemo {
     public static void main(String[] args) throws InterruptedException {
         Object lock = new Object();
@@ -233,6 +251,7 @@ public class TimedWaitDemo {
 `notify()` 不保证唤醒哪个线程，也不保证它能立即获得锁。生产者/消费者通常选择 notifyAll，并让每个醒来的线程重新检查自己的条件。
 
 ```java
+// 说明：main 线程已持有 lock 才调用 notify()；它最多把一个等待者转为竞争该监视器的状态。
 public class NotifyOneDemo {
     public static void main(String[] args) {
         Object lock = new Object();
@@ -250,6 +269,7 @@ public class NotifyOneDemo {
 调用 wait、notify 或 notifyAll 前必须持有对应监视器，否则会抛 IllegalMonitorStateException。这个规则经常在把锁对象和条件对象拆开时被忽略。
 
 ```java
+// 说明：main 未进入 synchronized(lock) 就调用 lock.wait()，因此当前线程不是监视器所有者并抛出 IllegalMonitorStateException。
 public class WaitMonitorRuleDemo {
     public static void main(String[] args) {
         Object lock = new Object();
@@ -270,6 +290,7 @@ public class WaitMonitorRuleDemo {
 在 JDK 20 虚拟线程预览实现中，监视器内的长时间阻塞可能 pin 住载体线程；这不是要求把所有 synchronized 换成 Lock，而是要通过 JFR 定位并缩短临界区。
 
 ```java
+// 说明：shortWork() 持有 this 监视器期间不做阻塞 I/O；这样虚拟线程能尽快释放监视器及载体。
 public class MonitorBlockingBoundaryDemo {
     synchronized void shortWork() {
         System.out.println("keep monitor work short");

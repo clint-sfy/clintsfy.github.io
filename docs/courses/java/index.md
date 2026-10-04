@@ -30,6 +30,10 @@ showComment: false
 | 6. 工程化 | [工程实践](/courses/java/11-工程实践/01-Maven与测试工程)、[设计与项目](/courses/java/12-设计与项目/01-设计原则模式与综合复习) | 后续路线：工程实践、设计原则、设计模式与综合项目 |
 | 7. 后端工程 | [后端工程](/courses/java/13-后端工程/01-Spring-Boot启动与配置) | 已完成：框架边界、日志、文件、Excel、定时任务、MySQL 与 Redis 速查 |
 
+## 工程实践路由
+
+- [Velocity 代码生成](/courses/java/11-工程实践/04-Velocity代码生成)
+
 ## 后端工程路由
 
 - [Spring Boot 启动与配置](/courses/java/13-后端工程/01-Spring-Boot启动与配置)

@@ -1,6 +1,6 @@
 ---
 title: Spring AOP 与声明式事务
-date: 2026-10-01
+date: 2026-10-01T00:00:00.000Z
 category: Java后端工程
 tags:
   - Java
@@ -40,9 +40,9 @@ Spring 声明式事务通常绑定当前线程和数据源资源，事务边界�
 
 ## 常用用法
 
-### @Aspect/@Pointcut：声明切点
+### `@Aspect`：声明切面类
 
-用途：用于集中匹配一类服务方法，让日志或指标逻辑与业务代码分离；切点应尽量窄且可读。
+用途：用于标记集中承载通知与切点定义的切面类。
 
 ```java
 import org.aspectj.lang.annotation.Aspect;
@@ -52,16 +52,33 @@ import org.springframework.stereotype.Component;
 @Aspect
 @Component
 class AuditAspect {
-    @Pointcut("execution(* com.example.service..*(..))")
-    void serviceOperation() {}
-
-    String pointcutName() {
-        return "serviceOperation";
-    }
+    String name() { return "audit"; }
 }
 
-System.out.println(new AuditAspect().pointcutName());
-// 输出：serviceOperation
+System.out.println(new AuditAspect().name());
+// 输出：audit
+// 说明：@Aspect 只把 TraceAspect 声明为切面；还需将它注册为 Bean 并启用代理，匹配的方法调用才会经过通知。直接 new TraceAspect() 不会创建 AOP 代理。
+```
+
+`@Aspect` 只提供切面语义；在 Spring 中还要让该类成为 Bean，并确保 AOP 支持已启用。
+
+### `@Pointcut`：声明可复用切点
+
+用途：用于命名一组方法匹配规则，供多个通知复用。
+
+```java
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
+
+@Aspect
+class AuditPointcuts {
+    @Pointcut("execution(* com.example.service..*(..))")
+    void serviceOperation() {}
+}
+
+System.out.println("pointcut=serviceOperation");
+// 输出：pointcut=serviceOperation
+// 说明：businessOperation() 命名 execution(* com.example.service..*(..))，供通知方法引用；空方法体不会被执行，Spring AOP 代理按表达式匹配 service 包下的方法。
 ```
 
 切点表达式写错时可能静默匹配不到目标，也可能范围过宽造成性能和日志噪声。优先按稳定注解或明确包路径匹配，并用一个真实调用验证切面是否进入。
@@ -86,6 +103,7 @@ class TimingAspect {
         return result;
     }
 }
+// 作用：用于在目标方法前后统一计时、记录结果或转换异常；正常路径必须调用 `proceed` 并保留返回值。
 ```
 
 不要在通知里吞掉目标异常或无条件改写返回类型；异步方法还要确认计时点是提交任务还是任务真正完成。通知中访问参数时注意敏感数据脱敏和大对象开销。
@@ -107,6 +125,8 @@ class Guard {
         return joinPoint.proceed();
     }
 }
+// 说明：joinPoint.proceed() 才把调用交给目标方法并返回其 Object 结果；省略它会让目标方法完全不执行，调用两次则会重复业务副作用。
+// 结果：allowed=false 时打印 denied 并返回 null；allowed=true 时返回目标方法的执行结果。
 ```
 
 短路必须有明确的返回契约；对写操作只因为缓存命中而跳过 `proceed` 可能造成状态不一致。重新抛出异常时要保留原始 cause，避免排障信息被覆盖。
@@ -127,11 +147,12 @@ class TransferService {
         // 输出：debit then credit
     }
 }
+// 说明：经 Spring 代理调用 transfer 时开启事务，debit 与 credit 共用同一事务；默认 RuntimeException 回滚。直接 new TransferService(...) 调用不会得到声明式事务。
 ```
 
 事务提交通常发生在代理方法正常返回之后；运行时异常默认触发回滚，受检异常需显式配置或由事务管理器策略决定。连接池、事务管理器和数据源必须指向同一业务边界。
 
-### 传播/隔离/回滚/只读：表达事务策略
+### 配置只读查询的事务策略
 
 用途：用于把调用嵌套、并发可见性、异常回滚和读写意图写成可审查的事务配置，而不是依赖默认值。
 
@@ -151,6 +172,7 @@ class ReportService {
         // 输出：read summary
     }
 }
+// 作用：用于把调用嵌套、并发可见性、异常回滚和读写意图写成可审查的事务配置，而不是依赖默认值。
 ```
 
 `REQUIRED` 会加入当前事务或创建新事务；`REQUIRES_NEW` 会挂起外层事务并占用额外连接。`readOnly` 是意图和优化提示，不是数据库权限控制；隔离级别和锁行为要与 MySQL 8.0 等实际数据库配置核对。
@@ -174,6 +196,7 @@ class OrderService {
         System.out.println("audit");
     }
 }
+// 作用：用于定位“注解存在但事务/切面没生效”的问题；同一对象内的 `this` 调用不会重新经过 Spring 代理。
 ```
 
 把事务方法拆到另一个 Bean 是首选修复；也可以从外部注入代理调用，但不要让业务代码依赖 `AopContext.currentProxy()` 这种隐式约束。私有方法和最终限制也可能无法被代理拦截。
@@ -198,6 +221,7 @@ class SecurityAspect {
         // 输出：security-first
     }
 }
+// 说明：@Order(1) 的 SecurityAspect 通常包在 @Order(2) 的 LoggingAspect 外层，因此前置阶段先鉴权、后记录业务调用；只有二者都是容器 Bean 时才生效。
 ```
 
 多个模块各自声明顺序时容易产生隐式耦合，应集中记录顺序契约。不要假设 `@Order` 能解决事务资源本身的竞态，它只排列拦截器进入和退出的嵌套关系。
@@ -224,6 +248,7 @@ class ImportService {
         });
     }
 }
+// 说明：transactionTemplate.execute 在回调返回 "saved" 时提交 saveOrder；回调抛出的运行时异常会触发回滚，模板本身必须由已配置 PlatformTransactionManager 的容器创建。
 ```
 
 回调返回 `null` 仍可能是成功事务；需要回滚时调用 `status.setRollbackOnly()` 或抛出符合策略的异常。程序化事务让边界更显式，也让测试和异常分支需要承担更多样板代码。
@@ -242,9 +267,54 @@ class BillingService {
         // 输出：charge in transaction
     }
 }
+// 作用：用于决定哪些异常触发数据库回滚；回滚只影响当前事务资源，不会自动撤销邮件、远程调用或文件写入。
 ```
 
 `noRollbackFor` 会覆盖特定异常的默认行为，规则越多越要写测试验证。跨资源副作用应使用事务事件、可靠消息或补偿流程，不能把数据库回滚当作全局撤销按钮。
+
+## 常用调用标题补齐
+
+### `AopContext.currentProxy`：显式穿过当前代理
+
+`AopContext.currentProxy` 只在暴露代理且当前调用已进入 AOP 时可用；拆分 Bean 通常更清晰。
+
+```java
+// 作用：通过 AopContext.currentProxy 显式穿过当前代理。
+// 结果：`refreshAll()` 经代理调用事务方法，打印 `refresh 42`。
+@Service
+class OrderService {
+    void refreshAll() {
+        OrderService proxy = (OrderService) AopContext.currentProxy();
+        proxy.refreshOne(42L);
+    }
+    @Transactional
+    public void refreshOne(long id) {
+        System.out.println("refresh " + id);
+    }
+}
+```
+
+输出：`refreshAll()` 经代理调用事务方法，打印 `refresh 42`。
+
+### `@EnableAspectJAutoProxy`：开启基于代理的 AOP
+
+`@EnableAspectJAutoProxy` 注册 Spring AOP 的自动代理能力；`exposeProxy=true` 增加隐式上下文，只在确有需要时开启。
+
+```java
+// 作用：通过 @EnableAspectJAutoProxy 开启基于代理的 AOP。
+// 结果：匹配切点的 Bean 被代理，`AopContext.currentProxy()` 可在代理调用内取值。
+@Configuration
+@EnableAspectJAutoProxy(exposeProxy = true)
+class AopConfiguration {
+    @Bean
+    AuditAspect auditAspect() {
+        return new AuditAspect();
+    }
+    String mode() { return "proxy"; }
+}
+```
+
+输出：匹配切点的 Bean 被代理，`AopContext.currentProxy()` 可在代理调用内取值。
 
 ## 继续阅读
 

@@ -1,6 +1,6 @@
 ---
 title: MySQL 8.0
-date: 2026-10-01
+date: 2026-10-01T00:00:00.000Z
 category: Java后端工程
 tags:
   - Java
@@ -50,22 +50,47 @@ CREATE TABLE account (
     UNIQUE KEY uk_account_username (username)
 ) ENGINE = InnoDB;
 -- 输出：表 account 创建成功，主键与唯一索引同时建立
+-- 作用：用于以 MySQL 8.0 的字符集、存储引擎、主键和约束建立可演进的业务表。
 ```
 
 生产变更要通过可回滚的迁移工具执行，并评估锁表、默认值和已有数据；`AUTO_INCREMENT` 不是业务编号安全策略，外部暴露的标识仍需按威胁模型设计。
 
-### DDL/常用类型/字符集：明确数据语义
+### `ALTER TABLE`：演进表结构
 
-用途：用于在建表或迁移时选择与业务含义匹配的类型，避免隐式转换、乱码和精度丢失。
+用途：用于通过可审计迁移为已有表增加列或约束。
 
 ```sql
 ALTER TABLE account
-    ADD COLUMN status VARCHAR(16) CHARACTER SET utf8mb4 NOT NULL DEFAULT 'ACTIVE',
-    ADD COLUMN version INT NOT NULL DEFAULT 0;
--- 输出：account 增加 status 与 version，未提供值的旧行使用默认值
+    ADD COLUMN status VARCHAR(16) NOT NULL DEFAULT 'ACTIVE';
+-- 结果：account 增加 status，旧行使用默认值 ACTIVE
+-- 说明：ALTER TABLE orders ADD COLUMN paid_at DATETIME(6) NULL 为已有 orders 表增加可空的微秒时间列；受影响行需由迁移工具和实际表规模评估，示例不声称在线零锁表。
 ```
 
-`VARCHAR` 长度与字符集有关；中文、表情和跨服务文本优先统一 `utf8mb4`。金额使用 `DECIMAL(p, s)`，状态等有限值可用受控字符串或字典表，避免把展示文字当作稳定主键。
+生产 DDL 应评估锁表、默认值和存量数据，并通过可回滚的迁移工具执行。
+
+### `DECIMAL`：存储精确金额
+
+用途：用于以明确精度和小数位存储不能容忍二进制浮点误差的数值。
+
+```sql
+ALTER TABLE account ADD COLUMN credit_limit DECIMAL(12, 2) NOT NULL DEFAULT 0.00;
+-- 结果：credit_limit 最多保留 10 位整数和 2 位小数
+-- 说明：DECIMAL(12,2) 最多保存 10 位整数和 2 位小数，例如 9999999999.99；金额计算保持十进制精度，超范围或多余小数按 SQL mode 处理。
+```
+
+应根据业务上限选择 `p` 和 `s`，并在 Java 端使用 `BigDecimal` 及明确舍入策略。
+
+### `utf8mb4`：统一文本字符集
+
+用途：用于保存中文、表情和跨服务 Unicode 文本。
+
+```sql
+ALTER TABLE account MODIFY username VARCHAR(64) CHARACTER SET utf8mb4 NOT NULL;
+-- 结果：username 使用 utf8mb4 字符集
+-- 说明：utf8mb4 配合 utf8mb4_0900_ai_ci 可保存四字节字符；该排序规则大小写/重音不敏感，唯一索引会据此判断文本是否重复。
+```
+
+字符集与排序规则会影响比较和索引语义，数据库、连接和表列配置应保持一致。
 
 ### 索引与 EXPLAIN：验证访问路径
 
@@ -87,6 +112,7 @@ WHERE status = 'ACTIVE'
 ORDER BY created_at DESC, id DESC
 LIMIT 20;
 -- 输出：EXPLAIN ANALYZE 返回实际 loops、rows 与执行耗时
+-- 作用：用于检查过滤、排序和连接是否利用合适索引，先观察计划再决定是否改 SQL 或索引。
 ```
 
 联合索引遵循左前缀：优化器通常先利用最左连续列，等值条件可以固定前缀，范围条件可能限制后续列的利用；排序列还要和过滤顺序、方向及唯一 tie-breaker 一起评估。函数包裹列、隐式类型转换或前导通配符可能让索引失效。MySQL 8.0.18+ 的 `EXPLAIN ANALYZE` 会真实执行语句并报告实际 rows、loops 和耗时，因此示例只使用读查询；不要对有写入或外部副作用的语句盲目执行，也要在生产环境控制锁、延迟和数据暴露风险。
@@ -113,6 +139,7 @@ IF ROW_COUNT() = 0 THEN
 END IF;
 COMMIT;
 -- 输出：扣款成功且两次 ROW_COUNT() 均为 1 时才提交转账
+-- 作用：用于把相互依赖的更新放进同一 InnoDB 事务，并用行锁保护读取后即将修改的记录。
 ```
 
 `FOR UPDATE` 需要在事务中使用，锁住的范围受索引和隔离级别影响；事务中不要调用慢速网络服务。扣款 `UPDATE` 后必须立即检查 `ROW_COUNT()`（JDBC 中对应 `executeUpdate()` 的返回值），为 0 就 `ROLLBACK` 并 `SIGNAL`/返回业务错误，控制流不得继续执行目标账户的加款；加款也要检查影响行数，任一步失败都回滚。
@@ -132,6 +159,7 @@ SELECT id, username, ranking
 FROM ranked
 WHERE ranking <= 3;
 -- 输出：返回余额最高的前三个 ACTIVE 账户及其排名
+-- 说明：CTE 先限定订单行，ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) 为每个 user_id 从最新订单起编号，筛选 rn=1 每个用户最多返回 1 行。
 ```
 
 CTE 提升可读性但不保证物化或更快；窗口排序仍需要扫描和排序成本，复杂分析要结合 `EXPLAIN` 与数据量验证。
@@ -153,11 +181,12 @@ try (Connection connection = dataSource.getConnection();
     System.out.println(statement.getParameterMetaData().getParameterCount());
     // 输出：2
 }
+// 作用：用于让数据库列、Java 类型、JDBC 驱动和时区约定保持一致，避免跨机器出现偏移。
 ```
 
 `TIMESTAMP`、`DATETIME` 与驱动时区设置的组合必须在项目契约中写明；连接池和事务资源释放可回看[JDBC 与事务](/courses/java/11-工程实践/02-JDBC与事务)。示例中的 `dataSource` 由应用配置提供，不能在每个请求中手写连接字符串。
 
-### offset/keyset 分页：按数据规模选择
+### keyset 分页：避免深页 offset 扫描
 
 用途：用于在结果集较小或需要跳到任意页时使用 offset，在大表连续翻页时用最后一条记录做 keyset 游标。
 
@@ -168,6 +197,7 @@ WHERE status = 'ACTIVE'
 ORDER BY created_at DESC, id DESC
 LIMIT 20;
 -- 输出：返回游标之前的下一页 20 行，不必扫描并丢弃前置页
+-- 作用：用于在结果集较小或需要跳到任意页时使用 offset，在大表连续翻页时用最后一条记录做 keyset 游标。
 ```
 
 offset 页码越深，数据库通常需要扫描并跳过越多行；keyset 要求排序键稳定、索引匹配且客户端保存游标。排序字段要加入唯一的 tie-breaker，例如 `id`，否则翻页可能重复或漏行。
@@ -184,6 +214,7 @@ INSERT INTO account (username, balance) VALUES
     AS new
 ON DUPLICATE KEY UPDATE balance = new.balance;
 -- 输出：一次写入或更新 3 个用户名，冲突行为由唯一键决定
+-- 作用：用于减少网络往返写入多行，同时限制单次事务的锁、日志和内存占用。
 ```
 
 MySQL 8.0.19 引入 row alias，8.0.20+ 推荐使用 `AS new`；旧的 `VALUES(balance)` 形式从 8.0.20 起已弃用，早于 8.0.19 的版本只能在确认兼容性后使用旧写法。批量大小应按行宽、索引数量和日志吞吐压测；失败重试必须考虑唯一键、幂等键和事务回滚。不要把 `ON DUPLICATE KEY UPDATE` 当成所有业务冲突的自动解决方案。

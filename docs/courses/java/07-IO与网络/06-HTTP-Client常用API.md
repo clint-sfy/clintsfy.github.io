@@ -1,6 +1,6 @@
 ---
 title: HTTP Client 常用 API
-date: 2026-09-27
+date: 2026-09-27T00:00:00.000Z
 category: Java基础快速入门
 tags:
   - Java
@@ -38,6 +38,7 @@ description: 直接用 Java 案例速查 HttpClient 的请求、响应、超时�
 连接超时覆盖建立连接阶段，DNS、TLS、服务器处理和响应读取仍可能耗时；不要把它当成完整请求超时。
 
 ```java
+// 说明：HttpClient.newBuilder：设置连接超时。
 import java.net.http.HttpClient;
 import java.time.Duration;
 
@@ -57,6 +58,7 @@ public class HttpClientTimeoutDemo {
 `NORMAL` 遵循常见浏览器式重定向规则，`ALWAYS` 更激进，`NEVER` 交给业务处理；跨域重定向还要重新审视凭证和敏感请求头。
 
 ```java
+// 说明：HttpClient.Redirect：配置重定向。
 import java.net.http.HttpClient;
 
 public class HttpRedirectDemo {
@@ -70,11 +72,12 @@ public class HttpRedirectDemo {
 }
 ```
 
-### `HttpRequest.newBuilder` 与 `GET`
+### 构建 GET 请求：设置 URI 后完成请求
 
 Request 是不可变对象，构建后可以安全地交给同步或异步发送；URI 要在边界校验 scheme、host、端口和允许的重定向范围。
 
 ```java
+// 说明：构建 GET 请求：设置 URI 后完成请求。
 import java.net.URI;
 import java.net.http.HttpRequest;
 
@@ -90,11 +93,12 @@ public class HttpGetRequestDemo {
 }
 ```
 
-### `POST` 与 `BodyPublishers.ofString`
+### 构建文本 POST 请求：发布字符串请求体
 
-请求体字符串默认使用 UTF-8；真实 JSON 仍需使用可信序列化器并设置正确 Content-Type。POST 等非幂等方法不能无条件自动重试。
+请求体字符串默认使用 UTF-8；真实 JSON 仍需使用可信序列化器并设置正确 Content-Type。
 
 ```java
+// 说明：构建文本 POST 请求：发布字符串请求体。
 import java.net.URI;
 import java.net.http.HttpRequest;
 
@@ -110,11 +114,14 @@ public class HttpPostRequestDemo {
 }
 ```
 
-### `HttpClient.send` 与 `BodyHandlers.ofString`
+POST 等非幂等方法不能无条件自动重试。
+
+### 同步发送请求：把响应体读取为字符串
 
 `send` 会阻塞当前线程，适合简单同步流程；必须先检查状态码，再决定是否解析响应字符串，且要防止不受控大响应占满内存。
 
 ```java
+// 说明：同步发送请求：把响应体读取为字符串。
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -132,11 +139,12 @@ public class HttpSendDemo {
 }
 ```
 
-### `statusCode`、`headers` 与 `body`
+### 检查 HTTP 响应：读取状态、响应头与正文
 
 响应头名称不区分大小写，但一个名称可能有多个值；`body` 的类型由 BodyHandler 决定，状态码和业务 JSON 要分开验证。
 
 ```java
+// 说明：检查 HTTP 响应：读取状态、响应头与正文。
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -160,6 +168,7 @@ public class HttpResponseDemo {
 请求超时是一次 Request 的等待边界，触发时通常以 `HttpTimeoutException` 表示；重试前仍要判断操作是否幂等。
 
 ```java
+// 说明：HttpRequest.timeout：请求级超时。
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.time.Duration;
@@ -180,6 +189,7 @@ public class HttpRequestTimeoutDemo {
 `sendAsync` 返回 `CompletableFuture`，`join` 会重新抛出包装后的异常；生产代码要在链上使用 `exceptionally`/`handle`，不要无条件阻塞等待所有 Future。
 
 ```java
+// 说明：sendAsync：异步请求与结果链。
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -203,6 +213,7 @@ public class HttpAsyncDemo {
 二进制响应不要强行转 String；图片、压缩数据和协议字节应使用 byte[] 或文件 BodyHandler，并设置大小保护。
 
 ```java
+// 说明：BodyHandlers.ofByteArray：处理二进制响应。
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -224,6 +235,7 @@ public class HttpBytesResponseDemo {
 `ofFile` 适合下载大响应，目标文件的覆盖、权限、磁盘空间和失败清理仍由调用方负责。
 
 ```java
+// 说明：BodyHandlers.ofFile：直接写入文件。
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -249,6 +261,7 @@ public class HttpFileResponseDemo {
 响应行 Stream 也要关闭；它适合边读边处理，但不应在没有协议限制时无限累积到集合。
 
 ```java
+// 说明：BodyHandlers.ofLines：按行处理响应。
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -267,11 +280,12 @@ public class HttpLinesResponseDemo {
 }
 ```
 
-### `headers`：设置请求头与读取响应头
+### 处理 HTTP 标头：写入请求并读取响应
 
 认证、Cookie、Trace ID 等头必须有明确的信任边界；不要把密码、Token 或内部地址写进日志。
 
 ```java
+// 说明：处理 HTTP 标头：写入请求并读取响应。
 import java.net.URI;
 import java.net.http.HttpRequest;
 
@@ -293,6 +307,7 @@ public class HttpHeadersDemo {
 这是偏好而不是对端强制结果；HTTP/2 需要服务端、TLS 和代理链路共同支持。
 
 ```java
+// 作用：通过 HttpClient.Version 偏好 HTTP/2 或 HTTP/1.1。
 import java.net.http.HttpClient;
 
 public class HttpVersionDemo {
@@ -309,6 +324,7 @@ public class HttpVersionDemo {
 取消是协作式的，可能已经建立连接或收到部分响应；业务代码还要停止后续解析、重试和界面更新。
 
 ```java
+// 作用：通过 CompletableFuture.cancel 取消异步请求。
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -330,6 +346,7 @@ public class HttpCancelDemo {
 上传要设置大小上限、内容类型和重试策略；文件变更、权限和删除时机都属于调用方责任。
 
 ```java
+// 作用：通过 BodyPublishers.ofFile 从文件上传请求体。
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.nio.file.Files;
@@ -354,6 +371,7 @@ public class HttpFileUploadDemo {
 不要在源码中硬编码凭证；认证回调可能被多次触发，需结合 host、port、protocol 和凭证存储做限制。
 
 ```java
+// 作用：通过 Authenticator 代理或服务端认证回调。
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 
@@ -392,6 +410,52 @@ public class HttpBodyHandlerBoundaryDemo {
 }
 ```
 ## 简单案例
+
+### `URLEncoder.encode`：编码查询参数值
+
+它执行 `application/x-www-form-urlencoded` 编码，只编码参数值，不能直接编码整条 URL。
+
+```java
+// 作用：通过 URLEncoder.encode 编码查询参数值。
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+String keyword = URLEncoder.encode("Java 入门", StandardCharsets.UTF_8);
+String url = "https://example.test/search?q=" + keyword;
+System.out.println(keyword);
+System.out.println(url);
+// 输出：Java+%E5%85%A5%E9%97%A8
+```
+
+### `URL(String)`：解析绝对资源地址
+
+`URL` 构造器把协议、主机、端口和路径解析为结构化地址，但不会在构造时连接服务器。固定地址可以直接构造；新代码通常优先用 `URI` 表达和校验地址，再在需要旧 API 时转为 `URL`。
+
+```java
+// 作用：通过 URL(String) 解析绝对资源地址。
+import java.net.URL;
+
+URL endpoint = new URL("https://example.test:8443/api/users");
+// endpoint 只保存地址组件，这一行没有发生 DNS 查询或网络 I/O。
+System.out.println(endpoint.getHost() + ":" + endpoint.getPort());
+// 输出：example.test:8443
+```
+
+### `URL.openConnection`：创建底层 URLConnection
+
+它只创建连接对象；真实网络访问还需读写，并应显式设置连接与读取超时。
+
+```java
+// 作用：通过 URL.openConnection 创建底层 URLConnection。
+import java.net.URL;
+URL endpoint = new URL("https://example.test/api");
+var connection = endpoint.openConnection();
+// connection 还未读写网络；先在它上设置连接与读取超时。
+connection.setConnectTimeout(3_000);
+connection.setReadTimeout(5_000);
+System.out.println(connection.getConnectTimeout());
+System.out.println(connection.getReadTimeout());
+// 输出：3000、5000；示例未发起网络读取
+```
 
 ```java
 import java.net.URI;
