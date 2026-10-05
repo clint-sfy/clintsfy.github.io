@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
@@ -295,6 +295,90 @@ const REQUIRED_SECTIONS = [
   '快速回顾',
 ]
 const REQUIRED_CORE_SUBSECTIONS = ['专业术语', '白话解释与边界']
+
+// New, migrated, and materially rewritten pages opt into the strict article
+// contract through this manifest. Later content tasks append route entries
+// here; legacy pages stay on their existing, intentionally separate checks.
+const ARTICLE_CONTRACT_MANIFEST = {
+  requiredH2: [
+    '学习目标',
+    '核心知识点',
+    '常用用法',
+    '易混点',
+    '课后小问',
+    '本节小结',
+    '快速回顾',
+  ],
+  entries: [
+    // Future entries use { path: 'docs/courses/java/...md', source: 'new' | 'migrated' | 'rewritten' }.
+  ],
+}
+const ARTICLE_CONTRACT_FRONTMATTER_FIELDS = [
+  'title',
+  'date',
+  'category',
+  'tags',
+  'description',
+]
+const ARTICLE_CONTRACT_PATHS = new Set(
+  ARTICLE_CONTRACT_MANIFEST.entries.map((entry) =>
+    typeof entry === 'string' ? entry : entry.path,
+  ),
+)
+
+// Keep this list public within the test module so the MySQL/Redis content
+// batches can reuse one danger vocabulary without copying it into each test.
+const DANGEROUS_MYSQL_REDIS_TOKENS = Object.freeze([
+  'FLUSHALL',
+  'FLUSHDB',
+  'KEYS',
+  'DEL',
+  'UNLINK',
+  'TRUNCATE',
+  'DROP TABLE',
+  'DROP DATABASE',
+  'LOCK TABLES',
+  'LOCK INSTANCE FOR BACKUP',
+  'FLUSH TABLES WITH READ LOCK',
+  'MYSQLDUMP',
+  'BACKUP',
+  'RESTORE',
+  'CONFIG SET',
+  'EVAL',
+  'EVALSHA',
+  'SCRIPT FLUSH',
+  'MONITOR',
+  'DEBUG',
+  'REPLICAOF',
+  'SLAVEOF',
+  'MIGRATE',
+  'SLOWLOG',
+  'INFO',
+  'LATENCY',
+  'MEMORY',
+  'SHUTDOWN',
+  'SAVE',
+  'BGSAVE',
+  'UPDATE',
+  'DELETE',
+])
+const MYSQL_DANGER_TOKENS = new Set([
+  'TRUNCATE',
+  'DROP TABLE',
+  'DROP DATABASE',
+  'LOCK TABLES',
+  'LOCK INSTANCE FOR BACKUP',
+  'FLUSH TABLES WITH READ LOCK',
+  'MYSQLDUMP',
+  'BACKUP',
+  'RESTORE',
+  'UPDATE',
+  'DELETE',
+])
+const REDIS_DANGER_TOKENS = new Set(
+  DANGEROUS_MYSQL_REDIS_TOKENS.filter((token) => !MYSQL_DANGER_TOKENS.has(token)),
+)
+const SHELL_DANGER_TOKENS = new Set(DANGEROUS_MYSQL_REDIS_TOKENS)
 
 const BACKEND_SHARED_SECTIONS = [
   ...REQUIRED_SECTIONS,
@@ -1502,6 +1586,551 @@ function relativeRoute(relativePath) {
 function formatViolations(violations) {
   return violations.length === 0 ? '' : `\n${violations.join('\n')}`
 }
+
+function getArticleContractHeadings(body, level) {
+  const lines = body.split(/\r?\n/u)
+  const marker = '#'.repeat(level)
+  const headingPattern = new RegExp(`^${marker}(?!#)\\s+(\\S.*)$`, 'u')
+  const headings = []
+  let inFence = false
+
+  lines.forEach((line, index) => {
+    if (/^\s*```/u.test(line)) {
+      inFence = !inFence
+      return
+    }
+    if (!inFence) {
+      const match = line.match(headingPattern)
+      if (match) headings.push({ index, heading: match[1].trim() })
+    }
+  })
+  return headings
+}
+
+function getArticleContractSection(body, label) {
+  const headings = getArticleContractHeadings(body, 2)
+  const start = headings.find((entry) => entry.heading === label)
+  if (!start) return null
+  const end = headings.find((entry) => entry.index > start.index)
+  const lines = body.split(/\r?\n/u)
+  return lines.slice(start.index + 1, end?.index ?? lines.length).join('\n').trim()
+}
+
+function getArticleContractH3Subsections(section) {
+  if (section === null) return []
+  const lines = section.split(/\r?\n/u)
+  const starts = []
+  let inFence = false
+  lines.forEach((line, index) => {
+    if (/^\s*```/u.test(line)) {
+      inFence = !inFence
+      return
+    }
+    if (!inFence) {
+      const match = line.match(/^###\s+(\S.*)$/u)
+      if (match) starts.push({ index, heading: match[1].trim() })
+    }
+  })
+  return starts.map((start, index) => ({
+    heading: start.heading,
+    content: lines.slice(start.index + 1, starts[index + 1]?.index ?? lines.length).join('\n').trim(),
+  }))
+}
+
+function getArticleContractCodeBlocks(content) {
+  return [...content.matchAll(/```([A-Za-z][\w-]*)[^\r\n]*\r?\n([\s\S]*?)```/gu)].map((match) => ({
+    language: match[1].toLowerCase(),
+    code: match[2],
+  }))
+}
+
+function stripArticleContractComments(code, language) {
+  const withoutBlocks = code.replace(/\/\*[\s\S]*?\*\//gu, '')
+  const commentPattern = language === 'java'
+    ? /^\s*\/\/.*$/u
+    : language === 'sql'
+      ? /^\s*(?:--|#).*$/u
+      : /^\s*(?:#|\/\/|--).*$/u
+  return withoutBlocks
+    .split(/\r?\n/u)
+    .filter((line) => !commentPattern.test(line))
+    .join('\n')
+    .trim()
+}
+
+function getArticleContractEvidenceLines(content, pattern) {
+  return content
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => pattern.test(line))
+    .map((line) => line.replace(/^(?:\/\/|--|#)\s*/u, '').trim())
+}
+
+function isConcreteArticleContractEvidence(value) {
+  const plain = stripMarkdown(value)
+    .replace(/^(?:输入|初始(?:状态)?|前置(?:条件)?|作用|关键变化|当前状态|效果)\s*[:：]\s*/u, '')
+    .trim()
+  if (plain.length < 4) return false
+  if (/^(?:具体|给定|某个|相关|预期|示例输入|示例参数|执行后得到预期结果)/u.test(plain)) return false
+  return /(?:["'“”`][^"'“”`]+["'“”`]|\b\d+(?:\.\d+)?\b|[A-Za-z_$][\w$]*(?:[:._-][\w$-]+)?)/u.test(plain)
+}
+
+function hasArticleContractInitialState(content, blocks) {
+  const initialLines = getArticleContractEvidenceLines(
+    content,
+    /(?:输入|初始(?:状态)?|前置(?:条件)?|initial(?:\s+state|\s+input)|before)\s*[:：]/iu,
+  )
+  if (initialLines.some(isConcreteArticleContractEvidence)) return true
+
+  return blocks.some(({ language, code }) => {
+    const executable = stripArticleContractComments(code, language)
+    if (!executable || /<[^>]+>|\$\{[^}]+\}|\?\s*(?:,|\)|$)/u.test(executable)) return false
+    if (language === 'sql') {
+      return /\b(?:INSERT\s+INTO|CREATE\s+TABLE|SELECT[\s\S]*\bWHERE\b)\b/iu.test(executable) &&
+        /(?:["'][^"']+["']|\b\d+\b)/u.test(executable)
+    }
+    if (['redis', 'shell', 'bash', 'sh'].includes(language)) {
+      return /^(?:SET|HSET|LPUSH|RPUSH|SADD|ZADD|XADD)\s+\S+\s+\S+/imu.test(executable) &&
+        /(?:["'][^"']+["']|\b\d+\b|[A-Za-z0-9_-]+:[A-Za-z0-9_:-]+)/u.test(executable)
+    }
+    if (language === 'java') {
+      return /\b(?:byte|short|int|long|float|double|boolean|char|String|var|List<[^>]+>)\s+[A-Za-z_$][\w$]*\s*=\s*(?:["'\d]|List\.of\(|new\s+)/u.test(executable)
+    }
+    return false
+  })
+}
+
+function hasArticleContractTransition(content) {
+  const transitionLines = getArticleContractEvidenceLines(
+    content,
+    /(?:作用|关键变化|当前状态|效果|transition|after)\s*[:：]/iu,
+  )
+  return transitionLines.some((line) =>
+    isConcreteArticleContractEvidence(line) && JAVA_ACTION_EFFECT_PATTERN.test(line),
+  )
+}
+
+function hasArticleContractObservableResult(content, blocks) {
+  const resultLines = getArticleContractEvidenceLines(
+    content,
+    /(?:输出|结果|返回|响应|断言|日志|observable|result)\s*[:：]/iu,
+  )
+  if (resultLines.some(isConcreteArticleContractEvidence)) return true
+
+  return blocks.some(({ language, code }) => {
+    const executable = stripArticleContractComments(code, language)
+    return (
+      /\bSystem\.out\.(?:print|println|printf)\s*\(/u.test(executable) ||
+      /\b(?:assert|assertEquals|echo|SELECT)\b/iu.test(executable)
+    )
+  })
+}
+
+function isArticleContractOperationHeading(heading) {
+  const label = heading.split(/[：:]/u, 1)[0].replaceAll('`', '').trim()
+  if (!label || /^(?:示例|操作|用法|案例|说明|注意|风险|边界)/u.test(label)) return false
+  const javaLike = /^@?[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*(?:\([^)]*\))?/u
+  const sqlOrRedis = /^(?:SELECT|INSERT|UPDATE|DELETE|SET|GET|MGET|MSET|INCR|DECR|HSET|HGET|HMGET|HGETALL|HSCAN|LPUSH|RPUSH|LPOP|RPOP|SADD|SMEMBERS|ZADD|ZRANGE|EXISTS|EXPIRE|TTL|SCAN|FLUSHALL|FLUSHDB|KEYS|DEL|UNLINK|TRUNCATE|DROP|CREATE|ALTER|LOCK|UNLOCK|EXPLAIN|WITH|SHOW|DESCRIBE|MYSQLDUMP|EVAL|EVALSHA|SCRIPT|MONITOR|DEBUG|REPLICAOF|SLAVEOF|MIGRATE|SLOWLOG|INFO|LATENCY|MEMORY|CONFIG)\b/iu
+  return javaLike.test(label) || sqlOrRedis.test(label)
+}
+
+function getDangerousArticleContractOperations(code, language) {
+  if (!['sql', 'redis', 'shell', 'bash', 'sh', 'java'].includes(language)) return []
+  const executable = stripArticleContractComments(code, language)
+  if (!executable) return []
+  const operations = new Set()
+  const escapedToken = (token) => token.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+
+  if (language !== 'java') {
+    for (const token of DANGEROUS_MYSQL_REDIS_TOKENS) {
+      const allowedTokens = language === 'sql'
+        ? MYSQL_DANGER_TOKENS
+        : ['redis'].includes(language)
+          ? REDIS_DANGER_TOKENS
+          : SHELL_DANGER_TOKENS
+      if (!allowedTokens.has(token)) continue
+      if (!new RegExp(`\\b${escapedToken(token)}\\b`, 'iu').test(executable)) continue
+      if (['UPDATE', 'DELETE'].includes(token)) {
+        const statements = executable.split(';').filter((statement) =>
+          new RegExp(`\\b${token}\\b`, 'iu').test(statement),
+        )
+        if (statements.some((statement) => {
+          const where = statement.match(/\bWHERE\b([\s\S]*)$/iu)?.[1]?.trim()
+          return !where || /^(?:1\s*=\s*1|TRUE)\s*$/iu.test(where) || /^([A-Za-z_]\w*)\s*=\s*\1\s*$/iu.test(where)
+        })) operations.add(token)
+        continue
+      }
+      if (token === 'DEL' || token === 'UNLINK') {
+        const lines = executable.split(/\r?\n/u).filter((line) =>
+          new RegExp(`\\b${token}\\b`, 'iu').test(line),
+        )
+        const hasBroadArguments = lines.some((line) => {
+          const argumentText = line.replace(new RegExp(`^[\\s\\S]*?\\b${token}\\b`, 'iu'), '').trim()
+          const argumentsList = argumentText.split(/\s+/u).filter(Boolean)
+          return argumentsList.length > 1 || /\*|(?:big|large|huge|hot)[_:\-]?(?:key|keys|hash|list|set|values?)/iu.test(argumentText)
+        })
+        if (hasBroadArguments) {
+          operations.add(token)
+        }
+        continue
+      }
+      operations.add(token)
+    }
+  }
+
+  if (language === 'java') {
+    if (/\b(?:RedisTemplate|redisTemplate)\.keys\s*\(/u.test(executable)) operations.add('KEYS')
+    if (/\b(?:RedisTemplate|redisTemplate)\.(?:delete|unlink)\s*\([^)]*(?:big|large|huge|hot)[_:\-]?(?:key|keys)?/iu.test(executable)) {
+      operations.add('DEL')
+    }
+  }
+  return [...operations]
+}
+
+function hasArticleContractRiskBoundary(content, operation) {
+  const boundaryLines = content
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => /(?:风险|边界|警告|注意)\s*[:：]|(?:仅(?:在|用于)|禁止|不要|避免|谨慎|不得|不应|切勿|测试环境|受控|全表|大键|锁表|备份|恢复|阻塞)/iu.test(line))
+  if (boundaryLines.length === 0) return false
+  const operationPattern = operation === 'DEL' || operation === 'UNLINK'
+    ? /(?:DEL|UNLINK|大键|大对象|单键|键)/iu
+    : operation === 'KEYS'
+      ? /(?:KEYS|SCAN|键空间|阻塞|生产)/iu
+      : operation === 'UPDATE' || operation === 'DELETE'
+        ? /(?:UPDATE|DELETE|全表|WHERE|条件|范围|行)/iu
+        : new RegExp(escapedRiskToken(operation), 'iu')
+  return boundaryLines.some((line) => operationPattern.test(line))
+}
+
+function escapedRiskToken(token) {
+  return token.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+}
+
+function inspectArticleContract(article, { path = 'article.md' } = {}) {
+  const violations = []
+  if (!article || typeof article.body !== 'string') {
+    return [`[article:input] ${path} needs parsed frontmatter and Markdown body`]
+  }
+
+  for (const field of ARTICLE_CONTRACT_FRONTMATTER_FIELDS) {
+    if (!isMeaningfulField(article.data?.[field])) {
+      violations.push(`[article:frontmatter] ${path} ${field} is missing or empty`)
+    }
+  }
+
+  const h1s = getArticleContractHeadings(article.body, 1)
+  if (h1s.length !== 1) {
+    violations.push(`[article:title] ${path} needs exactly one H1 title`)
+  } else if (isMeaningfulField(article.data?.title) && h1s[0].heading !== String(article.data.title).trim()) {
+    violations.push(`[article:title] ${path} H1 must match frontmatter.title`)
+  }
+
+  const h2s = getArticleContractHeadings(article.body, 2).map(({ heading }) => heading)
+  if (JSON.stringify(h2s) !== JSON.stringify(ARTICLE_CONTRACT_MANIFEST.requiredH2)) {
+    violations.push(
+      `[article:h2] ${path} requires exact H2 order: ${ARTICLE_CONTRACT_MANIFEST.requiredH2.join(' > ')}`,
+    )
+  }
+
+  const usage = getArticleContractSection(article.body, '常用用法')
+  const subsections = getArticleContractH3Subsections(usage)
+  if (subsections.length === 0) {
+    violations.push(`[h3:name] ${path} 常用用法 needs a searchable operation H3`)
+    return violations
+  }
+
+  for (const { heading, content } of subsections) {
+    const prefix = `${path} [${heading}]`
+    if (!isArticleContractOperationHeading(heading)) {
+      violations.push(`[h3:name] ${prefix} must start with a real API, SQL, or Redis operation name`)
+      continue
+    }
+
+    const lines = content.split(/\r?\n/u)
+    const first = lines.findIndex((line) => line.trim() !== '')
+    const firstLine = first < 0 ? '' : lines[first].trim()
+    const codeIndex = lines.findIndex((line, index) => index > first && /^```[A-Za-z][\w-]*(?:\s|$)/u.test(line.trim()))
+    if (first < 0 || /^(?:```|[-*+]\s|\d+[.)]\s|>|#{1,6}\s|\/\/|--|#)/u.test(firstLine)) {
+      violations.push(`[example:purpose] ${prefix} needs an immediate purpose sentence before code`)
+    } else if (codeIndex < 0) {
+      violations.push(`[example:code] ${prefix} needs a supported executable code block`)
+    } else {
+      const purpose = stripMarkdown(lines.slice(first, codeIndex).filter((line) => line.trim() !== '').join(' '))
+      if (
+        lines.slice(first, codeIndex).filter((line) => line.trim() !== '').length !== 1 ||
+        purpose.length < 10 ||
+        !/[。！？.!?]$/u.test(purpose)
+      ) {
+        violations.push(`[example:purpose] ${prefix} purpose must be one complete sentence`)
+      }
+    }
+
+    const blocks = getArticleContractCodeBlocks(content)
+    const supportedBlocks = blocks.filter(({ language }) =>
+      ['java', 'sql', 'redis', 'shell', 'bash', 'sh'].includes(language),
+    )
+    if (supportedBlocks.length === 0) {
+      violations.push(`[example:code] ${prefix} needs java, SQL, or Redis CLI code`)
+      continue
+    }
+
+    const executableBlocks = supportedBlocks.filter(({ language, code }) =>
+      stripArticleContractComments(code, language) !== '',
+    )
+    if (executableBlocks.length === 0) {
+      violations.push(`[example:state] ${prefix} must include executable input/state, not only a final output comment`)
+      continue
+    }
+
+    if (FORBIDDEN_EXAMPLE_COMMENT_PATTERN.test(content) || FORBIDDEN_TEMPLATE_PHRASES.some((phrase) => content.includes(phrase))) {
+      violations.push(`[example:template] ${prefix} contains generic template wording`)
+    }
+    if (!hasArticleContractInitialState(content, supportedBlocks)) {
+      violations.push(`[example:state] ${prefix} needs a concrete initial input or state`)
+    }
+    if (!hasArticleContractTransition(content)) {
+      violations.push(`[example:state] ${prefix} needs a concrete key transition`)
+    }
+    if (!hasArticleContractObservableResult(content, supportedBlocks)) {
+      violations.push(`[example:result] ${prefix} needs an observable output, result, assertion, or log`)
+    }
+
+    for (const { language, code } of supportedBlocks) {
+      for (const operation of getDangerousArticleContractOperations(code, language)) {
+        if (!hasArticleContractRiskBoundary(content, operation)) {
+          violations.push(`[danger:boundary] ${prefix} ${operation} needs a nearby explicit risk boundary`)
+        }
+      }
+    }
+  }
+
+  return violations
+}
+
+function inspectArticleContractManifest() {
+  const violations = []
+  const entries = ARTICLE_CONTRACT_MANIFEST.entries
+  const paths = entries.map((entry) => (typeof entry === 'string' ? entry : entry.path))
+  if (new Set(paths).size !== paths.length) {
+    violations.push('[article:manifest] strict article routes must be unique')
+  }
+
+  for (const entry of entries) {
+    const path = typeof entry === 'string' ? entry : entry.path
+    if (!path || !/^docs\/courses\/java\/[^/]+\/[^/]+\.md$/u.test(path)) {
+      violations.push(`[article:manifest] invalid strict article route ${path ?? '<missing>'}`)
+      continue
+    }
+    if (!ARTICLE_CONTRACT_PATHS.has(path) || !existsSync(join(REPO_ROOT, ...path.split('/')))) {
+      violations.push(`[article:manifest] strict article route ${path} must point to an existing file`)
+      continue
+    }
+    try {
+      for (const issue of inspectArticleContract(readMarkdown(path), { path })) {
+        violations.push(issue)
+      }
+    } catch (error) {
+      violations.push(`[article:manifest] ${path} could not be read: ${error.message}`)
+    }
+  }
+  return violations
+}
+
+const CONTRACT_FIXTURE_ROOT = join(REPO_ROOT, 'tests/fixtures/java-course')
+
+function readContractFixture(fileName) {
+  const source = readFileSync(join(CONTRACT_FIXTURE_ROOT, fileName), 'utf8')
+  const parsed = matter(source)
+  return { data: parsed.data, body: parsed.content }
+}
+
+function createValidArticleContractFixture() {
+  return {
+    data: {
+      title: '可验证的 Redis 示例',
+      date: '2026-10-05',
+      category: 'Redis 基础',
+      tags: ['Redis'],
+      description: '展示带有具体状态变化和可观察结果的 Redis 命令。',
+    },
+    body: `# 可验证的 Redis 示例
+
+## 学习目标
+
+- 能够按状态变化阅读一个 Redis 命令示例。
+
+## 核心知识点
+
+### 专业术语
+
+Redis key/value 用 key 定位具体值，命令会改变或读取该值。
+
+### 白话解释与边界
+
+具体 key 和 value 让示例可以复现；生产数据还要考虑权限和生命周期。
+
+## 常用用法
+
+### \`INCR\`：递增计数器
+
+用途：用于在已有计数器上做原子递增并观察新的数值。
+
+\`\`\`redis
+# 初始状态：demo:count = 1，输入 key 为 demo:count。
+SET demo:count 1
+# 关键变化：demo:count 从 1 递增为 2。
+INCR demo:count
+# 输出：命令返回整数 2。
+\`\`\`
+
+## 易混点
+
+递增计数器只改变一个已知 key，不能替代多字段事务。
+
+## 课后小问
+
+1. 递增前的 key 是什么？
+
+答案：demo:count，初始值为 1。
+
+解析：代码先写入 1，再调用 INCR 得到 2。
+
+## 本节小结
+
+- 具体 key、变化和结果应当逐项可见。
+
+## 快速回顾
+
+- 先写入初值，再观察递增结果。`,
+  }
+}
+
+test('article contract checks frontmatter, exact H2 order, and searchable operation headings', () => {
+  const valid = createValidArticleContractFixture()
+  assert.deepEqual(inspectArticleContract(valid, { path: 'valid-fixture.md' }), [])
+
+  const malformedFrontmatter = createValidArticleContractFixture()
+  delete malformedFrontmatter.data.description
+  const frontmatterIssues = inspectArticleContract(malformedFrontmatter, { path: 'missing-description.md' })
+  assert.ok(frontmatterIssues.some((issue) => issue.startsWith('[article:frontmatter]')))
+  assert.deepEqual(
+    frontmatterIssues.filter((issue) => !issue.startsWith('[article:frontmatter]')),
+    [],
+  )
+
+  const reorderedSections = createValidArticleContractFixture()
+  reorderedSections.body = reorderedSections.body
+    .replace('## 易混点', '## 临时顺序')
+    .replace('## 课后小问', '## 易混点')
+    .replace('## 临时顺序', '## 课后小问')
+  const sectionIssues = inspectArticleContract(reorderedSections, { path: 'wrong-h2-order.md' })
+  assert.ok(sectionIssues.some((issue) => issue.startsWith('[article:h2]')))
+  assert.deepEqual(
+    sectionIssues.filter((issue) => !issue.startsWith('[article:h2]')),
+    [],
+  )
+
+  const genericHeading = createValidArticleContractFixture()
+  genericHeading.body = genericHeading.body.replace('### \`INCR\`：递增计数器', '### 计数器操作：递增一个值')
+  const headingIssues = inspectArticleContract(genericHeading, { path: 'generic-heading.md' })
+  assert.ok(headingIssues.some((issue) => issue.startsWith('[h3:name]')))
+  assert.deepEqual(
+    headingIssues.filter((issue) => !issue.startsWith('[h3:name]')),
+    [],
+  )
+
+  const missingPurpose = readContractFixture('missing-purpose.md')
+  const issues = inspectArticleContract(missingPurpose, { path: 'missing-purpose.md' })
+  assert.ok(
+    issues.some((issue) => issue.startsWith('[example:purpose]')),
+    `missing-purpose fixture should fail for purpose only${formatViolations(issues)}`,
+  )
+  assert.deepEqual(
+    issues.filter((issue) => !issue.startsWith('[example:purpose]')),
+    [],
+    'missing-purpose fixture must not fail unrelated article-contract rules',
+  )
+})
+
+test('example state checks reject output-only and template-comment fixtures', () => {
+  const onlyOutputIssues = inspectArticleContract(
+    readContractFixture('only-final-output.md'),
+    { path: 'only-final-output.md' },
+  )
+  assert.ok(
+    onlyOutputIssues.some((issue) => issue.startsWith('[example:state]')),
+    `only-final-output fixture should require executable state${formatViolations(onlyOutputIssues)}`,
+  )
+  assert.deepEqual(
+    onlyOutputIssues.filter((issue) => !issue.startsWith('[example:state]')),
+    [],
+    'only-final-output fixture must not fail unrelated article-contract rules',
+  )
+
+  const templateIssues = inspectArticleContract(
+    readContractFixture('template-comment.md'),
+    { path: 'template-comment.md' },
+  )
+  assert.ok(
+    templateIssues.some((issue) => issue.startsWith('[example:template]')),
+    `template-comment fixture should reject generic wording${formatViolations(templateIssues)}`,
+  )
+  assert.deepEqual(
+    templateIssues.filter((issue) => !issue.startsWith('[example:template]')),
+    [],
+    'template-comment fixture must not fail unrelated article-contract rules',
+  )
+})
+
+test('danger boundary requires an explicit warning for dangerous MySQL and Redis operations', () => {
+  const dangerIssues = inspectArticleContract(
+    readContractFixture('danger-without-warning.md'),
+    { path: 'danger-without-warning.md' },
+  )
+  assert.ok(
+    dangerIssues.some((issue) => issue.startsWith('[danger:boundary]')),
+    `danger-without-warning fixture should require a risk boundary${formatViolations(dangerIssues)}`,
+  )
+  assert.deepEqual(
+    dangerIssues.filter((issue) => !issue.startsWith('[danger:boundary]')),
+    [],
+    'danger-without-warning fixture must not fail unrelated article-contract rules',
+  )
+
+  const safeKeyedSql = {
+    data: createValidArticleContractFixture().data,
+    body: createValidArticleContractFixture().body
+      .replace('### `INCR`：递增计数器', '### UPDATE：按主键更新一行')
+      .replace('用途：用于在已有计数器上做原子递增并观察新的数值。', '用途：用于按具体主键更新一行并观察受影响行数。')
+      .replaceAll('```redis', '```sql')
+      .replace('SET demo:count 1', 'UPDATE users SET name = \'Ann\' WHERE id = 7;')
+      .replace('INCR demo:count', 'SELECT name FROM users WHERE id = 7;')
+      .replace('demo:count = 1，输入 key 为 demo:count。', 'users 表已有 id = 7、name = \'Bob\'。')
+      .replace('demo:count 从 1 递增为 2。', 'users.id = 7 的 name 从 Bob 更新为 Ann。')
+      .replace('命令返回整数 2。', '查询返回 id = 7 的 name = Ann。'),
+  }
+  assert.deepEqual(
+    inspectArticleContract(safeKeyedSql, { path: 'safe-keyed-sql.md' }),
+    [],
+    'keyed UPDATE/SELECT examples should not be classified as dangerous',
+  )
+})
+
+test('article contract manifest scopes strict checks to explicit new or rewritten routes', () => {
+  const entries = ARTICLE_CONTRACT_MANIFEST.entries
+  const paths = entries.map((entry) => (typeof entry === 'string' ? entry : entry.path))
+  assert.deepEqual(
+    [...ARTICLE_CONTRACT_PATHS].sort(),
+    [...new Set(paths)].sort(),
+    'strict article paths must be derived from the explicit manifest only',
+  )
+  assert.deepEqual(
+    inspectArticleContractManifest(),
+    [],
+    'all opted-in article routes must satisfy the strict contract',
+  )
+})
 
 test('backend article specification manifest covers 14 planned pages', () => {
   assert.equal(BACKEND_ARTICLE_SPECS.length, 14, 'rule backend-manifest-count: expected 14 planned pages')
