@@ -978,7 +978,7 @@ const JAVA_RESULT_COMMENT_LABEL = /(?:输出|结果|返回|异常)\s*[:：]/u
 const JAVA_ACTION_EFFECT_PATTERN = /(?:变为|变成|更新|追加|插入|删除|移除|写入|读取|返回|得到|产生|注册|匹配|替换|合并|累加|递减|递增|阻塞|唤醒|等待|创建|关闭|释放|格式化|判断|比较|校验|验证|转换|复制|获取|计算|查找|截取|拼接|检查|选择|遍历|处理|提供|取得|生成|启动|提交|停止|触发|保留|保持|消费|生产|长度|数量|元素|字段|键|值|状态|结果|集合|列表|队列|映射|异常|成功|失败|生效|调用后|之后|此时|最终|现在|剩余|内容|字符串|文本|时间|线程|任务|锁|配置|规则|响应|请求|对象|文件|目录|连接|资源|流|字节|索引|位置|引用|实例|类型|名称|标识)/u
 const JAVA_OUTPUT_CALL_PATTERN = /\bSystem\.out\.(?:print|println|printf)\s*\(/u
 const FORBIDDEN_EXAMPLE_COMMENT_PATTERN = /关键输入或调用是|执行后[^\r\n]*(?:完成|进入|得到|产生)|本例演示|示例完成|本次输出调用已产生可观察结果|接收对象或返回值按该参数产生对应状态|使用给定参数产生该输出|使用具体参数[^\r\n。]*(?:计算并返回结果|完成判断并返回布尔结果)|使用表达式中的具体参数完成本次调用|保存该调用按具体参数计算出的返回值|追加具体参数 当前元素|按具体键值参数 当前键和值|按具体参数 当前索引或条件|写入具体参数 当前值|标准输出写入具体参数 当前值|[^\r\n。]+按这次调用的具体参数完成更新|处理当前语句中的具体状态|后续代码可观察该调用产生的状态|该配置语句明确示例中的具体边界/u
-const FORBIDDEN_NO_INFORMATION_COMMENT_PATTERN = /^(?:(?:TODO|FIXME)(?:\s*[:：])?\s*)?(?:待补充|此处(?:需要)?补充(?:具体)?说明|执行后得到预期结果|操作成功|如上所述|输出结果如下|此处省略)[。.!！]?$/iu
+const FORBIDDEN_NO_INFORMATION_COMMENT_PATTERN = /^(?:(?:TODO|FIXME|TBD)(?:\s*[:：])?\s*(?:(?:待补充(?:具体说明)?|此处(?:需要)?补充(?:具体)?说明|执行后得到预期结果|操作成功|如上所述|输出结果如下|此处省略))?|待补充(?:具体说明)?|此处(?:需要)?补充(?:具体)?说明|执行后得到预期结果|操作成功|如上所述|输出结果如下|此处省略)[。.!！]?$/iu
 
 const WEAK_EXPLANATION_ANCHORS = new Set([
   'abstract', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const',
@@ -1994,6 +1994,19 @@ function isArticleContractOperationHeading(heading, content = '') {
     const receiver = segments.slice(0, -1).join('.')
     const escapedReceiver = receiver.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
     if (new RegExp(`\\b${escapedReceiver}\\s*\\.\\s*${escapedMethod}\\s*\\(`, 'u').test(executable)) return true
+    // Match the method immediately after this constructor's balanced argument
+    // list, so another expression's method cannot supply receiver evidence.
+    const constructorPattern = new RegExp(`\\bnew\\s+${escapedReceiver}(?:\\s*<[^>]*>)?\\s*\\(`, 'gu')
+    for (const constructor of executable.matchAll(constructorPattern)) {
+      let depth = 1
+      let end = constructor.index + constructor[0].length
+      while (end < executable.length && depth > 0) {
+        if (executable[end] === '(') depth += 1
+        if (executable[end] === ')') depth -= 1
+        end += 1
+      }
+      if (depth === 0 && new RegExp(`^\\s*\\.\\s*${escapedMethod}\\s*\\(`, 'u').test(executable.slice(end))) return true
+    }
     const typedVariable = executable.match(new RegExp(`\\b${escapedReceiver}(?:<[^>]+>)?\\s+([A-Za-z_$][\\w$]*)\\s*=`, 'u'))?.[1]
     const inferredVariable = executable.match(new RegExp(`\\bvar\\s+([A-Za-z_$][\\w$]*)\\s*=\\s*new\\s+${escapedReceiver}(?:<[^>]*>)?\\s*\\(`, 'u'))?.[1]
     const implementationType = receiver === 'List' ? '(?:ArrayList|LinkedList|Vector)' : receiver === 'Set' ? '(?:HashSet|LinkedHashSet|TreeSet)' : receiver === 'Map' ? '(?:HashMap|LinkedHashMap|TreeMap)' : escapedReceiver
@@ -2753,6 +2766,14 @@ System.out.println(builder);
 // 输出：b。`,
   })
   assertArticleContractIssueTypes(noInformationWithConcreteDetail, [], 'matrix/no-information-comment-with-details.md')
+  for (const comment of ['TODO', 'FIXME', 'TBD:', '待补充具体说明', 'TODO: 待补充具体说明。', '此处补充说明']) {
+    const fixture = { ...genericNoInformation, body: genericNoInformation.body.replace('TODO：此处需要补充具体说明。', comment) }
+    assertArticleContractIssueTypes(fixture, ['[example:template]'], `matrix/placeholder-${comment}.md`)
+  }
+  for (const comment of ['TODO: users.id=7 写入后返回1', 'FIXME: users.id=7 写入后返回1', '待补充具体说明：users.id=7 写入后返回1']) {
+    const fixture = { ...genericNoInformation, body: genericNoInformation.body.replace('TODO：此处需要补充具体说明。', comment) }
+    assertArticleContractIssueTypes(fixture, [], `matrix/concrete-${comment}.md`)
+  }
 
   const informativeFreeFormComment = createArticleContractOperationFixture({
     heading: 'StringBuilder.append：追加文本',
@@ -3416,8 +3437,27 @@ System.out.println(name);
 // 输出：Ada。`,
   })
   assertArticleContractIssueTypes(unrelatedReceiverEvidence, ['[h3:name]'], 'matrix/Foo.get-unrelated-receiver-evidence.md')
+  const unrelatedConstructor = {
+    ...unrelatedReceiverEvidence,
+    body: unrelatedReceiverEvidence.body.replace('Foo.bar();', 'new Foo().bar();'),
+  }
+  assertArticleContractIssueTypes(unrelatedConstructor, ['[h3:name]'], 'matrix/Foo.get-unrelated-constructor.md')
 
   const positiveExamples = [
+    {
+      heading: 'Foo.get：读取值',
+      code: `int value = new Foo().get();
+// 关键变化：value 从 Foo 读取为 7。
+System.out.println(value);
+// 输出：7。`,
+    },
+    {
+      heading: 'StringBuilder.append：追加文本',
+      code: `var value = new StringBuilder(String.valueOf(7)).append("A");
+// 关键变化：value 从 7 追加为 7A。
+System.out.println(value);
+// 输出：7A。`,
+    },
     {
       heading: 'StringBuilder.append：追加文本',
       code: `String seed = "A";
