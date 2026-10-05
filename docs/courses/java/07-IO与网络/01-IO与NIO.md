@@ -42,8 +42,8 @@ description: 从 I/O 类型选择开始，串起 Path、Files、字节流、字�
 import java.nio.file.Path;
 
 Path path = Path.of("docs", "guide.txt");
-// 输入：path 的初始值为 Path.of("docs", "guide.txt")。
-// 作用：需要用多个路径片段构造与操作系统分隔符兼容的文件路径时使用 Path.of。
+// 输入：Path path = Path.of("docs", "guide.txt");；右侧表达式 Path.of("docs", "guide.txt") 的结果赋给 path。
+// 关键变化：Path path = Path.of("docs", "guide.txt");；按 "docs", "guide.txt" 调用 of 创建值，结果写入 path。
 System.out.println(path.getFileName());
 // 输出：guide.txt
 ```
@@ -58,12 +58,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 var file = Files.createTempFile("java-io-", ".txt");
-// 初始状态：file 当前为 Files.createTempFile("java-io-", ".txt")。
+// 输入：var file = Files.createTempFile("java-io-", ".txt");；右侧表达式 Files.createTempFile("java-io-", ".txt") 的结果赋给 file。
+// 关键变化：var file = Files.createTempFile("java-io-", ".txt");；调用 createTempFile，实参为 "java-io-", ".txt"，返回值写入 file。
 Files.writeString(file, "java api", StandardCharsets.UTF_8);
-// 作用：需要一次写入能够放进内存的短文本时使用 Files.writeString，并应显式选择业务所需字符集。
+// 输入：Files.writeString(file, "java api", StandardCharsets.UTF_8);；接收对象为 Files，调用 writeString 的实参为 file, "java api", StandardCharsets.UTF_8。
+// 关键变化：Files.writeString(file, "java api", StandardCharsets.UTF_8);；将 "java api"，字符集为 StandardCharsets.UTF_8 写入路径 file；writeString 返回目标 Path，文件内容更新。
 System.out.println(Files.size(file) > 0);
 // 输出：true
 Files.deleteIfExists(file);
+// 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
+// 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
 ```
 
 ### `Files.lines`：按行流式读取文本
@@ -75,14 +79,20 @@ Files.deleteIfExists(file);
 import java.nio.file.Files;
 
 var file = Files.createTempFile("java-lines-", ".txt");
-// 初始状态：file 当前为 Files.createTempFile("java-lines-", ".txt")。
+// 输入：var file = Files.createTempFile("java-lines-", ".txt");；右侧表达式 Files.createTempFile("java-lines-", ".txt") 的结果赋给 file。
+// 关键变化：var file = Files.createTempFile("java-lines-", ".txt");；调用 createTempFile，实参为 "java-lines-", ".txt"，返回值写入 file。
 Files.writeString(file, "java\napi\n");
+// 输入：Files.writeString(file, "java\napi\n");；接收对象为 Files，调用 writeString 的实参为 file, "java\napi\n"。
+// 关键变化：Files.writeString(file, "java\napi\n");；将 "java\napi\n" 写入路径 file；writeString 返回目标 Path，文件内容更新。
 try (var lines = Files.lines(file)) {
-// 关键变化：try (var lines = Files.lines(file)) {；当前对象；try；当前对象.try(var lines = Files.lines(file)) 返回本次调用的具体结果，后续语句继续使用该值。
+// 输入：try (var lines = Files.lines(file)) {；资源变量 lines 接收 Files.lines(file)，try 结束时自动关闭。
+// 关键变化：try (var lines = Files.lines(file)) {；创建资源 lines，构造表达式为 Files.lines(file)；try 结束时关闭该资源。
     System.out.println(lines.count());
     // 输出：2
 }
 Files.deleteIfExists(file);
+// 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
+// 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
 ```
 
 完整 API 见 [Path 与 Files 常用 API](/courses/java/07-IO与网络/03-Path与Files常用API)。
@@ -102,14 +112,20 @@ import java.nio.file.Path;
 public class IoLayerChoiceDemo {
     public static void main(String[] args) throws IOException {
         Path file = Files.createTempFile("java-text-", ".txt");
-// 关键变化：file 接收表达式 Files.createTempFile("java-text-", ".txt") 的计算结果。
-// 初始状态：file 的初始值为 Files.createTempFile("java-text-", ".txt")。
+        // 输入：Path file = Files.createTempFile("java-text-", ".txt");；右侧表达式 Files.createTempFile("java-text-", ".txt") 的结果赋给 file。
+        // 关键变化：Path file = Files.createTempFile("java-text-", ".txt");；调用 createTempFile，实参为 "java-text-", ".txt"，返回值写入 file。
         Files.writeString(file, "你好", StandardCharsets.UTF_8);
+        // 输入：Files.writeString(file, "你好", StandardCharsets.UTF_8);；接收对象为 Files，调用 writeString 的实参为 file, "你好", StandardCharsets.UTF_8。
+        // 关键变化：Files.writeString(file, "你好", StandardCharsets.UTF_8);；将 "你好"，字符集为 StandardCharsets.UTF_8 写入路径 file；writeString 返回目标 Path，文件内容更新。
         try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+        // 输入：try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {；资源变量 reader 接收 Files.newBufferedReader(file, StandardCharsets.UTF_8)，try 结束时自动关闭。
+        // 关键变化：try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {；创建资源 reader，构造表达式为 Files.newBufferedReader(file, StandardCharsets.UTF_8)；try 结束时关闭该资源。
             System.out.println(reader.readLine());
             // 输出：你好
         }
         Files.deleteIfExists(file);
+        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
+        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -125,12 +141,14 @@ public class IoLayerChoiceDemo {
 import java.nio.ByteBuffer;
 
 ByteBuffer buffer = ByteBuffer.allocate(4);
-// 关键变化：ByteBuffer buffer = ByteBuffer.allocate(4)；buffer 接收 allocate(4) 的返回值，当前值变为这次调用得到的具体结果。
-// 输入：ByteBuffer buffer = ByteBuffer.allocate(4); 使用语句中的具体实参或初始值，buffer 从这里进入后续操作。
+// 输入：ByteBuffer buffer = ByteBuffer.allocate(4);；右侧表达式 ByteBuffer.allocate(4) 的结果赋给 buffer。
+// 关键变化：ByteBuffer buffer = ByteBuffer.allocate(4);；调用 allocate，实参为 4，返回值写入 buffer。
 buffer.put((byte) 7).put((byte) 8);
-// 关键变化：buffer.put((byte) 7).put((byte) 8);；buffer 按具体键值参数 (byte) 7 更新映射内容。
+// 输入：buffer.put((byte) 7).put((byte) 8);；接收对象为 buffer，连续调用 put 的实参为 (byte) 7、(byte) 8。
+// 关键变化：buffer.put((byte) 7).put((byte) 8);；依次写入字节 7 和 8，两个 put 都返回同一 ByteBuffer；position 前进到 2。
 buffer.flip();
-// 关键变化：buffer.flip()；buffer.flip() 完成本例中的具体调用，后续语句观察调用后的状态。
+// 输入：buffer.flip();；接收对象为 buffer，调用 flip 的实参为 无显式参数。
+// 关键变化：buffer.flip();；调用 flip，实参为 无显式参数；将 buffer 切换到读模式，position 置 0、limit 设为此前写入长度；缓冲状态更新。
 System.out.println(buffer.get() + ", " + buffer.get());
 // 输出：7, 8
 ```
@@ -147,19 +165,23 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
 var file = Files.createTempFile("java-channel-", ".txt");
-// 关键变化：var file = Files.createTempFile("java-channel-", ".txt")；file 接收 createTempFile("java-channel-") 的返回值，当前值变为这次调用得到的具体结果。
-// 初始状态：file 当前为 Files.createTempFile("java-channel-", ".txt")。
+// 输入：var file = Files.createTempFile("java-channel-", ".txt");；右侧表达式 Files.createTempFile("java-channel-", ".txt") 的结果赋给 file。
+// 关键变化：var file = Files.createTempFile("java-channel-", ".txt");；调用 createTempFile，实参为 "java-channel-", ".txt"，返回值写入 file。
 Files.writeString(file, "OK");
-// 关键变化：Files.writeString(file, "OK");；Files 写入具体参数 file，对象状态或输出内容随之改变。
+// 输入：Files.writeString(file, "OK");；接收对象为 Files，调用 writeString 的实参为 file, "OK"。
+// 关键变化：Files.writeString(file, "OK");；将 "OK" 写入路径 file；writeString 返回目标 Path，文件内容更新。
 try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
-// 关键变化：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {；当前对象；try；当前对象.try(FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) 返回本次调用的具体结果，后续语句继续使用该值。
+// 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.READ)，try 结束时自动关闭。
+// 关键变化：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {；创建资源 channel，构造表达式为 FileChannel.open(file, StandardOpenOption.READ)；try 结束时关闭该资源。
     ByteBuffer buffer = ByteBuffer.allocate(2);
-    // 关键变化：ByteBuffer buffer = ByteBuffer.allocate(2)；buffer 接收 allocate(2) 的返回值，当前值变为这次调用得到的具体结果。
+    // 输入：ByteBuffer buffer = ByteBuffer.allocate(2);；右侧表达式 ByteBuffer.allocate(2) 的结果赋给 buffer。
+    // 关键变化：ByteBuffer buffer = ByteBuffer.allocate(2);；调用 allocate，实参为 2，返回值写入 buffer。
     System.out.println(channel.read(buffer));
     // 输出：2
 }
 Files.deleteIfExists(file);
-// 关键变化：Files.deleteIfExists(file);；Files 按具体参数 file 删除目标内容。
+// 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
+// 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
 ```
 
 需要控制 position、limit 和零拷贝传输时阅读 [NIO Buffer 与 Channel](/courses/java/07-IO与网络/05-NIO-Buffer与Channel)。
@@ -177,10 +199,11 @@ import java.nio.file.Path;
 public class FilePathBridgeDemo {
     public static void main(String[] args) {
         File legacy = new File("notes.txt");
-        // 关键变化：File legacy = new File("notes.txt")；legacy 接收 该操作("notes.txt") 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：legacy 当前为 new File("notes.txt")。
+        // 输入：File legacy = new File("notes.txt");；使用构造参数 "notes.txt" 创建 File，结果赋给 legacy。
+        // 关键变化：File legacy = new File("notes.txt");；创建 File，构造参数为 "notes.txt"，实例写入 legacy。
         Path modern = legacy.toPath();
-        // 作用：File 仍存在于旧库和旧签名中，但它的异常、属性和符号链接表达能力较弱；新代码从 Path 开始，需要兼容旧 API 时用 toPath() 或 toFile() 做边界转换。
+        // 输入：Path modern = legacy.toPath();；右侧表达式 legacy.toPath() 的结果赋给 modern。
+        // 关键变化：Path modern = legacy.toPath();；调用 toPath，实参为 无显式参数，返回值写入 modern。
         System.out.println(modern.getFileName());
         // 输出：notes.txt
     }
@@ -201,12 +224,18 @@ import java.io.ObjectOutputStream;
 public class SerializationBoundaryDemo {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         var bytes = new ByteArrayOutputStream();
-// 关键变化：bytes 接收表达式 new ByteArrayOutputStream() 的计算结果。
-// 初始状态：bytes 的初始值为 new ByteArrayOutputStream()。
+        // 输入：var bytes = new ByteArrayOutputStream();；使用构造参数 无显式参数 创建 ByteArrayOutputStream，结果赋给 bytes。
+        // 关键变化：var bytes = new ByteArrayOutputStream();；创建 ByteArrayOutputStream，构造参数为 无显式参数，实例写入 bytes。
         try (var out = new ObjectOutputStream(bytes)) {
+        // 输入：try (var out = new ObjectOutputStream(bytes)) {；资源变量 out 接收 new ObjectOutputStream(bytes)，try 结束时自动关闭。
+        // 关键变化：try (var out = new ObjectOutputStream(bytes)) {；创建资源 out，构造表达式为 new ObjectOutputStream(bytes)；try 结束时关闭该资源。
             out.writeObject("java");
+            // 输入：out.writeObject("java");；接收对象为 out，调用 writeObject 的实参为 "java"。
+            // 关键变化：out.writeObject("java");；向 out 写入 "java"，writeObject 返回 void；目标内容更新。
         }
         try (var in = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+        // 输入：try (var in = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {；资源变量 in 接收 new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))，try 结束时自动关闭。
+        // 关键变化：try (var in = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {；创建资源 in，构造表达式为 new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))；try 结束时关闭该资源。
             System.out.println(in.readObject());
             // 输出：java
         }
@@ -224,9 +253,11 @@ import java.nio.file.Path;
 public class PathBoundaryDemo {
     public static void main(String[] args) {
         Path root = Path.of("/srv/data").toAbsolutePath().normalize();
-// 关键变化：root 接收表达式 Path.of("/srv/data").toAbsolutePath().normalize() 的计算结果。
-// 初始状态：root 的初始值为 Path.of("/srv/data").toAbsolutePath().normalize()。
+        // 输入：Path root = Path.of("/srv/data").toAbsolutePath().normalize();；右侧表达式 Path.of("/srv/data").toAbsolutePath().normalize() 的结果赋给 root。
+        // 关键变化：Path root = Path.of("/srv/data").toAbsolutePath().normalize();；按 "/srv/data" 调用 of 创建值，结果写入 root。
         Path candidate = root.resolve("reports", "2026.txt").normalize();
+        // 输入：Path candidate = root.resolve("reports", "2026.txt").normalize();；右侧表达式 root.resolve("reports", "2026.txt").normalize() 的结果赋给 candidate。
+        // 关键变化：Path candidate = root.resolve("reports", "2026.txt").normalize();；调用 resolve，实参为 "reports", "2026.txt"，返回值写入 candidate。
         System.out.println(candidate.startsWith(root));
         // 输出：true
     }
@@ -243,15 +274,31 @@ import java.nio.file.Path;
 public class IoNioDemo {
     public static void main(String[] args) throws IOException {
         Path directory = Files.createTempDirectory("java-io-demo-");
+        // 输入：Path directory = Files.createTempDirectory("java-io-demo-");；右侧表达式 Files.createTempDirectory("java-io-demo-") 的结果赋给 directory。
+        // 关键变化：Path directory = Files.createTempDirectory("java-io-demo-");；调用 createTempDirectory，实参为 "java-io-demo-"，返回值写入 directory。
         Path source = directory.resolve("source.txt");
+        // 输入：Path source = directory.resolve("source.txt");；右侧表达式 directory.resolve("source.txt") 的结果赋给 source。
+        // 关键变化：Path source = directory.resolve("source.txt");；调用 resolve，实参为 "source.txt"，返回值写入 source。
         Path copy = directory.resolve("copy.txt");
+        // 输入：Path copy = directory.resolve("copy.txt");；右侧表达式 directory.resolve("copy.txt") 的结果赋给 copy。
+        // 关键变化：Path copy = directory.resolve("copy.txt");；调用 resolve，实参为 "copy.txt"，返回值写入 copy。
         Files.writeString(source, "Java I/O", StandardCharsets.UTF_8);
+        // 输入：Files.writeString(source, "Java I/O", StandardCharsets.UTF_8);；接收对象为 Files，调用 writeString 的实参为 source, "Java I/O", StandardCharsets.UTF_8。
+        // 关键变化：Files.writeString(source, "Java I/O", StandardCharsets.UTF_8);；将 "Java I/O"，字符集为 StandardCharsets.UTF_8 写入路径 source；writeString 返回目标 Path，文件内容更新。
         Files.copy(source, copy);
+        // 输入：Files.copy(source, copy);；接收对象为 Files，调用 copy 的实参为 source, copy。
+        // 关键变化：Files.copy(source, copy);；将 source 复制到 copy，返回目标 Path；目标文件更新。
         System.out.println(Files.readString(copy, StandardCharsets.UTF_8));
         // 输出：Java I/O
         Files.deleteIfExists(copy);
+        // 输入：Files.deleteIfExists(copy);；接收对象为 Files，调用 deleteIfExists 的实参为 copy。
+        // 关键变化：Files.deleteIfExists(copy);；删除路径 copy；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(source);
+        // 输入：Files.deleteIfExists(source);；接收对象为 Files，调用 deleteIfExists 的实参为 source。
+        // 关键变化：Files.deleteIfExists(source);；删除路径 source；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(directory);
+        // 输入：Files.deleteIfExists(directory);；接收对象为 Files，调用 deleteIfExists 的实参为 directory。
+        // 关键变化：Files.deleteIfExists(directory);；删除路径 directory；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```

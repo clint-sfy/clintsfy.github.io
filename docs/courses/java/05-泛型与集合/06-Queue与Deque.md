@@ -40,16 +40,18 @@ description: 速查 FIFO 队列、双端队列、栈、优先级队列及并发�
 offer 尝试把元素加入队尾，并用返回值表示是否成功。
 
 ```java
+// 语义：offer 尝试把元素加入队尾，并用返回值表示是否成功。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class QueueOfferDemo {
     public static void main(String[] args) {
         Queue<String> queue = new ArrayDeque<>();
-        // 初始状态：queue 当前为 new ArrayDeque<>()。
+        // 输入：Queue<String> queue = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 queue。
+        // 关键变化：Queue<String> queue = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 queue。
         boolean accepted = queue.offer("job-1");
-        // 初始状态：accepted 当前为 queue.offer("job-1")。
-        // 作用：offer 尝试把元素加入队尾，并用返回值表示是否成功。
+        // 输入：boolean accepted = queue.offer("job-1");；右侧表达式 queue.offer("job-1") 的结果赋给 accepted。
+        // 关键变化：boolean accepted = queue.offer("job-1");；调用 offer，实参为 "job-1"，返回值写入 accepted。
         System.out.println(accepted + ", " + queue);
         // 输出：true, [job-1]
     }
@@ -61,18 +63,20 @@ public class QueueOfferDemo {
 poll 返回并删除队首，队列为空时返回 null。
 
 ```java
+// 语义：poll 返回并删除队首，队列为空时返回 null。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class QueuePollDemo {
     public static void main(String[] args) {
         Queue<String> queue = new ArrayDeque<>();
-        // 关键变化：Queue<String> queue = new ArrayDeque<>()；queue 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：queue 当前为 new ArrayDeque<>()。
+        // 输入：Queue<String> queue = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 queue。
+        // 关键变化：Queue<String> queue = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 queue。
         queue.offer("job-1");
-        // 关键变化：queue.offer("job-1");；queue；offer；queue.offer("job-1") 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：queue.offer("job-1");；接收对象为 queue，调用 offer 的实参为 "job-1"。
+        // 关键变化：queue.offer("job-1");；向 queue 写入 "job-1"，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         System.out.println(queue.poll());
-// 输出：job-1
+        // 输出：job-1
         System.out.println(queue.poll());
         // 输出：null
     }
@@ -84,18 +88,20 @@ public class QueuePollDemo {
 peek 返回但不删除队首，队列为空时返回 null。
 
 ```java
+// 语义：peek 返回但不删除队首，队列为空时返回 null。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class QueuePeekDemo {
     public static void main(String[] args) {
         Queue<String> queue = new ArrayDeque<>();
-        // 关键变化：Queue<String> queue = new ArrayDeque<>()；queue 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：queue 当前为 new ArrayDeque<>()。
+        // 输入：Queue<String> queue = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 queue。
+        // 关键变化：Queue<String> queue = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 queue。
         queue.offer("job-1");
-        // 关键变化：queue.offer("job-1");；queue；offer；queue.offer("job-1") 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：queue.offer("job-1");；接收对象为 queue，调用 offer 的实参为 "job-1"。
+        // 关键变化：queue.offer("job-1");；向 queue 写入 "job-1"，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         System.out.println(queue.peek());
-// 输出：job-1
+        // 输出：job-1
         System.out.println(queue.size());
         // 输出：1
     }
@@ -107,16 +113,18 @@ public class QueuePeekDemo {
 add 在无法加入元素时抛异常，适合把失败视为违背程序约束的场景。
 
 ```java
+// 语义：add 在无法加入元素时抛异常，适合把失败视为违背程序约束的场景。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class QueueAddDemo {
     public static void main(String[] args) {
         Queue<String> queue = new ArrayDeque<>();
-        // 初始状态：queue 当前为 new ArrayDeque<>()。
+        // 输入：Queue<String> queue = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 queue。
+        // 关键变化：Queue<String> queue = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 queue。
         boolean added = queue.add("required");
-        // 初始状态：added 当前为 queue.add("required")。
-        // 作用：add 在无法加入元素时抛异常，适合把失败视为违背程序约束的场景。
+        // 输入：boolean added = queue.add("required");；右侧表达式 queue.add("required") 的结果赋给 added。
+        // 关键变化：boolean added = queue.add("required");；调用 add，实参为 "required"，返回值写入 added。
         System.out.println(added + ", " + queue);
         // 输出：true, [required]
     }
@@ -128,18 +136,20 @@ public class QueueAddDemo {
 remove 返回并删除队首，空队列调用会抛 NoSuchElementException。
 
 ```java
+// 语义：remove 返回并删除队首，空队列调用会抛 NoSuchElementException。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class QueueRemoveDemo {
     public static void main(String[] args) {
         Queue<String> queue = new ArrayDeque<>();
-        // 关键变化：Queue<String> queue = new ArrayDeque<>();；queue 按具体参数 当前键或路径 删除目标内容。
-        // 初始状态：queue 当前为 new ArrayDeque<>()。
+        // 输入：Queue<String> queue = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 queue。
+        // 关键变化：Queue<String> queue = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 queue。
         queue.add("required");
-        // 关键变化：queue.add("required");；queue 追加具体参数 "required"，容器内容随之增长。
+        // 输入：queue.add("required");；接收对象为 queue，调用 add 的实参为 "required"。
+        // 关键变化：queue.add("required");；向 queue 加入 "required"，返回 boolean 表示是否发生变化；queue 内容更新。
         System.out.println(queue.remove());
-// 输出：required
+        // 输出：required
     }
 }
 ```
@@ -149,18 +159,20 @@ public class QueueRemoveDemo {
 element 返回但不删除队首，空队列调用会抛 NoSuchElementException。
 
 ```java
+// 语义：element 返回但不删除队首，空队列调用会抛 NoSuchElementException。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class QueueElementDemo {
     public static void main(String[] args) {
         Queue<String> queue = new ArrayDeque<>();
-        // 关键变化：Queue<String> queue = new ArrayDeque<>()；queue 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：queue 当前为 new ArrayDeque<>()。
+        // 输入：Queue<String> queue = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 queue。
+        // 关键变化：Queue<String> queue = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 queue。
         queue.add("required");
-        // 关键变化：queue.add("required");；queue 追加具体参数 "required"，容器内容随之增长。
+        // 输入：queue.add("required");；接收对象为 queue，调用 add 的实参为 "required"。
+        // 关键变化：queue.add("required");；向 queue 加入 "required"，返回 boolean 表示是否发生变化；queue 内容更新。
         System.out.println(queue.element());
-// 输出：required
+        // 输出：required
         System.out.println(queue.size());
         // 输出：1
     }
@@ -172,15 +184,18 @@ public class QueueElementDemo {
 offerFirst 尝试从双端队列头部加入元素，并返回是否成功。
 
 ```java
+// 语义：offerFirst 尝试从双端队列头部加入元素，并返回是否成功。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequeOfferFirstDemo {
     public static void main(String[] args) {
         Deque<String> deque = new ArrayDeque<>();
-        // 初始状态：deque 当前为 new ArrayDeque<>()。
+        // 输入：Deque<String> deque = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 deque。
+        // 关键变化：Deque<String> deque = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 deque。
         deque.offerFirst("urgent");
-        // 关键变化：deque.offerFirst("urgent");；deque；offerFirst；deque.offerFirst("urgent") 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：deque.offerFirst("urgent");；接收对象为 deque，调用 offerFirst 的实参为 "urgent"。
+        // 关键变化：deque.offerFirst("urgent");；向 deque 写入 "urgent"，返回 boolean 表示是否入队；入队成功时 deque 内容更新。
         System.out.println(deque);
         // 输出：[urgent]
     }
@@ -192,15 +207,18 @@ public class DequeOfferFirstDemo {
 offerLast 尝试从双端队列尾部加入元素，并返回是否成功。
 
 ```java
+// 语义：offerLast 尝试从双端队列尾部加入元素，并返回是否成功。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequeOfferLastDemo {
     public static void main(String[] args) {
         Deque<String> deque = new ArrayDeque<>();
-        // 初始状态：deque 当前为 new ArrayDeque<>()。
+        // 输入：Deque<String> deque = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 deque。
+        // 关键变化：Deque<String> deque = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 deque。
         deque.offerLast("normal");
-        // 关键变化：deque.offerLast("normal");；deque；offerLast；deque.offerLast("normal") 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：deque.offerLast("normal");；接收对象为 deque，调用 offerLast 的实参为 "normal"。
+        // 关键变化：deque.offerLast("normal");；向 deque 写入 "normal"，返回 boolean 表示是否入队；入队成功时 deque 内容更新。
         System.out.println(deque);
         // 输出：[normal]
     }
@@ -212,20 +230,23 @@ public class DequeOfferLastDemo {
 pollFirst 返回并删除头部元素，双端队列为空时返回 null。
 
 ```java
+// 语义：pollFirst 返回并删除头部元素，双端队列为空时返回 null。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequePollFirstDemo {
     public static void main(String[] args) {
         Deque<Integer> deque = new ArrayDeque<>();
-        // 关键变化：Deque<Integer> deque = new ArrayDeque<>()；deque 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：deque 当前为 new ArrayDeque<>()。
+        // 输入：Deque<Integer> deque = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 deque。
+        // 关键变化：Deque<Integer> deque = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 deque。
         deque.addLast(1);
-        // 关键变化：deque.addLast(1);；deque；addLast；deque.addLast(1) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：deque.addLast(1);；接收对象为 deque，调用 addLast 的实参为 1。
+        // 关键变化：deque.addLast(1);；调用 addLast，实参为 1；向 deque 末端追加 1；队列顺序更新。
         deque.addLast(2);
-        // 关键变化：deque.addLast(2);；deque；addLast；deque.addLast(2) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：deque.addLast(2);；接收对象为 deque，调用 addLast 的实参为 2。
+        // 关键变化：deque.addLast(2);；调用 addLast，实参为 2；向 deque 末端追加 2；队列顺序更新。
         System.out.println(deque.pollFirst());
-// 输出：1
+        // 输出：1
         System.out.println(deque);
         // 输出：[2]
     }
@@ -237,20 +258,23 @@ public class DequePollFirstDemo {
 pollLast 返回并删除尾部元素，双端队列为空时返回 null。
 
 ```java
+// 语义：pollLast 返回并删除尾部元素，双端队列为空时返回 null。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequePollLastDemo {
     public static void main(String[] args) {
         Deque<Integer> deque = new ArrayDeque<>();
-        // 关键变化：Deque<Integer> deque = new ArrayDeque<>()；deque 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：deque 当前为 new ArrayDeque<>()。
+        // 输入：Deque<Integer> deque = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 deque。
+        // 关键变化：Deque<Integer> deque = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 deque。
         deque.addLast(1);
-        // 关键变化：deque.addLast(1);；deque；addLast；deque.addLast(1) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：deque.addLast(1);；接收对象为 deque，调用 addLast 的实参为 1。
+        // 关键变化：deque.addLast(1);；调用 addLast，实参为 1；向 deque 末端追加 1；队列顺序更新。
         deque.addLast(2);
-        // 关键变化：deque.addLast(2);；deque；addLast；deque.addLast(2) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：deque.addLast(2);；接收对象为 deque，调用 addLast 的实参为 2。
+        // 关键变化：deque.addLast(2);；调用 addLast，实参为 2；向 deque 末端追加 2；队列顺序更新。
         System.out.println(deque.pollLast());
-// 输出：2
+        // 输出：2
         System.out.println(deque);
         // 输出：[1]
     }
@@ -262,20 +286,23 @@ public class DequePollLastDemo {
 peekFirst 返回但不删除头部元素，双端队列为空时返回 null。
 
 ```java
+// 语义：peekFirst 返回但不删除头部元素，双端队列为空时返回 null。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequePeekFirstDemo {
     public static void main(String[] args) {
         Deque<Integer> deque = new ArrayDeque<>();
-        // 关键变化：Deque<Integer> deque = new ArrayDeque<>()；deque 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：deque 当前为 new ArrayDeque<>()。
+        // 输入：Deque<Integer> deque = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 deque。
+        // 关键变化：Deque<Integer> deque = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 deque。
         deque.addLast(1);
-        // 关键变化：deque.addLast(1);；deque；addLast；deque.addLast(1) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：deque.addLast(1);；接收对象为 deque，调用 addLast 的实参为 1。
+        // 关键变化：deque.addLast(1);；调用 addLast，实参为 1；向 deque 末端追加 1；队列顺序更新。
         deque.addLast(2);
-        // 关键变化：deque.addLast(2);；deque；addLast；deque.addLast(2) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：deque.addLast(2);；接收对象为 deque，调用 addLast 的实参为 2。
+        // 关键变化：deque.addLast(2);；调用 addLast，实参为 2；向 deque 末端追加 2；队列顺序更新。
         System.out.println(deque.peekFirst());
-// 输出：1
+        // 输出：1
         System.out.println(deque);
         // 输出：[1, 2]
     }
@@ -287,20 +314,23 @@ public class DequePeekFirstDemo {
 peekLast 返回但不删除尾部元素，双端队列为空时返回 null。
 
 ```java
+// 语义：peekLast 返回但不删除尾部元素，双端队列为空时返回 null。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequePeekLastDemo {
     public static void main(String[] args) {
         Deque<Integer> deque = new ArrayDeque<>();
-        // 关键变化：Deque<Integer> deque = new ArrayDeque<>()；deque 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：deque 当前为 new ArrayDeque<>()。
+        // 输入：Deque<Integer> deque = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 deque。
+        // 关键变化：Deque<Integer> deque = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 deque。
         deque.addLast(1);
-        // 关键变化：deque.addLast(1);；deque；addLast；deque.addLast(1) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：deque.addLast(1);；接收对象为 deque，调用 addLast 的实参为 1。
+        // 关键变化：deque.addLast(1);；调用 addLast，实参为 1；向 deque 末端追加 1；队列顺序更新。
         deque.addLast(2);
-        // 关键变化：deque.addLast(2);；deque；addLast；deque.addLast(2) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：deque.addLast(2);；接收对象为 deque，调用 addLast 的实参为 2。
+        // 关键变化：deque.addLast(2);；调用 addLast，实参为 2；向 deque 末端追加 2；队列顺序更新。
         System.out.println(deque.peekLast());
-// 输出：2
+        // 输出：2
         System.out.println(deque);
         // 输出：[1, 2]
     }
@@ -312,15 +342,18 @@ public class DequePeekLastDemo {
 push 从头部压入元素，普通栈场景优先 Deque 而不是遗留 Stack。
 
 ```java
+// 语义：push 从头部压入元素，普通栈场景优先 Deque 而不是遗留 Stack。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequePushDemo {
     public static void main(String[] args) {
         Deque<String> stack = new ArrayDeque<>();
-        // 初始状态：stack 当前为 new ArrayDeque<>()。
+        // 输入：Deque<String> stack = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 stack。
+        // 关键变化：Deque<String> stack = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 stack。
         stack.push("page-1");
-        // 关键变化：stack.push("page-1");；stack；push；stack.push("page-1") 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：stack.push("page-1");；接收对象为 stack，调用 push 的实参为 "page-1"。
+        // 关键变化：stack.push("page-1");；调用 push，实参为 "page-1"；将 "page-1" 压入 stack 栈顶；栈状态更新。
         System.out.println(stack);
         // 输出：[page-1]
     }
@@ -332,20 +365,23 @@ public class DequePushDemo {
 pop 返回并删除头部元素，空栈调用会抛 NoSuchElementException。
 
 ```java
+// 语义：pop 返回并删除头部元素，空栈调用会抛 NoSuchElementException。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequePopDemo {
     public static void main(String[] args) {
         Deque<String> stack = new ArrayDeque<>();
-        // 关键变化：Deque<String> stack = new ArrayDeque<>()；stack 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：stack 当前为 new ArrayDeque<>()。
+        // 输入：Deque<String> stack = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 stack。
+        // 关键变化：Deque<String> stack = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 stack。
         stack.push("page-1");
-        // 关键变化：stack.push("page-1");；stack；push；stack.push("page-1") 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：stack.push("page-1");；接收对象为 stack，调用 push 的实参为 "page-1"。
+        // 关键变化：stack.push("page-1");；调用 push，实参为 "page-1"；将 "page-1" 压入 stack 栈顶；栈状态更新。
         stack.push("page-2");
-        // 关键变化：stack.push("page-2");；stack；push；stack.push("page-2") 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：stack.push("page-2");；接收对象为 stack，调用 push 的实参为 "page-2"。
+        // 关键变化：stack.push("page-2");；调用 push，实参为 "page-2"；将 "page-2" 压入 stack 栈顶；栈状态更新。
         System.out.println(stack.pop());
-// 输出：page-2
+        // 输出：page-2
     }
 }
 ```
@@ -355,18 +391,20 @@ public class DequePopDemo {
 peek 返回但不删除头部元素，空栈时返回 null。
 
 ```java
+// 语义：peek 返回但不删除头部元素，空栈时返回 null。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class DequeStackPeekDemo {
     public static void main(String[] args) {
         Deque<String> stack = new ArrayDeque<>();
-        // 关键变化：Deque<String> stack = new ArrayDeque<>()；stack 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：stack 当前为 new ArrayDeque<>()。
+        // 输入：Deque<String> stack = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 stack。
+        // 关键变化：Deque<String> stack = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 stack。
         stack.push("page-1");
-        // 关键变化：stack.push("page-1");；stack；push；stack.push("page-1") 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：stack.push("page-1");；接收对象为 stack，调用 push 的实参为 "page-1"。
+        // 关键变化：stack.push("page-1");；调用 push，实参为 "page-1"；将 "page-1" 压入 stack 栈顶；栈状态更新。
         System.out.println(stack.peek());
-// 输出：page-1
+        // 输出：page-1
         System.out.println(stack.size());
         // 输出：1
     }
@@ -378,22 +416,26 @@ public class DequeStackPeekDemo {
 offer 把元素加入优先级队列，默认由自然顺序决定队首。
 
 ```java
+// 语义：offer 把元素加入优先级队列，默认由自然顺序决定队首。
 import java.util.PriorityQueue;
 import java.util.Queue;
 
 public class PriorityQueueDemo {
     public static void main(String[] args) {
         Queue<Integer> queue = new PriorityQueue<>();
-        // 关键变化：Queue<Integer> queue = new PriorityQueue<>()；queue 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：queue 当前为 new PriorityQueue<>()。
+        // 输入：Queue<Integer> queue = new PriorityQueue<>();；使用构造参数 无显式参数 创建 PriorityQueue<>，结果赋给 queue。
+        // 关键变化：Queue<Integer> queue = new PriorityQueue<>();；创建 PriorityQueue<>，构造参数为 无显式参数，实例写入 queue。
         queue.offer(30);
-        // 关键变化：queue.offer(30);；queue；offer；queue.offer(30) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：queue.offer(30);；接收对象为 queue，调用 offer 的实参为 30。
+        // 关键变化：queue.offer(30);；向 queue 写入 30，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         queue.offer(10);
-        // 关键变化：queue.offer(10);；queue；offer；queue.offer(10) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：queue.offer(10);；接收对象为 queue，调用 offer 的实参为 10。
+        // 关键变化：queue.offer(10);；向 queue 写入 10，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         queue.offer(20);
-        // 关键变化：queue.offer(20);；queue；offer；queue.offer(20) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：queue.offer(20);；接收对象为 queue，调用 offer 的实参为 20。
+        // 关键变化：queue.offer(20);；向 queue 写入 20，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         System.out.println(queue.offer(20));
-// 输出：true
+        // 输出：true
         System.out.println(queue.peek());
         // 输出：10
     }
@@ -405,18 +447,25 @@ public class PriorityQueueDemo {
 poll 删除当前最小元素，遍历顺序本身不代表完整排序结果。
 
 ```java
+// 语义：poll 删除当前最小元素，遍历顺序本身不代表完整排序结果。
 import java.util.PriorityQueue;
 
 public class PriorityQueuePollDemo {
     public static void main(String[] args) {
         PriorityQueue<Integer> queue = new PriorityQueue<>();
-        // 关键变化：PriorityQueue<Integer> queue = new PriorityQueue<>()；queue 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：queue 当前为 new PriorityQueue<>()。
+        // 输入：PriorityQueue<Integer> queue = new PriorityQueue<>();；使用构造参数 无显式参数 创建 PriorityQueue<>，结果赋给 queue。
+        // 关键变化：PriorityQueue<Integer> queue = new PriorityQueue<>();；创建 PriorityQueue<>，构造参数为 无显式参数，实例写入 queue。
         queue.offer(30);
+        // 输入：queue.offer(30);；接收对象为 queue，调用 offer 的实参为 30。
+        // 关键变化：queue.offer(30);；向 queue 写入 30，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         queue.offer(10);
+        // 输入：queue.offer(10);；接收对象为 queue，调用 offer 的实参为 10。
+        // 关键变化：queue.offer(10);；向 queue 写入 10，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         queue.offer(20);
+        // 输入：queue.offer(20);；接收对象为 queue，调用 offer 的实参为 20。
+        // 关键变化：queue.offer(20);；向 queue 写入 20，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         System.out.println(queue.poll());
-// 输出：10
+        // 输出：10
     }
 }
 ```
@@ -426,17 +475,22 @@ public class PriorityQueuePollDemo {
 peek 查看但不删除当前最高优先级元素，空队列时返回 null。
 
 ```java
+// 语义：peek 查看但不删除当前最高优先级元素，空队列时返回 null。
 import java.util.PriorityQueue;
 
 public class PriorityQueuePeekDemo {
     public static void main(String[] args) {
         PriorityQueue<Integer> queue = new PriorityQueue<>();
-        // 关键变化：PriorityQueue<Integer> queue = new PriorityQueue<>()；queue 接收 该操作(当前参数) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：queue 当前为 new PriorityQueue<>()。
+        // 输入：PriorityQueue<Integer> queue = new PriorityQueue<>();；使用构造参数 无显式参数 创建 PriorityQueue<>，结果赋给 queue。
+        // 关键变化：PriorityQueue<Integer> queue = new PriorityQueue<>();；创建 PriorityQueue<>，构造参数为 无显式参数，实例写入 queue。
         queue.offer(30);
+        // 输入：queue.offer(30);；接收对象为 queue，调用 offer 的实参为 30。
+        // 关键变化：queue.offer(30);；向 queue 写入 30，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         queue.offer(10);
+        // 输入：queue.offer(10);；接收对象为 queue，调用 offer 的实参为 10。
+        // 关键变化：queue.offer(10);；向 queue 写入 10，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         System.out.println(queue.peek());
-// 输出：10
+        // 输出：10
         System.out.println(queue.size());
         // 输出：2
     }
@@ -457,12 +511,16 @@ public class CustomPriorityQueueDemo {
     public static void main(String[] args) {
         PriorityQueue<String> queue =
             new PriorityQueue<>(Comparator.comparingInt(String::length).reversed());
-// 初始状态：表达式为 PriorityQueue<String> queue =。
-            // 关键变化：new PriorityQueue<>(Comparator.comparingInt(String::length).reversed());；Comparator；comparingInt；Comparator.comparingInt(Comparator.comparingInt(String::length).reversed()) 返回本次调用的具体结果，后续语句继续使用该值。
+            // 输入：PriorityQueue<String> queue = new PriorityQueue<>(Comparator.comparingInt(String::length).reversed());；使用构造参数 Comparator.comparingInt(String::length).reversed() 创建 PriorityQueue<>，结果赋给 queue。
+            // 关键变化：PriorityQueue<String> queue = new PriorityQueue<>(Comparator.comparingInt(String::length).reversed());；把方法引用 new PriorityQueue<>(Comparator.comparingInt(String::length).reversed()) 绑定到目标函数式接口，结果写入 queue。
+            // 输入：new PriorityQueue<>(Comparator.comparingInt(String::length).reversed());；接收对象为 Comparator，调用 comparingInt 的实参为 String::length。
+            // 关键变化：Comparator.comparingInt(String::length).reversed() 让长度更长的字符串优先，PriorityQueue 使用该 Comparator。
         queue.offer("a");
-        // 关键变化：queue.offer("a");；queue；offer；queue.offer("a") 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：queue.offer("a");；接收对象为 queue，调用 offer 的实参为 "a"。
+        // 关键变化：queue.offer("a");；向 queue 写入 "a"，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         queue.offer("long");
-        // 关键变化：queue.offer("long");；queue；offer；queue.offer("long") 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：queue.offer("long");；接收对象为 queue，调用 offer 的实参为 "long"。
+        // 关键变化：queue.offer("long");；向 queue 写入 "long"，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         System.out.println(queue.poll());
         // 输出：long
     }
@@ -479,13 +537,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public class BlockingQueueDemo {
-// 初始状态：queue 是容量为 2 的空 ArrayBlockingQueue。
-// 初始状态：put("task-1") 入队，take() 会移除并返回它。
     public static void main(String[] args) throws InterruptedException {
         BlockingQueue<String> queue = new ArrayBlockingQueue<>(2);
-        // 初始状态：queue 当前为 new ArrayBlockingQueue<>(2)。
+        // 输入：BlockingQueue<String> queue = new ArrayBlockingQueue<>(2);；使用构造参数 2 创建 ArrayBlockingQueue<>，结果赋给 queue。
+        // 关键变化：BlockingQueue<String> queue = new ArrayBlockingQueue<>(2);；创建 ArrayBlockingQueue<>，构造参数为 2，实例写入 queue。
         queue.put("task-1");
-        // 关键变化：queue.put("task-1");；queue 按具体键值参数 "task-1" 更新映射内容。
+        // 输入：queue.put("task-1");；接收对象为 queue，调用 put 的实参为 "task-1"。
+        // 关键变化：queue.put("task-1");；阻塞等待容量后把 "task-1" 放入 queue，成功返回 void；队列内容更新。
         System.out.println(queue.take());
         // 输出：task-1
     }
@@ -503,12 +561,14 @@ import java.util.concurrent.BlockingQueue;
 public class BlockingQueueOfferDemo {
     public static void main(String[] args) {
         BlockingQueue<String> queue = new ArrayBlockingQueue<>(1);
-        // 初始状态：queue 当前为 new ArrayBlockingQueue<>(1)。
+        // 输入：BlockingQueue<String> queue = new ArrayBlockingQueue<>(1);；使用构造参数 1 创建 ArrayBlockingQueue<>，结果赋给 queue。
+        // 关键变化：BlockingQueue<String> queue = new ArrayBlockingQueue<>(1);；创建 ArrayBlockingQueue<>，构造参数为 1，实例写入 queue。
         boolean accepted = queue.offer("task");
-        // 关键变化：boolean accepted = queue.offer("task"); 的返回值写入 accepted，调用后 accepted 保存该具体结果。
+        // 输入：boolean accepted = queue.offer("task");；右侧表达式 queue.offer("task") 的结果赋给 accepted。
+        // 关键变化：boolean accepted = queue.offer("task");；调用 offer，实参为 "task"，返回值写入 accepted。
         boolean rejected = queue.offer("overflow");
-// 返回：rejected 接收 queue.offer("overflow") 的返回值。
-        // 关键变化：boolean rejected = queue.offer("overflow"); 的返回值写入 rejected，调用后 rejected 保存该具体结果。
+        // 输入：boolean rejected = queue.offer("overflow");；右侧表达式 queue.offer("overflow") 的结果赋给 rejected。
+        // 关键变化：boolean rejected = queue.offer("overflow");；调用 offer，实参为 "overflow"，返回值写入 rejected。
         System.out.println(accepted + ", " + rejected);
         // 输出：true, false
     }
@@ -526,12 +586,13 @@ import java.util.concurrent.BlockingQueue;
 public class BlockingQueuePollDemo {
     public static void main(String[] args) {
         BlockingQueue<String> queue = new ArrayBlockingQueue<>(1);
-        // 关键变化：BlockingQueue<String> queue = new ArrayBlockingQueue<>(1)；queue 接收 该操作(1) 的返回值，当前值变为这次调用得到的具体结果。
-        // 初始状态：queue 当前为 new ArrayBlockingQueue<>(1)。
+        // 输入：BlockingQueue<String> queue = new ArrayBlockingQueue<>(1);；使用构造参数 1 创建 ArrayBlockingQueue<>，结果赋给 queue。
+        // 关键变化：BlockingQueue<String> queue = new ArrayBlockingQueue<>(1);；创建 ArrayBlockingQueue<>，构造参数为 1，实例写入 queue。
         queue.offer("task");
-        // 关键变化：queue.offer("task");；queue；offer；queue.offer("task") 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：queue.offer("task");；接收对象为 queue，调用 offer 的实参为 "task"。
+        // 关键变化：queue.offer("task");；向 queue 写入 "task"，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         System.out.println(queue.poll());
-// 输出：task
+        // 输出：task
         System.out.println(queue.poll());
         // 输出：null
     }
@@ -547,13 +608,13 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ConcurrentQueueDemo {
-// 初始状态：queue 是空 ConcurrentLinkedQueue。
-// 初始状态：offer("task") 非阻塞入队，poll() 移除队头。
     public static void main(String[] args) {
         Queue<String> queue = new ConcurrentLinkedQueue<>();
-// 输入：queue 的初始值为 new ConcurrentLinkedQueue<>()。
-        // 作用：ConcurrentLinkedQueue 适合多线程下非阻塞入队出队，但不提供等待能力，也不适合把 size 当作精确并发协调条件。
+        // 输入：Queue<String> queue = new ConcurrentLinkedQueue<>();；使用构造参数 无显式参数 创建 ConcurrentLinkedQueue<>，结果赋给 queue。
+        // 关键变化：Queue<String> queue = new ConcurrentLinkedQueue<>();；创建 ConcurrentLinkedQueue<>，构造参数为 无显式参数，实例写入 queue。
         queue.offer("task");
+        // 输入：queue.offer("task");；接收对象为 queue，调用 offer 的实参为 "task"。
+        // 关键变化：queue.offer("task");；向 queue 写入 "task"，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         System.out.println(queue.poll());
         // 输出：task
     }
@@ -571,12 +632,20 @@ import java.util.Deque;
 public class DequeRemoveFirstOccurrenceDemo {
     public static void main(String[] args) {
         Deque<String> deque = new ArrayDeque<>();
-        // 初始状态：deque 当前为 new ArrayDeque<>()。
+        // 输入：Deque<String> deque = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 deque。
+        // 关键变化：Deque<String> deque = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 deque。
         deque.addLast("a");
+        // 输入：deque.addLast("a");；接收对象为 deque，调用 addLast 的实参为 "a"。
+        // 关键变化：deque.addLast("a");；调用 addLast，实参为 "a"；向 deque 末端追加 "a"；队列顺序更新。
         deque.addLast("b");
+        // 输入：deque.addLast("b");；接收对象为 deque，调用 addLast 的实参为 "b"。
+        // 关键变化：deque.addLast("b");；调用 addLast，实参为 "b"；向 deque 末端追加 "b"；队列顺序更新。
         deque.addLast("a");
+        // 输入：deque.addLast("a");；接收对象为 deque，调用 addLast 的实参为 "a"。
+        // 关键变化：deque.addLast("a");；调用 addLast，实参为 "a"；向 deque 末端追加 "a"；队列顺序更新。
         deque.removeFirstOccurrence("a");
-        // 关键变化：deque.removeFirstOccurrence("a");；deque；removeFirstOccurrence；deque.removeFirstOccurrence("a") 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：deque.removeFirstOccurrence("a");；接收对象为 deque，调用 removeFirstOccurrence 的实参为 "a"。
+        // 关键变化：deque.removeFirstOccurrence("a");；调用 removeFirstOccurrence，实参为 "a"；从 deque 删除首个等于 "a" 的元素；返回是否删除。
         System.out.println(deque);
         // 输出：[b, a]
     }
@@ -594,12 +663,20 @@ import java.util.Deque;
 public class DequeRemoveLastOccurrenceDemo {
     public static void main(String[] args) {
         Deque<String> deque = new ArrayDeque<>();
-        // 初始状态：deque 当前为 new ArrayDeque<>()。
+        // 输入：Deque<String> deque = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 deque。
+        // 关键变化：Deque<String> deque = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 deque。
         deque.addLast("a");
+        // 输入：deque.addLast("a");；接收对象为 deque，调用 addLast 的实参为 "a"。
+        // 关键变化：deque.addLast("a");；调用 addLast，实参为 "a"；向 deque 末端追加 "a"；队列顺序更新。
         deque.addLast("b");
+        // 输入：deque.addLast("b");；接收对象为 deque，调用 addLast 的实参为 "b"。
+        // 关键变化：deque.addLast("b");；调用 addLast，实参为 "b"；向 deque 末端追加 "b"；队列顺序更新。
         deque.addLast("a");
+        // 输入：deque.addLast("a");；接收对象为 deque，调用 addLast 的实参为 "a"。
+        // 关键变化：deque.addLast("a");；调用 addLast，实参为 "a"；向 deque 末端追加 "a"；队列顺序更新。
         deque.removeLastOccurrence("a");
-        // 关键变化：deque.removeLastOccurrence("a");；deque；removeLastOccurrence；deque.removeLastOccurrence("a") 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：deque.removeLastOccurrence("a");；接收对象为 deque，调用 removeLastOccurrence 的实参为 "a"。
+        // 关键变化：deque.removeLastOccurrence("a");；调用 removeLastOccurrence，实参为 "a"；从 deque 删除末个等于 "a" 的元素；返回是否删除。
         System.out.println(deque);
         // 输出：[a, b]
     }
@@ -617,11 +694,17 @@ import java.util.Queue;
 public class QueueToArrayDemo {
     public static void main(String[] args) {
         Queue<String> queue = new ArrayDeque<>();
-        // 初始状态：queue 当前为 new ArrayDeque<>()。
+        // 输入：Queue<String> queue = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 queue。
+        // 关键变化：Queue<String> queue = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 queue。
         queue.offer("a");
+        // 输入：queue.offer("a");；接收对象为 queue，调用 offer 的实参为 "a"。
+        // 关键变化：queue.offer("a");；向 queue 写入 "a"，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         queue.offer("b");
+        // 输入：queue.offer("b");；接收对象为 queue，调用 offer 的实参为 "b"。
+        // 关键变化：queue.offer("b");；向 queue 写入 "b"，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         String[] values = queue.toArray(String[]::new);
-        // 关键变化：String[] values = queue.toArray(String[]::new); 的返回值写入 values，调用后 values 保存该具体结果。
+        // 输入：String[] values = queue.toArray(String[]::new);；右侧表达式 queue.toArray(String[]::new) 的结果赋给 values。
+        // 关键变化：String[] values = queue.toArray(String[]::new);；把方法引用 queue.toArray(String[]::new) 绑定到目标函数式接口，结果写入 values。
         System.out.println(values.length + ", " + values[0]);
         // 输出：2, a
     }
@@ -636,7 +719,11 @@ import java.util.Queue;
 public class QueueSummaryDemo {
     public static void main(String[] args) {
         Queue<String> queue = new ArrayDeque<>();
+        // 输入：Queue<String> queue = new ArrayDeque<>();；使用构造参数 无显式参数 创建 ArrayDeque<>，结果赋给 queue。
+        // 关键变化：Queue<String> queue = new ArrayDeque<>();；创建 ArrayDeque<>，构造参数为 无显式参数，实例写入 queue。
         queue.offer("task");
+        // 输入：queue.offer("task");；接收对象为 queue，调用 offer 的实参为 "task"。
+        // 关键变化：queue.offer("task");；向 queue 写入 "task"，返回 boolean 表示是否入队；入队成功时 queue 内容更新。
         System.out.println(queue.poll());
         // 输出：task
     }

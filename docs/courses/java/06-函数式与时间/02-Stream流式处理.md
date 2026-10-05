@@ -40,15 +40,20 @@ Stream 像一条尚未开机的流水线：中间操作只描述步骤，遇到�
 流是数据源的处理视图，不会复制或持久化集合；同一条流消费后不能再次使用。
 
 ```java
+// 语义：流是数据源的处理视图，不会复制或持久化集合。
 import java.util.List;
 import java.util.stream.Stream;
 
 List<String> names = List.of("Ann", "Bob");
-// 初始状态：names 当前为 List.of("Ann", "Bob")。
+// 输入：List<String> names = List.of("Ann", "Bob");；右侧表达式 List.of("Ann", "Bob") 的结果赋给 names。
+// 关键变化：List<String> names = List.of("Ann", "Bob");；按 "Ann", "Bob" 调用 of 创建值，结果写入 names。
 long fromCollection = names.stream().count();
-// 初始状态：fromCollection 当前为 names.stream().count()。
-// 作用：流是数据源的处理视图，不会复制或持久化集合。
+// 输入：long fromCollection = names.stream().count();；右侧表达式 names.stream().count() 的结果赋给 fromCollection。
+// 关键变化：long fromCollection = names.stream().count();；统计 上一个链式结果 的元素数量，计数结果写入 fromCollection。
 long fromValues = Stream.of("Java", "SQL").count();
+// 输入：long fromValues = Stream.of("Java", "SQL").count();；右侧表达式 Stream.of("Java", "SQL").count() 的结果赋给 fromValues。
+// 关键变化：long fromValues = Stream.of("Java", "SQL").count();；统计 上一个链式结果 的元素数量，计数结果写入 fromValues。
+// 输出：2
 System.out.println(fromCollection + ", " + fromValues);
 // 输出：2, 2
 ```
@@ -59,9 +64,9 @@ System.out.println(fromCollection + ", " + fromValues);
 
 ```java
 long fromValues = Stream.of("Java", "SQL").count();
-// 初始状态：Stream.of 把显式字符串 "Java" 和 "SQL" 作为两个流元素，count() 将它们计入 fromValues。
-// 关键变化：long fromValues = Stream.of("Java", "SQL").count(); 将返回值写入 fromValues；fromValues 现在保存该具体结果。
-// 结果：fromValues 保存两个显式元素的计数 2。
+// 输入：long fromValues = Stream.of("Java", "SQL").count();；右侧表达式 Stream.of("Java", "SQL").count() 的结果赋给 fromValues。
+// 关键变化：long fromValues = Stream.of("Java", "SQL").count();；统计 上一个链式结果 的元素数量，计数结果写入 fromValues。
+// 输出：2
 ```
 
 ### `filter`：保留满足条件的元素
@@ -76,8 +81,12 @@ import java.util.List;
 List<Integer> result = List.of(1, 2, 3, 4).stream()
         .filter(number -> number % 2 == 0)
         .toList();
-        // 关键变化：.filter(number -> number % 2 == 0) .toList();；当前对象；filter；当前对象.filter(number -> number % 2 == 0) 处理当前元素流并得到对应结果。
-        // 初始状态：result 当前保存 List.of(1, 2, 3, 4).stream() .filter(number -> number % 2 == 0) .toList()的计算结果。
+        // 输入：List<Integer> result = List.of(1, 2, 3, 4).stream() .filter(number -> number % 2 == 0) .toList();；右侧表达式 List.of(1, 2, 3, 4).stream() .filter(number -> number % 2 == 0) .toList() 的结果赋给 result。
+        // 关键变化：List<Integer> result = List.of(1, 2, 3, 4).stream() .filter(number -> number % 2 == 0) .toList();；在流上调用 filter 处理元素，结果写入 result。
+        // 输入：filter(number -> number % 2 == 0)；从 1、2、3、4 中筛选出 2、4。
+        // 关键变化：filter 返回只含 2、4 的流，toList 收集为 [2, 4] 并写入 result。
+        // 输入：.toList();；接收对象为 上一个链式结果，调用 toList 的实参为 无显式参数。
+        // 关键变化：.toList();；终止当前流管道并把元素收集为 List；返回列表结果。
 System.out.println(result);
 // 输出：[2, 4]
 ```
@@ -94,8 +103,12 @@ import java.util.List;
 List<String> labels = List.of("java", "sql").stream()
         .map(String::toUpperCase)
         .toList();
-        // 关键变化：.map(String::toUpperCase) .toList();；当前对象；map；当前对象.map(String::toUpperCase) 处理当前元素流并得到对应结果。
-        // 初始状态：labels 当前保存 List.of("java", "sql").stream() .map(String::toUpperCase) .toList()的计算结果。
+        // 输入：List<String> labels = List.of("java", "sql").stream() .map(String::toUpperCase) .toList();；右侧表达式 List.of("java", "sql").stream() .map(String::toUpperCase) .toList() 的结果赋给 labels。
+        // 关键变化：List<String> labels = List.of("java", "sql").stream() .map(String::toUpperCase) .toList();；把方法引用 List.of("java", "sql").stream() .map(String::toUpperCase) .toList() 绑定到目标函数式接口，结果写入 labels。
+        // 输入：.map(String::toUpperCase) .toList();；接收对象为 上一个链式结果，调用 map 的实参为 String::toUpperCase。
+        // 关键变化：.map(String::toUpperCase) .toList();；按 mapper 将每个元素转换后继续传递到下游。
+        // 输入：.toList();；接收对象为 上一个链式结果，调用 toList 的实参为 无显式参数。
+        // 关键变化：.toList();；终止当前流管道并把元素收集为 List；返回列表结果。
 System.out.println(labels);
 // 输出：[JAVA, SQL]
 ```
@@ -105,13 +118,15 @@ System.out.println(labels);
 `flatMap` 把每个元素产生的子流合并成一层；子流为 `null` 时应改成 `Stream.empty()`，不要让管道抛异常。
 
 ```java
+// 语义：flatMap 把每个元素产生的子流合并成一层。
 import java.util.List;
 
 List<List<String>> groups = List.of(List.of("java", "sql"), List.of("http"));
-// 初始状态：groups 当前为 List.of(List.of("java", "sql"), List.of("http"))。
+// 输入：List<List<String>> groups = List.of(List.of("java", "sql"), List.of("http"));；右侧表达式 List.of(List.of("java", "sql"), List.of("http")) 的结果赋给 groups。
+// 关键变化：List<List<String>> groups = List.of(List.of("java", "sql"), List.of("http"));；按 List.of("java", "sql"), List.of("http") 调用 of 创建值，结果写入 groups。
 List<String> all = groups.stream().flatMap(List::stream).toList();
-// 初始状态：all 当前为 groups.stream().flatMap(List::stream).toList()。
-// 作用：flatMap 把每个元素产生的子流合并成一层。
+// 输入：List<String> all = groups.stream().flatMap(List::stream).toList();；右侧表达式 groups.stream().flatMap(List::stream).toList() 的结果赋给 all。
+// 关键变化：List<String> all = groups.stream().flatMap(List::stream).toList();；把方法引用 groups.stream().flatMap(List::stream).toList() 绑定到目标函数式接口，结果写入 all。
 System.out.println(all);
 // 输出：[java, sql, http]
 ```
@@ -121,11 +136,12 @@ System.out.println(all);
 去重依赖元素的 `equals`/`hashCode` 契约，并保持顺序流中首次出现的顺序。
 
 ```java
+// 语义：去重依赖元素的 equals/hashCode 契约，并保持顺序流中首次出现的顺序。
 import java.util.List;
 
 List<String> unique = List.of("java", "sql", "java").stream().distinct().toList();
-// 初始状态：unique 当前为 List.of("java", "sql", "java").stream().distinct().toList()。
-// 作用：去重依赖元素的 equals/hashCode 契约，并保持顺序流中首次出现的顺序。
+// 输入：List<String> unique = List.of("java", "sql", "java").stream().distinct().toList();；右侧表达式 List.of("java", "sql", "java").stream().distinct().toList() 的结果赋给 unique。
+// 关键变化：List<String> unique = List.of("java", "sql", "java").stream().distinct().toList();；在流上调用 distinct 处理元素，结果写入 unique。
 System.out.println(unique);
 // 输出：[java, sql]
 ```
@@ -143,8 +159,12 @@ import java.util.List;
 List<String> sorted = List.of("Java", "C", "Go").stream()
         .sorted(Comparator.comparingInt(String::length).thenComparing(String::compareTo))
         .toList();
-        // 关键变化：.sorted(Comparator.comparingInt(String::length).thenComparing(String::compareTo)) .toList();；当前对象；sorted；当前对象.sorted(Comparator.comparingInt(String::length).thenComparing(String::compareTo)) 处理当前元素流并得到对应结果。
-        // 初始状态：sorted 当前保存 List.of("Java", "C", "Go").stream() .sorted(Comparator.comparingInt(String::length).thenComparing(String::compareTo)) .toList()的计算结果。
+        // 输入：List<String> sorted = List.of("Java", "C", "Go").stream() .sorted(Comparator.comparingInt(String::length).thenComparing(String::compareTo)) .toList();；右侧表达式 List.of("Java", "C", "Go").stream() .sorted(Comparator.comparingInt(String::length).thenComparing(String::compareTo)) .toList() 的结果赋给 sorted。
+        // 关键变化：List<String> sorted = List.of("Java", "C", "Go").stream() .sorted(Comparator.comparingInt(String::length).thenComparing(String::compareTo)) .toList();；把方法引用 List.of("Java", "C", "Go").stream() .sorted(Comparator.comparingInt(String::length).thenComparing(String::compareTo)) .toList() 绑定到目标函数式接口，结果写入 sorted。
+        // 输入：.sorted(Comparator.comparingInt(String::length).thenComparing(String::compareTo)) .toList();；接收对象为 上一个链式结果，调用 sorted 的实参为 Comparator.comparingInt(String::length).thenComparing(String::compareTo)。
+        // 关键变化：.sorted(Comparator.comparingInt(String::length).thenComparing(String::compareTo)) .toList();；按指定比较器或自然顺序重新排列元素。
+        // 输入：.toList();；接收对象为 上一个链式结果，调用 toList 的实参为 无显式参数。
+        // 关键变化：.toList();；终止当前流管道并把元素收集为 List；返回列表结果。
 System.out.println(sorted);
 // 输出：[C, Go, Java]
 ```
@@ -161,8 +181,12 @@ import java.util.List;
 List<Integer> firstThree = List.of(1, 2, 3, 4, 5).stream()
         .limit(3)
         .toList();
-        // 关键变化：.limit(3) .toList();；当前对象；limit；当前对象.limit(3) 处理当前元素流并得到对应结果。
-        // 初始状态：firstThree 当前保存 List.of(1, 2, 3, 4, 5).stream() .limit(3) .toList()的计算结果。
+        // 输入：List<Integer> firstThree = List.of(1, 2, 3, 4, 5).stream() .limit(3) .toList();；右侧表达式 List.of(1, 2, 3, 4, 5).stream() .limit(3) .toList() 的结果赋给 firstThree。
+        // 关键变化：List<Integer> firstThree = List.of(1, 2, 3, 4, 5).stream() .limit(3) .toList();；在流上调用 limit 处理元素，结果写入 firstThree。
+        // 输入：.limit(3) .toList();；接收对象为 上一个链式结果，调用 limit 的实参为 3。
+        // 关键变化：.limit(3) .toList();；只保留前 3 个元素；流长度受限。
+        // 输入：.toList();；接收对象为 上一个链式结果，调用 toList 的实参为 无显式参数。
+        // 关键变化：.toList();；终止当前流管道并把元素收集为 List；返回列表结果。
 
 System.out.println(firstThree);
 // 输出：[1, 2, 3]
@@ -180,8 +204,12 @@ import java.util.List;
 List<Integer> remaining = List.of(1, 2, 3, 4, 5).stream()
         .skip(2)
         .toList();
-        // 关键变化：.skip(2) .toList();；当前对象；skip；当前对象.skip(2) 处理当前元素流并得到对应结果。
-        // 初始状态：remaining 当前保存 List.of(1, 2, 3, 4, 5).stream() .skip(2) .toList()的计算结果。
+        // 输入：List<Integer> remaining = List.of(1, 2, 3, 4, 5).stream() .skip(2) .toList();；右侧表达式 List.of(1, 2, 3, 4, 5).stream() .skip(2) .toList() 的结果赋给 remaining。
+        // 关键变化：List<Integer> remaining = List.of(1, 2, 3, 4, 5).stream() .skip(2) .toList();；在流上调用 skip 处理元素，结果写入 remaining。
+        // 输入：.skip(2) .toList();；接收对象为 上一个链式结果，调用 skip 的实参为 2。
+        // 关键变化：.skip(2) .toList();；跳过前 2 个元素；后续流从其余元素开始。
+        // 输入：.toList();；接收对象为 上一个链式结果，调用 toList 的实参为 无显式参数。
+        // 关键变化：.toList();；终止当前流管道并把元素收集为 List；返回列表结果。
 
 System.out.println(remaining);
 // 输出：[3, 4, 5]
@@ -192,16 +220,25 @@ System.out.println(remaining);
 `peek` 仍然是惰性的，只有终止操作触发才会执行；生产逻辑不要依赖它完成关键副作用。
 
 ```java
+// 语义：peek 仍然是惰性的，只有终止操作触发才会执行。
 import java.util.ArrayList;
 import java.util.List;
 
 List<String> trace = new ArrayList<>();
-// 初始状态：trace 当前为 new ArrayList<>()。
+// 输入：List<String> trace = new ArrayList<>();；使用构造参数 无显式参数 创建 ArrayList<>，结果赋给 trace。
+// 关键变化：List<String> trace = new ArrayList<>();；创建 ArrayList<>，构造参数为 无显式参数，实例写入 trace。
 List<Integer> result = List.of(1, 2, 3).stream()
         .peek(number -> trace.add("read=" + number))
+        // 输入：peek(number -> trace.add("read=" + number));；对 1、2、3 逐个执行观察 lambda。
+        // 关键变化：peek 为每个元素向 trace 追加 read=1、read=2、read=3；元素继续流向 map。
         .map(number -> number * 2)
         .toList();
-        // 关键变化：.peek(number -> trace.add("read=" + number)) .map(number -> number * 2) .toList();；对经过的元素执行观察动作 number -> trace.add("read=" + number)，元素本身保持不变。
+        // 输入：List<Integer> result = List.of(1, 2, 3).stream() .peek(number -> trace.add("read=" + number)) .map(number -> number * 2) .toList();；右侧表达式 List.of(1, 2, 3).stream() .peek(number -> trace.add("read=" + number)) .map(number -> number * 2) .toList() 的结果赋给 result。
+        // 关键变化：List<Integer> result = List.of(1, 2, 3).stream() .peek(number -> trace.add("read=" + number)) .map(number -> number * 2) .toList();；peek 依次追加 read=1、read=2、read=3，map 将元素翻倍，toList 返回 [2, 4, 6] 写入 result。
+        // 输入：.map(number -> number * 2) .toList();；接收对象为 上一个链式结果，调用 map 的实参为 number -> number * 2。
+        // 关键变化：.map(number -> number * 2) .toList();；按 mapper 将每个元素转换后继续传递到下游。
+        // 输入：.toList();；接收对象为 上一个链式结果，调用 toList 的实参为 无显式参数。
+        // 关键变化：.toList();；终止当前流管道并把元素收集为 List；返回列表结果。
 System.out.println(trace);
 // 输出：[read=1, read=2, read=3]
 System.out.println(result);
@@ -213,11 +250,12 @@ System.out.println(result);
 并行归约要求累加器满足结合律、尽量无副作用；复杂可变聚合优先考虑 `collect`。
 
 ```java
+// 语义：并行归约要求累加器满足结合律、尽量无副作用。
 import java.util.List;
 
 int total = List.of(1, 2, 3, 4).stream().reduce(0, Integer::sum);
-// 初始状态：total 当前为 List.of(1, 2, 3, 4).stream().reduce(0, Integer::sum)。
-// 作用：并行归约要求累加器满足结合律、尽量无副作用。
+// 输入：int total = List.of(1, 2, 3, 4).stream().reduce(0, Integer::sum);；右侧表达式 List.of(1, 2, 3, 4).stream().reduce(0, Integer::sum) 的结果赋给 total。
+// 关键变化：int total = List.of(1, 2, 3, 4).stream().reduce(0, Integer::sum);；把方法引用 List.of(1, 2, 3, 4).stream().reduce(0, Integer::sum) 绑定到目标函数式接口，结果写入 total。
 System.out.println(total);
 // 输出：10
 ```
@@ -227,13 +265,18 @@ System.out.println(total);
 `allMatch` 遇到第一个不匹配元素就短路，空流会返回 `true`。
 
 ```java
+// 语义：allMatch 遇到第一个不匹配元素就短路，空流会返回 true。
 import java.util.List;
 
 List<Integer> numbers = List.of(2, 4, 6);
-// 初始状态：numbers 当前为 List.of(2, 4, 6)。
+// 输入：List<Integer> numbers = List.of(2, 4, 6);；右侧表达式 List.of(2, 4, 6) 的结果赋给 numbers。
+// 关键变化：List<Integer> numbers = List.of(2, 4, 6);；按 2, 4, 6 调用 of 创建值，结果写入 numbers。
 boolean allEven = numbers.stream()
         .allMatch(number -> number % 2 == 0);
-        // 关键变化：.allMatch(number -> number % 2 == 0);；当前对象；allMatch；当前对象.allMatch(number -> number % 2 == 0) 处理当前元素流并得到对应结果。
+        // 输入：boolean allEven = numbers.stream() .allMatch(number -> number % 2 == 0);；右侧表达式 numbers.stream() .allMatch(number -> number % 2 == 0) 的结果赋给 allEven。
+        // 关键变化：numbers 中的 2、4、6 都满足 number % 2 == 0，allMatch 返回 true 并写入 allEven。
+        // 输入：allMatch(number -> number % 2 == 0)；检查 numbers 中的 2、4、6。
+        // 关键变化：2、4、6 都满足谓词，allMatch 返回 true 并写入 allEven。
 
 System.out.println(allEven);
 // 输出：true
@@ -244,13 +287,18 @@ System.out.println(allEven);
 `anyMatch` 遇到第一个匹配元素就短路，适合存在性检查。
 
 ```java
+// 语义：anyMatch 遇到第一个匹配元素就短路，适合存在性检查。
 import java.util.List;
 
 List<Integer> numbers = List.of(2, 4, 6);
-// 初始状态：numbers 当前为 List.of(2, 4, 6)。
+// 输入：List<Integer> numbers = List.of(2, 4, 6);；右侧表达式 List.of(2, 4, 6) 的结果赋给 numbers。
+// 关键变化：List<Integer> numbers = List.of(2, 4, 6);；按 2, 4, 6 调用 of 创建值，结果写入 numbers。
 boolean hasLargeValue = numbers.stream()
         .anyMatch(number -> number > 5);
-        // 关键变化：.anyMatch(number -> number > 5);；当前对象；anyMatch；当前对象.anyMatch(number -> number > 5) 处理当前元素流并得到对应结果。
+        // 输入：boolean hasLargeValue = numbers.stream() .anyMatch(number -> number > 5);；右侧表达式 numbers.stream() .anyMatch(number -> number > 5) 的结果赋给 hasLargeValue。
+        // 关键变化：numbers 中的 6 满足 number > 5，anyMatch 立即返回 true 并写入 hasLargeValue。
+        // 输入：.anyMatch(number -> number > 5);；接收对象为 上一个链式结果，调用 anyMatch 的实参为 number -> number > 5。
+        // 关键变化：.anyMatch(number -> number > 5);；调用 anyMatch，实参为 number -> number > 5；按 number -> number > 5 检查流，返回是否存在匹配元素。
 
 System.out.println(hasLargeValue);
 // 输出：true
@@ -261,13 +309,18 @@ System.out.println(hasLargeValue);
 `noneMatch` 遇到第一个匹配元素就返回 `false`，空流会返回 `true`。
 
 ```java
+// 语义：noneMatch 遇到第一个匹配元素就返回 false，空流会返回 true。
 import java.util.List;
 
 List<Integer> numbers = List.of(2, 4, 6);
-// 初始状态：numbers 当前为 List.of(2, 4, 6)。
+// 输入：List<Integer> numbers = List.of(2, 4, 6);；右侧表达式 List.of(2, 4, 6) 的结果赋给 numbers。
+// 关键变化：List<Integer> numbers = List.of(2, 4, 6);；按 2, 4, 6 调用 of 创建值，结果写入 numbers。
 boolean hasNoNegative = numbers.stream()
         .noneMatch(number -> number < 0);
-        // 关键变化：.noneMatch(number -> number < 0);；当前对象；noneMatch；当前对象.noneMatch(number -> number < 0) 处理当前元素流并得到对应结果。
+        // 输入：boolean hasNoNegative = numbers.stream() .noneMatch(number -> number < 0);；右侧表达式 numbers.stream() .noneMatch(number -> number < 0) 的结果赋给 hasNoNegative。
+        // 关键变化：2、4、6 都不满足 number < 0，noneMatch 返回 true 并写入 hasNoNegative。
+        // 输入：.noneMatch(number -> number < 0);；接收对象为 上一个链式结果，调用 noneMatch 的实参为 number -> number < 0。
+        // 关键变化：.noneMatch(number -> number < 0);；调用 noneMatch，实参为 number -> number < 0；按 number -> number < 0 检查流，返回是否不存在匹配元素。
 
 System.out.println(hasNoNegative);
 // 输出：true
@@ -286,8 +339,14 @@ String first = List.of("a", "b", "c").stream()
         .filter(text -> !text.isBlank())
         .findFirst()
         .orElse("none");
-        // 初始状态：first 当前保存 List.of("a", "b", "c").stream() .filter(text -> !text.isBlank()) .findFirst() .orElse("none")的计算结果。
-        // 关键变化：.findFirst() .orElse("none");；当前对象.findFirst(当前参数) 处理当前元素流并得到对应结果。
+        // 输入：String first = List.of("a", "b", "c").stream() .filter(text -> !text.isBlank()) .findFirst() .orElse("none");；右侧表达式 List.of("a", "b", "c").stream() .filter(text -> !text.isBlank()) .findFirst() .orElse("none") 的结果赋给 first。
+        // 关键变化：String first = List.of("a", "b", "c").stream() .filter(text -> !text.isBlank()) .findFirst() .orElse("none");；在流上调用 filter 处理元素，结果写入 first。
+        // 输入：.filter(text -> !text.isBlank()) .findFirst() .orElse("none");；接收对象为 上一个链式结果，调用 filter 的实参为 text -> !text.isBlank()。
+        // 关键变化：.filter(text -> !text.isBlank()) .findFirst() .orElse("none");；按 predicate 筛选元素，只保留满足条件的元素。
+        // 输入：.findFirst() .orElse("none");；接收对象为 上一个链式结果，调用 findFirst 的实参为 无显式参数。
+        // 关键变化：.findFirst() .orElse("none");；从流中查找元素并返回 Optional 结果；流源内容不变。
+        // 输入：.orElse("none");；接收对象为 上一个链式结果，调用 orElse 的实参为 "none"。
+        // 关键变化：.orElse("none");；调用 orElse，实参为 "none"；Optional 为空时使用 "none"；返回最终值。
 System.out.println(first);
 // 输出：a
 ```
@@ -305,8 +364,14 @@ String any = List.of("a", "b", "c").parallelStream()
         .filter(text -> !text.isBlank())
         .findAny()
         .orElse("none");
-        // 初始状态：any 当前保存 List.of("a", "b", "c").parallelStream() .filter(text -> !text.isBlank()) .findAny() .orElse("none")的计算结果。
-        // 关键变化：.findAny() .orElse("none");；当前对象.findAny(当前参数) 处理当前元素流并得到对应结果。
+        // 输入：String any = List.of("a", "b", "c").parallelStream() .filter(text -> !text.isBlank()) .findAny() .orElse("none");；右侧表达式 List.of("a", "b", "c").parallelStream() .filter(text -> !text.isBlank()) .findAny() .orElse("none") 的结果赋给 any。
+        // 关键变化："a"、"b"、"c" 都通过非空筛选，findAny 返回其中任一项并由 orElse 写入 any；并行执行不保证具体是哪一项。
+        // 输入：.filter(text -> !text.isBlank()) .findAny() .orElse("none");；接收对象为 上一个链式结果，调用 filter 的实参为 text -> !text.isBlank()。
+        // 关键变化：.filter(text -> !text.isBlank()) .findAny() .orElse("none");；按 predicate 筛选元素，只保留满足条件的元素。
+        // 输入：.findAny() .orElse("none");；接收对象为 上一个链式结果，调用 findAny 的实参为 无显式参数。
+        // 关键变化：.findAny() .orElse("none");；从流中查找元素并返回 Optional 结果；流源内容不变。
+        // 输入：.orElse("none");；接收对象为 上一个链式结果，调用 orElse 的实参为 "none"。
+        // 关键变化：.orElse("none");；调用 orElse，实参为 "none"；Optional 为空时使用 "none"；返回最终值。
 System.out.println(List.of("a", "b", "c").contains(any));
 // 输出：true
 ```
@@ -316,15 +381,22 @@ System.out.println(List.of("a", "b", "c").contains(any));
 `forEach` 适合末端通知或打印；并行流中不要依赖顺序，也不要修改非线程安全共享状态。
 
 ```java
+// 语义：forEach 适合末端通知或打印。
 import java.util.List;
 
 List<String> names = List.of("Ann", "Bob");
-// 初始状态：names 当前为 List.of("Ann", "Bob")。
+// 输入：List<String> names = List.of("Ann", "Bob");；右侧表达式 List.of("Ann", "Bob") 的结果赋给 names。
+// 关键变化：List<String> names = List.of("Ann", "Bob");；按 "Ann", "Bob" 调用 of 创建值，结果写入 names。
 names.stream()
         .map(String::toUpperCase)
         .forEach(System.out::println);
-        // 关键变化：.forEach(System.out::println);；当前对象；forEach；当前对象.forEach(System.out::println) 处理当前元素流并得到对应结果。
-// 结果：forEach 依次输出转换后的 "ANN" 和 "BOB"。
+        // 输入：names.stream() .map(String::toUpperCase) .forEach(System.out::println);；接收对象为 上一个链式结果，调用 forEach 的实参为 System.out::println。
+        // 关键变化：names.stream() .map(String::toUpperCase) .forEach(System.out::println);；把 上一个链式结果 的每个元素交给 System.out::println，无返回值；遍历动作完成。
+        // 输入：.map(String::toUpperCase) .forEach(System.out::println);；接收对象为 上一个链式结果，调用 forEach 的实参为 System.out::println。
+        // 关键变化：.map(String::toUpperCase) .forEach(System.out::println);；把 上一个链式结果 的每个元素交给 System.out::println，无返回值；遍历动作完成。
+        // 输入：.forEach(System.out::println);；接收对象为 上一个链式结果，调用 forEach 的实参为 System.out::println。
+        // 关键变化：.forEach(System.out::println);；把 上一个链式结果 的每个元素交给 System.out::println，无返回值；遍历动作完成。
+// 输出：ANN、BOB
 ```
 
 ### `forEachOrdered`：按遇到顺序执行动作
@@ -332,15 +404,22 @@ names.stream()
 `forEachOrdered` 在并行流中仍保留遇到顺序，但顺序约束可能降低并行收益。
 
 ```java
+// 语义：forEachOrdered 在并行流中仍保留遇到顺序，但顺序约束可能降低并行收益。
 import java.util.List;
 
 List<Integer> numbers = List.of(1, 2, 3);
-// 初始状态：numbers 当前为 List.of(1, 2, 3)。
+// 输入：List<Integer> numbers = List.of(1, 2, 3);；右侧表达式 List.of(1, 2, 3) 的结果赋给 numbers。
+// 关键变化：List<Integer> numbers = List.of(1, 2, 3);；按 1, 2, 3 调用 of 创建值，结果写入 numbers。
 numbers.parallelStream()
         .map(number -> number * 10)
         .forEachOrdered(System.out::println);
-        // 关键变化：.forEachOrdered(System.out::println);；当前对象；forEachOrdered；当前对象.forEachOrdered(System.out::println) 处理当前元素流并得到对应结果。
-// 结果：forEachOrdered 按遇到顺序输出 10、20、30。
+        // 输入：numbers.parallelStream() .map(number -> number * 10) .forEachOrdered(System.out::println);；接收对象为 上一个链式结果，调用 forEachOrdered 的实参为 System.out::println。
+        // 关键变化：numbers.parallelStream() .map(number -> number * 10) .forEachOrdered(System.out::println);；把 上一个链式结果 的每个元素交给 System.out::println，无返回值；遍历动作完成。
+        // 输入：.map(number -> number * 10) .forEachOrdered(System.out::println);；接收对象为 上一个链式结果，调用 forEachOrdered 的实参为 System.out::println。
+        // 关键变化：.map(number -> number * 10) .forEachOrdered(System.out::println);；把 上一个链式结果 的每个元素交给 System.out::println，无返回值；遍历动作完成。
+        // 输入：.forEachOrdered(System.out::println);；接收对象为 上一个链式结果，调用 forEachOrdered 的实参为 System.out::println。
+        // 关键变化：.forEachOrdered(System.out::println);；把 上一个链式结果 的每个元素交给 System.out::println，无返回值；遍历动作完成。
+// 输出：10、20、30
 ```
 
 ### `toList`：得到不可变结果列表
@@ -348,11 +427,12 @@ numbers.parallelStream()
 JDK 16 的 `Stream.toList()` 返回不可修改列表；需要可变列表时使用 `collect(Collectors.toCollection(ArrayList::new))`。
 
 ```java
+// 语义：JDK 16 的 Stream.toList() 返回不可修改列表。
 import java.util.List;
 
 List<String> result = List.of("a", "b").stream().map(String::toUpperCase).toList();
-// 初始状态：result 当前为 List.of("a", "b").stream().map(String::toUpperCase).toList()。
-// 作用：JDK 16 的 Stream.toList() 返回不可修改列表。
+// 输入：List<String> result = List.of("a", "b").stream().map(String::toUpperCase).toList();；右侧表达式 List.of("a", "b").stream().map(String::toUpperCase).toList() 的结果赋给 result。
+// 关键变化：List<String> result = List.of("a", "b").stream().map(String::toUpperCase).toList();；把方法引用 List.of("a", "b").stream().map(String::toUpperCase).toList() 绑定到目标函数式接口，结果写入 result。
 System.out.println(result);
 // 输出：[A, B]
 ```
@@ -368,9 +448,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 var values = List.of("a", "b").stream()
         .collect(Collectors.toList());
-        // 关键变化：.collect(Collectors.toList());；当前对象；collect；当前对象.collect(Collectors.toList()) 处理当前元素流并得到对应结果。
-        // 初始状态：values 当前保存 List.of("a", "b").stream() .collect(Collectors.toList())的计算结果。
+        // 输入：var values = List.of("a", "b").stream() .collect(Collectors.toList());；右侧表达式 List.of("a", "b").stream() .collect(Collectors.toList()) 的结果赋给 values。
+        // 关键变化：var values = List.of("a", "b").stream() .collect(Collectors.toList());；在流上调用 collect 处理元素，结果写入 values。
+        // 输入：.collect(Collectors.toList());；接收对象为 上一个链式结果，调用 collect 的实参为 Collectors.toList()。
+        // 关键变化：.collect(Collectors.toList());；使用指定 Collector 聚合当前元素；返回该 Collector 的结果。
 values.add("c");
+// 输入：values.add("c");；接收对象为 values，调用 add 的实参为 "c"。
+// 关键变化：values.add("c");；向 values 加入 "c"，返回 boolean 表示是否发生变化；values 内容更新。
 System.out.println(values);
 // 输出：[a, b, c]
 ```
@@ -386,12 +470,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 var values = List.of("a", "a", "b").stream()
         .collect(Collectors.toSet());
-        // 关键变化：.collect(Collectors.toSet());；当前对象；collect；当前对象.collect(Collectors.toSet()) 处理当前元素流并得到对应结果。
-        // 初始状态：values 当前保存 List.of("a", "a", "b").stream() .collect(Collectors.toSet())的计算结果。
+        // 输入：var values = List.of("a", "a", "b").stream() .collect(Collectors.toSet());；右侧表达式 List.of("a", "a", "b").stream() .collect(Collectors.toSet()) 的结果赋给 values。
+        // 关键变化：var values = List.of("a", "a", "b").stream() .collect(Collectors.toSet());；在流上调用 collect 处理元素，结果写入 values。
+        // 输入：.collect(Collectors.toSet());；接收对象为 上一个链式结果，调用 collect 的实参为 Collectors.toSet()。
+        // 关键变化：.collect(Collectors.toSet());；使用指定 Collector 聚合当前元素；返回该 Collector 的结果。
 System.out.println(values.size());
-// 输出：2、true
+// 输出：2
 System.out.println(values.containsAll(List.of("a", "b")));
-// 输出：System.out 调用参数为 values.containsAll(List.of("a", "b"))。
+// 输出：true
 ```
 
 ### `Collectors.toMap`：按键和值构造映射
@@ -406,8 +492,10 @@ import java.util.stream.Collectors;
 var lengths = List.of("aa", "ab", "b").stream()
         .collect(Collectors.toMap(String::length, s -> s,
                 (left, right) -> left + "," + right));
-        // 关键变化：.collect(Collectors.toMap(String::length, s -> s, (left, right) -> left + "," + right));；当前对象；collect；当前对象.collect(Collectors.toMap(String::length, s -> s, (left, right) -> left + "," + right)) 处理当前元素流并得到对应结果。
-                // 初始状态：lengths 当前保存 List.of("aa", "ab", "b").stream() .collect(Collectors.toMap(String::length, s -> s, (left, right) -> left + "," + right))的计算结果。
+                // 输入：var lengths = List.of("aa", "ab", "b").stream() .collect(Collectors.toMap(String::length, s -> s, (left, right) -> left + "," + right));；右侧表达式 List.of("aa", "ab", "b").stream() .collect(Collectors.toMap(String::length, s -> s, (left, right) -> left + "," + right)) 的结果赋给 lengths。
+                // 关键变化：var lengths = List.of("aa", "ab", "b").stream() .collect(Collectors.toMap(String::length, s -> s, (left, right) -> left + "," + right));；把方法引用 List.of("aa", "ab", "b").stream() .collect(Collectors.toMap(String::length, s -> s, (left, right) -> left + "," + right)) 绑定到目标函数式接口，结果写入 lengths。
+                // 输入：.collect(Collectors.toMap(String::length, s -> s, (left, right) -> left + "," + right));；接收对象为 上一个链式结果，调用 collect 的实参为 Collectors.toMap(String::length, s -> s, (left, right) -> left + "," + right)。
+                // 关键变化：.collect(Collectors.toMap(String::length, s -> s, (left, right) -> left + "," + right));；使用指定 Collector 聚合当前元素；返回该 Collector 的结果。
 System.out.println(lengths);
 // 输出：{1=b, 2=aa,ab}
 ```
@@ -423,8 +511,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 String text = List.of("java", "sql").stream()
         .collect(Collectors.joining(", ", "[", "]"));
-        // 关键变化：.collect(Collectors.joining(", ", "[", "]"));；当前对象；collect；当前对象.collect(Collectors.joining(", ", "[", "]")) 处理当前元素流并得到对应结果。
-        // 初始状态：text 当前保存 List.of("java", "sql").stream() .collect(Collectors.joining(", ", "[", "]"))的计算结果。
+        // 输入：String text = List.of("java", "sql").stream() .collect(Collectors.joining(", ", "[", "]"));；右侧表达式 List.of("java", "sql").stream() .collect(Collectors.joining(", ", "[", "]")) 的结果赋给 text。
+        // 关键变化：String text = List.of("java", "sql").stream() .collect(Collectors.joining(", ", "[", "]"));；在流上调用 collect 处理元素，结果写入 text。
+        // 输入：.collect(Collectors.joining(", ", "[", "]"));；接收对象为 上一个链式结果，调用 collect 的实参为 Collectors.joining(", ", "[", "]")。
+        // 关键变化：.collect(Collectors.joining(", ", "[", "]"));；使用指定 Collector 聚合当前元素；返回该 Collector 的结果。
 System.out.println(text);
 // 输出：[java, sql]
 ```
@@ -440,12 +530,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 var groups = List.of("a", "bb", "c").stream()
         .collect(Collectors.groupingBy(String::length));
-        // 关键变化：.collect(Collectors.groupingBy(String::length));；当前对象；collect；当前对象.collect(Collectors.groupingBy(String::length)) 处理当前元素流并得到对应结果。
-        // 初始状态：groups 当前保存 List.of("a", "bb", "c").stream() .collect(Collectors.groupingBy(String::length))的计算结果。
+        // 输入：var groups = List.of("a", "bb", "c").stream() .collect(Collectors.groupingBy(String::length));；右侧表达式 List.of("a", "bb", "c").stream() .collect(Collectors.groupingBy(String::length)) 的结果赋给 groups。
+        // 关键变化：var groups = List.of("a", "bb", "c").stream() .collect(Collectors.groupingBy(String::length));；把方法引用 List.of("a", "bb", "c").stream() .collect(Collectors.groupingBy(String::length)) 绑定到目标函数式接口，结果写入 groups。
+        // 输入：.collect(Collectors.groupingBy(String::length));；接收对象为 上一个链式结果，调用 collect 的实参为 Collectors.groupingBy(String::length)。
+        // 关键变化：.collect(Collectors.groupingBy(String::length));；使用指定 Collector 聚合当前元素；返回该 Collector 的结果。
 System.out.println(groups.get(1));
-// 输出：[a, c]、[bb]
+// 输出：[a, c]
 System.out.println(groups.get(2));
-// 输出：System.out 调用参数为 groups.get(2)。
+// 输出：[bb]
 ```
 
 具体收集器的更多组合可查 [Collectors 收集器速查](./05-Collectors收集器速查)。
@@ -460,12 +552,14 @@ import java.util.List;
 import java.util.stream.Stream;
 
 Stream<String> stream = List.of("a", "b").stream();
-// 关键变化：stream 接收表达式 List.of("a", "b").stream() 的计算结果。
-// 初始状态：stream 的初始值为 List.of("a", "b").stream()。
+// 输入：Stream<String> stream = List.of("a", "b").stream();；右侧表达式 List.of("a", "b").stream() 的结果赋给 stream。
+// 关键变化：Stream<String> stream = List.of("a", "b").stream();；按 "a", "b" 调用 of 创建值，结果写入 stream。
 System.out.println(stream.count());
 // 输出：2
 try {
     stream.count();
+    // 输入：stream.count();；接收对象为 stream，调用 count 的实参为 无显式参数。
+    // 关键变化：stream.count();；统计 stream 中的元素数量，返回 long 计数值；源流内容不变。
 } catch (IllegalStateException ex) {
     System.out.println(ex.getClass().getSimpleName());
     // 输出：IllegalStateException
@@ -481,9 +575,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 List<Integer> target = new ArrayList<>();
-// 初始状态：target 的初始值为 new ArrayList<>()。
+// 输入：List<Integer> target = new ArrayList<>();；使用构造参数 无显式参数 创建 ArrayList<>，结果赋给 target。
+// 关键变化：List<Integer> target = new ArrayList<>();；创建 ArrayList<>，构造参数为 无显式参数，实例写入 target。
 List.of(1, 2, 3).stream().forEach(target::add);
-// 关键变化：List.of(1, 2, 3).stream().forEach(target::add);；List；of；List.of(1) 返回转换后的具体值，赋给当前示例中的接收变量。
+// 输入：List.of(1, 2, 3).stream().forEach(target::add);；接收对象为 上一个链式结果，调用 forEach 的实参为 target::add。
+// 关键变化：List.of(1, 2, 3).stream().forEach(target::add);；把 上一个链式结果 的每个元素交给 target::add，无返回值；遍历动作完成。
 System.out.println(target.size());
 // 输出：3
 ```
@@ -498,8 +594,12 @@ import java.util.List;
 long count = List.of(1, 2, 3, 4).parallelStream()
         .filter(number -> number % 2 == 0)
         .count();
-// 关键变化：long count = List.of(1, 2, 3, 4).parallelStream() .filter(number -> number % 2 == 0) .count()；List.of(1) 返回转换后的具体值，赋给当前示例中的接收变量。
-// 输入：count 的初始值为 List.of(1, 2, 3, 4).parallelStream()。
+        // 输入：long count = List.of(1, 2, 3, 4).parallelStream() .filter(number -> number % 2 == 0) .count();；右侧表达式 List.of(1, 2, 3, 4).parallelStream() .filter(number -> number % 2 == 0) .count() 的结果赋给 count。
+        // 关键变化：long count = List.of(1, 2, 3, 4).parallelStream() .filter(number -> number % 2 == 0) .count();；统计 上一个链式结果 的元素数量，计数结果写入 count。
+        // 输入：filter(number -> number % 2 == 0)；从 1、2、3、4 中筛选出 2、4。
+        // 关键变化：filter 后流中有 2、4，count 返回 2 并写入 count。
+        // 输入：.count();；接收对象为 上一个链式结果，调用 count 的实参为 无显式参数。
+        // 关键变化：.count();；统计 上一个链式结果 中的元素数量，返回 long 计数值；源流内容不变。
 System.out.println(count);
 // 输出：2
 ```
@@ -509,11 +609,10 @@ System.out.println(count);
 `stream.parallel()` 返回并行模式的流管道，它与 `parallelStream()` 的并行成本和无副作用要求相同；不会自动保证更快。
 
 ```java
-// 关键变化：Stream.of(1, 2, 3) 初始为顺序流，parallel() 把管道标记为并行，所以 isParallel() 写入 true。
 boolean parallel = Stream.of(1, 2, 3).parallel().isParallel();
-// 关键变化：boolean parallel = Stream.of(1, 2, 3).parallel().isParallel(); 将返回值写入 parallel；parallel 现在保存该具体结果。
-// 输入：parallel 的初始值为 Stream.of(1, 2, 3).parallel().isParallel()。
-// 结果：parallel 为 true
+// 输入：boolean parallel = Stream.of(1, 2, 3).parallel().isParallel();；右侧表达式 Stream.of(1, 2, 3).parallel().isParallel() 的结果赋给 parallel。
+// 关键变化：boolean parallel = Stream.of(1, 2, 3).parallel().isParallel();；调用 parallel 将流切换为并行状态，再由 isParallel 返回布尔值写入 parallel。
+// 结果：true
 ```
 
 ### `unordered`：声明不需要遇到顺序
@@ -524,8 +623,8 @@ boolean parallel = Stream.of(1, 2, 3).parallel().isParallel();
 import java.util.List;
 
 long count = List.of("a", "b", "c").parallelStream().unordered().distinct().count();
-// 输入：count 的初始值为 List.of("a", "b", "c").parallelStream().unordered().distinct().count()。
-// 作用：通过 unordered 声明不需要遇到顺序。
+// 输入：long count = List.of("a", "b", "c").parallelStream().unordered().distinct().count();；右侧表达式 List.of("a", "b", "c").parallelStream().unordered().distinct().count() 的结果赋给 count。
+// 关键变化：long count = List.of("a", "b", "c").parallelStream().unordered().distinct().count();；统计 上一个链式结果 的元素数量，计数结果写入 count。
 System.out.println(count);
 // 输出：3
 ```
@@ -540,9 +639,11 @@ import java.util.List;
 import java.util.stream.Stream;
 
 List<String> events = new ArrayList<>();
-// 初始状态：events 当前为 new ArrayList<>()。
+// 输入：List<String> events = new ArrayList<>();；使用构造参数 无显式参数 创建 ArrayList<>，结果赋给 events。
+// 关键变化：List<String> events = new ArrayList<>();；创建 ArrayList<>，构造参数为 无显式参数，实例写入 events。
 try (Stream<String> stream = Stream.of("a").onClose(() -> events.add("closed"))) {
-// 关键变化：try (Stream<String> stream = Stream.of("a").onClose(() -> events.add("closed"))) {；当前对象；try；当前对象.try(Stream<String> stream = Stream.of("a").onClose(() -> events.add("closed"))) 返回本次调用的具体结果，后续语句继续使用该值。
+// 输入：try (Stream<String> stream = Stream.of("a").onClose(() -> events.add("closed"))) {；资源变量 stream 接收 Stream.of("a").onClose(() -> events.add("closed"))，try 结束时自动关闭。
+// 关键变化：try (Stream<String> stream = Stream.of("a").onClose(() -> events.add("closed"))) {；创建资源 stream，构造表达式为 Stream.of("a").onClose(() -> events.add("closed"))；try 结束时关闭该资源。
     System.out.println(stream.count());
     // 输出：1
 }
@@ -556,12 +657,13 @@ try-with-resources 在代码块结束时调用 `close()`，因此上例注册的
 
 ```java
 try (Stream<String> lines = Files.lines(Path.of("data.txt"))) {
-// 关键变化：try (Stream<String> lines = Files.lines(Path.of("data.txt"))) {；当前对象；try；当前对象.try(Stream<String> lines = Files.lines(Path.of("data.txt"))) 返回本次调用的具体结果，后续语句继续使用该值。
-// 初始状态：Files.lines(Path.of("data.txt")) 打开文件并返回 lines，try-with-resources 在离开块时调用 lines.close()。
+// 输入：try (Stream<String> lines = Files.lines(Path.of("data.txt"))) {；资源变量 lines 接收 Files.lines(Path.of("data.txt"))，try 结束时自动关闭。
+// 关键变化：try (Stream<String> lines = Files.lines(Path.of("data.txt"))) {；创建资源 lines，构造表达式为 Files.lines(Path.of("data.txt"))；try 结束时关闭该资源。
     lines.findFirst();
-    // 关键变化：lines.findFirst()；lines.findFirst(当前参数) 处理当前元素流并得到对应结果。
+    // 输入：lines.findFirst();；接收对象为 lines，调用 findFirst 的实参为 无显式参数。
+    // 关键变化：lines.findFirst();；从流中查找元素并返回 Optional 结果；流源内容不变。
 }
-// 结果：离开 try 块时流已关闭
+// 结果：try 代码块结束后 lines 自动关闭。
 ```
 ## 专题导航
 
@@ -571,7 +673,6 @@ try (Stream<String> lines = Files.lines(Path.of("data.txt"))) {
 ## 简单案例
 
 ```java
-// 作用：通过 BaseStream.close 关闭拥有外部资源的流。
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -585,17 +686,45 @@ public class StreamDemo {
                 new Order("alice", List.of("book", "pen"), new BigDecimal("20.00"), true),
                 new Order("bob", List.of("bag"), new BigDecimal("80.00"), false),
                 new Order("alice", List.of("cup"), new BigDecimal("35.00"), true));
+                // 输入：List<Order> orders = List.of( new Order("alice", List.of("book", "pen"), new BigDecimal("20.00"), true), new Order("bob", List.of("bag"), new BigDecimal("80.00"), false), new Order("alice", List.of("cup"), new BigDecimal("35.00"), true));；使用构造参数 "alice", List.of("book", "pen"), new BigDecimal("20.00"), true 创建 Order，结果赋给 orders。
+                // 关键变化：List<Order> orders = List.of( new Order("alice", List.of("book", "pen"), new BigDecimal("20.00"), true), new Order("bob", List.of("bag"), new BigDecimal("80.00"), false), new Order("alice", List.of("cup"), new BigDecimal("35.00"), true));；创建 Order，构造参数为 "alice", List.of("book", "pen"), new BigDecimal("20.00"), true，实例写入 orders。
+                // 输入：new Order("alice", List.of("book", "pen"), new BigDecimal("20.00"), true), new Order("bob", List.of("bag"), new BigDecimal("80.00"), false), new Order("alice", List.of("cup"), new BigDecimal("35.00"), true));；接收对象为 List，调用 of 的实参为 "book", "pen"。
+                // 关键变化：new Order("alice", List.of("book", "pen"), new BigDecimal("20.00"), true), new Order("bob", List.of("bag"), new BigDecimal("80.00"), false), new Order("alice", List.of("cup"), new BigDecimal("35.00"), true));；创建 Order，构造参数保留在外层调用中。
+                // 输入：new Order("bob", List.of("bag"), new BigDecimal("80.00"), false), new Order("alice", List.of("cup"), new BigDecimal("35.00"), true));；接收对象为 List，调用 of 的实参为 "bag"。
+                // 关键变化：new Order("bob", List.of("bag"), new BigDecimal("80.00"), false), new Order("alice", List.of("cup"), new BigDecimal("35.00"), true));；创建 Order，构造参数保留在外层调用中。
+                // 输入：new Order("alice", List.of("cup"), new BigDecimal("35.00"), true));；接收对象为 List，调用 of 的实参为 "cup"。
+                // 关键变化：new Order("alice", List.of("cup"), new BigDecimal("35.00"), true));；创建 Order，构造参数保留在外层调用中。
 
         Map<String, BigDecimal> totals = orders.stream()
                 .filter(Order::paid)
                 .collect(Collectors.groupingBy(Order::user,
                         Collectors.reducing(BigDecimal.ZERO, Order::amount, BigDecimal::add)));
+                        // 输入：Map<String, BigDecimal> totals = orders.stream() .filter(Order::paid) .collect(Collectors.groupingBy(Order::user, Collectors.reducing(BigDecimal.ZERO, Order::amount, BigDecimal::add)));；右侧表达式 orders.stream() .filter(Order::paid) .collect(Collectors.groupingBy(Order::user, Collectors.reducing(BigDecimal.ZERO, Order::amount, BigDecimal::add))) 的结果赋给 totals。
+                        // 关键变化：Map<String, BigDecimal> totals = orders.stream() .filter(Order::paid) .collect(Collectors.groupingBy(Order::user, Collectors.reducing(BigDecimal.ZERO, Order::amount, BigDecimal::add)));；把方法引用 orders.stream() .filter(Order::paid) .collect(Collectors.groupingBy(Order::user, Collectors.reducing(BigDecimal.ZERO, Order::amount, BigDecimal::add))) 绑定到目标函数式接口，结果写入 totals。
+                        // 输入：.filter(Order::paid) .collect(Collectors.groupingBy(Order::user, Collectors.reducing(BigDecimal.ZERO, Order::amount, BigDecimal::add)));；接收对象为 上一个链式结果，调用 filter 的实参为 Order::paid。
+                        // 关键变化：.filter(Order::paid) .collect(Collectors.groupingBy(Order::user, Collectors.reducing(BigDecimal.ZERO, Order::amount, BigDecimal::add)));；按 predicate 筛选元素，只保留满足条件的元素。
+                        // 输入：.collect(Collectors.groupingBy(Order::user, Collectors.reducing(BigDecimal.ZERO, Order::amount, BigDecimal::add)));；接收对象为 上一个链式结果，调用 collect 的实参为 Collectors.groupingBy(Order::user, Collectors.reducing(BigDecimal.ZERO, Order::amount, BigDecimal::add))。
+                        // 关键变化：.collect(Collectors.groupingBy(Order::user, Collectors.reducing(BigDecimal.ZERO, Order::amount, BigDecimal::add)));；使用指定 Collector 聚合当前元素；返回该 Collector 的结果。
+                        // 输入：Collectors.reducing(BigDecimal.ZERO, Order::amount, BigDecimal::add)));；接收对象为 Collectors，调用 reducing 的实参为 BigDecimal.ZERO, Order::amount, BigDecimal::add。
+                        // 关键变化：Collectors.reducing(BigDecimal.ZERO, Order::amount, BigDecimal::add)));；调用 reducing，实参为 BigDecimal.ZERO, Order::amount, BigDecimal::add))；返回按给定初值和二元操作聚合的 Collector。
         List<String> itemNames = orders.stream()
                 .filter(Order::paid)
                 .flatMap(order -> order.items().stream())
                 .map(String::toUpperCase)
                 .sorted()
                 .toList();
+                // 输入：List<String> itemNames = orders.stream() .filter(Order::paid) .flatMap(order -> order.items().stream()) .map(String::toUpperCase) .sorted() .toList();；右侧表达式 orders.stream() .filter(Order::paid) .flatMap(order -> order.items().stream()) .map(String::toUpperCase) .sorted() .toList() 的结果赋给 itemNames。
+                // 关键变化：List<String> itemNames = orders.stream() .filter(Order::paid) .flatMap(order -> order.items().stream()) .map(String::toUpperCase) .sorted() .toList();；把方法引用 orders.stream() .filter(Order::paid) .flatMap(order -> order.items().stream()) .map(String::toUpperCase) .sorted() .toList() 绑定到目标函数式接口，结果写入 itemNames。
+                // 输入：.filter(Order::paid) .flatMap(order -> order.items().stream()) .map(String::toUpperCase) .sorted() .toList();；接收对象为 上一个链式结果，调用 flatMap 的实参为 order -> order.items().stream()。
+                // 关键变化：.filter(Order::paid) .flatMap(order -> order.items().stream()) .map(String::toUpperCase) .sorted() .toList();；把每个元素映射成子流并展开为一个连续流。
+                // 输入：.flatMap(order -> order.items().stream()) .map(String::toUpperCase) .sorted() .toList();；接收对象为 上一个链式结果，调用 flatMap 的实参为 order -> order.items().stream()。
+                // 关键变化：.flatMap(order -> order.items().stream()) .map(String::toUpperCase) .sorted() .toList();；把每个元素映射成子流并展开为一个连续流。
+                // 输入：.map(String::toUpperCase) .sorted() .toList();；接收对象为 上一个链式结果，调用 sorted 的实参为 无显式参数。
+                // 关键变化：.map(String::toUpperCase) .sorted() .toList();；按指定比较器或自然顺序重新排列元素。
+                // 输入：.sorted() .toList();；接收对象为 上一个链式结果，调用 sorted 的实参为 无显式参数。
+                // 关键变化：.sorted() .toList();；按指定比较器或自然顺序重新排列元素。
+                // 输入：.toList();；接收对象为 上一个链式结果，调用 toList 的实参为 无显式参数。
+                // 关键变化：.toList();；终止当前流管道并把元素收集为 List；返回列表结果。
 
         System.out.println("totals=" + totals);
         // 输出：totals={alice=55.00}

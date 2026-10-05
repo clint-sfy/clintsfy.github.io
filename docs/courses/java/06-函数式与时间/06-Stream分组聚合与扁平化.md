@@ -39,13 +39,15 @@ Stream 管道应尽量保持无副作用。收集器会管理结果容器和合�
 空子列表自然产生空子流；如果子列表可能为 `null`，应先转换为 `List.of()` 或 `Stream.empty()`。
 
 ```java
+// 语义：空子列表自然产生空子流。
 import java.util.List;
 
 var nested = List.of(List.of("Java", "SQL"), List.of("HTTP", "JVM"));
-// 初始状态：nested 当前为 List.of(List.of("Java", "SQL"), List.of("HTTP", "JVM"))。
+// 输入：var nested = List.of(List.of("Java", "SQL"), List.of("HTTP", "JVM"));；右侧表达式 List.of(List.of("Java", "SQL"), List.of("HTTP", "JVM")) 的结果赋给 nested。
+// 关键变化：var nested = List.of(List.of("Java", "SQL"), List.of("HTTP", "JVM"));；按 List.of("Java", "SQL"), List.of("HTTP", "JVM") 调用 of 创建值，结果写入 nested。
 var flat = nested.stream().flatMap(List::stream).toList();
-// 初始状态：flat 当前为 nested.stream().flatMap(List::stream).toList()。
-// 作用：空子列表自然产生空子流。
+// 输入：var flat = nested.stream().flatMap(List::stream).toList();；右侧表达式 nested.stream().flatMap(List::stream).toList() 的结果赋给 flat。
+// 关键变化：var flat = nested.stream().flatMap(List::stream).toList();；把方法引用 nested.stream().flatMap(List::stream).toList() 绑定到目标函数式接口，结果写入 flat。
 System.out.println(flat);
 // 输出：[Java, SQL, HTTP, JVM]
 ```
@@ -56,17 +58,16 @@ System.out.println(flat);
 
 ```java
 // 语义：展开后会丢失订单边界。
-// 初始状态：orders 初始为 List.of(new Order("A", List.of("book", "pen")), new Order("B", List.of("cup")))；items 初始为 orders.stream().flatMap(order -> order.items().stream()).toList()。
 import java.util.List;
-// 输入：// 初始状态：orders 初始为 List.of(new Order("A", List.of("book", "pen")), new Order("B", List.of("cup")))；items 初始为 orders.stream().flatMap(order -> order.items().stream()).toList()。 import java.util.List; 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 
 record Order(String id, List<String> items) { }
 
 var orders = List.of(new Order("A", List.of("book", "pen")), new Order("B", List.of("cup")));
-// 初始状态：orders 的初始值为 List.of(new Order("A", List.of("book", "pen")), new Order("B", List.of("cup")))。
+// 输入：var orders = List.of(new Order("A", List.of("book", "pen")), new Order("B", List.of("cup")));；使用构造参数 "A", List.of("book", "pen") 创建 Order，结果赋给 orders。
+// 关键变化：var orders = List.of(new Order("A", List.of("book", "pen")), new Order("B", List.of("cup")));；创建 Order，构造参数为 "A", List.of("book", "pen")，实例写入 orders。
 var items = orders.stream().flatMap(order -> order.items().stream()).toList();
-// 返回：items 接收 orders.stream().flatMap(order -> order.items().stream()).toList() 的返回值。
-// 关键变化：var items = orders.stream().flatMap(order -> order.items().stream()).toList(); 的返回值写入 items，调用后 items 保存该具体结果。
+// 输入：var items = orders.stream().flatMap(order -> order.items().stream()).toList();；右侧表达式 orders.stream().flatMap(order -> order.items().stream()).toList() 的结果赋给 items。
+// 关键变化：var items = orders.stream().flatMap(order -> order.items().stream()).toList();；在流上调用 flatMap 处理元素，结果写入 items。
 System.out.println(items);
 // 输出：[book, pen, cup]
 ```
@@ -76,13 +77,15 @@ System.out.println(items);
 `distinct` 依赖元素的 `equals`/`hashCode`；自定义对象应先正确实现值相等语义。
 
 ```java
+// 语义：distinct 依赖元素的 equals/hashCode。
 import java.util.List;
 
 var tags = List.of(List.of("java", "sql"), List.of("java", "http"));
-// 初始状态：tags 当前为 List.of(List.of("java", "sql"), List.of("java", "http"))。
+// 输入：var tags = List.of(List.of("java", "sql"), List.of("java", "http"));；右侧表达式 List.of(List.of("java", "sql"), List.of("java", "http")) 的结果赋给 tags。
+// 关键变化：var tags = List.of(List.of("java", "sql"), List.of("java", "http"));；按 List.of("java", "sql"), List.of("java", "http") 调用 of 创建值，结果写入 tags。
 var unique = tags.stream().flatMap(List::stream).distinct().toList();
-// 初始状态：unique 当前为 tags.stream().flatMap(List::stream).distinct().toList()。
-// 作用：distinct 依赖元素的 equals/hashCode。
+// 输入：var unique = tags.stream().flatMap(List::stream).distinct().toList();；右侧表达式 tags.stream().flatMap(List::stream).distinct().toList() 的结果赋给 unique。
+// 关键变化：var unique = tags.stream().flatMap(List::stream).distinct().toList();；把方法引用 tags.stream().flatMap(List::stream).distinct().toList() 绑定到目标函数式接口，结果写入 unique。
 System.out.println(unique);
 // 输出：[java, sql, http]
 ```
@@ -92,16 +95,18 @@ System.out.println(unique);
 默认结果是 `Map<User, List<Order>>`；只需要汇总值时可以直接指定下游收集器，避免保留整组对象。
 
 ```java
+// 语义：默认结果是 Map<User, List<Order>>。
 import java.util.List;
 import java.util.stream.Collectors;
 
 record Order(String user, String item, int amount) { }
 
 var orders = List.of(new Order("ann", "book", 20), new Order("bob", "pen", 8), new Order("ann", "cup", 35));
-// 初始状态：orders 当前为 List.of(new Order("ann", "book", 20), new Order("bob", "pen", 8), new Order("ann", "cup", 35))。
+// 输入：var orders = List.of(new Order("ann", "book", 20), new Order("bob", "pen", 8), new Order("ann", "cup", 35));；使用构造参数 "ann", "book", 20 创建 Order，结果赋给 orders。
+// 关键变化：var orders = List.of(new Order("ann", "book", 20), new Order("bob", "pen", 8), new Order("ann", "cup", 35));；创建 Order，构造参数为 "ann", "book", 20，实例写入 orders。
 var groups = orders.stream().collect(Collectors.groupingBy(Order::user));
-// 初始状态：groups 当前为 orders.stream().collect(Collectors.groupingBy(Order::user))。
-// 作用：默认结果是 Map<User, List<Order>>。
+// 输入：var groups = orders.stream().collect(Collectors.groupingBy(Order::user));；右侧表达式 orders.stream().collect(Collectors.groupingBy(Order::user)) 的结果赋给 groups。
+// 关键变化：var groups = orders.stream().collect(Collectors.groupingBy(Order::user));；把方法引用 orders.stream().collect(Collectors.groupingBy(Order::user)) 绑定到目标函数式接口，结果写入 groups。
 System.out.println(groups.get("ann").size());
 // 输出：2
 ```
@@ -111,16 +116,21 @@ System.out.println(groups.get("ann").size());
 `mapping` 让结果只保留需要的字段；需要去重时替换下游为 `Collectors.toSet()`。
 
 ```java
+// 语义：mapping 让结果只保留需要的字段。
 import java.util.List;
 import java.util.stream.Collectors;
 
 record Order(String user, String item, int amount) { }
 
 var orders = List.of(new Order("ann", "book", 20), new Order("ann", "cup", 35));
-// 初始状态：orders 当前为 List.of(new Order("ann", "book", 20), new Order("ann", "cup", 35))。
+// 输入：var orders = List.of(new Order("ann", "book", 20), new Order("ann", "cup", 35));；使用构造参数 "ann", "book", 20 创建 Order，结果赋给 orders。
+// 关键变化：var orders = List.of(new Order("ann", "book", 20), new Order("ann", "cup", 35));；创建 Order，构造参数为 "ann", "book", 20，实例写入 orders。
 var items = orders.stream().collect(Collectors.groupingBy(
         Order::user, Collectors.mapping(Order::item, Collectors.toList())));
-        // 关键变化：Order::user, Collectors.mapping(Order::item, Collectors.toList())));；Collectors；mapping；Collectors.mapping(Order::item) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：var items = orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.mapping(Order::item, Collectors.toList())));；右侧表达式 orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.mapping(Order::item, Collectors.toList()))) 的结果赋给 items。
+        // 关键变化：var items = orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.mapping(Order::item, Collectors.toList())));；把方法引用 orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.mapping(Order::item, Collectors.toList()))) 绑定到目标函数式接口，结果写入 items。
+        // 输入：Order::user, Collectors.mapping(Order::item, Collectors.toList())));；接收对象为 Collectors，调用 toList 的实参为 无显式参数。
+        // 关键变化：Order::user, Collectors.mapping(Order::item, Collectors.toList())));；终止当前流管道并把元素收集为 List；返回列表结果。
 System.out.println(items);
 // 输出：{ann=[book, cup]}
 ```
@@ -130,16 +140,21 @@ System.out.println(items);
 用数值下游收集器比先分组 List 再循环求和更直接，也减少中间对象。
 
 ```java
+// 语义：用数值下游收集器比先分组 List 再循环求和更直接，也减少中间对象。
 import java.util.List;
 import java.util.stream.Collectors;
 
 record Order(String user, int amount) { }
 
 var orders = List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8));
-// 初始状态：orders 当前为 List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8))。
+// 输入：var orders = List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8));；使用构造参数 "ann", 20 创建 Order，结果赋给 orders。
+// 关键变化：var orders = List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8));；创建 Order，构造参数为 "ann", 20，实例写入 orders。
 var totals = orders.stream().collect(Collectors.groupingBy(
         Order::user, Collectors.summingInt(Order::amount)));
-        // 关键变化：Order::user, Collectors.summingInt(Order::amount)));；Collectors；summingInt；Collectors.summingInt(Order::amount) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：var totals = orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.summingInt(Order::amount)));；右侧表达式 orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.summingInt(Order::amount))) 的结果赋给 totals。
+        // 关键变化：var totals = orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.summingInt(Order::amount)));；把方法引用 orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.summingInt(Order::amount))) 绑定到目标函数式接口，结果写入 totals。
+        // 输入：Order::user, Collectors.summingInt(Order::amount)));；接收对象为 Collectors，调用 summingInt 的实参为 Order::amount。
+        // 关键变化：Order::user, Collectors.summingInt(Order::amount)));；调用 summingInt，实参为 Order::amount))；返回按 Order::amount 求和的 Collector。
 System.out.println(totals);
 // 输出：{ann=55, bob=8}
 ```
@@ -149,16 +164,21 @@ System.out.println(totals);
 摘要同时提供数量、总和、最小、最大和平均值，适合报表或诊断数据。
 
 ```java
+// 语义：摘要同时提供数量、总和、最小、最大和平均值，适合报表或诊断数据。
 import java.util.List;
 import java.util.stream.Collectors;
 
 record Order(String user, int amount) { }
 
 var orders = List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8));
-// 初始状态：orders 当前为 List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8))。
+// 输入：var orders = List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8));；使用构造参数 "ann", 20 创建 Order，结果赋给 orders。
+// 关键变化：var orders = List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8));；创建 Order，构造参数为 "ann", 20，实例写入 orders。
 var stats = orders.stream().collect(Collectors.groupingBy(
         Order::user, Collectors.summarizingInt(Order::amount)));
-        // 关键变化：Order::user, Collectors.summarizingInt(Order::amount)));；Collectors；summarizingInt；Collectors.summarizingInt(Order::amount) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：var stats = orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.summarizingInt(Order::amount)));；右侧表达式 orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.summarizingInt(Order::amount))) 的结果赋给 stats。
+        // 关键变化：var stats = orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.summarizingInt(Order::amount)));；把方法引用 orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.summarizingInt(Order::amount))) 绑定到目标函数式接口，结果写入 stats。
+        // 输入：Order::user, Collectors.summarizingInt(Order::amount)));；接收对象为 Collectors，调用 summarizingInt 的实参为 Order::amount。
+        // 关键变化：Order::user, Collectors.summarizingInt(Order::amount)));；调用 summarizingInt，实参为 Order::amount))；返回按 Order::amount 生成 IntSummaryStatistics 的 Collector。
 System.out.println(stats.get("ann").getAverage());
 // 输出：27.5
 ```
@@ -168,16 +188,21 @@ System.out.println(stats.get("ann").getAverage());
 归约函数要明确初始值和结合规则；如果只是求和、最大值等常见统计，优先使用对应的专用收集器。
 
 ```java
+// 语义：归约函数要明确初始值和结合规则。
 import java.util.List;
 import java.util.stream.Collectors;
 
 record Order(String user, int amount) { }
 
 var orders = List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8));
-// 初始状态：orders 当前为 List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8))。
+// 输入：var orders = List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8));；使用构造参数 "ann", 20 创建 Order，结果赋给 orders。
+// 关键变化：var orders = List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8));；创建 Order，构造参数为 "ann", 20，实例写入 orders。
 var max = orders.stream().collect(Collectors.groupingBy(
         Order::user, Collectors.reducing(0, Order::amount, Integer::max)));
-        // 关键变化：Order::user, Collectors.reducing(0, Order::amount, Integer::max)));；Collectors；reducing；Collectors.reducing(0) 返回本次调用的具体结果，后续语句继续使用该值。
+        // 输入：var max = orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.reducing(0, Order::amount, Integer::max)));；右侧表达式 orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.reducing(0, Order::amount, Integer::max))) 的结果赋给 max。
+        // 关键变化：var max = orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.reducing(0, Order::amount, Integer::max)));；把方法引用 orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.reducing(0, Order::amount, Integer::max))) 绑定到目标函数式接口，结果写入 max。
+        // 输入：Order::user, Collectors.reducing(0, Order::amount, Integer::max)));；接收对象为 Collectors，调用 reducing 的实参为 0, Order::amount, Integer::max。
+        // 关键变化：Order::user, Collectors.reducing(0, Order::amount, Integer::max)));；调用 reducing，实参为 0, Order::amount, Integer::max))；返回按给定初值和二元操作聚合的 Collector。
 System.out.println(max);
 // 输出：{ann=35, bob=8}
 ```
@@ -194,8 +219,10 @@ import java.util.stream.Collectors;
 
 var parts = List.of(10, 25, 80, 5).stream().collect(
         Collectors.partitioningBy(amount -> amount >= 20));
-        // 关键变化：Collectors.partitioningBy(amount -> amount >= 20));；Collectors；partitioningBy；Collectors.partitioningBy(amount -> amount >= 20) 处理当前元素流并得到对应结果。
-        // 初始状态：parts 当前保存 List.of(10, 25, 80, 5).stream().collect( Collectors.partitioningBy(amount -> amount >= 20))的计算结果。
+        // 输入：var parts = List.of(10, 25, 80, 5).stream().collect( Collectors.partitioningBy(amount -> amount >= 20));；右侧表达式 List.of(10, 25, 80, 5).stream().collect( Collectors.partitioningBy(amount -> amount >= 20)) 的结果赋给 parts。
+        // 关键变化：var parts = List.of(10, 25, 80, 5).stream().collect( Collectors.partitioningBy(amount -> amount >= 20));；在流上调用 collect 处理元素，结果写入 parts。
+        // 输入：Collectors.partitioningBy(amount -> amount >= 20));；右侧表达式 20)) 的结果赋给 Collectors.partitioningBy(amount -> amount >。
+        // 关键变化：Collectors.partitioningBy(amount -> amount >= 20));；将 20)) 的计算结果写入 Collectors.partitioningBy(amount -> amount >；赋值完成。
 System.out.println(parts);
 // 输出：{false=[10, 5], true=[25, 80]}
 ```
@@ -206,19 +233,18 @@ System.out.println(parts);
 
 ```java
 // 语义：没有合并策略的重复键会抛异常。
-// 初始状态：scores 初始为 List.of(new Score("java", 80), new Score("java", 95))。
 import java.util.List;
-// 输入：// 初始状态：scores 初始为 List.of(new Score("java", 80), new Score("java", 95))。 import java.util.List; 使用语句中的具体实参或初始值，当前对象 从这里进入后续操作。
 import java.util.stream.Collectors;
 
 record Score(String name, int value) { }
 
 var scores = List.of(new Score("java", 80), new Score("java", 95));
-// 关键变化：scores 接收表达式 List.of(new Score("java", 80), new Score("java", 95)) 的计算结果。
-// 初始状态：scores 的初始值为 List.of(new Score("java", 80), new Score("java", 95))。
+// 输入：var scores = List.of(new Score("java", 80), new Score("java", 95));；使用构造参数 "java", 80 创建 Score，结果赋给 scores。
+// 关键变化：var scores = List.of(new Score("java", 80), new Score("java", 95));；创建 Score，构造参数为 "java", 80，实例写入 scores。
 var best = scores.stream().collect(Collectors.toMap(
         Score::name, Score::value, Integer::max));
-// 关键变化：var best = scores.stream().collect(Collectors.toMap( Score::name, Score::value, Integer::max)); 将返回值写入 best；best 现在保存该具体结果。
+        // 输入：var best = scores.stream().collect(Collectors.toMap( Score::name, Score::value, Integer::max));；右侧表达式 scores.stream().collect(Collectors.toMap( Score::name, Score::value, Integer::max)) 的结果赋给 best。
+        // 关键变化：var best = scores.stream().collect(Collectors.toMap( Score::name, Score::value, Integer::max));；把方法引用 scores.stream().collect(Collectors.toMap( Score::name, Score::value, Integer::max)) 绑定到目标函数式接口，结果写入 best。
 System.out.println(best);
 // 输出：{java=95}
 ```
@@ -236,8 +262,12 @@ import java.util.stream.Collectors;
 var result = List.of("java", "stream", "api").stream()
         .filter(text -> text.length() >= 4)
         .collect(Collectors.joining("/"));
-        // 关键变化：.collect(Collectors.joining("/"));；当前对象；collect；当前对象.collect(Collectors.joining("/")) 处理当前元素流并得到对应结果。
-        // 初始状态：result 当前保存 List.of("java", "stream", "api").stream() .filter(text -> text.length() >= 4) .collect(Collectors.joining("/"))的计算结果。
+        // 输入：var result = List.of("java", "stream", "api").stream() .filter(text -> text.length() >= 4) .collect(Collectors.joining("/"));；右侧表达式 List.of("java", "stream", "api").stream() .filter(text -> text.length() >= 4) .collect(Collectors.joining("/")) 的结果赋给 result。
+        // 关键变化：var result = List.of("java", "stream", "api").stream() .filter(text -> text.length() >= 4) .collect(Collectors.joining("/"));；在流上调用 filter 处理元素，结果写入 result。
+        // 输入：filter(text -> text.length() >= 4)；从 "java"、"stream"、"api" 中保留前两项。
+        // 关键变化：joining("/") 把 "java"、"stream" 拼为 "java/stream" 并写入 result。
+        // 输入：.collect(Collectors.joining("/"));；接收对象为 上一个链式结果，调用 collect 的实参为 Collectors.joining("/")。
+        // 关键变化：.collect(Collectors.joining("/"));；使用指定 Collector 聚合当前元素；返回该 Collector 的结果。
 System.out.println(result);
 // 输出：java/stream
 ```
@@ -247,11 +277,12 @@ System.out.println(result);
 `reduce` 的累加器应满足结合律，才能安全地考虑并行；需要同时保留多个字段时使用 `collect` 或记录类型。
 
 ```java
+// 语义：reduce 的累加器应满足结合律，才能安全地考虑并行。
 import java.util.List;
 
 int total = List.of(20, 35, 8).stream().reduce(0, Integer::sum);
-// 初始状态：total 当前为 List.of(20, 35, 8).stream().reduce(0, Integer::sum)。
-// 作用：reduce 的累加器应满足结合律，才能安全地考虑并行。
+// 输入：int total = List.of(20, 35, 8).stream().reduce(0, Integer::sum);；右侧表达式 List.of(20, 35, 8).stream().reduce(0, Integer::sum) 的结果赋给 total。
+// 关键变化：int total = List.of(20, 35, 8).stream().reduce(0, Integer::sum);；把方法引用 List.of(20, 35, 8).stream().reduce(0, Integer::sum) 绑定到目标函数式接口，结果写入 total。
 System.out.println(total);
 // 输出：63
 ```
@@ -266,12 +297,20 @@ import java.util.List;
 
 var result = List.of("java", "sql").stream()
         .<String>mapMulti((text, sink) -> {
-        // 关键变化：.<String>mapMulti((text, sink) -> {；当前对象.该操作((text, sink) -> {) 返回本次调用的具体结果，后续语句继续使用该值。
-        // 初始状态：result 当前保存 List.of("java", "sql").stream() .<String>mapMulti((text, sink) -> {的计算结果。
+        // 输入：var result = List.of("java", "sql").stream() .<String>mapMulti((text, sink) -> {；右侧表达式 List.of("java", "sql").stream() .<String>mapMulti((text, sink) -> { 的结果赋给 result。
+        // 关键变化：var result = List.of("java", "sql").stream() .<String>mapMulti((text, sink) -> {；按 "java", "sql" 调用 of 创建值，结果写入 result。
+        // 输入：.<String>mapMulti((text, sink) -> {；接收对象为 上一个链式结果，调用 mapMulti 的实参为 (text, sink) ->。
+        // 关键变化：.<String>mapMulti((text, sink) -> {；对每个 text 调用 sink 两次，分别发出原文和大写文本；返回的流继续收集到 result。
             sink.accept(text);
+            // 输入：sink.accept(text);；接收对象为 sink，调用 accept 的实参为 text。
+            // 关键变化：sink.accept(text);；把 text 交给 sink 消费，Consumer 无返回值；副作用状态更新。
             sink.accept(text.toUpperCase());
+            // 输入：sink.accept(text.toUpperCase());；接收对象为 sink，调用 accept 的实参为 text.toUpperCase()。
+            // 关键变化：sink.accept(text.toUpperCase());；把 text.toUpperCase() 交给 sink 消费，Consumer 无返回值；副作用状态更新。
         })
         .toList();
+        // 输入：.toList();；接收对象为 上一个链式结果，调用 toList 的实参为 无显式参数。
+        // 关键变化：.toList();；终止当前流管道并把元素收集为 List；返回列表结果。
 System.out.println(result);
 // 输出：[java, JAVA, sql, SQL]
 ```
@@ -286,8 +325,10 @@ import java.util.stream.Collectors;
 
 var result = List.of("java", "sql").stream().collect(
         Collectors.collectingAndThen(Collectors.toList(), List::copyOf));
-        // 关键变化：Collectors.collectingAndThen(Collectors.toList(), List::copyOf));；Collectors；collectingAndThen；Collectors.collectingAndThen(Collectors.toList()) 返回本次调用的具体结果，后续语句继续使用该值。
-        // 初始状态：result 当前保存 List.of("java", "sql").stream().collect( Collectors.collectingAndThen(Collectors.toList(), List::copyOf))的计算结果。
+        // 输入：var result = List.of("java", "sql").stream().collect( Collectors.collectingAndThen(Collectors.toList(), List::copyOf));；右侧表达式 List.of("java", "sql").stream().collect( Collectors.collectingAndThen(Collectors.toList(), List::copyOf)) 的结果赋给 result。
+        // 关键变化：var result = List.of("java", "sql").stream().collect( Collectors.collectingAndThen(Collectors.toList(), List::copyOf));；把方法引用 List.of("java", "sql").stream().collect( Collectors.collectingAndThen(Collectors.toList(), List::copyOf)) 绑定到目标函数式接口，结果写入 result。
+        // 输入：Collectors.collectingAndThen(Collectors.toList(), List::copyOf));；接收对象为 Collectors，调用 toList 的实参为 无显式参数。
+        // 关键变化：Collectors.collectingAndThen(Collectors.toList(), List::copyOf));；终止当前流管道并把元素收集为 List；返回列表结果。
 System.out.println(result);
 // 输出：[java, sql]
 ```
@@ -301,8 +342,10 @@ import java.util.List;
 
 long count = List.of("java", "sql", "java").parallelStream()
         .unordered().distinct().count();
-        // 初始状态：count 当前保存 List.of("java", "sql", "java").parallelStream() .unordered().distinct().count()的计算结果。
-        // 关键变化：.unordered().distinct().count();；当前对象.unordered() 完成本例中的具体调用，后续语句观察调用后的状态。
+        // 输入：long count = List.of("java", "sql", "java").parallelStream() .unordered().distinct().count();；右侧表达式 List.of("java", "sql", "java").parallelStream() .unordered().distinct().count() 的结果赋给 count。
+        // 关键变化：long count = List.of("java", "sql", "java").parallelStream() .unordered().distinct().count();；统计 上一个链式结果 的元素数量，计数结果写入 count。
+        // 输入：.unordered().distinct().count();；接收对象为 上一个链式结果，调用 count 的实参为 无显式参数。
+        // 关键变化：.unordered().distinct().count();；统计 上一个链式结果 中的元素数量，返回 long 计数值；源流内容不变。
 System.out.println(count);
 // 输出：2
 ```
@@ -316,11 +359,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 List<Integer> result = new ArrayList<>();
-// 关键变化：result 接收表达式 new ArrayList<>() 的计算结果。
-// 初始状态：result 的初始值为 new ArrayList<>()。
+// 输入：List<Integer> result = new ArrayList<>();；使用构造参数 无显式参数 创建 ArrayList<>，结果赋给 result。
+// 关键变化：List<Integer> result = new ArrayList<>();；创建 ArrayList<>，构造参数为 无显式参数，实例写入 result。
 List.of(1, 2, 3, 4).parallelStream().forEach(result::add);
+// 输入：List.of(1, 2, 3, 4).parallelStream().forEach(result::add);；接收对象为 上一个链式结果，调用 forEach 的实参为 result::add。
+// 关键变化：List.of(1, 2, 3, 4).parallelStream().forEach(result::add);；把 上一个链式结果 的每个元素交给 result::add，无返回值；遍历动作完成。
 System.out.println(result.size());
-// 输出：不应依赖具体结果（共享 ArrayList 非线程安全）
+// 输出：0
 ```
 ## 简单案例
 
@@ -336,13 +381,27 @@ public class StreamGroupDemo {
                 new Order("ann", List.of("book", "pen"), 28),
                 new Order("bob", List.of("cup"), 35),
                 new Order("ann", List.of("cup"), 20));
+                // 输入：var orders = List.of( new Order("ann", List.of("book", "pen"), 28), new Order("bob", List.of("cup"), 35), new Order("ann", List.of("cup"), 20));；使用构造参数 "ann", List.of("book", "pen"), 28 创建 Order，结果赋给 orders。
+                // 关键变化：var orders = List.of( new Order("ann", List.of("book", "pen"), 28), new Order("bob", List.of("cup"), 35), new Order("ann", List.of("cup"), 20));；创建 Order，构造参数为 "ann", List.of("book", "pen"), 28，实例写入 orders。
+                // 输入：new Order("ann", List.of("book", "pen"), 28), new Order("bob", List.of("cup"), 35), new Order("ann", List.of("cup"), 20));；接收对象为 List，调用 of 的实参为 "book", "pen"。
+                // 关键变化：new Order("ann", List.of("book", "pen"), 28), new Order("bob", List.of("cup"), 35), new Order("ann", List.of("cup"), 20));；创建 Order，构造参数保留在外层调用中。
+                // 输入：new Order("bob", List.of("cup"), 35), new Order("ann", List.of("cup"), 20));；接收对象为 List，调用 of 的实参为 "cup"。
+                // 关键变化：new Order("bob", List.of("cup"), 35), new Order("ann", List.of("cup"), 20));；创建 Order，构造参数保留在外层调用中。
+                // 输入：new Order("ann", List.of("cup"), 20));；接收对象为 List，调用 of 的实参为 "cup"。
+                // 关键变化：new Order("ann", List.of("cup"), 20));；创建 Order，构造参数保留在外层调用中。
         var items = orders.stream().flatMap(order -> order.items().stream()).distinct().sorted().toList();
+        // 输入：var items = orders.stream().flatMap(order -> order.items().stream()).distinct().sorted().toList();；右侧表达式 orders.stream().flatMap(order -> order.items().stream()).distinct().sorted().toList() 的结果赋给 items。
+        // 关键变化：var items = orders.stream().flatMap(order -> order.items().stream()).distinct().sorted().toList();；在流上调用 flatMap 处理元素，结果写入 items。
         var totals = orders.stream().collect(Collectors.groupingBy(
                 Order::user, Collectors.summingInt(Order::amount)));
+                // 输入：var totals = orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.summingInt(Order::amount)));；右侧表达式 orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.summingInt(Order::amount))) 的结果赋给 totals。
+                // 关键变化：var totals = orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.summingInt(Order::amount)));；把方法引用 orders.stream().collect(Collectors.groupingBy( Order::user, Collectors.summingInt(Order::amount))) 绑定到目标函数式接口，结果写入 totals。
+                // 输入：Order::user, Collectors.summingInt(Order::amount)));；接收对象为 Collectors，调用 summingInt 的实参为 Order::amount。
+                // 关键变化：Order::user, Collectors.summingInt(Order::amount)));；调用 summingInt，实参为 Order::amount))；返回按 Order::amount 求和的 Collector。
         System.out.println(items);
-        // 输出：[book, cup, pen]
+        // 输出：[book
         System.out.println(totals);
-        // 输出：{ann=48, bob=35}
+        // 输出：cup
     }
 }
 ```
