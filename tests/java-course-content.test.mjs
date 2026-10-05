@@ -978,7 +978,7 @@ const JAVA_RESULT_COMMENT_LABEL = /(?:输出|结果|返回|异常)\s*[:：]/u
 const JAVA_ACTION_EFFECT_PATTERN = /(?:变为|变成|更新|追加|插入|删除|移除|写入|读取|返回|得到|产生|注册|匹配|替换|合并|累加|递减|递增|阻塞|唤醒|等待|创建|关闭|释放|格式化|判断|比较|校验|验证|转换|复制|获取|计算|查找|截取|拼接|检查|选择|遍历|处理|提供|取得|生成|启动|提交|停止|触发|保留|保持|消费|生产|长度|数量|元素|字段|键|值|状态|结果|集合|列表|队列|映射|异常|成功|失败|生效|调用后|之后|此时|最终|现在|剩余|内容|字符串|文本|时间|线程|任务|锁|配置|规则|响应|请求|对象|文件|目录|连接|资源|流|字节|索引|位置|引用|实例|类型|名称|标识)/u
 const JAVA_OUTPUT_CALL_PATTERN = /\bSystem\.out\.(?:print|println|printf)\s*\(/u
 const FORBIDDEN_EXAMPLE_COMMENT_PATTERN = /关键输入或调用是|执行后[^\r\n]*(?:完成|进入|得到|产生)|本例演示|示例完成|本次输出调用已产生可观察结果|接收对象或返回值按该参数产生对应状态|使用给定参数产生该输出|使用具体参数[^\r\n。]*(?:计算并返回结果|完成判断并返回布尔结果)|使用表达式中的具体参数完成本次调用|保存该调用按具体参数计算出的返回值|追加具体参数 当前元素|按具体键值参数 当前键和值|按具体参数 当前索引或条件|写入具体参数 当前值|标准输出写入具体参数 当前值|[^\r\n。]+按这次调用的具体参数完成更新|处理当前语句中的具体状态|后续代码可观察该调用产生的状态|该配置语句明确示例中的具体边界/u
-const FORBIDDEN_NO_INFORMATION_COMMENT_PATTERN = /^(?:TODO\b|FIXME\b|待补充|此处(?:需要)?补充(?:具体)?说明|执行后得到预期结果|操作成功|如上所述|输出结果如下|此处省略)[^\r\n]*$/iu
+const FORBIDDEN_NO_INFORMATION_COMMENT_PATTERN = /^(?:(?:TODO|FIXME)(?:\s*[:：])?\s*)?(?:待补充|此处(?:需要)?补充(?:具体)?说明|执行后得到预期结果|操作成功|如上所述|输出结果如下|此处省略)[。.!！]?$/iu
 
 const WEAK_EXPLANATION_ANCHORS = new Set([
   'abstract', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const',
@@ -1993,16 +1993,14 @@ function isArticleContractOperationHeading(heading, content = '') {
   if (segments.length > 1) {
     const receiver = segments.slice(0, -1).join('.')
     const escapedReceiver = receiver.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
-    const receiverCall = new RegExp(`\\b${escapedReceiver}\\s*\\.\\s*${escapedMethod}\\s*\\(`, 'u')
-    if (receiverCall.test(executable)) return true
-    if (/^[A-Z]/u.test(receiver)) {
-      const declaredReceiver = new RegExp(`\\b${escapedReceiver}(?:<[^>]+>)?\\s+[A-Za-z_$][\\w$]*\\s*=`, 'u').test(executable)
-      const constructedReceiver = new RegExp(`\\bnew\\s+${escapedReceiver}\\s*\\(`, 'u').test(executable)
-      const staticReceiver = new RegExp(`\\b${escapedReceiver}\\s*\\.\\s*[A-Za-z_$][\\w$]*\\s*\\(`, 'u').test(executable)
-      return (declaredReceiver || constructedReceiver || staticReceiver) &&
-        new RegExp(`\\.\\s*${escapedMethod}\\s*\\(`, 'u').test(executable)
-    }
-    return false
+    if (new RegExp(`\\b${escapedReceiver}\\s*\\.\\s*${escapedMethod}\\s*\\(`, 'u').test(executable)) return true
+    const typedVariable = executable.match(new RegExp(`\\b${escapedReceiver}(?:<[^>]+>)?\\s+([A-Za-z_$][\\w$]*)\\s*=`, 'u'))?.[1]
+    const inferredVariable = executable.match(new RegExp(`\\bvar\\s+([A-Za-z_$][\\w$]*)\\s*=\\s*new\\s+${escapedReceiver}(?:<[^>]*>)?\\s*\\(`, 'u'))?.[1]
+    const implementationType = receiver === 'List' ? '(?:ArrayList|LinkedList|Vector)' : receiver === 'Set' ? '(?:HashSet|LinkedHashSet|TreeSet)' : receiver === 'Map' ? '(?:HashMap|LinkedHashMap|TreeMap)' : escapedReceiver
+    const compatibleVariable = executable.match(new RegExp(`\\bvar\\s+([A-Za-z_$][\\w$]*)\\s*=\\s*new\\s+${implementationType}(?:<[^>]*>)?\\s*\\(`, 'u'))?.[1]
+    const receiverVariable = typedVariable ?? inferredVariable ?? compatibleVariable
+    if (receiverVariable && new RegExp(`\\b${receiverVariable}\\s*\\.\\s*${escapedMethod}\\s*\\(`, 'u').test(executable)) return true
+    return receiver === 'List' && new RegExp(`\\bList\\s*\\.\\s*of\\s*\\([\\s\\S]*?\\)\\s*\\.\\s*${escapedMethod}\\s*\\(`, 'u').test(executable)
   }
 
   const builtInType = new Set([
@@ -2053,15 +2051,36 @@ function splitSqlBoolean(text, operator) {
 }
 
 function isArticleContractTautologicalWhere(where) {
-  let normalized = where.trim()
-  if (!normalized) return true
-  while (normalized.startsWith('(') && normalized.endsWith(')')) {
-    const parts = splitSqlBoolean(normalized.slice(1, -1), 'OR')
-    if (parts.length === 1) normalized = normalized.slice(1, -1).trim()
-    else break
+  const stripBalancedOuterParentheses = (value) => {
+    let normalized = value.trim()
+    while (normalized.startsWith('(') && normalized.endsWith(')')) {
+      let depth = 0
+      let quote = null
+      let closesAtEnd = true
+      for (let index = 0; index < normalized.length; index += 1) {
+        const char = normalized[index]
+        if (quote) {
+          if (char === quote && normalized[index + 1] === quote) index += 1
+          else if (char === quote) quote = null
+          continue
+        }
+        if (char === "'" || char === '"' || char === '`') { quote = char; continue }
+        if (char === '(') depth += 1
+        if (char === ')') depth -= 1
+        if (depth === 0 && index < normalized.length - 1) { closesAtEnd = false; break }
+      }
+      if (!closesAtEnd) break
+      normalized = normalized.slice(1, -1).trim()
+    }
+    return normalized
   }
   const isTautologicalAtom = (term) => {
-    const atom = term.trim().replace(/^\(+|\)+$/gu, '').trim()
+    const atom = stripBalancedOuterParentheses(term)
+    if (!atom) return true
+    const disjuncts = splitSqlBoolean(atom, 'OR')
+    if (disjuncts.length > 1) return disjuncts.some(isTautologicalAtom)
+    const conjuncts = splitSqlBoolean(atom, 'AND')
+    if (conjuncts.length > 1) return conjuncts.every(isTautologicalAtom)
     if (/^(?:TRUE|1\s*=\s*1|1\s*<>\s*0)$/iu.test(atom)) return true
     const equality = atom.match(/^('(?:''|[^'])*'|"(?:""|[^"])*"|\d+(?:\.\d+)?|TRUE|FALSE)\s*(=|<>|!=)\s*('(?:''|[^'])*'|"(?:""|[^"])*"|\d+(?:\.\d+)?|TRUE|FALSE)$/iu)
     if (!equality) {
@@ -2073,9 +2092,7 @@ function isArticleContractTautologicalWhere(where) {
     const same = unquote(left) === unquote(right)
     return operator === '=' ? same : !same
   }
-  return splitSqlBoolean(normalized, 'OR').some((disjunct) =>
-    splitSqlBoolean(disjunct, 'AND').every(isTautologicalAtom),
-  )
+  return isTautologicalAtom(where)
 }
 
 function hasArticleContractBroadKeyArguments(argumentText) {
@@ -2202,30 +2219,37 @@ function getJavaExecutionCalls(code) {
 
 function getJavaExecutionStringLiterals(code) {
   const lexical = lexArticleContractCode(code, 'java')
+  const executable = lexical.executable
   const calls = getJavaExecutionCalls(code)
   const literals = []
+  const variableNames = new Set()
   for (const literal of lexical.stringLiterals) {
     const directCall = calls.find((call) => literal.start >= call.start && literal.end <= call.end)
     if (directCall) {
       literals.push({ ...literal, mode: directCall.mode, executionLineIndex: directCall.lineIndex })
-      continue
     }
+  }
 
-    const declaration = code.slice(0, literal.start).match(/\b(?:String|var)\s+([A-Za-z_$][\w$]*)\s*=\s*$/u)
-    if (!declaration) continue
-    const name = declaration[1]
-    const declarationStart = code.lastIndexOf('\n', literal.start) + 1
-    const declarationEnd = code.indexOf(';', literal.start)
-    const expression = code.slice(declarationStart, declarationEnd < 0 ? code.length : declarationEnd)
-    const expressionLiterals = lexical.stringLiterals.filter((item) => item.start >= declarationStart && item.start < (declarationEnd < 0 ? code.length : declarationEnd))
-    const dynamic = expression.replace(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/gu, ' ').replace(/\b(?:String|var)\s+[\w$]+\s*=|\bnew\s+/gu, ' ').replace(/[+();\s]/gu, '').length > 0
-    for (const passedToCall of calls.filter((call) => new RegExp(`\\b${name}\\b`, 'u').test(call.args))) {
+  const declarationPattern = /\b(?:String|var)\s+([A-Za-z_$][\w$]*)\s*=/gu
+  for (const match of executable.matchAll(declarationPattern)) {
+    const name = match[1]
+    if (variableNames.has(name)) continue
+    variableNames.add(name)
+    const start = (match.index ?? 0) + match[0].length
+    const semicolon = executable.indexOf(';', start)
+    const end = semicolon < 0 ? executable.length : semicolon
+    const expressionCode = code.slice(start, end)
+    const passedCalls = calls.filter((call) => new RegExp(`\\b${name}\\b`, 'u').test(call.args))
+    if (!passedCalls.length) continue
+    const expressionLiterals = lexical.stringLiterals.filter((item) => item.start >= start && item.start < end)
+    const expressionExecutable = executable.slice(start, end).replace(/[+\s]/gu, '')
+    const dynamic = expressionExecutable.length > 0
+    const combinedValue = expressionLiterals.map((item) => item.value).join(' ')
+    for (const passedCall of passedCalls) {
       if (dynamic) {
-        literals.push({ ...literal, value: '', mode: passedToCall.mode, executionLineIndex: passedToCall.lineIndex, dynamic: true })
-        break
-      }
-      if (expressionLiterals[0]?.start === literal.start) {
-        literals.push({ ...literal, value: expressionLiterals.map((item) => item.value).join(' '), mode: passedToCall.mode, executionLineIndex: passedToCall.lineIndex })
+        literals.push({ value: combinedValue, mode: passedCall.mode, executionLineIndex: passedCall.lineIndex, dynamic: true })
+      } else if (expressionLiterals.length) {
+        literals.push({ value: combinedValue, mode: passedCall.mode, executionLineIndex: passedCall.lineIndex, dynamic: false })
       }
     }
   }
@@ -2255,7 +2279,8 @@ function getDangerousJavaArticleContractOperations(code) {
   for (const literal of getJavaExecutionStringLiterals(code)) {
     const { mode } = literal
     if (literal.dynamic) {
-      occurrences.push({ operation: mode === 'jdbc' ? 'UPDATE' : 'DEL', lineIndex: literal.executionLineIndex, source: 'java-dynamic' })
+      const detectedOperation = DANGEROUS_MYSQL_REDIS_TOKENS.find((operation) => new RegExp(`\\b${operation}\\b`, 'iu').test(literal.value))
+      occurrences.push({ operation: detectedOperation ?? (mode === 'jdbc' ? 'UPDATE' : 'DEL'), lineIndex: literal.executionLineIndex, source: 'java-dynamic' })
       continue
     }
     for (const occurrence of getJavaEmbeddedStringOccurrences(literal.value, mode)) {
@@ -2263,17 +2288,6 @@ function getDangerousJavaArticleContractOperations(code) {
         ...occurrence,
         lineIndex: literal.executionLineIndex,
       })
-    }
-  }
-
-  for (const call of getJavaExecutionCalls(code)) {
-    for (const [, name] of call.args.matchAll(/\b([A-Za-z_$][\w$]*)\b/gu)) {
-      const declaration = code.match(new RegExp(`\\b(?:String|var)\\s+${name}\\s*=\\s*([^;]+)`, 'u'))
-      if (!declaration) continue
-      const expression = declaration[1]
-      if (!/[+]|\b(?:build|create|format|resolve)[A-Za-z_$]*\s*\(/iu.test(expression)) continue
-      const hasKnownLiteral = /^(?:\s*"(?:\\.|[^"\\])*"\s*(?:\+\s*"(?:\\.|[^"\\])*"\s*)*)$/u.test(expression)
-      if (!hasKnownLiteral) occurrences.push({ operation: call.mode === 'jdbc' ? 'UPDATE' : 'DEL', lineIndex: call.lineIndex, source: 'java-dynamic' })
     }
   }
 
@@ -2728,6 +2742,18 @@ System.out.println(builder);
     'matrix/generic-no-information-comment.md',
   )
 
+  const noInformationWithConcreteDetail = createArticleContractOperationFixture({
+    heading: 'StringBuilder.append：追加文本',
+    language: 'java',
+    code: `var builder = new StringBuilder();
+builder.append("b");
+// TODO: users.id=7; return 1.
+// 关键变化：builder 从空文本更新为 b。
+System.out.println(builder);
+// 输出：b。`,
+  })
+  assertArticleContractIssueTypes(noInformationWithConcreteDetail, [], 'matrix/no-information-comment-with-details.md')
+
   const informativeFreeFormComment = createArticleContractOperationFixture({
     heading: 'StringBuilder.append：追加文本',
     language: 'java',
@@ -2998,6 +3024,17 @@ SELECT COUNT(*) FROM users;`,
       expected: ['[danger:boundary]'],
     },
     {
+      name: 'delete-with-nested-parenthesized-tautology',
+      heading: 'DELETE：嵌套括号包含恒真谓词',
+      language: 'sql',
+      code: `-- 初始状态：users 表有 id = 7 的记录。
+INSERT INTO users(id, name) VALUES (7, 'Bob');
+DELETE FROM users WHERE ((id = 7 OR 2 = 2));
+-- 关键变化：users 表中的记录可能全部被删除。
+SELECT COUNT(*) FROM users;`,
+      expected: ['[danger:boundary]'],
+    },
+    {
       name: 'delete-with-false-predicate-is-not-broad',
       heading: 'DELETE：使用恒假条件',
       language: 'sql',
@@ -3184,6 +3221,31 @@ System.out.println("done");
       expected: ['[danger:boundary]'],
     },
     {
+      name: 'jdbc-semicolon-inside-string-does-not-end-declaration',
+      heading: 'jdbcTemplate.execute：执行删除',
+      language: 'java',
+      code: `String sql = "SELECT ';'; " + "DELETE FROM users";
+jdbcTemplate.execute(sql);
+// 关键变化：users 表中的记录被删除。
+System.out.println("done");
+// 输出：done。`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'jdbc-text-block-boundary-at-execution-passes',
+      heading: 'jdbcTemplate.execute：执行删除',
+      language: 'java',
+      code: `String sql = """
+DELETE FROM users
+""";
+// 风险边界：DELETE 只在受控维护窗口执行，并先备份后核对影响范围。
+jdbcTemplate.execute(sql);
+// 关键变化：users 表中的记录被删除。
+System.out.println("done");
+// 输出：done。`,
+      expected: [],
+    },
+    {
       name: 'jdbc-text-block-is-executable-sql',
       heading: 'jdbcTemplate.execute：执行删除',
       language: 'java',
@@ -3342,6 +3404,18 @@ System.out.println(name);
 // 输出：Ada。`,
   })
   assertArticleContractIssueTypes(mismatchedReceiver, ['[h3:name]'], 'matrix/Foo.get-mismatched-receiver.md')
+
+  const unrelatedReceiverEvidence = createArticleContractOperationFixture({
+    heading: 'Foo.get：读取列表元素',
+    language: 'java',
+    code: `Foo.bar();
+List<String> names = List.of("Ada");
+String name = names.get(0);
+// 关键变化：name 从列表中的 Ada 更新为该元素。
+System.out.println(name);
+// 输出：Ada。`,
+  })
+  assertArticleContractIssueTypes(unrelatedReceiverEvidence, ['[h3:name]'], 'matrix/Foo.get-unrelated-receiver-evidence.md')
 
   const positiveExamples = [
     {

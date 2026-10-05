@@ -210,4 +210,40 @@ git diff --check
 → pass
 ```
 
-Commit: pending.
+Commit: `36d2871f1` (`test(java): close article gate review gaps`).
+
+### Review fix round 3
+
+Status: `DONE`
+
+The WHERE tautology parser now recursively removes only balanced outer
+parentheses and evaluates top-level OR/AND while preserving nested groups. The
+Java string-declaration scanner uses the same-length executable mask to locate
+semicolon terminators outside ordinary strings and text blocks, maps each
+variable once to the actual execution call, and carries literal SQL operation
+names through dynamic-expression boundary reporting. Receiver H3 matching no
+longer accepts arbitrary uppercase type evidence paired with another
+receiver's method; typed/inferred receiver variables and documented collection
+factory chains are correlated explicitly. Generic-comment rejection is now
+limited to entire normalized generic phrases, so concrete detail alongside a
+TODO marker is allowed.
+
+New regressions cover nested `(id = 7 OR 2 = 2)`, a semicolon inside an SQL
+string, concatenated SQL, text-block execution with a correctly placed
+operation-specific boundary, unrelated `Foo.bar` plus `names.get`, and
+generic-comment text with concrete details.
+
+Verification:
+
+```text
+corepack pnpm@9.15.9 exec node --test --test-name-pattern="article contract rejects tautological|danger and executable|operation H3" tests/java-course-content.test.mjs
+→ 3 pass, 0 fail
+
+corepack pnpm@9.15.9 exec node --test tests/java-course-content.test.mjs
+→ 44 pass, 0 fail
+
+git diff --check
+→ pass
+```
+
+Commit: `4a04f4b03` (`test(java): fix remaining article gate review issues`).
