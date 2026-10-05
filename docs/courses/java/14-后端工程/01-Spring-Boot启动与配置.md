@@ -232,7 +232,7 @@ class PropertyProbe {
 - [List 基础](/courses/java/05-泛型与集合/04-List常用API)：需要处理配置列表时先查 `List` 的可变性和视图边界。
 - [Map 基础](/courses/java/05-泛型与集合/07-Map常用API)：需要读取键值配置或构建索引时查 `Map` 的合并语义。
 - [String 文本处理](/courses/java/02-数组与文本/02-String与文本处理)：需要规范化环境变量、URL 或 profile 名称时查字符串边界。
-- [JDBC 与事务](/courses/java/11-工程实践/02-JDBC与事务)：应用启动后连接数据库时，区分连接池初始化和事务边界。
+- [JDBC 与事务](/courses/java/12-工程实践/02-JDBC与事务)：应用启动后连接数据库时，区分连接池初始化和事务边界。
 
 ## 简单案例
 

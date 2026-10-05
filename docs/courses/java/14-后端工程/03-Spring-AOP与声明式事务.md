@@ -349,7 +349,7 @@ class AopConfiguration {
 - [List 基础](/courses/java/05-泛型与集合/04-List常用API)：批量事务写入前先确认列表顺序、重复项和视图是否独立。
 - [Map 基础](/courses/java/05-泛型与集合/07-Map常用API)：按主键聚合写入或统计异常时查 `merge` 和并发单键语义。
 - [String 文本处理](/courses/java/02-数组与文本/02-String与文本处理)：切点、日志和异常消息涉及文本匹配时查字面/正则边界。
-- [JDBC 与事务](/courses/java/11-工程实践/02-JDBC与事务)：理解连接、提交、回滚、隔离级别和资源释放的底层边界。
+- [JDBC 与事务](/courses/java/12-工程实践/02-JDBC与事务)：理解连接、提交、回滚、隔离级别和资源释放的底层边界。
 
 ## 简单案例
 

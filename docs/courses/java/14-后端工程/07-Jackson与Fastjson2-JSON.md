@@ -474,7 +474,7 @@ System.out.println("redis=StringSerializer");
 - [Map 基础](/courses/java/05-泛型与集合/07-Map常用API)：读取树模型、配置选项和错误映射时查 Map 的键值边界。
 - [String 文本处理](/courses/java/02-数组与文本/02-String与文本处理)：规范化日期文本、媒体类型和缓存 key 时查字符串 API。
 - [JSON 与 Java 对象转换](/courses/java/02-数组与文本/05-JSON与Java对象转换)：比较 Hutool JSONUtil 与 Spring 消息转换的责任边界。
-- [Redis](/courses/java/13-后端工程/14-Redis)：继续查看 TTL、缓存一致性和脚本边界。
+- Redis（第 15 章内容整理中）：继续学习 TTL、缓存一致性和脚本边界。
 
 ## 简单案例
 

@@ -5,13 +5,6 @@ export interface JavaCourseArticle {
   readonly file: string;
   readonly title: string;
   readonly route: string;
-  /** Legacy source kept visible until its canonical file is available. */
-  readonly legacyFile?: string;
-  readonly legacyRoute?: string;
-  readonly legacyTitle?: string;
-  readonly legacyFallbackPriority?: number;
-  /** Marks the canonical article that owns this legacy source during staging. */
-  readonly legacyFallbackTarget?: boolean;
 }
 
 export interface JavaCourseChapter {
@@ -23,17 +16,7 @@ export interface JavaCourseChapter {
 type ArticleDefinition = readonly [
   fileName: string,
   title: string,
-  legacyFile?: string,
-  legacyTitle?: string,
-  legacyFallbackPriority?: number,
-  legacyFallbackTarget?: boolean,
 ];
-
-const LEGACY_CHAPTER_IDS: Readonly<Record<string, string>> = {
-  '12-工程实践': '11-工程实践',
-  '13-设计与项目': '12-设计与项目',
-  '14-后端工程': '13-后端工程',
-};
 
 function routeFromFile(file: string): string {
   return `/${file.replace(/^docs\//u, '').replace(/\.md$/u, '')}`;
@@ -41,35 +24,10 @@ function routeFromFile(file: string): string {
 
 function createArticle(
   chapterId: string,
-  [
-    fileName,
-    title,
-    explicitLegacyFile,
-    legacyTitle,
-    legacyFallbackPriority,
-    legacyFallbackTarget,
-  ]: ArticleDefinition,
+  [fileName, title]: ArticleDefinition,
 ): JavaCourseArticle {
   const file = `docs/courses/java/${chapterId}/${fileName}`;
-  const legacyChapterId = LEGACY_CHAPTER_IDS[chapterId];
-  const legacyFile =
-    explicitLegacyFile ??
-    (legacyChapterId ? `docs/courses/java/${legacyChapterId}/${fileName}` : undefined);
-
-  return {
-    file,
-    title,
-    route: routeFromFile(file),
-    ...(legacyFile
-      ? {
-          legacyFile,
-          legacyRoute: routeFromFile(legacyFile),
-          legacyTitle,
-          legacyFallbackPriority,
-          legacyFallbackTarget,
-        }
-      : {}),
-  };
+  return { file, title, route: routeFromFile(file) };
 }
 
 function createChapter(
@@ -87,26 +45,14 @@ function createChapter(
 const article = (
   fileName: string,
   title: string,
-  legacyFile?: string,
-  legacyTitle?: string,
-  legacyFallbackPriority?: number,
-  legacyFallbackTarget?: boolean,
-): ArticleDefinition => [
-  fileName,
-  title,
-  legacyFile,
-  legacyTitle,
-  legacyFallbackPriority,
-  legacyFallbackTarget,
-];
+): ArticleDefinition => [fileName, title];
 
 /**
  * The sole source of order for the Java learning route.
  *
  * Entries for chapters that are being written in later tasks intentionally live
- * here from the beginning. The sidebar uses a canonical file first and a
- * deterministic legacy fallback only while that canonical file is absent, so
- * migration can happen incrementally without dropping existing navigation.
+ * here from the beginning. The sidebar includes an article only after its
+ * canonical Markdown file exists.
  */
 export const JAVA_COURSE_CHAPTERS: readonly JavaCourseChapter[] = [
   createChapter('01-Java基础', 'Java基础', [
@@ -206,14 +152,7 @@ export const JAVA_COURSE_CHAPTERS: readonly JavaCourseChapter[] = [
     article('05-GC日志与问题定位.md', 'GC 日志与问题定位'),
   ]),
   createChapter('11-MySQL-8', 'MySQL 8', [
-    article(
-      '01-环境连接与数据库对象.md',
-      '环境连接与数据库对象',
-      'docs/courses/java/13-后端工程/13-MySQL-8.0.md',
-      'MySQL 8.0',
-      undefined,
-      true,
-    ),
+    article('01-环境连接与数据库对象.md', '环境连接与数据库对象'),
     article('02-表设计与DDL.md', '表设计与 DDL'),
     article('03-数据类型字符集与时区.md', '数据类型、字符集与时区'),
     article('04-数据写入更新与删除.md', '数据写入、更新与删除'),
@@ -249,20 +188,8 @@ export const JAVA_COURSE_CHAPTERS: readonly JavaCourseChapter[] = [
     article('10-文件上传下载与资源安全.md', '文件上传下载与资源安全'),
     article('11-Apache-POI-Excel导入导出.md', 'Apache POI Excel 导入导出'),
     article('12-Quartz定时任务.md', 'Quartz 定时任务'),
-    article(
-      '13-OpenAPI与统一错误契约.md',
-      'OpenAPI 与统一错误契约',
-      'docs/courses/java/13-后端工程/13-MySQL-8.0.md',
-      'MySQL 8.0',
-      100,
-    ),
-    article(
-      '14-JUnit5-Mockito与MockMvc.md',
-      'JUnit 5、Mockito 与 MockMvc',
-      'docs/courses/java/13-后端工程/14-Redis.md',
-      'Redis',
-      100,
-    ),
+    article('13-OpenAPI与统一错误契约.md', 'OpenAPI 与统一错误契约'),
+    article('14-JUnit5-Mockito与MockMvc.md', 'JUnit 5、Mockito 与 MockMvc'),
     article('15-Testcontainers集成测试.md', 'Testcontainers 集成测试'),
     article('16-MyBatis生产边界.md', 'MyBatis 生产边界'),
     article('17-RestClient-WebClient与HTTP韧性.md', 'RestClient、WebClient 与 HTTP 韧性'),
@@ -270,14 +197,7 @@ export const JAVA_COURSE_CHAPTERS: readonly JavaCourseChapter[] = [
     article('19-Spring-Cache-Caffeine与Redisson.md', 'Spring Cache、Caffeine 与 Redisson'),
   ]),
   createChapter('15-Redis', 'Redis', [
-    article(
-      '01-基础连接与数据模型.md',
-      '基础连接与数据模型',
-      'docs/courses/java/13-后端工程/14-Redis.md',
-      'Redis',
-      undefined,
-      true,
-    ),
+    article('01-基础连接与数据模型.md', '基础连接与数据模型'),
     article('02-String与计数器.md', 'String 与计数器'),
     article('03-Hash与对象字段.md', 'Hash 与对象字段'),
     article('04-List-Set与Sorted-Set.md', 'List、Set 与 Sorted Set'),
@@ -313,84 +233,14 @@ export interface JavaCourseSidebarOptions {
   readonly fileExists?: (file: string) => boolean;
 }
 
-interface ResolvedArticle {
-  readonly title: string;
-  readonly route: string;
-}
-
-function compareFallbackPriority(left: JavaCourseArticle, right: JavaCourseArticle): number {
-  return (left.legacyFallbackPriority ?? 0) - (right.legacyFallbackPriority ?? 0);
-}
-
-function resolveAvailableArticles(
-  chapters: readonly JavaCourseChapter[],
-  fileExists: (file: string) => boolean,
-): Map<string, ResolvedArticle> {
-  const articles = chapters.flatMap((chapter) => chapter.articles);
-  const canonicalFiles = new Set(
-    articles.filter((article) => fileExists(article.file)).map((article) => article.file),
-  );
-  const legacyCandidates = new Map<string, JavaCourseArticle[]>();
-  for (const article of articles) {
-    if (!article.legacyFile || !fileExists(article.legacyFile)) continue;
-    const candidates = legacyCandidates.get(article.legacyFile) ?? [];
-    candidates.push(article);
-    legacyCandidates.set(article.legacyFile, candidates);
-  }
-  const fallbackWinners = new Map<string, JavaCourseArticle>();
-
-  for (const [legacyFile, candidates] of legacyCandidates) {
-    const canonicalTargetExists = candidates.some(
-      (article) => article.legacyFallbackTarget && canonicalFiles.has(article.file),
-    );
-    if (canonicalTargetExists) continue;
-
-    const availableFallbacks = candidates.filter((article) => !canonicalFiles.has(article.file));
-    const targetFallback = availableFallbacks.find((article) => article.legacyFallbackTarget);
-    const canonicalCompatibilityExists = candidates.some(
-      (article) => !article.legacyFallbackTarget && canonicalFiles.has(article.file),
-    );
-    const winner = canonicalCompatibilityExists && targetFallback
-      ? targetFallback
-      : availableFallbacks.reduce<JavaCourseArticle | undefined>((current, article) => {
-          if (!current || compareFallbackPriority(article, current) > 0) return article;
-          return current;
-        }, undefined);
-
-    if (winner) {
-      fallbackWinners.set(legacyFile, winner);
-    }
-  }
-
-  const resolved = new Map<string, ResolvedArticle>();
-  const usedRoutes = new Set<string>();
-  for (const article of articles) {
-    let candidate: ResolvedArticle | undefined;
-    if (canonicalFiles.has(article.file)) {
-      candidate = { title: article.title, route: article.route };
-    } else if (article.legacyFile && fallbackWinners.get(article.legacyFile) === article) {
-      candidate = {
-        title: article.legacyTitle ?? article.title,
-        route: article.legacyRoute ?? routeFromFile(article.legacyFile),
-      };
-    }
-
-    if (candidate && !usedRoutes.has(candidate.route)) {
-      usedRoutes.add(candidate.route);
-      resolved.set(article.route, candidate);
-    }
-  }
-  return resolved;
-}
-
 /**
  * Build the Java sidebar in manifest order.
  *
  * The optional argument is useful for callers that provide a selected copy of
  * the manifest. Its values are treated as a set of chapter IDs; the canonical
  * manifest still supplies both ordering and article metadata, so shuffling the
- * copy cannot change navigation order. A legacy file may temporarily stand in
- * for an absent canonical file, with canonical files always taking precedence.
+ * copy cannot change navigation order. Planned entries appear once their
+ * canonical Markdown files are created.
  */
 export function getJavaCourseItems(
   selectedChapters: readonly JavaCourseChapter[] = JAVA_COURSE_CHAPTERS,
@@ -398,14 +248,13 @@ export function getJavaCourseItems(
 ): DefaultTheme.SidebarItem[] {
   const selectedIds = new Set(selectedChapters.map((chapter) => chapter.id));
   const chapters = JAVA_COURSE_CHAPTERS.filter((chapter) => selectedIds.has(chapter.id));
-  const resolve = resolveAvailableArticles(chapters, options.fileExists ?? existsSync);
+  const fileExists = options.fileExists ?? existsSync;
   let total = 0;
 
   const groups = chapters.map((chapter) => {
     const items = chapter.articles
-      .map((article) => resolve.get(article.route))
-      .filter((article): article is ResolvedArticle => Boolean(article))
-      .map(({ title, route }) => ({ text: title, link: route }));
+      .filter((article) => fileExists(article.file))
+      .map((article) => ({ text: article.title, link: article.route }));
     total += items.length;
 
     return {

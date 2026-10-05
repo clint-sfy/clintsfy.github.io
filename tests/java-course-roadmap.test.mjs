@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { test } from 'node:test'
 
@@ -70,18 +70,31 @@ function findArticle(chapterId, fileName) {
   return article
 }
 
-function routeForLegacyFile(filePath) {
-  return `/${relative('.', filePath).replaceAll('\\', '/').replace(/^docs\//u, '').replace(/\.md$/u, '')}`
-}
-
 function listExistingLegacyRoutes() {
-  const roots = ['11-工程实践', '12-设计与项目', '13-后端工程']
-  return roots.flatMap((chapterId) => {
-    const directory = join('docs', 'courses', 'java', chapterId)
-    return readdirSync(directory, { withFileTypes: true })
-      .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-      .map((entry) => routeForLegacyFile(join(directory, entry.name)))
-  })
+  return [
+    '/courses/java/11-工程实践/01-Maven与测试工程',
+    '/courses/java/11-工程实践/02-JDBC与事务',
+    '/courses/java/11-工程实践/04-Velocity代码生成',
+    '/courses/java/12-设计与项目/01-设计原则模式与综合复习',
+    ...Array.from({ length: 14 }, (_, index) =>
+      `/courses/java/13-后端工程/${String(index + 1).padStart(2, '0')}-${[
+        'Spring-Boot启动与配置',
+        'Spring-IoC与Bean生命周期',
+        'Spring-AOP与声明式事务',
+        'Spring-MVC与Servlet边界',
+        'Spring-Security与JWT',
+        'MyBatis核心与MyBatis-Plus重点',
+        'Jackson与Fastjson2-JSON',
+        'Bean-Validation参数校验',
+        'SLF4J与Logback日志',
+        '文件上传下载与资源安全',
+        'Apache-POI-Excel导入导出',
+        'Quartz定时任务',
+        'MySQL-8.0',
+        'Redis',
+      ][index]}`,
+    ),
+  ]
 }
 
 function expectedRedirectTarget(source) {
@@ -148,7 +161,7 @@ test('Java sidebar follows canonical order even when a copied manifest is shuffl
   )
 })
 
-test('Java sidebar preserves the current legacy inventory during migration', () => {
+test('Java sidebar uses the migrated canonical inventory', () => {
   const groups = getJavaCourseItems()
   const expected = [
     ['Java基础', 7, false],
@@ -164,7 +177,7 @@ test('Java sidebar preserves the current legacy inventory during migration', () 
     ['MySQL 8', 0, true],
     ['工程实践', 3, true],
     ['设计与项目', 1, true],
-    ['后端工程', 14, true],
+    ['后端工程', 12, true],
     ['Redis', 0, true],
   ]
 
@@ -177,112 +190,57 @@ test('Java sidebar preserves the current legacy inventory during migration', () 
     expected,
   )
 
-  const expectedLegacyLinks = [
-    '/courses/java/11-工程实践/01-Maven与测试工程',
-    '/courses/java/11-工程实践/02-JDBC与事务',
-    '/courses/java/11-工程实践/04-Velocity代码生成',
-    '/courses/java/12-设计与项目/01-设计原则模式与综合复习',
-    ...Array.from({ length: 14 }, (_, index) =>
-      `/courses/java/13-后端工程/${String(index + 1).padStart(2, '0')}-${[
-        'Spring-Boot启动与配置',
-        'Spring-IoC与Bean生命周期',
-        'Spring-AOP与声明式事务',
-        'Spring-MVC与Servlet边界',
-        'Spring-Security与JWT',
-        'MyBatis核心与MyBatis-Plus重点',
-        'Jackson与Fastjson2-JSON',
-        'Bean-Validation参数校验',
-        'SLF4J与Logback日志',
-        '文件上传下载与资源安全',
-        'Apache-POI-Excel导入导出',
-        'Quartz定时任务',
-        'MySQL-8.0',
-        'Redis',
-      ][index]}`,
-    ),
-  ]
   const legacyLinks = groups
     .flatMap((group) => group.items ?? [])
     .map((item) => item.link)
-    .filter((link) => /\/courses\/java\/(?:11|12|13)-/u.test(link))
-  assert.deepEqual(legacyLinks, expectedLegacyLinks)
-  assert.equal(new Set(legacyLinks).size, legacyLinks.length, 'legacy fallback routes must be unique')
+    .filter((link) => /\/courses\/java\/(?:11-工程实践|12-设计与项目|13-后端工程)\//u.test(link))
+  assert.deepEqual(legacyLinks, [], 'the sidebar must not publish old chapter routes')
 })
 
-test('Java sidebar only links to existing canonical or transitional legacy files', () => {
-  const links = collectLinks(getJavaCourseItems())
-  const manifestByRoute = new Map(
-    JAVA_COURSE_CHAPTERS.flatMap((chapter) => chapter.articles.map((article) => [article.route, article])),
-  )
-  const legacyByRoute = new Map(
-    JAVA_COURSE_CHAPTERS.flatMap((chapter) =>
-      chapter.articles
-        .filter((article) => article.legacyRoute)
-        .map((article) => [article.legacyRoute, article]),
-    ),
-  )
+test('Java chapter migration keeps only canonical 12-14 files and updates Markdown links', () => {
+  const oldDirectories = ['11-工程实践', '12-设计与项目', '13-后端工程']
+  for (const chapter of oldDirectories) {
+    const directory = join('docs', 'courses', 'java', chapter)
+    assert.equal(existsSync(directory), false, `legacy chapter directory ${chapter} must be absent`)
+  }
 
-  for (const item of links) {
-    const canonicalArticle = manifestByRoute.get(item.link)
-    if (canonicalArticle) {
-      assert.ok(existsSync(canonicalArticle.file), `sidebar link ${item.link} must point to an existing file`)
-      continue
-    }
+  for (const chapter of ['12-工程实践', '13-设计与项目', '14-后端工程']) {
+    const manifestFiles = JAVA_COURSE_CHAPTERS
+      .find((entry) => entry.id === chapter)
+      ?.articles.map((entry) => entry.file)
+      .filter((file) => existsSync(file))
+      .sort()
+    assert.ok(manifestFiles?.length, `${chapter} must have canonical manifest entries`)
+    const diskFiles = readdirSync(join('docs', 'courses', 'java', chapter), { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+      .map((entry) => `docs/courses/java/${chapter}/${entry.name}`)
+      .sort()
+    assert.deepEqual(diskFiles, manifestFiles, `${chapter} files must match the canonical manifest`)
+  }
 
-    const legacyArticle = legacyByRoute.get(item.link)
-    assert.ok(legacyArticle, `sidebar link ${item.link} must come from the manifest fallback metadata`)
-    assert.ok(
-      legacyArticle.legacyFile && existsSync(legacyArticle.legacyFile),
-      `sidebar legacy link ${item.link} must point to an existing file`,
+  const markdownFiles = readdirSync('docs/courses/java', { recursive: true, withFileTypes: true })
+  const courseMarkdownPaths = markdownFiles
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+  for (const entry of courseMarkdownPaths) {
+    const markdown = readFileSync(join(entry.parentPath, entry.name), 'utf8')
+    assert.doesNotMatch(
+      markdown,
+      /\]\(\/courses\/java\/(?:11-工程实践|12-设计与项目|13-后端工程)\//u,
+      `${entry.name} must not link to a legacy chapter route`,
     )
   }
 })
 
-test('Java sidebar canonical files win over legacy fallbacks when both paths are available', () => {
-  const mysqlArticle = JAVA_COURSE_CHAPTERS
-    .find((chapter) => chapter.id === '11-MySQL-8')
-    ?.articles[0]
-  assert.ok(mysqlArticle?.legacyFile)
-  assert.ok(mysqlArticle?.legacyRoute)
-
-  const groups = getJavaCourseItems(JAVA_COURSE_CHAPTERS, {
-    fileExists: (file) => file === mysqlArticle.file || file === mysqlArticle.legacyFile || existsSync(file),
-  })
-  const mysqlGroup = groups.find((group) => stripMarkup(group.text).startsWith('MySQL 8'))
-  const backendGroup = groups.find((group) => stripMarkup(group.text).startsWith('后端工程'))
-
-  assert.equal(mysqlGroup?.items?.[0]?.link, mysqlArticle.route)
-  assert.ok(
-    !(backendGroup?.items ?? []).some((item) => item.link === mysqlArticle.legacyRoute),
-    'the legacy route must not be duplicated after its canonical file appears',
+test('Java sidebar only links to existing canonical manifest files', () => {
+  const links = collectLinks(getJavaCourseItems())
+  const manifestByRoute = new Map(
+    JAVA_COURSE_CHAPTERS.flatMap((chapter) => chapter.articles.map((article) => [article.route, article])),
   )
-})
-
-test('Java sidebar keeps a target fallback when a compatibility slot becomes canonical', () => {
-  const redisArticle = JAVA_COURSE_CHAPTERS
-    .find((chapter) => chapter.id === '15-Redis')
-    ?.articles[0]
-  const backendCompatibilityArticle = JAVA_COURSE_CHAPTERS
-    .find((chapter) => chapter.id === '14-后端工程')
-    ?.articles[13]
-  assert.ok(redisArticle?.legacyFile)
-  assert.ok(redisArticle?.legacyRoute)
-  assert.ok(backendCompatibilityArticle)
-
-  const groups = getJavaCourseItems(JAVA_COURSE_CHAPTERS, {
-    fileExists: (file) =>
-      file === backendCompatibilityArticle.file || file === redisArticle.legacyFile || existsSync(file),
-  })
-  const redisGroup = groups.find((group) => stripMarkup(group.text).startsWith('Redis'))
-  const backendGroup = groups.find((group) => stripMarkup(group.text).startsWith('后端工程'))
-  const links = groups.flatMap((group) => (group.items ?? []).map((item) => item.link))
-
-  assert.equal(redisGroup?.items?.[0]?.link, redisArticle.legacyRoute)
-  assert.equal(links.filter((link) => link === redisArticle.legacyRoute).length, 1)
-  assert.ok(
-    !(backendGroup?.items ?? []).some((item) => item.link === redisArticle.legacyRoute),
-    'a compatibility canonical article must not hide or duplicate the target fallback',
-  )
+  for (const item of links) {
+    const canonicalArticle = manifestByRoute.get(item.link)
+    assert.ok(canonicalArticle, `sidebar link ${item.link} must be canonical`)
+    assert.ok(existsSync(canonicalArticle.file), `sidebar link ${item.link} must point to an existing file`)
+  }
 })
 
 test('Java permanent redirects map every existing legacy route exactly once', () => {

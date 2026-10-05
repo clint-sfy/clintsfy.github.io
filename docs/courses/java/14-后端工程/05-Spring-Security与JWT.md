@@ -476,7 +476,7 @@ String algorithm() { return "bcrypt"; }
 - [Map 基础](/courses/java/05-泛型与集合/07-Map常用API)：读取 claims、权限映射和错误响应时查 Map 的键值边界。
 - [String 文本处理](/courses/java/02-数组与文本/02-String与文本处理)：规范化 Bearer header、角色名和错误码时查字符串 API。
 - [JSON 与 Java 对象转换](/courses/java/02-数组与文本/05-JSON与Java对象转换)：比较 JSON 转换与 JWT claims 映射的职责边界。
-- [Spring MVC 与 Servlet 边界](/courses/java/13-后端工程/04-Spring-MVC与Servlet边界)：理解 Filter、Interceptor 与响应错误边界。
+- [Spring MVC 与 Servlet 边界](/courses/java/14-后端工程/04-Spring-MVC与Servlet边界)：理解 Filter、Interceptor 与响应错误边界。
 
 ## 简单案例
 

@@ -22,9 +22,9 @@ const CHAPTER_NAMES = [
   '08-反射与模块',
   '09-并发编程',
   '10-JVM',
-  '11-工程实践',
-  '12-设计与项目',
-  '13-后端工程',
+  '12-工程实践',
+  '13-设计与项目',
+  '14-后端工程',
 ]
 
 const QUALITY_CHAPTER_NAMES = CHAPTER_NAMES.slice(0, 10)
@@ -126,13 +126,13 @@ const EXPECTED_ARTICLES_BY_CHAPTER = {
     '04-JVM诊断命令与JFR.md',
     '05-GC日志与问题定位.md',
   ],
-  '11-工程实践': [
+  '12-工程实践': [
     '01-Maven与测试工程.md',
     '02-JDBC与事务.md',
     '04-Velocity代码生成.md',
   ],
-  '12-设计与项目': ['01-设计原则模式与综合复习.md'],
-  '13-后端工程': [
+  '13-设计与项目': ['01-设计原则模式与综合复习.md'],
+  '14-后端工程': [
     '01-Spring-Boot启动与配置.md',
     '02-Spring-IoC与Bean生命周期.md',
     '03-Spring-AOP与声明式事务.md',
@@ -145,8 +145,6 @@ const EXPECTED_ARTICLES_BY_CHAPTER = {
     '10-文件上传下载与资源安全.md',
     '11-Apache-POI-Excel导入导出.md',
     '12-Quartz定时任务.md',
-    '13-MySQL-8.0.md',
-    '14-Redis.md',
   ],
 }
 
@@ -162,7 +160,7 @@ const EXPECTED_JAVA_PATHS = [
 const ARTICLE_PATHS = EXPECTED_JAVA_PATHS.filter((file) => file !== JAVA_INDEX_PATH)
 
 const COMMENT_CONTRACT_PATHS = ARTICLE_PATHS.filter((file) =>
-  /^docs\/courses\/java\/(?:08-|09-|10-|11-|12-|13-)/u.test(file),
+  /^docs\/courses\/java\/(?:08-|09-|10-|12-|13-|14-)/u.test(file),
 )
 
 const FORBIDDEN_GENERIC_COMMENT_TAILS = [
@@ -222,42 +220,42 @@ const REQUIRED_EXTERNAL_API_HEADINGS = {
   'docs/courses/java/09-并发编程/02-并发工具与线程安全.md': [
     'ThreadPoolExecutor.CallerRunsPolicy',
   ],
-  'docs/courses/java/11-工程实践/01-Maven与测试工程.md': [
+  'docs/courses/java/12-工程实践/01-Maven与测试工程.md': [
     '@PreDestroy', '@Resource', 'Charset.defaultCharset', 'Charset.forName',
     'Random.nextInt', 'UUID.randomUUID',
   ],
-  'docs/courses/java/11-工程实践/04-Velocity代码生成.md': [
+  'docs/courses/java/12-工程实践/04-Velocity代码生成.md': [
     'Properties', 'Template.merge', 'VelocityContext.put',
   ],
-  'docs/courses/java/13-后端工程/01-Spring-Boot启动与配置.md': ['@Configuration'],
-  'docs/courses/java/13-后端工程/02-Spring-IoC与Bean生命周期.md': [
+  'docs/courses/java/14-后端工程/01-Spring-Boot启动与配置.md': ['@Configuration'],
+  'docs/courses/java/14-后端工程/02-Spring-IoC与Bean生命周期.md': [
     '@Autowired', '@Value', '@ConditionalOnProperty', 'SpringApplication.run',
     'FilterRegistrationBean', 'FilterRegistrationBean.addUrlPatterns',
   ],
-  'docs/courses/java/13-后端工程/03-Spring-AOP与声明式事务.md': [
+  'docs/courses/java/14-后端工程/03-Spring-AOP与声明式事务.md': [
     '@Transactional', 'AopContext.currentProxy',
   ],
-  'docs/courses/java/13-后端工程/04-Spring-MVC与Servlet边界.md': [
+  'docs/courses/java/14-后端工程/04-Spring-MVC与Servlet边界.md': [
     '@DeleteMapping', '@ExceptionHandler', '@GetMapping', '@PathVariable', '@PostMapping',
     '@PutMapping', '@RequestMapping', '@RequestParam', '@ResponseBody', '@RestController',
     '@RestControllerAdvice', 'FilterChain.doFilter', 'HttpServletResponse.addHeader',
   ],
-  'docs/courses/java/13-后端工程/05-Spring-Security与JWT.md': [
+  'docs/courses/java/14-后端工程/05-Spring-Security与JWT.md': [
     '@EnableMethodSecurity', '@PreAuthorize', 'Claims.get', 'Jwts.parser', 'BCryptPasswordEncoder',
   ],
-  'docs/courses/java/13-后端工程/06-MyBatis核心与MyBatis-Plus重点.md': [
+  'docs/courses/java/14-后端工程/06-MyBatis核心与MyBatis-Plus重点.md': [
     '@Param', '@MapperScan', 'PageHelper.startPage', 'PageHelper.orderBy',
     'PageHelper.clearPage', 'PageInfo',
   ],
-  'docs/courses/java/13-后端工程/07-Jackson与Fastjson2-JSON.md': [
+  'docs/courses/java/14-后端工程/07-Jackson与Fastjson2-JSON.md': [
     '@JSONField', '@JsonSerialize', 'JSONObject.containsKey', 'JSONObject.parseObject',
     '@JsonProperty', '@JsonIgnore', '@JacksonAnnotationsInside', 'Jwts.builder', 'Claims.put',
   ],
-  'docs/courses/java/13-后端工程/08-Bean-Validation参数校验.md': [
+  'docs/courses/java/14-后端工程/08-Bean-Validation参数校验.md': [
     '@Constraint', '@Email', '@NotNull', '@Pattern',
   ],
-  'docs/courses/java/13-后端工程/09-SLF4J与Logback日志.md': ['Logger.debug', 'Logger.warn'],
-  'docs/courses/java/13-后端工程/11-Apache-POI-Excel导入导出.md': [
+  'docs/courses/java/14-后端工程/09-SLF4J与Logback日志.md': ['Logger.debug', 'Logger.warn'],
+  'docs/courses/java/14-后端工程/11-Apache-POI-Excel导入导出.md': [
     'Row.createCell', 'Sheet.addMergedRegion', 'Sheet.createRow',
     'Workbook.createCellStyle', 'Workbook.createDataFormat', 'Workbook.createFont',
     'Workbook.createSheet', 'WorkbookFactory.create', 'CellRangeAddress',
@@ -265,20 +263,15 @@ const REQUIRED_EXTERNAL_API_HEADINGS = {
     'DataValidationHelper.createValidation', 'DataValidation.createPromptBox',
     'Sheet.addValidationData', 'CellRangeAddressList', 'IOUtils.toByteArray',
   ],
-  'docs/courses/java/13-后端工程/12-Quartz定时任务.md': [
+  'docs/courses/java/14-后端工程/12-Quartz定时任务.md': [
     'CronExpression', 'CronScheduleBuilder.cronSchedule', 'JobBuilder.newJob', 'JobDataMap',
     'JobDataMap.put', 'JobKey.jobKey', 'Scheduler.checkExists', 'Scheduler.deleteJob',
     'Scheduler.pauseJob', 'Scheduler.resumeJob', 'Scheduler.scheduleJob',
     'TriggerBuilder.newTrigger',
   ],
-  'docs/courses/java/13-后端工程/14-Redis.md': [
-    'RedisTemplate.delete', 'RedisTemplate.execute', 'RedisTemplate.keys',
-    'RedisTemplate.opsForHash', 'RedisTemplate.opsForList', 'DefaultRedisScript',
-    'StringRedisSerializer',
-  ],
 }
 // Chapters 01-10 are the completed quality-gated learning path. Chapters
-// 11-12 remain the unchanged follow-up roadmap and are covered only by the
+// Chapters 11-15 are still being authored and are covered only by the
 // global path/frontmatter/navigation guards.
 const QUALITY_ARTICLE_PATHS = ARTICLE_PATHS.filter((file) =>
   QUALITY_CHAPTER_NAMES.some((chapter) => file.startsWith(`docs/courses/java/${chapter}/`)),
@@ -421,102 +414,88 @@ function createBackendArticleSpec({ path, title, keywords, commonUsage, uncommon
 
 const BACKEND_ARTICLE_SPECS = [
   createBackendArticleSpec({
-    path: 'docs/courses/java/13-后端工程/01-Spring-Boot启动与配置.md',
+    path: 'docs/courses/java/14-后端工程/01-Spring-Boot启动与配置.md',
     title: 'Spring Boot 启动与配置',
     keywords: ['@SpringBootApplication', 'application.yml', '@ConfigurationProperties', 'ApplicationRunner', 'Environment'],
     commonUsage: ['@SpringBootApplication', 'application.yml', '@ConfigurationProperties'],
     uncommonUsage: ['条件装配', '启动失败定位', 'ApplicationRunner', 'Environment'],
   }),
   createBackendArticleSpec({
-    path: 'docs/courses/java/13-后端工程/02-Spring-IoC与Bean生命周期.md',
+    path: 'docs/courses/java/14-后端工程/02-Spring-IoC与Bean生命周期.md',
     title: 'Spring IoC 与 Bean 生命周期',
     keywords: ['@Component', '@Service', '@Bean', '构造器注入', '@PostConstruct', '作用域', '代理对象'],
     commonUsage: ['@Component', '@Service', '@Bean', '构造器注入', '@PostConstruct', '作用域', '代理对象'],
     uncommonUsage: ['ObjectProvider', '@Lazy', '@Primary'],
   }),
   createBackendArticleSpec({
-    path: 'docs/courses/java/13-后端工程/03-Spring-AOP与声明式事务.md',
+    path: 'docs/courses/java/14-后端工程/03-Spring-AOP与声明式事务.md',
     title: 'Spring AOP 与声明式事务',
     keywords: ['@Aspect', '@Pointcut', '@Around', 'proceed', '@Transactional', '传播', '隔离', '回滚', '只读', '自调用'],
     commonUsage: ['@Aspect', '@Pointcut', '@Around', 'proceed', '@Transactional', '配置只读查询的事务策略', '自调用'],
     uncommonUsage: ['@Order', 'TransactionTemplate', '回滚规则'],
   }),
   createBackendArticleSpec({
-    path: 'docs/courses/java/13-后端工程/04-Spring-MVC与Servlet边界.md',
+    path: 'docs/courses/java/14-后端工程/04-Spring-MVC与Servlet边界.md',
     title: 'Spring MVC 与 Servlet 边界',
     keywords: ['@RestController', '@RequestMapping', '@GetMapping', '@RequestBody', '响应体', '异常处理', 'Filter', 'Interceptor'],
     commonUsage: ['@RestController', '@RequestMapping', '@GetMapping', '@RequestBody', '响应体', '异常处理', 'Filter', 'HandlerInterceptor'],
     uncommonUsage: ['ResponseEntity', 'OncePerRequestFilter', '拦截器顺序', 'HttpServletResponse.flushBuffer'],
   }),
   createBackendArticleSpec({
-    path: 'docs/courses/java/13-后端工程/05-Spring-Security与JWT.md',
+    path: 'docs/courses/java/14-后端工程/05-Spring-Security与JWT.md',
     title: 'Spring Security 与 JWT',
     keywords: ['SecurityFilterChain', 'authorizeHttpRequests', '@PreAuthorize', 'BCrypt', 'Bearer', 'claims', '过期', '401', '403'],
     commonUsage: ['SecurityFilterChain', 'authorizeHttpRequests', '@PreAuthorize', 'BCrypt', 'Bearer token', 'JWT claims', 'JWT exp'],
     uncommonUsage: ['AuthenticationEntryPoint', 'AccessDeniedHandler', '测试替身'],
   }),
   createBackendArticleSpec({
-    path: 'docs/courses/java/13-后端工程/06-MyBatis核心与MyBatis-Plus重点.md',
+    path: 'docs/courses/java/14-后端工程/06-MyBatis核心与MyBatis-Plus重点.md',
     title: 'MyBatis 核心与 MyBatis-Plus 重点',
     keywords: ['<select', '<insert', '#{}', '<if ', '<foreach ', '结果映射', 'BaseMapper', 'IService', 'QueryWrapper', '分页'],
     commonUsage: ['XML <select>', 'XML <insert>', '#{}', '按可选 ID 集合构建查询', '结果映射'],
     uncommonUsage: ['BaseMapper', 'IService', 'LambdaQueryWrapper', '分页', '原生 XML 对照'],
   }),
   createBackendArticleSpec({
-    path: 'docs/courses/java/13-后端工程/07-Jackson与Fastjson2-JSON.md',
+    path: 'docs/courses/java/14-后端工程/07-Jackson与Fastjson2-JSON.md',
     title: 'Jackson 与 Fastjson2 JSON',
     keywords: ['ObjectMapper', 'Jackson', '@JsonFormat', '@JsonInclude', 'toJSONString', 'parseObject', '自定义序列化', 'Redis 序列化'],
     commonUsage: ['ObjectMapper.writeValueAsString', 'ObjectMapper.readValue', '@JsonFormat', '@JsonInclude', 'JSON.toJSONString', 'JSON.parseObject'],
     uncommonUsage: ['自定义序列化', 'Redis 序列化'],
   }),
   createBackendArticleSpec({
-    path: 'docs/courses/java/13-后端工程/08-Bean-Validation参数校验.md',
+    path: 'docs/courses/java/14-后端工程/08-Bean-Validation参数校验.md',
     title: 'Bean Validation 参数校验',
     keywords: ['@NotBlank', '@Size', '@Valid', '@Validated', '级联', '分组', 'ConstraintValidator', '字段错误响应'],
     commonUsage: ['@NotBlank', '@Size', '@Valid', '@Validated', '级联', '分组'],
     uncommonUsage: ['ConstraintValidator', '字段错误响应', '转换/校验/授权职责'],
   }),
   createBackendArticleSpec({
-    path: 'docs/courses/java/13-后端工程/09-SLF4J与Logback日志.md',
+    path: 'docs/courses/java/14-后端工程/09-SLF4J与Logback日志.md',
     title: 'SLF4J 与 Logback 日志',
     keywords: ['LoggerFactory', 'info', 'error', 'Logback', 'appender', '滚动', 'MDC', '脱敏', 'AOP 操作日志'],
     commonUsage: ['LoggerFactory', 'Logger.info', 'Logger.error', 'Logback 滚动文件', 'MDC'],
     uncommonUsage: ['脱敏', 'AOP 操作日志', '采样/异常堆栈'],
   }),
   createBackendArticleSpec({
-    path: 'docs/courses/java/13-后端工程/10-文件上传下载与资源安全.md',
+    path: 'docs/courses/java/14-后端工程/10-文件上传下载与资源安全.md',
     title: '文件上传下载与资源安全',
     keywords: ['MultipartFile', 'transferTo', '扩展名', '大小白名单', '路径规范化', '路径穿越', 'Content-Disposition', '流式下载'],
     commonUsage: ['MultipartFile', 'transferTo', '执行上传白名单校验', '路径规范化', 'Content-Disposition', '流式下载'],
     uncommonUsage: ['路径穿越', '临时文件', '拒绝路径'],
   }),
   createBackendArticleSpec({
-    path: 'docs/courses/java/13-后端工程/11-Apache-POI-Excel导入导出.md',
+    path: 'docs/courses/java/14-后端工程/11-Apache-POI-Excel导入导出.md',
     title: 'Apache POI Excel 导入导出',
     keywords: ['WorkbookFactory', 'SXSSFWorkbook', '注解列映射', 'importExcel', 'exportExcel', '大文件', '日期', '公式', '资源释放'],
     commonUsage: ['WorkbookFactory', 'SXSSFWorkbook', '注解列映射', 'importExcel', 'exportExcel'],
     uncommonUsage: ['大文件', '日期/公式', '资源释放'],
   }),
   createBackendArticleSpec({
-    path: 'docs/courses/java/13-后端工程/12-Quartz定时任务.md',
+    path: 'docs/courses/java/14-后端工程/12-Quartz定时任务.md',
     title: 'Quartz 定时任务',
     keywords: ['Job', 'JobDetail', 'CronTrigger', 'Cron 表达式', 'misfire', '暂停/恢复', '@DisallowConcurrentExecution', '持久化表', '失败重试'],
     commonUsage: ['Job', 'JobDetail', 'CronTrigger', 'Cron 表达式', 'misfire', '维护期间控制调度启停'],
     uncommonUsage: ['@DisallowConcurrentExecution', '持久化表', '失败重试', 'ScheduledExecutorService'],
-  }),
-  createBackendArticleSpec({
-    path: 'docs/courses/java/13-后端工程/13-MySQL-8.0.md',
-    title: 'MySQL 8.0',
-    keywords: ['MySQL 8.0', 'ALTER TABLE', 'DECIMAL', 'utf8mb4', '索引', 'EXPLAIN', '事务', '行锁', 'CTE', '窗口函数'],
-    commonUsage: ['MySQL 8.0', 'ALTER TABLE', 'DECIMAL', 'utf8mb4', '索引与 EXPLAIN'],
-    uncommonUsage: ['事务/行锁', 'CTE/窗口函数', '时间类型与 JDBC 驱动', 'keyset 分页', '批量写入'],
-  }),
-  createBackendArticleSpec({
-    path: 'docs/courses/java/13-后端工程/14-Redis.md',
-    title: 'Redis',
-    keywords: ['RedisTemplate', 'opsForValue', 'Hash', 'List', 'Set', 'TTL', '序列化', 'Lua', '缓存一致性', '限流'],
-    commonUsage: ['RedisTemplate.opsForValue', 'Redis Hash', 'Redis List', 'Redis Set', 'TTL', '序列化'],
-    uncommonUsage: ['Lua', '缓存一致性', '穿透/击穿/雪崩', '限流', '并发失败边界'],
   }),
 ]
 
@@ -533,8 +512,6 @@ const EXPECTED_BACKEND_TITLES_BY_FILENAME = new Map([
   ['10-文件上传下载与资源安全.md', '文件上传下载与资源安全'],
   ['11-Apache-POI-Excel导入导出.md', 'Apache POI Excel 导入导出'],
   ['12-Quartz定时任务.md', 'Quartz 定时任务'],
-  ['13-MySQL-8.0.md', 'MySQL 8.0'],
-  ['14-Redis.md', 'Redis'],
 ])
 const EXPECTED_JDK20_PREVIEW_ARTICLES = [
   'docs/courses/java/04-现代Java类型/01-枚举record与sealed.md',
@@ -1417,7 +1394,7 @@ function inspectBackendArticle(article, spec) {
 
 function createBackendInspectorFixture() {
   const spec = {
-    path: 'docs/courses/java/13-后端工程/00-runtime-fixture.md',
+    path: 'docs/courses/java/14-后端工程/00-runtime-fixture.md',
     title: 'Backend Runtime Fixture',
     keywords: ['DemoApi'],
     commonUsage: ['DemoApi'],
@@ -3611,8 +3588,8 @@ test('article contract manifest scopes strict checks to explicit new or rewritte
   )
 })
 
-test('backend article specification manifest covers 14 planned pages', () => {
-  assert.equal(BACKEND_ARTICLE_SPECS.length, 14, 'rule backend-manifest-count: expected 14 planned pages')
+test('backend article specification manifest covers 12 migrated pages', () => {
+  assert.equal(BACKEND_ARTICLE_SPECS.length, 12, 'rule backend-manifest-count: expected 12 migrated pages')
 
   const paths = BACKEND_ARTICLE_SPECS.map((spec) => spec.path)
   assert.equal(new Set(paths).size, paths.length, 'rule backend-manifest-paths: planned paths must be unique')
@@ -3629,8 +3606,8 @@ test('backend article specification manifest covers 14 planned pages', () => {
   for (const spec of BACKEND_ARTICLE_SPECS) {
     assert.match(
       spec.path,
-      /^docs\/courses\/java\/13-后端工程\/[^/]+\.md$/u,
-      `rule backend-manifest-path: ${spec.path} must be a chapter 13 Markdown path`,
+      /^docs\/courses\/java\/14-后端工程\/[^/]+\.md$/u,
+      `rule backend-manifest-path: ${spec.path} must be a chapter 14 Markdown path`,
     )
     assert.ok(spec.title, `rule backend-manifest-title: ${spec.path} needs a title`)
     assert.ok(spec.keywords?.length > 0, `rule backend-manifest-keywords: ${spec.path} needs API keywords`)
@@ -3728,7 +3705,7 @@ class Demo {
 
 test('Spring backend batch exposes four article paths and content contracts', () => {
   const batchSpecs = BACKEND_ARTICLE_SPECS.filter((spec) =>
-    /\/13-后端工程\/0[1-4]-/u.test(spec.path),
+    /\/14-后端工程\/0[1-4]-/u.test(spec.path),
   )
   assert.equal(batchSpecs.length, 4, 'rule backend-batch1-manifest: expected four Spring pages')
 
@@ -3753,7 +3730,7 @@ test('Spring backend batch exposes four article paths and content contracts', ()
 
 test('Spring backend references document runtime boundaries and compatibility baselines', () => {
   const batchSpecs = BACKEND_ARTICLE_SPECS.filter((spec) =>
-    /\/13-后端工程\/0[1-4]-/u.test(spec.path),
+    /\/14-后端工程\/0[1-4]-/u.test(spec.path),
   )
   const violations = []
   const articles = new Map()
@@ -3780,17 +3757,17 @@ test('Spring backend references document runtime boundaries and compatibility ba
     }
   }
 
-  const iocBody = articles.get('docs/courses/java/13-后端工程/02-Spring-IoC与Bean生命周期.md') ?? ''
+  const iocBody = articles.get('docs/courses/java/14-后端工程/02-Spring-IoC与Bean生命周期.md') ?? ''
   for (const requiredText of ['ProxyFactory', 'AopUtils.isAopProxy', 'AnnotationConfigApplicationContext', 'getBean(']) {
     if (!iocBody.includes(requiredText)) {
-      violations.push(`docs/courses/java/13-后端工程/02-Spring-IoC与Bean生命周期.md [runtime:${requiredText}] is missing`)
+      violations.push(`docs/courses/java/14-后端工程/02-Spring-IoC与Bean生命周期.md [runtime:${requiredText}] is missing`)
     }
   }
 
-  const mvcBody = articles.get('docs/courses/java/13-后端工程/04-Spring-MVC与Servlet边界.md') ?? ''
+  const mvcBody = articles.get('docs/courses/java/14-后端工程/04-Spring-MVC与Servlet边界.md') ?? ''
   for (const requiredText of ['flushBuffer()', 'isCommitted()', '输出：req-7/true']) {
     if (!mvcBody.includes(requiredText)) {
-      violations.push(`docs/courses/java/13-后端工程/04-Spring-MVC与Servlet边界.md [servlet:${requiredText}] is missing`)
+      violations.push(`docs/courses/java/14-后端工程/04-Spring-MVC与Servlet边界.md [servlet:${requiredText}] is missing`)
     }
   }
 
@@ -3801,11 +3778,11 @@ test('Spring backend references document runtime boundaries and compatibility ba
   )
 })
 
-test('persistence backend batch exposes MyBatis MySQL and Redis contracts', () => {
+test('persistence backend batch exposes the MyBatis contract', () => {
   const batchSpecs = BACKEND_ARTICLE_SPECS.filter((spec) =>
-    /\/13-后端工程\/(?:06-|13-|14-)/u.test(spec.path),
+    /\/14-后端工程\/06-/u.test(spec.path),
   )
-  assert.equal(batchSpecs.length, 3, 'rule backend-batch2-manifest: expected three persistence pages')
+  assert.equal(batchSpecs.length, 1, 'rule backend-batch2-manifest: expected the migrated MyBatis page')
 
   const violations = []
   for (const spec of batchSpecs) {
@@ -3826,120 +3803,32 @@ test('persistence backend batch exposes MyBatis MySQL and Redis contracts', () =
   )
 })
 
-test('persistence backend batch keeps MyBatis source boundary and database keywords', () => {
-  const articles = new Map()
-  const violations = []
-
-  for (const relativePath of [
-    'docs/courses/java/13-后端工程/06-MyBatis核心与MyBatis-Plus重点.md',
-    'docs/courses/java/13-后端工程/13-MySQL-8.0.md',
-    'docs/courses/java/13-后端工程/14-Redis.md',
-  ]) {
-    try {
-      articles.set(relativePath, readMarkdown(relativePath).body)
-    } catch (error) {
-      violations.push(`${relativePath} [article-read] ${error.message}`)
-    }
-  }
-
-  const myBatisBody = articles.get('docs/courses/java/13-后端工程/06-MyBatis核心与MyBatis-Plus重点.md') ?? ''
+test('persistence backend batch keeps the MyBatis source boundary and database keywords', () => {
+  const myBatisBody = readMarkdown(
+    'docs/courses/java/14-后端工程/06-MyBatis核心与MyBatis-Plus重点.md',
+  ).body
   for (const requiredText of [
     '<select', '<insert', '#{}', '<if ', '<foreach ', '结果映射',
     'BaseMapper', 'QueryWrapper', '分页', '原生 XML',
     '@TableId', 'IdType.AUTO', 'getId', 'setId', 'getStatus', 'setStatus',
     'getCreatedAt', 'setCreatedAt', 'useGeneratedKeys', 'keyProperty',
   ]) {
-    if (!myBatisBody.includes(requiredText)) {
-      violations.push(`docs/courses/java/13-后端工程/06-MyBatis核心与MyBatis-Plus重点.md [keyword:${requiredText}] is missing`)
-    }
+    assert.ok(myBatisBody.includes(requiredText), `MyBatis article needs ${requiredText}`)
   }
-
-  const mysqlBody = articles.get('docs/courses/java/13-后端工程/13-MySQL-8.0.md') ?? ''
-  for (const requiredText of ['MySQL 8.0', 'EXPLAIN']) {
-    if (!mysqlBody.includes(requiredText)) {
-      violations.push(`docs/courses/java/13-后端工程/13-MySQL-8.0.md [keyword:${requiredText}] is missing`)
-    }
-  }
-
-  const redisBody = articles.get('docs/courses/java/13-后端工程/14-Redis.md') ?? ''
-  for (const requiredText of ['RedisTemplate', 'opsForValue', 'TTL', 'Lua']) {
-    if (!redisBody.includes(requiredText)) {
-      violations.push(`docs/courses/java/13-后端工程/14-Redis.md [keyword:${requiredText}] is missing`)
-    }
-  }
-
   assert.doesNotMatch(
     myBatisBody,
     /(?:源码|当前).{0,20}MyBatis-Plus/u,
     'MyBatis-Plus must remain an independent example and not be claimed as current source usage',
   )
-  assert.doesNotMatch(
-    myBatisBody,
-    /User::(?:status|createdAt)/u,
-    'LambdaQueryWrapper must use JavaBean getter references rather than record accessors',
-  )
-  assert.doesNotMatch(
-    myBatisBody,
-    /record User\(/u,
-    'MyBatis-Plus save example must use a writable JavaBean entity',
-  )
-  assert.doesNotMatch(
-    myBatisBody,
-    /service\.save\(new User\(/u,
-    'MyBatis-Plus save example must allow generated id backfill before reading it',
-  )
-  assert.doesNotMatch(
-    myBatisBody,
-    /\\\$\{\}/u,
-    'MyBatis parameter explanation must not contain an escaped dollar typo',
-  )
-
-  for (const requiredText of [
-    '8.0.18+', 'EXPLAIN ANALYZE', '真实执行', '8.0.20+', 'AS new',
-    '左前缀', '等值', '排序',
-  ]) {
-    if (!mysqlBody.includes(requiredText)) {
-      violations.push(`docs/courses/java/13-后端工程/13-MySQL-8.0.md [review:${requiredText}] is missing`)
-    }
-  }
-
-  for (const requiredText of [
-    'StringRedisTemplate', 'KEYS', 'ARGV', 'Long', 'setKeySerializer',
-    'setValueSerializer', 'setHashKeySerializer', 'setHashValueSerializer',
-    '@TransactionalEventListener', 'AFTER_COMMIT',
-    'TransactionPhase',
-  ]) {
-    if (!redisBody.includes(requiredText)) {
-      violations.push(`docs/courses/java/13-后端工程/14-Redis.md [review:${requiredText}] is missing`)
-    }
-  }
-
-  assert.deepEqual(
-    violations,
-    [],
-    `rule backend-persistence-keywords${formatViolations(violations)}`,
-  )
-
-  assert.doesNotMatch(
-    mysqlBody,
-    /ON DUPLICATE KEY UPDATE\s+balance\s*=\s*VALUES\(balance\)/u,
-    'MySQL upsert example must use the row alias syntax in executable SQL',
-  )
-  assert.match(
-    redisBody,
-    /StringRedisTemplate redis = stringRedisTemplate;\s+(?:(?:\/\/[^\r\n]*\r?\n)\s*)*String lua =[\s\S]*?java\.util\.List<String> keys[\s\S]*?Long allowed = redis\.execute\(script, keys, amount\)/u,
-    'Redis Lua example must bind string KEYS/ARGV and a Long result through StringRedisTemplate',
-  )
-  assert.match(
-    redisBody,
-    /events\.publishEvent\(new UserStatusChanged\(id\)\)[\s\S]*?@TransactionalEventListener\(phase = TransactionPhase\.AFTER_COMMIT\)/u,
-    'Redis invalidation example must publish an event and evict only after commit',
-  )
+  assert.doesNotMatch(myBatisBody, /User::(?:status|createdAt)/u)
+  assert.doesNotMatch(myBatisBody, /record User\(/u)
+  assert.doesNotMatch(myBatisBody, /service\.save\(new User\(/u)
+  assert.doesNotMatch(myBatisBody, /\\\$\{\}/u)
 })
 
 test('security JSON and validation backend batch exposes boundary contracts', () => {
   const batchSpecs = BACKEND_ARTICLE_SPECS.filter((spec) =>
-    /\/13-后端工程\/(?:05-|07-|08-)/u.test(spec.path),
+    /\/14-后端工程\/(?:05-|07-|08-)/u.test(spec.path),
   )
   assert.equal(batchSpecs.length, 3, 'rule backend-batch3-manifest: expected three security/JSON/validation pages')
 
@@ -3957,7 +3846,7 @@ test('security JSON and validation backend batch exposes boundary contracts', ()
     }
   }
 
-  const securityPath = 'docs/courses/java/13-后端工程/05-Spring-Security与JWT.md'
+  const securityPath = 'docs/courses/java/14-后端工程/05-Spring-Security与JWT.md'
   const securityBody = articles.get(securityPath) ?? ''
   for (const requiredText of [
     '认证', '授权', 'SecurityFilterChain', 'authorizeHttpRequests', '@PreAuthorize',
@@ -3985,7 +3874,7 @@ test('security JSON and validation backend batch exposes boundary contracts', ()
     'JWT examples must not hard-code a realistic secret',
   )
 
-  const jsonPath = 'docs/courses/java/13-后端工程/07-Jackson与Fastjson2-JSON.md'
+  const jsonPath = 'docs/courses/java/14-后端工程/07-Jackson与Fastjson2-JSON.md'
   const jsonBody = articles.get(jsonPath) ?? ''
   for (const requiredText of [
     'Jackson 3', 'tools.jackson', 'com.fasterxml.jackson.databind', 'ObjectMapper',
@@ -4004,7 +3893,7 @@ test('security JSON and validation backend batch exposes boundary contracts', ()
     violations.push(`${jsonPath} [json:redis-boundary] Redis serialization boundary is missing`)
   }
 
-  const validationPath = 'docs/courses/java/13-后端工程/08-Bean-Validation参数校验.md'
+  const validationPath = 'docs/courses/java/14-后端工程/08-Bean-Validation参数校验.md'
   const validationBody = articles.get(validationPath) ?? ''
   for (const requiredText of [
     '@NotBlank', '@NotNull', '@Size', '@Email', '@Pattern', '@Valid', '@Validated',
@@ -4033,9 +3922,9 @@ test('security JSON and validation backend batch exposes boundary contracts', ()
 })
 
 test('Task4 review regressions lock version, proxy, package, and response details', () => {
-  const securityPath = 'docs/courses/java/13-后端工程/05-Spring-Security与JWT.md'
-  const jsonPath = 'docs/courses/java/13-后端工程/07-Jackson与Fastjson2-JSON.md'
-  const validationPath = 'docs/courses/java/13-后端工程/08-Bean-Validation参数校验.md'
+  const securityPath = 'docs/courses/java/14-后端工程/05-Spring-Security与JWT.md'
+  const jsonPath = 'docs/courses/java/14-后端工程/07-Jackson与Fastjson2-JSON.md'
+  const validationPath = 'docs/courses/java/14-后端工程/08-Bean-Validation参数校验.md'
   const securityBody = readMarkdown(securityPath).body
   const jsonBody = readMarkdown(jsonPath).body
   const validationBody = readMarkdown(validationPath).body
@@ -4128,13 +4017,11 @@ test('Task4 review regressions lock version, proxy, package, and response detail
   assert.match(validationBody, /new\s+FieldViolation\(/u, 'field error mapping must return a stable response object')
 })
 
-test('final backend review regressions close Jackson 3, upload, and transfer failure boundaries', () => {
-  const jsonPath = 'docs/courses/java/13-后端工程/07-Jackson与Fastjson2-JSON.md'
-  const filePath = 'docs/courses/java/13-后端工程/10-文件上传下载与资源安全.md'
-  const mysqlPath = 'docs/courses/java/13-后端工程/13-MySQL-8.0.md'
+test('final backend review regressions close Jackson 3 and upload failure boundaries', () => {
+  const jsonPath = 'docs/courses/java/14-后端工程/07-Jackson与Fastjson2-JSON.md'
+  const filePath = 'docs/courses/java/14-后端工程/10-文件上传下载与资源安全.md'
   const jsonBody = readMarkdown(jsonPath).body
   const fileBody = readMarkdown(filePath).body
-  const mysqlBody = readMarkdown(mysqlPath).body
 
   assert.match(jsonBody, /tools\.jackson\.databind\.ValueSerializer/u)
   assert.match(jsonBody, /tools\.jackson\.databind\.ValueDeserializer/u)
@@ -4175,24 +4062,11 @@ test('final backend review regressions close Jackson 3, upload, and transfer fai
       && /isAllowedSize\(file\.getSize\(\)\)/u.test(code)),
     'store must call both extension and size policy helpers before writing',
   )
-
-  const transactionSection = getSubsection(getSection(mysqlBody, '不常用但需要知道'), '事务/行锁：缩短一致性边界') ?? ''
-  const simpleCase = getSection(mysqlBody, '简单案例') ?? ''
-  for (const [label, content] of [['transaction', transactionSection], ['simple', simpleCase]]) {
-    assert.match(content, /UPDATE\s+account[\s\S]*?balance\s*=\s*balance\s*-\s*10(?:\.00)?[\s\S]*?balance\s*>=\s*10(?:\.00)?/u, `${label} transfer must guard the debit`)
-    assert.match(content, /ROW_COUNT\(\)|executeUpdate\(\)/u, `${label} transfer must inspect debit row count`)
-    assert.match(content, /(?:ROLLBACK|rollback)[\s\S]{0,180}(?:SIGNAL|throw|异常)/u, `${label} transfer must abort a failed debit`)
-    const debitIndex = content.search(/balance\s*=\s*balance\s*-\s*10(?:\.00)?/u)
-    const creditIndex = content.search(/balance\s*=\s*balance\s*\+\s*10(?:\.00)?/u)
-    assert.ok(debitIndex >= 0 && creditIndex > debitIndex, `${label} transfer should credit only after the debit branch`)
-    const guard = content.slice(debitIndex, creditIndex)
-    assert.match(guard, /ROW_COUNT\(\)|executeUpdate\(\)/u, `${label} transfer must check debit before credit`)
-  }
 })
 
 test('Task5 backend references cover logging, resource safety, Excel, and Quartz boundaries', () => {
   const task5Specs = BACKEND_ARTICLE_SPECS.filter((spec) =>
-    /\/13-后端工程\/(?:09-|10-|11-|12-)/u.test(spec.path),
+    /\/14-后端工程\/(?:09-|10-|11-|12-)/u.test(spec.path),
   )
   assert.equal(task5Specs.length, 4, 'rule backend-batch4-manifest: expected four engineering pages')
 
@@ -4210,7 +4084,7 @@ test('Task5 backend references cover logging, resource safety, Excel, and Quartz
     }
   }
 
-  const loggingPath = 'docs/courses/java/13-后端工程/09-SLF4J与Logback日志.md'
+  const loggingPath = 'docs/courses/java/14-后端工程/09-SLF4J与Logback日志.md'
   const loggingBody = articles.get(loggingPath) ?? ''
   for (const requiredText of [
     'LoggerFactory', '参数化', 'Throwable', 'MDC', 'traceId',
@@ -4228,7 +4102,7 @@ test('Task5 backend references cover logging, resource safety, Excel, and Quartz
     violations.push(`${loggingPath} [logging:mdc-pattern] Logback MDC traceId pattern is missing`)
   }
 
-  const filePath = 'docs/courses/java/13-后端工程/10-文件上传下载与资源安全.md'
+  const filePath = 'docs/courses/java/14-后端工程/10-文件上传下载与资源安全.md'
   const fileBody = articles.get(filePath) ?? ''
   for (const requiredText of [
     'MultipartFile', 'transferTo', '扩展名', '大小白名单', 'normalize',
@@ -4246,7 +4120,7 @@ test('Task5 backend references cover logging, resource safety, Excel, and Quartz
     violations.push(`${filePath} [file:root-boundary] normalized path root check is missing`)
   }
 
-  const poiPath = 'docs/courses/java/13-后端工程/11-Apache-POI-Excel导入导出.md'
+  const poiPath = 'docs/courses/java/14-后端工程/11-Apache-POI-Excel导入导出.md'
   const poiBody = articles.get(poiPath) ?? ''
   for (const requiredText of [
     'WorkbookFactory', 'SXSSFWorkbook', '注解列映射', 'importExcel', 'exportExcel',
@@ -4263,7 +4137,7 @@ test('Task5 backend references cover logging, resource safety, Excel, and Quartz
     violations.push(`${poiPath} [poi:import-validation] import validation failure boundary is missing`)
   }
 
-  const quartzPath = 'docs/courses/java/13-后端工程/12-Quartz定时任务.md'
+  const quartzPath = 'docs/courses/java/14-后端工程/12-Quartz定时任务.md'
   const quartzBody = articles.get(quartzPath) ?? ''
   for (const requiredText of [
     'Job', 'JobDetail', 'CronTrigger', 'Cron 表达式', 'misfire', '暂停', '恢复',
@@ -4288,10 +4162,10 @@ test('Task5 backend references cover logging, resource safety, Excel, and Quartz
 })
 
 test('Task5 review regressions lock versions, input safety, cleanup, bytes, and scheduler lifecycle', () => {
-  const loggingPath = 'docs/courses/java/13-后端工程/09-SLF4J与Logback日志.md'
-  const filePath = 'docs/courses/java/13-后端工程/10-文件上传下载与资源安全.md'
-  const poiPath = 'docs/courses/java/13-后端工程/11-Apache-POI-Excel导入导出.md'
-  const quartzPath = 'docs/courses/java/13-后端工程/12-Quartz定时任务.md'
+  const loggingPath = 'docs/courses/java/14-后端工程/09-SLF4J与Logback日志.md'
+  const filePath = 'docs/courses/java/14-后端工程/10-文件上传下载与资源安全.md'
+  const poiPath = 'docs/courses/java/14-后端工程/11-Apache-POI-Excel导入导出.md'
+  const quartzPath = 'docs/courses/java/14-后端工程/12-Quartz定时任务.md'
   const loggingBody = readMarkdown(loggingPath).body
   const fileBody = readMarkdown(filePath).body
   const poiBody = readMarkdown(poiPath).body
@@ -4395,7 +4269,7 @@ test('Task5 review regressions lock versions, input safety, cleanup, bytes, and 
   assert.match(quartzBody, /Scheduler[\s\S]*scheduler\.shutdown\(/u)
 })
 
-test('Java backend index exposes all fourteen article routes', () => {
+test('Java backend index exposes all twelve migrated article routes', () => {
   const index = readMarkdown(JAVA_INDEX_PATH).body
   const violations = []
   for (const spec of BACKEND_ARTICLE_SPECS) {
@@ -4420,13 +4294,13 @@ test('Java course keeps the expected Markdown files, article counts, chapters, a
 
   assert.equal(
     markdownPaths.length,
-    95,
-    'rule java-markdown-count: expected 95 Markdown files',
+    93,
+    'rule java-markdown-count: expected 93 Markdown files',
   )
   assert.equal(
     markdownPaths.filter((file) => file !== JAVA_INDEX_PATH).length,
-    94,
-    'rule java-article-count: expected 94 course articles',
+    92,
+    'rule java-article-count: expected 92 course articles',
   )
   assert.equal(
     chapterDirectories.length,
@@ -4526,7 +4400,7 @@ test('List iterator and remove examples show calls, state, and output', () => {
   assert.match(removeExample, /\/\/ numbers：\[10, 20, 30\][\s\S]*remove\(1\)[\s\S]*remove\(Integer\.valueOf\(30\)\)[\s\S]*\/\/ 输出：\[10\]/u)
 })
 
-test('all 94 Java articles keep the unified API heading format', () => {
+test('all 92 Java articles keep the unified API heading format', () => {
   const violations = []
   for (const relativePath of ARTICLE_PATHS) {
     const { body } = readMarkdown(relativePath)
@@ -4599,7 +4473,7 @@ test('reviewed JSON, regex, and Collections APIs keep one operation per H3', () 
 })
 
 test('@Primary example proves Spring container selection instead of direct construction', () => {
-  const body = readMarkdown('docs/courses/java/13-后端工程/02-Spring-IoC与Bean生命周期.md').body
+  const body = readMarkdown('docs/courses/java/14-后端工程/02-Spring-IoC与Bean生命周期.md').body
   const primary = getSubsection(getSection(body, '不常用但需要知道'), '@Primary') ?? ''
   assert.match(primary, /AnnotationConfigApplicationContext/u)
   assert.match(primary, /@Primary[\s\S]*Notifier systemClockNotifier/u)
@@ -4934,7 +4808,7 @@ int first = numbers.get(0);
   )
 })
 
-test('all 94 Java articles put API purpose prose before examples and retain observable results', () => {
+test('all 92 Java articles put API purpose prose before examples and retain observable results', () => {
   const violations = []
   for (const relativePath of ARTICLE_PATHS) {
     const { body } = readMarkdown(relativePath)
@@ -4962,7 +4836,7 @@ test('all 94 Java articles put API purpose prose before examples and retain obse
   assert.deepEqual(violations, [], `rule java-common-usage-example-comments${formatViolations(violations)}`)
 })
 
-test('08-13 Java blocks reject recursive, templated, reused, and detached output comments', () => {
+test('08-14 Java blocks reject recursive, templated, reused, and detached output comments', () => {
   const recursiveFixture = `
 ### \`List.size\`：读取元素数
 \`\`\`java
@@ -5101,7 +4975,7 @@ test('RuoYi common external calls remain directly searchable in API H3 headings'
     }
   }
 
-  assert.equal(requiredCount, 159, 'rule java-external-api-heading-count: audit snapshot changed')
+  assert.equal(requiredCount, 152, 'rule java-external-api-heading-count: audit snapshot changed')
   assert.deepEqual(violations, [], `rule java-external-api-headings${formatViolations(violations)}`)
 })
 

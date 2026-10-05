@@ -379,8 +379,8 @@ public @interface Slug {
 - [Map 基础](/courses/java/05-泛型与集合/07-Map常用API)：组织错误码、消息模板和分组映射时查 Map 的键值选择。
 - [String 文本处理](/courses/java/02-数组与文本/02-String与文本处理)：规范化字段、消息和路径参数时查字符串边界。
 - [JSON 与 Java 对象转换](/courses/java/02-数组与文本/05-JSON与Java对象转换)：区分 JSON 转换与字段校验。
-- [Spring MVC 与 Servlet 边界](/courses/java/13-后端工程/04-Spring-MVC与Servlet边界)：查看 `@RequestBody`、异常处理和响应提交边界。
-- [Spring Security 与 JWT](/courses/java/13-后端工程/05-Spring-Security与JWT)：查看认证、授权与 401/403 责任。
+- [Spring MVC 与 Servlet 边界](/courses/java/14-后端工程/04-Spring-MVC与Servlet边界)：查看 `@RequestBody`、异常处理和响应提交边界。
+- [Spring Security 与 JWT](/courses/java/14-后端工程/05-Spring-Security与JWT)：查看认证、授权与 401/403 责任。
 
 ## 简单案例
 

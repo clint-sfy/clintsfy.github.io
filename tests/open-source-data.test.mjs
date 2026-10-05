@@ -12,6 +12,7 @@ import openSourceLoader, {
   createOpenSourceDataLoader,
   resolveOpenSourceDocsRoot,
 } from '../docs/.vitepress/theme/data/open-source.data.ts'
+import { getJavaCourseItems } from '../docs/.vitepress/config/java-course.ts'
 
 const EXPECTED_JAVA_ARTICLES_BY_CHAPTER = {
   '01-Java基础': [
@@ -110,13 +111,13 @@ const EXPECTED_JAVA_ARTICLES_BY_CHAPTER = {
     '04-JVM诊断命令与JFR.md',
     '05-GC日志与问题定位.md',
   ],
-  '11-工程实践': [
+  '12-工程实践': [
     '01-Maven与测试工程.md',
     '02-JDBC与事务.md',
     '04-Velocity代码生成.md',
   ],
-  '12-设计与项目': ['01-设计原则模式与综合复习.md'],
-  '13-后端工程': [
+  '13-设计与项目': ['01-设计原则模式与综合复习.md'],
+  '14-后端工程': [
     '01-Spring-Boot启动与配置.md',
     '02-Spring-IoC与Bean生命周期.md',
     '03-Spring-AOP与声明式事务.md',
@@ -129,8 +130,6 @@ const EXPECTED_JAVA_ARTICLES_BY_CHAPTER = {
     '10-文件上传下载与资源安全.md',
     '11-Apache-POI-Excel导入导出.md',
     '12-Quartz定时任务.md',
-    '13-MySQL-8.0.md',
-    '14-Redis.md',
   ],
 }
 
@@ -141,12 +140,24 @@ const EXPECTED_JAVA_PATHS = [
   ),
 ].sort()
 
-const EXPECTED_JAVA_CHAPTER_COUNTS = [7, 6, 7, 6, 8, 8, 7, 7, 15, 5, 3, 1, 14]
+const EXPECTED_JAVA_CHAPTER_COUNTS = [7, 6, 7, 6, 8, 8, 7, 7, 15, 5, 3, 1, 12]
 const EXPECTED_JAVA_ROADMAP_PATHS = [
-  'docs/courses/java/11-工程实践/01-Maven与测试工程.md',
-  'docs/courses/java/11-工程实践/02-JDBC与事务.md',
-  'docs/courses/java/11-工程实践/04-Velocity代码生成.md',
-  'docs/courses/java/12-设计与项目/01-设计原则模式与综合复习.md',
+  'docs/courses/java/12-工程实践/01-Maven与测试工程.md',
+  'docs/courses/java/12-工程实践/02-JDBC与事务.md',
+  'docs/courses/java/12-工程实践/04-Velocity代码生成.md',
+  'docs/courses/java/13-设计与项目/01-设计原则模式与综合复习.md',
+  'docs/courses/java/14-后端工程/01-Spring-Boot启动与配置.md',
+  'docs/courses/java/14-后端工程/02-Spring-IoC与Bean生命周期.md',
+  'docs/courses/java/14-后端工程/03-Spring-AOP与声明式事务.md',
+  'docs/courses/java/14-后端工程/04-Spring-MVC与Servlet边界.md',
+  'docs/courses/java/14-后端工程/05-Spring-Security与JWT.md',
+  'docs/courses/java/14-后端工程/06-MyBatis核心与MyBatis-Plus重点.md',
+  'docs/courses/java/14-后端工程/07-Jackson与Fastjson2-JSON.md',
+  'docs/courses/java/14-后端工程/08-Bean-Validation参数校验.md',
+  'docs/courses/java/14-后端工程/09-SLF4J与Logback日志.md',
+  'docs/courses/java/14-后端工程/10-文件上传下载与资源安全.md',
+  'docs/courses/java/14-后端工程/11-Apache-POI-Excel导入导出.md',
+  'docs/courses/java/14-后端工程/12-Quartz定时任务.md',
 ]
 
 function addProject(docsRoot, directoryName, frontmatter, notes = []) {
@@ -449,7 +460,7 @@ test('Agent development notes are exposed through navigation and sidebar', () =>
   assert.match(roadmap, /LangChain/)
 })
 
-test('Java learning path follows Python and covers the complete fundamentals-to-backend outline', () => {
+test('Java learning path follows Python and uses the explicit roadmap sidebar', () => {
   const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
   const nav = readFileSync(join(repoRoot, 'docs/.vitepress/config/nav.ts'), 'utf8')
   const sidebar = readFileSync(join(repoRoot, 'docs/.vitepress/config/sidebar.ts'), 'utf8')
@@ -460,8 +471,13 @@ test('Java learning path follows Python and covers the complete fundamentals-to-
     /Python基础快速入门[\s\S]*Java基础快速入门/,
     'Java should appear immediately after Python in the learning navigation',
   )
-  assert.match(sidebar, /'\/courses\/java\/':\s*getItems\("courses\/java"\)/)
-  assert.equal(javaFiles.length, 95, 'the Java path should contain 95 Markdown files including the index')
+  assert.match(sidebar, /'\/courses\/java\/':\s*getJavaCourseItems\(\)/)
+  assert.equal(javaFiles.length, 93, 'the Java path should contain 93 Markdown files including the index')
+  assert.equal(
+    getJavaCourseItems().flatMap((chapter) => chapter.items ?? []).length,
+    92,
+    'the published sidebar should expose the 92 existing canonical articles',
+  )
 
   const javaContent = javaFiles
     .map((file) => readFileSync(join(repoRoot, file), 'utf8'))
@@ -475,7 +491,7 @@ test('Java learning path follows Python and covers the complete fundamentals-to-
   }
 })
 
-test('Java course keeps the exact 95-page path set and 01-10 quality range', () => {
+test('Java course keeps the exact migrated path set and 01-10 quality range', () => {
   const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
   const javaPaths = fg
     .sync('docs/courses/java/**/*.md', { cwd: repoRoot, onlyFiles: true })
@@ -493,11 +509,11 @@ test('Java course keeps the exact 95-page path set and 01-10 quality range', () 
   )
 
   assert.deepEqual(javaPaths, EXPECTED_JAVA_PATHS, 'the Java path set must stay exact')
-  assert.equal(javaPaths.length, 95, 'the Java path should contain 95 Markdown files')
+  assert.equal(javaPaths.length, 93, 'the Java path should contain 93 Markdown files')
   assert.equal(
     javaPaths.filter((file) => file !== 'docs/courses/java/index.md').length,
-    94,
-    'the Java path should contain 94 article pages',
+    92,
+    'the Java path should contain 92 article pages',
   )
   assert.deepEqual(actualChapterPaths, chapterPaths, 'the Java chapter directory range must stay exact')
   assert.deepEqual(actualChapterCounts, EXPECTED_JAVA_CHAPTER_COUNTS, 'the Java chapter counts must stay exact')
@@ -507,9 +523,9 @@ test('Java course keeps the exact 95-page path set and 01-10 quality range', () 
   )
   assert.equal(qualityPaths.length, 76, 'chapters 01-10 must contain 76 quality-gated articles')
   assert.deepEqual(
-    javaPaths.filter((file) => /^(?:docs\/courses\/java\/11-|docs\/courses\/java\/12-)/u.test(file)),
+    javaPaths.filter((file) => /^(?:docs\/courses\/java\/(?:12|13|14)-)/u.test(file)),
     EXPECTED_JAVA_ROADMAP_PATHS,
-    'chapters 11-12 must retain the four roadmap article paths',
+    'chapters 12-14 must retain the migrated article paths',
   )
 })
 
