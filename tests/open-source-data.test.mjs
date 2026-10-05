@@ -111,7 +111,7 @@ const EXPECTED_JAVA_ARTICLES_BY_CHAPTER = {
     '04-JVM诊断命令与JFR.md',
     '05-GC日志与问题定位.md',
   ],
-  '11-MySQL-8': ['index.md', '01-环境连接与数据库对象.md', '02-表设计与DDL.md', '03-数据类型字符集与时区.md', '04-数据写入更新与删除.md'],
+  '11-MySQL-8': ['index.md', '01-环境连接与数据库对象.md', '02-表设计与DDL.md', '03-数据类型字符集与时区.md', '04-数据写入更新与删除.md', '05-查询过滤排序与分页.md', '06-连接子查询与集合查询.md', '07-聚合CTE窗口函数与JSON.md', '08-约束与索引设计.md', '09-事务MVCC隔离级别与锁.md', '10-EXPLAIN慢SQL与性能优化.md'],
   '12-工程实践': [
     '01-Maven与测试工程.md',
     '02-JDBC与事务.md',
@@ -141,7 +141,7 @@ const EXPECTED_JAVA_PATHS = [
   ),
 ].sort()
 
-const EXPECTED_JAVA_CHAPTER_COUNTS = [7, 6, 7, 6, 8, 8, 7, 7, 15, 5, 5, 3, 1, 12]
+const EXPECTED_JAVA_CHAPTER_COUNTS = [7, 6, 7, 6, 8, 8, 7, 7, 15, 5, 11, 3, 1, 12]
 const EXPECTED_JAVA_ROADMAP_PATHS = [
   'docs/courses/java/12-工程实践/01-Maven与测试工程.md',
   'docs/courses/java/12-工程实践/02-JDBC与事务.md',
@@ -473,11 +473,11 @@ test('Java learning path follows Python and uses the explicit roadmap sidebar', 
     'Java should appear immediately after Python in the learning navigation',
   )
   assert.match(sidebar, /'\/courses\/java\/':\s*getJavaCourseItems\(\)/)
-  assert.equal(javaFiles.length, 98, 'the Java path should contain 98 Markdown files including indexes')
+  assert.equal(javaFiles.length, 104, 'the Java path should contain 104 Markdown files including indexes')
   assert.equal(
     getJavaCourseItems().flatMap((chapter) => chapter.items ?? []).length,
-    96,
-    'the published sidebar should expose the 96 existing canonical articles',
+    102,
+    'the published sidebar should expose the 102 existing canonical articles',
   )
 
   const javaContent = javaFiles
@@ -510,11 +510,11 @@ test('Java course keeps the exact migrated path set and 01-10 quality range', ()
   )
 
   assert.deepEqual(javaPaths, EXPECTED_JAVA_PATHS, 'the Java path set must stay exact')
-  assert.equal(javaPaths.length, 98, 'the Java path should contain 98 Markdown files')
+  assert.equal(javaPaths.length, 104, 'the Java path should contain 104 Markdown files')
   assert.equal(
     javaPaths.filter((file) => !file.endsWith('/index.md')).length,
-    96,
-    'the Java path should contain 96 article pages',
+    102,
+    'the Java path should contain 102 article pages',
   )
   assert.deepEqual(actualChapterPaths, chapterPaths, 'the Java chapter directory range must stay exact')
   assert.deepEqual(actualChapterCounts, EXPECTED_JAVA_CHAPTER_COUNTS, 'the Java chapter counts must stay exact')
