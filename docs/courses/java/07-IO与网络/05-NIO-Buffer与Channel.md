@@ -44,10 +44,7 @@ import java.nio.ByteBuffer;
 public class ByteBufferPutDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.allocate(4);
-        // 输入：ByteBuffer buffer = ByteBuffer.allocate(4);；右侧表达式 ByteBuffer.allocate(4) 的结果赋给 buffer。
-        // 关键变化：ByteBuffer buffer = ByteBuffer.allocate(4);；调用 allocate，实参为 4，返回值写入 buffer。
         buffer.put((byte) 10).put((byte) 20);
-// 输入：buffer.put((byte) 10).put((byte) 20);；接收对象为 buffer，连续调用 put 的实参为 (byte) 10、(byte) 20。
 // 关键变化：buffer.put((byte) 10).put((byte) 20);；依次写入 (byte) 10 和 (byte) 20，两个 put 都返回同一 ByteBuffer，position 前进到 2。
         System.out.println(buffer.position() + "/" + buffer.limit() + "/" + buffer.capacity());
         // 输出：2/4/4
@@ -66,13 +63,9 @@ import java.nio.ByteBuffer;
 public class ByteBufferFlipDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.allocate(4);
-        // 输入：ByteBuffer buffer = ByteBuffer.allocate(4);；右侧表达式 ByteBuffer.allocate(4) 的结果赋给 buffer。
-        // 关键变化：ByteBuffer buffer = ByteBuffer.allocate(4);；调用 allocate，实参为 4，返回值写入 buffer。
         buffer.put((byte) 10).put((byte) 20);
-// 输入：buffer.put((byte) 10).put((byte) 20);；接收对象为 buffer，连续调用 put 的实参为 (byte) 10、(byte) 20。
 // 关键变化：buffer.put((byte) 10).put((byte) 20);；依次写入 (byte) 10 和 (byte) 20，两个 put 都返回同一 ByteBuffer，position 前进到 2。
         buffer.flip();
-        // 输入：buffer.flip();；接收对象为 buffer，调用 flip 的实参为 无显式参数。
         // 关键变化：buffer.flip();；调用 flip，实参为 无显式参数；将 buffer 切换到读模式，position 置 0、limit 设为此前写入长度；缓冲状态更新。
         System.out.println(buffer.get() + "," + buffer.get());
         // 输出：10,20
@@ -91,8 +84,6 @@ import java.nio.ByteBuffer;
 public class ByteBufferGetDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.wrap(new byte[]{1, 2, 3});
-        // 输入：ByteBuffer buffer = ByteBuffer.wrap(new byte[]{1, 2, 3});；右侧表达式 ByteBuffer.wrap(new byte[]{1, 2, 3}) 的结果赋给 buffer。
-        // 关键变化：ByteBuffer buffer = ByteBuffer.wrap(new byte[]{1, 2, 3});；调用 wrap，实参为 new byte[]{1, 2, 3}，返回值写入 buffer。
         while (buffer.hasRemaining()) {
             System.out.println(buffer.get());
             // 输出：1
@@ -112,21 +103,15 @@ import java.nio.ByteBuffer;
 public class ByteBufferReuseDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.allocate(4);
-        // 输入：ByteBuffer buffer = ByteBuffer.allocate(4);；右侧表达式 ByteBuffer.allocate(4) 的结果赋给 buffer。
-        // 关键变化：ByteBuffer buffer = ByteBuffer.allocate(4);；调用 allocate，实参为 4，返回值写入 buffer。
         buffer.put((byte) 1).put((byte) 2);
-// 输入：buffer.put((byte) 1).put((byte) 2);；接收对象为 buffer，连续调用 put 的实参为 (byte) 1、(byte) 2。
 // 关键变化：buffer.put((byte) 1).put((byte) 2);；依次写入 (byte) 1 和 (byte) 2，两个 put 都返回同一 ByteBuffer，position 前进到 2。
         buffer.flip();
-        // 输入：buffer.flip();；接收对象为 buffer，调用 flip 的实参为 无显式参数。
         // 关键变化：buffer.flip();；调用 flip，实参为 无显式参数；将 buffer 切换到读模式，position 置 0、limit 设为此前写入长度；缓冲状态更新。
         System.out.println(buffer.get());
         // 输出：1
         buffer.compact();
-        // 输入：buffer.compact();；接收对象为 buffer，调用 compact 的实参为 无显式参数。
         // 关键变化：buffer.compact();；调用 compact，实参为 无显式参数；保留 buffer 的未读字节并切回写模式；position 移到剩余数据末端。
         buffer.put((byte) 3).flip();
-// 输入：buffer.put((byte) 3).flip();；接收对象为 buffer，先以 (byte) 3 调用 put，再无参调用 flip。
 // 关键变化：buffer.put((byte) 3).flip();；put 写入 (byte) 3 后返回同一 ByteBuffer，flip 将 position 置 0、limit 置 1。
         System.out.println(buffer.get() + "," + buffer.get());
         // 输出：2
@@ -145,19 +130,13 @@ import java.nio.ByteBuffer;
 public class ByteBufferMarkDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.wrap(new byte[]{1, 2, 3});
-        // 输入：ByteBuffer buffer = ByteBuffer.wrap(new byte[]{1, 2, 3});；右侧表达式 ByteBuffer.wrap(new byte[]{1, 2, 3}) 的结果赋给 buffer。
-        // 关键变化：ByteBuffer buffer = ByteBuffer.wrap(new byte[]{1, 2, 3});；调用 wrap，实参为 new byte[]{1, 2, 3}，返回值写入 buffer。
         buffer.get();
-        // 输入：buffer.get();；接收对象为 buffer，调用 get 的实参为 无显式参数。
         // 关键变化：buffer.get();；读取 buffer 当前 position 的字节并推进 position；缓冲内容本身不变。
         buffer.mark();
-        // 输入：buffer.mark();；接收对象为 buffer，调用 mark 的实参为 无显式参数。
         // 关键变化：buffer.mark();；调用 mark，实参为 无显式参数；记录 buffer 当前 position 作为 mark；后续 reset 可回到该位置。
         int second = buffer.get();
-        // 输入：int second = buffer.get();；右侧表达式 buffer.get() 的结果赋给 second。
         // 关键变化：int second = buffer.get();；读取 buffer 当前 position 的字节 2 并写入 second；position 前进，缓冲内容不变。
         buffer.reset();
-        // 输入：buffer.reset();；接收对象为 buffer，调用 reset 的实参为 无显式参数。
         // 关键变化：buffer.reset();；调用 reset，实参为 无显式参数；将 buffer 的 position 恢复到最近 mark。
         System.out.println(second + "," + buffer.get());
         // 输出：2,2
@@ -180,25 +159,18 @@ import java.nio.file.StandardOpenOption;
 public class FileChannelReadDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("channel-read-", ".txt");
-        // 输入：Path file = Files.createTempFile("channel-read-", ".txt");；右侧表达式 Files.createTempFile("channel-read-", ".txt") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("channel-read-", ".txt");；调用 createTempFile，实参为 "channel-read-", ".txt"，返回值写入 file。
         Files.writeString(file, "java");
-        // 输入：Files.writeString(file, "java");；接收对象为 Files，调用 writeString 的实参为 file, "java"。
         // 关键变化：Files.writeString(file, "java");；将 "java" 写入路径 file；writeString 返回目标 Path，文件内容更新。
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
         // 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.READ)，try 结束时自动关闭。
         // 关键变化：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {；创建资源 channel，构造表达式为 FileChannel.open(file, StandardOpenOption.READ)；try 结束时关闭该资源。
             ByteBuffer buffer = ByteBuffer.allocate(8);
-            // 输入：ByteBuffer buffer = ByteBuffer.allocate(8);；右侧表达式 ByteBuffer.allocate(8) 的结果赋给 buffer。
-            // 关键变化：ByteBuffer buffer = ByteBuffer.allocate(8);；调用 allocate，实参为 8，返回值写入 buffer。
             int count = channel.read(buffer);
-            // 输入：int count = channel.read(buffer);；右侧表达式 channel.read(buffer) 的结果赋给 count。
 // 关键变化：int count = channel.read(buffer);；从文件读取 4 个字节“java”到 buffer，返回字节数 4 并写入 count；EOF 时才返回 -1。
             System.out.println(count);
             // 输出：4
         }
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -219,24 +191,18 @@ import java.nio.file.StandardOpenOption;
 public class FileChannelWriteDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("channel-write-", ".txt");
-        // 输入：Path file = Files.createTempFile("channel-write-", ".txt");；右侧表达式 Files.createTempFile("channel-write-", ".txt") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("channel-write-", ".txt");；调用 createTempFile，实参为 "channel-write-", ".txt"，返回值写入 file。
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {
         // 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.WRITE)，try 结束时自动关闭。
         // 关键变化：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {；创建资源 channel，构造表达式为 FileChannel.open(file, StandardOpenOption.WRITE)；try 结束时关闭该资源。
             ByteBuffer buffer = ByteBuffer.wrap("java".getBytes());
-            // 输入：ByteBuffer buffer = ByteBuffer.wrap("java".getBytes());；右侧表达式 ByteBuffer.wrap("java".getBytes()) 的结果赋给 buffer。
-            // 关键变化：ByteBuffer buffer = ByteBuffer.wrap("java".getBytes());；调用 getBytes，实参为 无显式参数，返回值写入 buffer。
             while (buffer.hasRemaining()) {
                 channel.write(buffer);
-                // 输入：channel.write(buffer);；接收对象为 channel，调用 write 的实参为 buffer。
                 // 关键变化：channel.write(buffer);；向 channel 写入 buffer 的剩余字节，返回本次写入字节数；buffer position 前进。
             }
         }
         System.out.println(Files.size(file));
         // 输出：4
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -259,31 +225,22 @@ import java.nio.file.StandardOpenOption;
 public class FileChannelPositionDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("channel-position-", ".bin");
-        // 输入：Path file = Files.createTempFile("channel-position-", ".bin");；右侧表达式 Files.createTempFile("channel-position-", ".bin") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("channel-position-", ".bin");；调用 createTempFile，实参为 "channel-position-", ".bin"，返回值写入 file。
         Files.write(file, new byte[]{10, 20, 30});
-        // 输入：Files.write(file, new byte[]{10, 20, 30});；接收对象为 Files，调用 write 的实参为 file, new byte[]{10, 20, 30}。
         // 关键变化：Files.write(file, new byte[]{10, 20, 30});；将 new byte[]{10, 20, 30} 写入路径 file；write 返回目标 Path，文件内容更新。
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
         // 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.READ)，try 结束时自动关闭。
         // 关键变化：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {；创建资源 channel，构造表达式为 FileChannel.open(file, StandardOpenOption.READ)；try 结束时关闭该资源。
             channel.position(1);
-            // 输入：channel.position(1);；接收对象为 channel，调用 position 的实参为 1。
             // 关键变化：channel.position(1);；调用 position，实参为 1；将 channel 的 position 设置为 1；位置状态更新。
             ByteBuffer buffer = ByteBuffer.allocate(1);
-            // 输入：ByteBuffer buffer = ByteBuffer.allocate(1);；右侧表达式 ByteBuffer.allocate(1) 的结果赋给 buffer。
-            // 关键变化：ByteBuffer buffer = ByteBuffer.allocate(1);；调用 allocate，实参为 1，返回值写入 buffer。
             channel.read(buffer);
-            // 输入：channel.read(buffer);；接收对象为 channel，调用 read 的实参为 buffer。
 // 关键变化：channel.read(buffer);；从 position=1 读取 1 个字节 20 到 buffer，返回 1；EOF 时才返回 -1。
             buffer.flip();
-            // 输入：buffer.flip();；接收对象为 buffer，调用 flip 的实参为 无显式参数。
             // 关键变化：buffer.flip();；调用 flip，实参为 无显式参数；将 buffer 切换到读模式，position 置 0、limit 设为此前写入长度；缓冲状态更新。
             System.out.println(buffer.get());
             // 输出：20
         }
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -303,31 +260,21 @@ import java.nio.file.StandardOpenOption;
 public class FileChannelTransferDemo {
     public static void main(String[] args) throws Exception {
         Path source = Files.createTempFile("channel-source-", ".bin");
-        // 输入：Path source = Files.createTempFile("channel-source-", ".bin");；右侧表达式 Files.createTempFile("channel-source-", ".bin") 的结果赋给 source。
-        // 关键变化：Path source = Files.createTempFile("channel-source-", ".bin");；调用 createTempFile，实参为 "channel-source-", ".bin"，返回值写入 source。
         Path target = Files.createTempFile("channel-target-", ".bin");
-        // 输入：Path target = Files.createTempFile("channel-target-", ".bin");；右侧表达式 Files.createTempFile("channel-target-", ".bin") 的结果赋给 target。
-        // 关键变化：Path target = Files.createTempFile("channel-target-", ".bin");；调用 createTempFile，实参为 "channel-target-", ".bin"，返回值写入 target。
         Files.write(source, new byte[]{1, 2, 3});
-        // 输入：Files.write(source, new byte[]{1, 2, 3});；接收对象为 Files，调用 write 的实参为 source, new byte[]{1, 2, 3}。
         // 关键变化：Files.write(source, new byte[]{1, 2, 3});；将 new byte[]{1, 2, 3} 写入路径 source；write 返回目标 Path，文件内容更新。
         try (var in = FileChannel.open(source, StandardOpenOption.READ);
         // 输入：try (var in = FileChannel.open(source, StandardOpenOption.READ);；资源变量 in 接收 FileChannel.open(source, StandardOpenOption.READ，try 结束时自动关闭。
         // 关键变化：try (var in = FileChannel.open(source, StandardOpenOption.READ);；创建资源 in，构造表达式为 FileChannel.open(source, StandardOpenOption.READ；try 结束时关闭该资源。
              var out = FileChannel.open(target, StandardOpenOption.WRITE)) {
-             // 输入：var out = FileChannel.open(target, StandardOpenOption.WRITE)) {；右侧表达式 FileChannel.open(target, StandardOpenOption.WRITE)) { 的结果赋给 out。
-             // 关键变化：var out = FileChannel.open(target, StandardOpenOption.WRITE)) {；调用 open，实参为 target, StandardOpenOption.WRITE，返回值写入 out。
             long copied = in.transferTo(0, in.size(), out);
-            // 输入：long copied = in.transferTo(0, in.size(), out);；右侧表达式 in.transferTo(0, in.size(), out) 的结果赋给 copied。
             // 关键变化：long copied = in.transferTo(0, in.size(), out);；把 source 文件从位置 0 开始的全部字节传给 out，返回复制字节数 3 并写入 copied。
             System.out.println(copied);
             // 输出：3
         }
         Files.deleteIfExists(source);
-        // 输入：Files.deleteIfExists(source);；接收对象为 Files，调用 deleteIfExists 的实参为 source。
         // 关键变化：Files.deleteIfExists(source);；删除路径 source；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(target);
-        // 输入：Files.deleteIfExists(target);；接收对象为 Files，调用 deleteIfExists 的实参为 target。
         // 关键变化：Files.deleteIfExists(target);；删除路径 target；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -347,22 +294,17 @@ import java.nio.file.StandardOpenOption;
 public class MappedByteBufferDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("channel-map-", ".bin");
-        // 输入：Path file = Files.createTempFile("channel-map-", ".bin");；右侧表达式 Files.createTempFile("channel-map-", ".bin") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("channel-map-", ".bin");；调用 createTempFile，实参为 "channel-map-", ".bin"，返回值写入 file。
         Files.write(file, new byte[]{7});
-        // 输入：Files.write(file, new byte[]{7});；接收对象为 Files，调用 write 的实参为 file, new byte[]{7}。
         // 关键变化：Files.write(file, new byte[]{7});；将 new byte[]{7} 写入路径 file；write 返回目标 Path，文件内容更新。
         try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {
         // 输入：try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.READ)，try 结束时自动关闭。
         // 关键变化：try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {；创建资源 channel，构造表达式为 FileChannel.open(file, StandardOpenOption.READ)；try 结束时关闭该资源。
             var mapped = channel.map(FileChannel.MapMode.READ_ONLY, 0, 1);
-            // 输入：var mapped = channel.map(FileChannel.MapMode.READ_ONLY, 0, 1);；右侧表达式 channel.map(FileChannel.MapMode.READ_ONLY, 0, 1) 的结果赋给 mapped。
             // 关键变化：var mapped = channel.map(FileChannel.MapMode.READ_ONLY, 0, 1);；在流上调用 map 处理元素，结果写入 mapped。
             System.out.println(mapped.get(0));
             // 输出：7
         }
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -384,10 +326,8 @@ public class SelectorRegisterDemo {
         // 输入：try (Selector selector = Selector.open(); SocketChannel channel = SocketChannel.open()) {；资源变量 selector 接收 Selector.open(); SocketChannel channel = SocketChannel.open()，try 结束时自动关闭。
         // 关键变化：try (Selector selector = Selector.open(); SocketChannel channel = SocketChannel.open()) {；创建资源 selector，构造表达式为 Selector.open(); SocketChannel channel = SocketChannel.open()；try 结束时关闭该资源。
             channel.configureBlocking(false);
-            // 输入：channel.configureBlocking(false);；接收对象为 channel，调用 configureBlocking 的实参为 false。
             // 关键变化：channel.configureBlocking(false);；把 channel 的阻塞模式设置为 false，通道状态更新。
             channel.register(selector, SelectionKey.OP_CONNECT);
-            // 输入：channel.register(selector, SelectionKey.OP_CONNECT);；接收对象为 channel，调用 register 的实参为 selector, SelectionKey.OP_CONNECT。
             // 关键变化：channel.register(selector, SelectionKey.OP_CONNECT);；调用 register，实参为 selector, SelectionKey.OP_CONNECT；向 selector 注册 channel 的事件 SelectionKey.OP_CONNECT，返回 SelectionKey。
             System.out.println(selector.keys().size());
             // 输出：1
@@ -407,10 +347,7 @@ import java.nio.ByteBuffer;
 public class DirectBufferDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(4);
-        // 输入：ByteBuffer buffer = ByteBuffer.allocateDirect(4);；右侧表达式 ByteBuffer.allocateDirect(4) 的结果赋给 buffer。
-        // 关键变化：ByteBuffer buffer = ByteBuffer.allocateDirect(4);；调用 allocateDirect，实参为 4，返回值写入 buffer。
         buffer.put((byte) 1).flip();
-// 输入：buffer.put((byte) 1).flip();；接收对象为 buffer，先以 (byte) 1 调用 put，再无参调用 flip。
 // 关键变化：buffer.put((byte) 1).flip();；put 写入 (byte) 1 后返回同一 ByteBuffer，flip 将 position 置 0、limit 置 1。
         System.out.println(buffer.get());
         // 输出：1
@@ -428,16 +365,10 @@ import java.nio.ByteBuffer;
 public class BufferViewDemo {
     public static void main(String[] args) {
         ByteBuffer source = ByteBuffer.wrap(new byte[]{1, 2, 3});
-        // 输入：ByteBuffer source = ByteBuffer.wrap(new byte[]{1, 2, 3});；右侧表达式 ByteBuffer.wrap(new byte[]{1, 2, 3}) 的结果赋给 source。
-        // 关键变化：ByteBuffer source = ByteBuffer.wrap(new byte[]{1, 2, 3});；调用 wrap，实参为 new byte[]{1, 2, 3}，返回值写入 source。
         source.position(1);
-        // 输入：source.position(1);；接收对象为 source，调用 position 的实参为 1。
         // 关键变化：source.position(1);；调用 position，实参为 1；将 source 的 position 设置为 1；位置状态更新。
         ByteBuffer slice = source.slice();
-        // 输入：ByteBuffer slice = source.slice();；右侧表达式 source.slice() 的结果赋给 slice。
-        // 关键变化：ByteBuffer slice = source.slice();；调用 slice，实参为 无显式参数，返回值写入 slice。
         slice.put(0, (byte) 9);
-        // 输入：slice.put(0, (byte) 9);；接收对象为 slice，调用 put 的实参为 0, (byte) 9。
         // 关键变化：slice.put(0, (byte) 9);；按索引 0 向 slice 写入 (byte) 9；绝对写入不改变 position。
         System.out.println(source.get(1));
         // 输出：9
@@ -455,8 +386,6 @@ import java.nio.ByteBuffer;
 public class ReadOnlyBufferDemo {
     public static void main(String[] args) {
         ByteBuffer readOnly = ByteBuffer.wrap(new byte[]{1}).asReadOnlyBuffer();
-        // 输入：ByteBuffer readOnly = ByteBuffer.wrap(new byte[]{1}).asReadOnlyBuffer();；右侧表达式 ByteBuffer.wrap(new byte[]{1}).asReadOnlyBuffer() 的结果赋给 readOnly。
-        // 关键变化：ByteBuffer readOnly = ByteBuffer.wrap(new byte[]{1}).asReadOnlyBuffer();；调用 wrap，实参为 new byte[]{1}，返回值写入 readOnly。
         System.out.println(readOnly.isReadOnly());
         // 输出：true
     }
@@ -477,19 +406,15 @@ import java.nio.file.StandardOpenOption;
 public class ScatterGatherDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("scatter-gather-", ".bin");
-        // 输入：Path file = Files.createTempFile("scatter-gather-", ".bin");；右侧表达式 Files.createTempFile("scatter-gather-", ".bin") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("scatter-gather-", ".bin");；调用 createTempFile，实参为 "scatter-gather-", ".bin"，返回值写入 file。
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {
         // 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.WRITE)，try 结束时自动关闭。
         // 关键变化：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {；创建资源 channel，构造表达式为 FileChannel.open(file, StandardOpenOption.WRITE)；try 结束时关闭该资源。
             long count = channel.write(new ByteBuffer[]{ByteBuffer.wrap(new byte[]{1}), ByteBuffer.wrap(new byte[]{2})});
-            // 输入：long count = channel.write(new ByteBuffer[]{ByteBuffer.wrap(new byte[]{1}), ByteBuffer.wrap(new byte[]{2})});；右侧表达式 channel.write(new ByteBuffer[]{ByteBuffer.wrap(new byte[]{1}), ByteBuffer.wrap(new byte[]{2})}) 的结果赋给 count。
             // 关键变化：long count = channel.write(new ByteBuffer[]{ByteBuffer.wrap(new byte[]{1}), ByteBuffer.wrap(new byte[]{2})});；按顺序写入两个各含 1 字节的 ByteBuffer，返回写入字节总数 2 并写入 count。
             System.out.println(count);
             // 输出：2
         }
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -509,22 +434,17 @@ import java.nio.file.StandardOpenOption;
 public class AsyncFileChannelDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("async-channel-", ".txt");
-        // 输入：Path file = Files.createTempFile("async-channel-", ".txt");；右侧表达式 Files.createTempFile("async-channel-", ".txt") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("async-channel-", ".txt");；调用 createTempFile，实参为 "async-channel-", ".txt"，返回值写入 file。
         Files.writeString(file, "java");
-        // 输入：Files.writeString(file, "java");；接收对象为 Files，调用 writeString 的实参为 file, "java"。
         // 关键变化：Files.writeString(file, "java");；将 "java" 写入路径 file；writeString 返回目标 Path，文件内容更新。
         try (var channel = AsynchronousFileChannel.open(file, StandardOpenOption.READ)) {
         // 输入：try (var channel = AsynchronousFileChannel.open(file, StandardOpenOption.READ)) {；资源变量 channel 接收 AsynchronousFileChannel.open(file, StandardOpenOption.READ)，try 结束时自动关闭。
         // 关键变化：try (var channel = AsynchronousFileChannel.open(file, StandardOpenOption.READ)) {；创建资源 channel，构造表达式为 AsynchronousFileChannel.open(file, StandardOpenOption.READ)；try 结束时关闭该资源。
             var result = channel.read(ByteBuffer.allocate(4), 0).get();
-            // 输入：var result = channel.read(ByteBuffer.allocate(4), 0).get();；右侧表达式 channel.read(ByteBuffer.allocate(4), 0).get() 的结果赋给 result。
             // 关键变化：var result = channel.read(ByteBuffer.allocate(4), 0).get();；异步读取从位置 0 开始的 4 个字节，get 等待完成并把读取字节数 4 写入 result。
             System.out.println(result);
             // 输出：4
         }
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -541,36 +461,25 @@ import java.nio.file.StandardOpenOption;
 public class BufferChannelDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("buffer-channel-", ".txt");
-        // 输入：Path file = Files.createTempFile("buffer-channel-", ".txt");；右侧表达式 Files.createTempFile("buffer-channel-", ".txt") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("buffer-channel-", ".txt");；调用 createTempFile，实参为 "buffer-channel-", ".txt"，返回值写入 file。
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
         // 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.READ)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.READ)，try 结束时自动关闭。
         // 关键变化：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.READ)) {；创建资源 channel，构造表达式为 FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.READ)；try 结束时关闭该资源。
             ByteBuffer write = ByteBuffer.wrap("NIO".getBytes());
-            // 输入：ByteBuffer write = ByteBuffer.wrap("NIO".getBytes());；右侧表达式 ByteBuffer.wrap("NIO".getBytes()) 的结果赋给 write。
-            // 关键变化：ByteBuffer write = ByteBuffer.wrap("NIO".getBytes());；调用 getBytes，实参为 无显式参数，返回值写入 write。
             while (write.hasRemaining()) {
                 channel.write(write);
-                // 输入：channel.write(write);；接收对象为 channel，调用 write 的实参为 write。
                 // 关键变化：channel.write(write);；向 channel 写入 write 的剩余字节，返回本次写入字节数；write position 前进。
             }
             channel.position(0);
-            // 输入：channel.position(0);；接收对象为 channel，调用 position 的实参为 0。
             // 关键变化：channel.position(0);；调用 position，实参为 0；将 channel 的 position 设置为 0；位置状态更新。
             ByteBuffer read = ByteBuffer.allocate(3);
-            // 输入：ByteBuffer read = ByteBuffer.allocate(3);；右侧表达式 ByteBuffer.allocate(3) 的结果赋给 read。
-            // 关键变化：ByteBuffer read = ByteBuffer.allocate(3);；调用 allocate，实参为 3，返回值写入 read。
             channel.read(read);
-            // 输入：channel.read(read);；接收对象为 channel，调用 read 的实参为 read。
 // 关键变化：channel.read(read);；从文件读取 3 个字节“NIO”到 read，返回 3；EOF 时才返回 -1。
             read.flip();
-            // 输入：read.flip();；接收对象为 read，调用 flip 的实参为 无显式参数。
             // 关键变化：read.flip();；调用 flip，实参为 无显式参数；将 read 切换到读模式，position 置 0、limit 设为此前写入长度；缓冲状态更新。
             System.out.println((char) read.get() + "" + (char) read.get() + (char) read.get());
             // 输出：NIO
         }
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }

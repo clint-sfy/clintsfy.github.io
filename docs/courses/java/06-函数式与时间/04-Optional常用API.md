@@ -43,11 +43,8 @@ description: 用 Optional 表达可能缺失的返回值，掌握转换、兜底
 import java.util.Optional;
 
 String input = null;
-// 输入：String input = null;；右侧表达式 null 的结果赋给 input。
 // 关键变化：String input = null;；将 null 的计算结果写入 input；赋值完成。
 Optional<String> value = Optional.ofNullable(input);
-// 输入：Optional<String> value = Optional.ofNullable(input);；右侧表达式 Optional.ofNullable(input) 的结果赋给 value。
-// 关键变化：Optional<String> value = Optional.ofNullable(input);；调用 ofNullable，实参为 input，返回值写入 value。
 System.out.println(value.isEmpty());
 // 输出：true
 ```
@@ -61,8 +58,6 @@ System.out.println(value.isEmpty());
 import java.util.Optional;
 
 Optional<String> value = Optional.of("Java");
-// 输入：Optional<String> value = Optional.of("Java");；右侧表达式 Optional.of("Java") 的结果赋给 value。
-// 关键变化：Optional<String> value = Optional.of("Java");；按 "Java" 调用 of 创建值，结果写入 value。
 System.out.println(value.get());
 // 输出：Java
 ```
@@ -76,11 +71,7 @@ System.out.println(value.get());
 import java.util.Optional;
 
 Optional<String> name = Optional.of(" java ");
-// 输入：Optional<String> name = Optional.of(" java ");；右侧表达式 Optional.of(" java ") 的结果赋给 name。
-// 关键变化：Optional<String> name = Optional.of(" java ");；按 " java " 调用 of 创建值，结果写入 name。
 Optional<Integer> length = name.map(String::trim).map(String::length);
-// 输入：Optional<Integer> length = name.map(String::trim).map(String::length);；右侧表达式 name.map(String::trim).map(String::length) 的结果赋给 length。
-// 关键变化：Optional<Integer> length = name.map(String::trim).map(String::length);；把方法引用 name.map(String::trim).map(String::length) 绑定到目标函数式接口，结果写入 length。
 System.out.println(length.orElse(0));
 // 输出：4
 ```
@@ -94,10 +85,7 @@ System.out.println(length.orElse(0));
 import java.util.Optional;
 
 Optional<String> text = Optional.of("42");
-// 输入：Optional<String> text = Optional.of("42");；右侧表达式 Optional.of("42") 的结果赋给 text。
-// 关键变化：Optional<String> text = Optional.of("42");；按 "42" 调用 of 创建值，结果写入 text。
 Optional<Integer> number = text.flatMap(value -> parseInt(value));
-// 输入：Optional<Integer> number = text.flatMap(value -> parseInt(value));；右侧表达式 text.flatMap(value -> parseInt(value)) 的结果赋给 number。
 // 关键变化：Optional<Integer> number = text.flatMap(value -> parseInt(value));；在流上调用 flatMap 处理元素，结果写入 number。
 System.out.println(number.orElse(-1));
 // 输出：42
@@ -105,11 +93,9 @@ System.out.println(number.orElse(-1));
 static Optional<Integer> parseInt(String value) {
     try {
         return Optional.of(Integer.parseInt(value));
-        // 输入：return Optional.of(Integer.parseInt(value));；接收对象为 Optional，调用 of 的实参为 Integer.parseInt(value)。
         // 关键变化：return Optional.of(Integer.parseInt(value));；按 Integer.parseInt(value) 调用 of 创建值，返回新实例。
     } catch (NumberFormatException ex) {
         return Optional.empty();
-        // 输入：return Optional.empty();；接收对象为 Optional，调用 empty 的实参为 无显式参数。
         // 关键变化：return Optional.empty();；调用 empty，实参为 无显式参数；返回空 Optional。
     }
 }
@@ -121,14 +107,11 @@ static Optional<Integer> parseInt(String value) {
 
 ```java
 // 语义：条件不满足时得到空 Optional，适合把校验接到查询或转换链中。
-// 调用参数：代码依次使用 "JAVA-20"、"JAVA-"、"invalid"、-20。
 import java.util.Optional;
 
 Optional<String> code = Optional.of("JAVA-20")
         .filter(value -> value.startsWith("JAVA-"));
-        // 输入：Optional<String> code = Optional.of("JAVA-20") .filter(value -> value.startsWith("JAVA-"));；右侧表达式 Optional.of("JAVA-20") .filter(value -> value.startsWith("JAVA-")) 的结果赋给 code。
         // 关键变化：Optional<String> code = Optional.of("JAVA-20") .filter(value -> value.startsWith("JAVA-"));；在流上调用 filter 处理元素，结果写入 code。
-        // 输入：.filter(value -> value.startsWith("JAVA-"));；接收对象为 上一个链式结果，调用 filter 的实参为 value -> value.startsWith("JAVA-")。
         // 关键变化：.filter(value -> value.startsWith("JAVA-"));；按 predicate 筛选元素，只保留满足条件的元素。
 System.out.println(code.orElse("invalid"));
 // 输出：JAVA-20
@@ -143,8 +126,6 @@ System.out.println(code.orElse("invalid"));
 import java.util.Optional;
 
 String label = Optional.<String>empty().orElse("unknown");
-// 输入：String label = Optional.<String>empty().orElse("unknown");；右侧表达式 Optional.<String>empty().orElse("unknown") 的结果赋给 label。
-// 关键变化：String label = Optional.<String>empty().orElse("unknown");；调用 orElse，实参为 "unknown"，返回值写入 label。
 System.out.println(label);
 // 输出：unknown
 ```
@@ -158,8 +139,6 @@ System.out.println(label);
 import java.util.Optional;
 
 String label = Optional.<String>empty().orElseGet(() -> "generated-20");
-// 输入：String label = Optional.<String>empty().orElseGet(() -> "generated-20");；右侧表达式 Optional.<String>empty().orElseGet(() -> "generated-20") 的结果赋给 label。
-// 关键变化：String label = Optional.<String>empty().orElseGet(() -> "generated-20");；调用 orElseGet，实参为 () -> "generated-20"，返回值写入 label。
 System.out.println(label);
 // 输出：generated-20
 ```
@@ -170,14 +149,10 @@ System.out.println(label);
 
 ```java
 // 语义：把“找不到就是错误”的边界明确转换为异常。
-// 调用参数：代码依次使用 "user not found"。
 import java.util.Optional;
 
 String user = Optional.<String>empty()
         .orElseThrow(() -> new IllegalArgumentException("user not found"));
-        // 输入：String user = Optional.<String>empty() .orElseThrow(() -> new IllegalArgumentException("user not found"));；使用构造参数 "user not found" 创建 IllegalArgumentException，结果赋给 user。
-        // 关键变化：String user = Optional.<String>empty() .orElseThrow(() -> new IllegalArgumentException("user not found"));；创建 IllegalArgumentException，构造参数为 "user not found"，实例写入 user。
-        // 输入：.orElseThrow(() -> new IllegalArgumentException("user not found"));；接收对象为 上一个链式结果，调用 orElseThrow 的实参为 () -> new IllegalArgumentException("user not found")。
         // 关键变化：.orElseThrow(() -> new IllegalArgumentException("user not found"));；调用 orElseThrow，实参为 () -> new IllegalArgumentException("user not found")；Optional 为空时执行 () -> new IllegalArgumentException("user not found") 抛出异常；有值时返回值。
 System.out.println(user);
 // 输出：缺失时抛出 IllegalArgumentException
@@ -190,7 +165,6 @@ System.out.println(user);
 ```java
 // 作用：Optional.of("saved").ifPresent 在值存在时执行打印动作。
 // 语义：适合末端通知或记录日志，不要用多个嵌套 ifPresent 代替有清晰返回值的业务流程。
-// 调用参数：代码依次使用 "saved"、"status="。
 import java.util.Optional;
 
 Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));
@@ -206,8 +180,6 @@ Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));
 import java.util.Optional;
 
 StringBuilder output = new StringBuilder();
-// 输入：StringBuilder output = new StringBuilder();；使用构造参数 无显式参数 创建 StringBuilder，结果赋给 output。
-// 关键变化：StringBuilder output = new StringBuilder();；创建 StringBuilder，构造参数为 无显式参数，实例写入 output。
 Optional.<String>empty().ifPresentOrElse(
         value -> output.append("value=").append(value),
         // 输入：value -> output.append("value=").append(value);；有值分支会追加 value= 和具体值。
@@ -228,8 +200,6 @@ System.out.println(output);
 import java.util.Optional;
 
 Optional<String> missing = Optional.empty();
-// 输入：Optional<String> missing = Optional.empty();；右侧表达式 Optional.empty() 的结果赋给 missing。
-// 关键变化：Optional<String> missing = Optional.empty();；调用 empty，实参为 无显式参数，返回值写入 missing。
 System.out.println(missing.isPresent());
 // 输出：false
 ```
@@ -242,11 +212,7 @@ System.out.println(missing.isPresent());
 import java.util.Optional;
 
 Optional<String> primary = Optional.empty();
-// 输入：Optional<String> primary = Optional.empty();；右侧表达式 Optional.empty() 的结果赋给 primary。
-// 关键变化：Optional<String> primary = Optional.empty();；调用 empty，实参为 无显式参数，返回值写入 primary。
 Optional<String> result = primary.or(() -> Optional.of("fallback"));
-// 输入：Optional<String> result = primary.or(() -> Optional.of("fallback"));；右侧表达式 primary.or(() -> Optional.of("fallback")) 的结果赋给 result。
-// 关键变化：Optional<String> result = primary.or(() -> Optional.of("fallback"));；按 "fallback" 调用 of 创建值，结果写入 result。
 System.out.println(result.get());
 // 输出：fallback
 ```
@@ -262,13 +228,8 @@ List<String> values = List.of("java", "", "sql").stream()
         .map(text -> text.isBlank() ? java.util.Optional.<String>empty() : java.util.Optional.of(text))
         .flatMap(java.util.Optional::stream)
         .toList();
-        // 输入：List<String> values = List.of("java", "", "sql").stream() .map(text -> text.isBlank() ? java.util.Optional.<String>empty() : java.util.Optional.of(text)) .flatMap(java.util.Optional::stream) .toList();；右侧表达式 List.of("java", "", "sql").stream() .map(text -> text.isBlank() ? java.util.Optional.<String>empty() : java.util.Optional.of(text)) .flatMap(java.util.Optional::stream) .toList() 的结果赋给 values。
-        // 关键变化：List<String> values = List.of("java", "", "sql").stream() .map(text -> text.isBlank() ? java.util.Optional.<String>empty() : java.util.Optional.of(text)) .flatMap(java.util.Optional::stream) .toList();；把方法引用 List.of("java", "", "sql").stream() .map(text -> text.isBlank() ? java.util.Optional.<String>empty() : java.util.Optional.of(text)) .flatMap(java.util.Optional::stream) .toList() 绑定到目标函数式接口，结果写入 values。
-        // 输入：.map(text -> text.isBlank() ? java.util.Optional.<String>empty() : java.util.Optional.of(text)) .flatMap(java.util.Optional::stream) .toList();；接收对象为 上一个链式结果，调用 flatMap 的实参为 java.util.Optional::stream。
         // 关键变化：.map(text -> text.isBlank() ? java.util.Optional.<String>empty() : java.util.Optional.of(text)) .flatMap(java.util.Optional::stream) .toList();；把每个元素映射成子流并展开为一个连续流。
-        // 输入：.flatMap(java.util.Optional::stream) .toList();；接收对象为 上一个链式结果，调用 flatMap 的实参为 java.util.Optional::stream。
         // 关键变化：.flatMap(java.util.Optional::stream) .toList();；把每个元素映射成子流并展开为一个连续流。
-        // 输入：.toList();；接收对象为 上一个链式结果，调用 toList 的实参为 无显式参数。
         // 关键变化：.toList();；终止当前流管道并把元素收集为 List；返回列表结果。
 System.out.println(values);
 // 输出：[java, sql]
@@ -282,8 +243,6 @@ System.out.println(values);
 import java.util.Optional;
 
 Optional<String> value = Optional.of("Java");
-// 输入：Optional<String> value = Optional.of("Java");；右侧表达式 Optional.of("Java") 的结果赋给 value。
-// 关键变化：Optional<String> value = Optional.of("Java");；按 "Java" 调用 of 创建值，结果写入 value。
 System.out.println(value.get());
 // 输出：Java
 ```
@@ -296,8 +255,6 @@ System.out.println(value.get());
 import java.util.OptionalInt;
 
 OptionalInt result = OptionalInt.of(20);
-// 输入：OptionalInt result = OptionalInt.of(20);；右侧表达式 OptionalInt.of(20) 的结果赋给 result。
-// 关键变化：OptionalInt result = OptionalInt.of(20);；按 20 调用 of 创建值，结果写入 result。
 System.out.println(result.orElse(0));
 // 输出：20
 ```
@@ -310,16 +267,10 @@ import java.util.Optional;
 public class OptionalDemo {
     public static void main(String[] args) {
         Map<String, String> users = Map.of("ann", "ann@example.com");
-        // 输入：Map<String, String> users = Map.of("ann", "ann@example.com");；右侧表达式 Map.of("ann", "ann@example.com") 的结果赋给 users。
-        // 关键变化：Map<String, String> users = Map.of("ann", "ann@example.com");；按 "ann", "ann@example.com" 调用 of 创建值，结果写入 users。
         String email = findEmail(users, "ann")
                 .filter(value -> value.contains("@"))
                 .orElseThrow(() -> new IllegalArgumentException("email missing"));
-                // 输入：String email = findEmail(users, "ann") .filter(value -> value.contains("@")) .orElseThrow(() -> new IllegalArgumentException("email missing"));；使用构造参数 "email missing" 创建 IllegalArgumentException，结果赋给 email。
-                // 关键变化：String email = findEmail(users, "ann") .filter(value -> value.contains("@")) .orElseThrow(() -> new IllegalArgumentException("email missing"));；创建 IllegalArgumentException，构造参数为 "email missing"，实例写入 email。
-                // 输入：.filter(value -> value.contains("@")) .orElseThrow(() -> new IllegalArgumentException("email missing"));；接收对象为 上一个链式结果，调用 filter 的实参为 value -> value.contains("@")。
                 // 关键变化：.filter(value -> value.contains("@")) .orElseThrow(() -> new IllegalArgumentException("email missing"));；按 predicate 筛选元素，只保留满足条件的元素。
-                // 输入：.orElseThrow(() -> new IllegalArgumentException("email missing"));；接收对象为 上一个链式结果，调用 orElseThrow 的实参为 () -> new IllegalArgumentException("email missing")。
                 // 关键变化：.orElseThrow(() -> new IllegalArgumentException("email missing"));；调用 orElseThrow，实参为 () -> new IllegalArgumentException("email missing")；Optional 为空时执行 () -> new IllegalArgumentException("email missing") 抛出异常；有值时返回值。
         System.out.println(email);
         // 输出：ann@example.com
@@ -327,7 +278,6 @@ public class OptionalDemo {
 
     static Optional<String> findEmail(Map<String, String> users, String user) {
         return Optional.ofNullable(users.get(user));
-        // 输入：return Optional.ofNullable(users.get(user));；接收对象为 users，调用 get 的实参为 user。
         // 关键变化：return Optional.ofNullable(users.get(user));；从 users 按 user 读取值，返回值不修改映射内容。
     }
 }

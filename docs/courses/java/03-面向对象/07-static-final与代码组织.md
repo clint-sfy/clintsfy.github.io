@@ -47,7 +47,6 @@ description: 速查 static、final、常量、静态导入和嵌套类型，建�
 // 初始状态：next 初始为 1。
 class Sequence {
     private static int next = 1;
-// 关键变化：next 接收右侧表达式 1 的计算结果。
     // 初始状态：next 当前为 1。
 
     static int nextValue() {
@@ -93,7 +92,6 @@ System.out.println(Texts.quote("Java"));
 class Limits {
 // 作用：常量名通常使用大写下划线；值应稳定且不依赖可变运行时状态，配置项不要伪装成编译期常量。
     static final int MAX_RETRY = 3;
-// 关键变化：MAX_RETRY 接收右侧表达式 3 的计算结果。
 // 初始状态：MAX_RETRY 的初始值为 3。
 }
 
@@ -203,7 +201,6 @@ System.out.println(new Token("abc").value());
 
 ```java
 // 语义：静态嵌套类只借用外部类的命名空间，不持有外部实例。
-// 调用参数：代码依次使用 true。
 class Parser {
     static class Result {
         final boolean ok;
@@ -226,7 +223,6 @@ System.out.println(new Parser.Result(true).ok);
 ```java
 class Registry {
     static String name = "ready";
-// 关键变化：name 接收右侧表达式 "ready" 的计算结果。
 // 初始状态：name 的初始值为 "ready"。
 
     static {

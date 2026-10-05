@@ -75,7 +75,6 @@ import org.aspectj.lang.annotation.Pointcut;
 @Aspect
 class AuditPointcuts {
     @Pointcut("execution(* com.example.service..*(..))")
-// 初始状态：@Pointcut("execution(* com.example.service..*(..))")。
 // 作用：@Pointcut("execution(* com.example.service..*(..))")；声明可复用切点。
     void serviceOperation() {}
 }
@@ -99,7 +98,6 @@ import org.aspectj.lang.annotation.Aspect;
 @Aspect
 class TimingAspect {
     @Around("execution(* com.example.service..*(..))")
-// 初始状态：@Around("execution(* com.example.service..*(..))")。
 // 作用：@Around("execution(* com.example.service..*(..))")；包裹目标调用。
     Object time(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.nanoTime();
@@ -153,7 +151,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 class TransferService {
     @Transactional
-// 初始状态：@Transactional。
 // 作用：@Transactional；声明事务边界。
     public void transfer() {
         System.out.println("debit then credit");
@@ -234,7 +231,6 @@ import org.springframework.core.annotation.Order;
 
 @Aspect
 @Order(1)
-// 初始状态：@Order(1)。
 // 作用：@Order(1)；确定多个通知顺序。
 class SecurityAspect {
     @Before("execution(* com.example..service..*(..))")
@@ -267,7 +263,6 @@ class ImportService {
     String importOne() {
         return template.execute(status -> {
 // 作用：return template.execute(status -> {；程序化事务。
-// 初始状态：return template.execute(status -> {。
             System.out.println("imported");
 // 输出：imported
             return "ok";

@@ -65,7 +65,6 @@ public class EnumOverviewDemo {
 
 ```java
 // 语义：需要校验、规范化或保护可变组件时，跳转到 record 数据载体页面查看完整写法。
-// 调用参数：代码依次使用 "CNY"、1999。
 record Money(String currency, long cents) {}
 
 public class RecordOverviewDemo {
@@ -106,7 +105,6 @@ public class SealedOverviewDemo {
 
 ```java
 // 语义：需要在 JDK 20 中直接拆出 record 组件时可使用预览版 record pattern，并为编译与运行同时启用预览特性。
-// 调用参数：代码依次使用 ":"、"unknown"、"Alice"、20。
 record User(String name, int age) {}
 
 public class PatternOverviewDemo {

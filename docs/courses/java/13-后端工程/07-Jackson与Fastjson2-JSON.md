@@ -111,7 +111,6 @@ System.out.println(new ObjectMapper().writeValueAsString(new Session("s-1", "tok
 @com.fasterxml.jackson.annotation.JsonIgnore
 @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
 // 作用：@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)；组合 Jackson 注解。
-// 初始状态：@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)。
 @interface InternalOnly {}
 // 输出：标注 @InternalOnly 的属性按 @JsonIgnore 处理。
 // 说明：@JacksonAnnotationsInside 让 @InternalOnly 汇总其上的 @JsonIgnore；Jackson 会忽略被标注属性，直接反射读取则不会执行映射规则。
@@ -225,7 +224,6 @@ pattern、时区和 Java Time 模块要与客户端协议一起测试；`LocalDa
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-// 初始状态：@JsonInclude(JsonInclude.Include.NON_NULL)。
 // 作用：@JsonInclude(JsonInclude.Include.NON_NULL)；省略可选字段。
 record ResultView(String id, String note) {}
 System.out.println(new ResultView("e-1", null).note() == null);

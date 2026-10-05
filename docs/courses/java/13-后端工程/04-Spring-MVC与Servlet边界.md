@@ -50,7 +50,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-// 初始状态：@RestController。
 // 作用：@RestController；声明 JSON 控制器。
 class HealthController {
     @GetMapping("/health")
@@ -77,7 +76,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/users")
-// 初始状态：@RequestMapping("/users")。
 // 作用：@RequestMapping("/users")；声明共享路径前缀。
 class UserController {
     String basePath() { return "/users"; }
@@ -102,7 +100,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 class UserQueryController {
     @GetMapping("/users/{id}")
-// 初始状态：@GetMapping("/users/{id}")。
 // 作用：@GetMapping("/users/{id}")；匹配 GET 请求。
     String find(@PathVariable long id) { return "user-" + id; }
 }
@@ -131,7 +128,6 @@ record CreateUser(String name) {}
 class CreateUserController {
     @PostMapping("/users")
     String create(@RequestBody CreateUser request) {
-// 初始状态：String create(@RequestBody CreateUser request) {。
 // 作用：String create(@RequestBody CreateUser request) {；读取 JSON 请求体。
         return "created:" + request.name();
 // 作用：return "created:" + request.name();；读取 JSON 请求体。
@@ -350,7 +346,6 @@ void inspect(HttpServletRequest request, HttpServletResponse response) throws Ex
 @RequestMapping("/orders")
 class OrderController {
     @PostMapping
-// 初始状态：@PostMapping。
 // 作用：@PostMapping；接收创建命令。
     ResponseEntity<Long> create(@RequestBody CreateOrder body) {
         long id = 42L;
@@ -374,7 +369,6 @@ class OrderController {
 @RestController
 class ProfileController {
     @PutMapping("/profiles/{id}")
-// 初始状态：@PutMapping("/profiles/{id}")。
 // 作用：@PutMapping("/profiles/{id}")；处理可幂等更新。
     Profile replace(@PathVariable long id, @RequestBody Profile body) {
         return new Profile(id, body.name());
@@ -397,7 +391,6 @@ class ProfileController {
 @RestController
 class SessionController {
     @DeleteMapping("/sessions/{id}")
-// 初始状态：@DeleteMapping("/sessions/{id}")。
 // 作用：@DeleteMapping("/sessions/{id}")；处理删除命令。
     ResponseEntity<Void> delete(@PathVariable String id) {
         System.out.println("delete " + id);
@@ -423,7 +416,6 @@ class SessionController {
 class UserController {
     @GetMapping("/users/{id}")
     String find(@PathVariable("id") long userId) {
-// 初始状态：String find(@PathVariable("id") long userId) {。
 // 作用：String find(@PathVariable("id") long userId) {；读取路径变量。
         if (userId <= 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 // 初始状态：if (userId <= 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST)。
@@ -472,7 +464,6 @@ class SearchController {
 class HealthController {
     @GetMapping("/health")
     @ResponseBody
-// 初始状态：@ResponseBody。
 // 作用：@ResponseBody；将返回值写入响应体。
     Map<String, String> health() {
         return Map.of("status", "UP");
@@ -495,7 +486,6 @@ class HealthController {
 @RestControllerAdvice
 class ApiErrors {
     @ExceptionHandler(IllegalArgumentException.class)
-// 初始状态：@ExceptionHandler(IllegalArgumentException.class)。
 // 作用：@ExceptionHandler(IllegalArgumentException.class)；映射已知异常。
     ResponseEntity<Map<String, String>> badInput(IllegalArgumentException ex) {
         return ResponseEntity.badRequest()
@@ -518,7 +508,6 @@ class ApiErrors {
 // 作用：通过 @RestControllerAdvice 集中处理 REST 异常。
 // 结果：未找到资源时返回 `404` Problem Detail。
 @RestControllerAdvice
-// 初始状态：@RestControllerAdvice。
 // 作用：@RestControllerAdvice；集中处理 REST 异常。
 class GlobalErrors {
     @ExceptionHandler(NoSuchElementException.class)

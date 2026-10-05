@@ -42,7 +42,6 @@ sealed 检查的是直接继承关系，子类仍需满足访问级别、同一�
 
 ```java
 // 语义：实现类型必须出现在 permits 列表中。
-// 调用参数：代码依次使用 "paid:"、"declined:"、"unreachable"、"p-1"、-1。
 sealed interface PaymentResult permits Paid, Declined {}
 
 record Paid(String id) implements PaymentResult {}
@@ -76,7 +75,6 @@ sealed class 适合共享少量受保护行为或状态的有限层次；如果�
 
 ```java
 // 语义：sealed class 适合共享少量受保护行为或状态的有限层次。
-// 调用参数：代码依次使用 "create"、"delete"。
 sealed abstract class Command permits CreateUser, DeleteUser {
     abstract String name();
 }
@@ -111,7 +109,6 @@ final 表示该直接子类型不能再被继承，编译器可以把这一支�
 
 ```java
 // 语义：final 表示该直接子类型不能再被继承，编译器可以把这一支视为稳定叶子节点。
-// 调用参数：代码依次使用 "ok"。
 sealed interface Result permits Success {}
 
 final class Success implements Result {
@@ -136,7 +133,6 @@ public class SealedFinalDemo {
 
 ```java
 // 语义：中间层声明 sealed 后，必须继续列出自己的直接子类。
-// 调用参数：代码依次使用 true。
 sealed interface FileNode permits File, Directory {}
 
 sealed class File implements FileNode permits TextFile, ImageFile {}
@@ -161,7 +157,6 @@ non-sealed 只放开这一支，不影响同一 sealed 层次的其他分支；�
 
 ```java
 // 语义：non-sealed 只放开这一支，不影响同一 sealed 层次的其他分支。
-// 调用参数：代码依次使用 true。
 sealed interface Event permits OpenEvent, ExternalEvent {}
 
 record OpenEvent() implements Event {}

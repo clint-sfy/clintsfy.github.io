@@ -93,7 +93,6 @@ public class RecordCompactConstructorDemo {
 
 ```java
 // 语义：显式规范构造器的参数必须与组件一一对应，并且要明确给每个组件赋值。
-// 调用参数：代码依次使用 1、65535、"port out of range"、8080。
 record Port(int value) {
     public Port(int value) {
         if (value < 1 || value > 65535) {
@@ -172,7 +171,6 @@ record 可以实现一个或多个接口，适合让不同数据载体遵守同�
 
 ```java
 // 语义：record 可以实现一个或多个接口，适合让不同数据载体遵守同一读取契约。
-// 调用参数：代码依次使用 "p-1"、"Book"、-1。
 interface Identified {
     String id();
 }
@@ -199,7 +197,6 @@ public class RecordInterfaceDemo {
 
 ```java
 // 语义：需要在 JDK 20 中合并类型判断、转换和组件读取时可使用预览版 record pattern，并为编译与运行配套启用预览特性。
-// 调用参数：代码依次使用 "x="、", y="、"unknown"、2、5。
 record Point(int x, int y) {}
 
 public class RecordPatternDemo {
@@ -230,7 +227,6 @@ java --enable-preview RecordPatternDemo
 
 ```java
 // 语义：javac --release 20 --enable-preview RecordPatternDemo.java java --enable-preview RecordPatternDemo。
-// 调用参数：代码依次使用 "@"、"unknown"、"Alice"、"Shanghai"。
 record Address(String city) {}
 record User(String name, Address address) {}
 

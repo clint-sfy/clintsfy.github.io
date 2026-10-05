@@ -45,11 +45,7 @@ import java.util.List;
 public class ListCreateDemo {
     public static void main(String[] args) {
         List<String> names = new ArrayList<>(List.of("Alice", "Bob"));
-        // 输入：List<String> names = new ArrayList<>(List.of("Alice", "Bob"));；使用构造参数 List.of("Alice", "Bob") 创建 ArrayList<>，结果赋给 names。
-        // 关键变化：List<String> names = new ArrayList<>(List.of("Alice", "Bob"));；创建 ArrayList<>，构造参数为 List.of("Alice", "Bob")，实例写入 names。
         names.add("Carol");
-        // 输入：names.add("Carol");；接收对象为 names，调用 add 的实参为 "Carol"。
-        // 关键变化：names.add("Carol");；向 names 加入 "Carol"，返回 boolean 表示是否发生变化；names 内容更新。
         System.out.println(names);
         // 输出：[Alice, Bob, Carol]
     }
@@ -68,13 +64,10 @@ import java.util.List;
 public class ListAddDemo {
     public static void main(String[] args) {
         List<String> list = new ArrayList<>(List.of("a", "c"));
-        // 输入：List<String> list = new ArrayList<>(List.of("a", "c"));；使用构造参数 List.of("a", "c") 创建 ArrayList<>，结果赋给 list。
         // 关键变化：List<String> list = new ArrayList<>(List.of("a", "c"));；创建 ArrayList<>，构造参数为 List.of("a", "c")，list 初始为 [a, c]。
         list.add("d");
-        // 输入：list.add("d");；接收对象为 list，调用 add 的实参为 "d"。
         // 关键变化：list.add("d");；向 list 追加 "d"，list 变为 [a, c, d]。
         list.add(1, "b");
-        // 输入：list.add(1, "b");；接收对象为 list，调用 add 的实参为 1, "b"。
         // 关键变化：list.add(1, "b");；在索引 1 插入 "b"，该重载返回 void；list 变为 [a, b, c, d]。
         System.out.println(list);
         // 输出：[a, b, c, d]
@@ -94,14 +87,8 @@ import java.util.List;
 public class ListAddAllDemo {
     public static void main(String[] args) {
         List<String> list = new ArrayList<>(List.of("a"));
-        // 输入：List<String> list = new ArrayList<>(List.of("a"));；使用构造参数 List.of("a") 创建 ArrayList<>，结果赋给 list。
-        // 关键变化：List<String> list = new ArrayList<>(List.of("a"));；创建 ArrayList<>，构造参数为 List.of("a")，实例写入 list。
         list.addAll(List.of("b", "c"));
-        // 输入：list.addAll(List.of("b", "c"));；接收对象为 list，调用 addAll 的实参为 List.of("b", "c")。
-        // 关键变化：list.addAll(List.of("b", "c"));；向 list 加入 List.of("b", "c")，返回 boolean 表示是否发生变化；list 内容更新。
         list.addAll(1, List.of("x", "y"));
-        // 输入：list.addAll(1, List.of("x", "y"));；接收对象为 list，调用 addAll 的实参为 1, List.of("x", "y")。
-        // 关键变化：list.addAll(1, List.of("x", "y"));；向 list 加入 1, List.of("x", "y")，返回 boolean 表示是否发生变化；list 内容更新。
         System.out.println(list);
         // 输出：[a, x, y, b, c]
     }
@@ -117,8 +104,6 @@ public class ListAddAllDemo {
 import java.util.List;
 
 List<String> list = List.of("a", "b");
-// 输入：List<String> list = List.of("a", "b");；右侧表达式 List.of("a", "b") 的结果赋给 list。
-// 关键变化：List<String> list = List.of("a", "b");；按 "a", "b" 调用 of 创建值，结果写入 list。
 System.out.println(list.get(1));
 // 输出：b
 ```
@@ -135,11 +120,7 @@ import java.util.List;
 public class ListGetSetDemo {
     public static void main(String[] args) {
         List<String> list = new ArrayList<>(List.of("a", "b"));
-        // 输入：List<String> list = new ArrayList<>(List.of("a", "b"));；使用构造参数 List.of("a", "b") 创建 ArrayList<>，结果赋给 list。
-        // 关键变化：List<String> list = new ArrayList<>(List.of("a", "b"));；创建 ArrayList<>，构造参数为 List.of("a", "b")，实例写入 list。
         String old = list.set(1, "B");
-        // 输入：String old = list.set(1, "B");；右侧表达式 list.set(1, "B") 的结果赋给 old。
-        // 关键变化：String old = list.set(1, "B");；调用 set，实参为 1, "B"，返回值写入 old。
         System.out.println(old + " -> " + list);
         // 输出：b -> [a, B]
     }
@@ -158,15 +139,11 @@ import java.util.List;
 public class ListRemoveDemo {
     public static void main(String[] args) {
         List<Integer> numbers = new ArrayList<>(List.of(10, 20, 30));
-        // 输入：List<Integer> numbers = new ArrayList<>(List.of(10, 20, 30));；使用构造参数 List.of(10, 20, 30) 创建 ArrayList<>，结果赋给 numbers。
-        // 关键变化：List<Integer> numbers = new ArrayList<>(List.of(10, 20, 30));；创建 ArrayList<>，构造参数为 List.of(10, 20, 30)，实例写入 numbers。
         // numbers：[10, 20, 30]
         numbers.remove(1);
-        // 输入：numbers.remove(1);；接收对象为 numbers，调用 remove 的实参为 1。
         // 关键变化：numbers.remove(1);；按索引 1 删除元素 20，返回被移除的 Integer 20；numbers 变为 [10, 30]。
         // numbers：[10, 30]
         numbers.remove(Integer.valueOf(30));
-        // 输入：numbers.remove(Integer.valueOf(30));；接收对象为 numbers，调用 remove 的实参为 Integer.valueOf(30)。
         // 关键变化：numbers.remove(Integer.valueOf(30));；按值删除元素 30，返回 true；numbers 变为 [10]。
         System.out.println(numbers);
         // 输出：[10]
@@ -183,8 +160,6 @@ public class ListRemoveDemo {
 import java.util.List;
 
 List<String> list = List.of("java", "sql", "java");
-// 输入：List<String> list = List.of("java", "sql", "java");；右侧表达式 List.of("java", "sql", "java") 的结果赋给 list。
-// 关键变化：List<String> list = List.of("java", "sql", "java");；按 "java", "sql", "java" 调用 of 创建值，结果写入 list。
 System.out.println(list.contains("sql"));
 // 输出：true
 ```
@@ -200,8 +175,6 @@ import java.util.List;
 public class ListSearchDemo {
     public static void main(String[] args) {
         List<String> list = List.of("java", "sql", "java");
-        // 输入：List<String> list = List.of("java", "sql", "java");；右侧表达式 List.of("java", "sql", "java") 的结果赋给 list。
-        // 关键变化：List<String> list = List.of("java", "sql", "java");；按 "java", "sql", "java" 调用 of 创建值，结果写入 list。
         System.out.println(list.indexOf("java"));
         // 输出：0
     }
@@ -217,8 +190,6 @@ public class ListSearchDemo {
 import java.util.List;
 
 List<String> list = List.of("java", "sql", "java");
-// 输入：List<String> list = List.of("java", "sql", "java");；右侧表达式 List.of("java", "sql", "java") 的结果赋给 list。
-// 关键变化：List<String> list = List.of("java", "sql", "java");；按 "java", "sql", "java" 调用 of 创建值，结果写入 list。
 System.out.println(list.lastIndexOf("java"));
 // 输出：2
 ```
@@ -233,12 +204,8 @@ import java.util.Iterator;
 import java.util.List;
 
 List<String> names = List.of("Alice", "Bob");
-// 输入：List<String> names = List.of("Alice", "Bob");；右侧表达式 List.of("Alice", "Bob") 的结果赋给 names。
-// 关键变化：List<String> names = List.of("Alice", "Bob");；按 "Alice", "Bob" 调用 of 创建值，结果写入 names。
 // names：[Alice, Bob]
 Iterator<String> iterator = names.iterator();
-// 输入：Iterator<String> iterator = names.iterator();；右侧表达式 names.iterator() 的结果赋给 iterator。
-// 关键变化：Iterator<String> iterator = names.iterator();；调用 iterator，实参为 无显式参数，返回值写入 iterator。
 while (iterator.hasNext()) {
     System.out.println(iterator.next());
     // 输出：Alice、Bob
@@ -251,9 +218,7 @@ while (iterator.hasNext()) {
 
 ```java
 // 语义：需要把每个元素交给同一 Consumer 时使用 forEach。
-// 调用参数：代码依次使用 "java"。
 java.util.List.of("java").forEach(System.out::println);
-// 输入：java.util.List.of("java").forEach(System.out::println);；接收对象为 上一个链式结果，调用 forEach 的实参为 System.out::println。
 // 关键变化：java.util.List.of("java").forEach(System.out::println);；把 上一个链式结果 的每个元素交给 System.out::println，无返回值；遍历动作完成。
 // 输出：java
 ```
@@ -271,12 +236,9 @@ import java.util.List;
 public class ListIterationDemo {
     public static void main(String[] args) {
         List<String> list = new ArrayList<>(List.of("java", "", "sql"));
-        // 输入：List<String> list = new ArrayList<>(List.of("java", "", "sql"));；使用构造参数 List.of("java", "", "sql") 创建 ArrayList<>，结果赋给 list。
-        // 关键变化：List<String> list = new ArrayList<>(List.of("java", "", "sql"));；创建 ArrayList<>，构造参数为 List.of("java", "", "sql")，实例写入 list。
         for (Iterator<String> it = list.iterator(); it.hasNext();) {
             if (it.next().isBlank()) {
                 it.remove();
-                // 输入：it.remove();；接收对象为 it，调用 remove 的实参为 无显式参数。
                 // 关键变化：it.remove();；删除最近一次 it.next() 返回的空字符串，返回 void；list 变为 [java, sql]。
             }
         }
@@ -298,10 +260,7 @@ import java.util.List;
 public class ListRemoveIfDemo {
     public static void main(String[] args) {
         List<Integer> numbers = new ArrayList<>(List.of(1, 2, 3, 4));
-        // 输入：List<Integer> numbers = new ArrayList<>(List.of(1, 2, 3, 4));；使用构造参数 List.of(1, 2, 3, 4) 创建 ArrayList<>，结果赋给 numbers。
-        // 关键变化：List<Integer> numbers = new ArrayList<>(List.of(1, 2, 3, 4));；创建 ArrayList<>，构造参数为 List.of(1, 2, 3, 4)，实例写入 numbers。
         numbers.removeIf(number -> number % 2 == 0);
-        // 输入：numbers.removeIf(number -> number % 2 == 0);；接收对象为 numbers，调用 removeIf 的实参为 number -> number % 2 == 0。
         // 关键变化：numbers.removeIf(number -> number % 2 == 0);；按谓词 number -> number % 2 == 0 删除 numbers 中的偶数，返回 boolean；numbers 内容更新。
         System.out.println(numbers);
         // 输出：[1, 3]
@@ -322,10 +281,7 @@ import java.util.List;
 public class ListSortDemo {
     public static void main(String[] args) {
         List<String> list = new ArrayList<>(List.of("Java", "C", "Python"));
-        // 输入：List<String> list = new ArrayList<>(List.of("Java", "C", "Python"));；使用构造参数 List.of("Java", "C", "Python") 创建 ArrayList<>，结果赋给 list。
-        // 关键变化：List<String> list = new ArrayList<>(List.of("Java", "C", "Python"));；创建 ArrayList<>，构造参数为 List.of("Java", "C", "Python")，实例写入 list。
         list.sort(Comparator.comparingInt(String::length));
-        // 输入：list.sort(Comparator.comparingInt(String::length));；接收对象为 list，调用 sort 的实参为 Comparator.comparingInt(String::length)。
         // 关键变化：list.sort(Comparator.comparingInt(String::length));；按 Comparator.comparingInt(String::length) 重排 list，返回 void；集合顺序更新。
         System.out.println(list);
         // 输出：[C, Java, Python]
@@ -345,13 +301,8 @@ import java.util.List;
 public class ListSubListDemo {
     public static void main(String[] args) {
         List<String> source = new ArrayList<>(List.of("a", "b", "c"));
-        // 输入：List<String> source = new ArrayList<>(List.of("a", "b", "c"));；使用构造参数 List.of("a", "b", "c") 创建 ArrayList<>，结果赋给 source。
-        // 关键变化：List<String> source = new ArrayList<>(List.of("a", "b", "c"));；创建 ArrayList<>，构造参数为 List.of("a", "b", "c")，实例写入 source。
         List<String> view = source.subList(0, 2);
-        // 输入：List<String> view = source.subList(0, 2);；右侧表达式 source.subList(0, 2) 的结果赋给 view。
-        // 关键变化：List<String> view = source.subList(0, 2);；调用 subList，实参为 0, 2，返回值写入 view。
         view.set(0, "A");
-        // 输入：view.set(0, "A");；接收对象为 view，调用 set 的实参为 0, "A"。
         // 关键变化：view.set(0, "A");；把 0, "A" 写入 view 的指定位置，返回旧元素；列表状态更新。
         System.out.println(source + " / " + view);
         // 输出：[A, b, c] / [A, b]
@@ -368,8 +319,6 @@ public class ListSubListDemo {
 import java.util.List;
 
 List<String> names = List.of("a", "b");
-// 输入：List<String> names = List.of("a", "b");；右侧表达式 List.of("a", "b") 的结果赋给 names。
-// 关键变化：List<String> names = List.of("a", "b");；按 "a", "b" 调用 of 创建值，结果写入 names。
 System.out.println(names);
 // 输出：[a, b]
 ```
@@ -386,14 +335,8 @@ import java.util.List;
 public class ListImmutableFactoryDemo {
     public static void main(String[] args) {
         List<String> source = new ArrayList<>(List.of("a"));
-        // 输入：List<String> source = new ArrayList<>(List.of("a"));；使用构造参数 List.of("a") 创建 ArrayList<>，结果赋给 source。
-        // 关键变化：List<String> source = new ArrayList<>(List.of("a"));；创建 ArrayList<>，构造参数为 List.of("a")，实例写入 source。
         List<String> snapshot = List.copyOf(source);
-        // 输入：List<String> snapshot = List.copyOf(source);；右侧表达式 List.copyOf(source) 的结果赋给 snapshot。
-        // 关键变化：List<String> snapshot = List.copyOf(source);；调用 copyOf，实参为 source，返回值写入 snapshot。
         source.add("b");
-        // 输入：source.add("b");；接收对象为 source，调用 add 的实参为 "b"。
-        // 关键变化：source.add("b");；向 source 加入 "b"，返回 boolean 表示是否发生变化；source 内容更新。
         System.out.println(snapshot);
         // 输出：[a]
     }
@@ -411,11 +354,7 @@ import java.util.List;
 public class ListToArrayDemo {
     public static void main(String[] args) {
         List<String> list = List.of("a", "b");
-        // 输入：List<String> list = List.of("a", "b");；右侧表达式 List.of("a", "b") 的结果赋给 list。
-        // 关键变化：List<String> list = List.of("a", "b");；按 "a", "b" 调用 of 创建值，结果写入 list。
         String[] array = list.toArray(String[]::new);
-        // 输入：String[] array = list.toArray(String[]::new);；右侧表达式 list.toArray(String[]::new) 的结果赋给 array。
-        // 关键变化：String[] array = list.toArray(String[]::new);；把方法引用 list.toArray(String[]::new) 绑定到目标函数式接口，结果写入 array。
         System.out.println(array.length + ", " + array[0]);
         // 输出：2, a
     }
@@ -434,10 +373,7 @@ import java.util.List;
 public class ArraysAsListDemo {
     public static void main(String[] args) {
         List<String> fixed = Arrays.asList("a", "b");
-        // 输入：List<String> fixed = Arrays.asList("a", "b");；右侧表达式 Arrays.asList("a", "b") 的结果赋给 fixed。
-        // 关键变化：List<String> fixed = Arrays.asList("a", "b");；调用 asList，实参为 "a", "b"，返回值写入 fixed。
         fixed.set(0, "A");
-        // 输入：fixed.set(0, "A");；接收对象为 fixed，调用 set 的实参为 0, "A"。
         // 关键变化：fixed.set(0, "A");；把 0, "A" 写入 fixed 的指定位置，返回旧元素；列表状态更新。
         System.out.println(fixed);
         // 输出：[A, b]
@@ -457,14 +393,8 @@ import java.util.List;
 public class UnmodifiableListDemo {
     public static void main(String[] args) {
         List<String> source = new ArrayList<>(List.of("a"));
-        // 输入：List<String> source = new ArrayList<>(List.of("a"));；使用构造参数 List.of("a") 创建 ArrayList<>，结果赋给 source。
-        // 关键变化：List<String> source = new ArrayList<>(List.of("a"));；创建 ArrayList<>，构造参数为 List.of("a")，实例写入 source。
         List<String> view = Collections.unmodifiableList(source);
-        // 输入：List<String> view = Collections.unmodifiableList(source);；右侧表达式 Collections.unmodifiableList(source) 的结果赋给 view。
-        // 关键变化：List<String> view = Collections.unmodifiableList(source);；调用 unmodifiableList，实参为 source，返回值写入 view。
         source.add("b");
-        // 输入：source.add("b");；接收对象为 source，调用 add 的实参为 "b"。
-        // 关键变化：source.add("b");；向 source 加入 "b"，返回 boolean 表示是否发生变化；source 内容更新。
         System.out.println(view);
         // 输出：[a, b]
     }
@@ -483,20 +413,12 @@ import java.util.ListIterator;
 public class ListIteratorDemo {
     public static void main(String[] args) {
         List<String> list = new ArrayList<>(List.of("a", "b"));
-        // 输入：List<String> list = new ArrayList<>(List.of("a", "b"));；使用构造参数 List.of("a", "b") 创建 ArrayList<>，结果赋给 list。
-        // 关键变化：List<String> list = new ArrayList<>(List.of("a", "b"));；创建 ArrayList<>，构造参数为 List.of("a", "b")，实例写入 list。
         ListIterator<String> it = list.listIterator();
-        // 输入：ListIterator<String> it = list.listIterator();；右侧表达式 list.listIterator() 的结果赋给 it。
-        // 关键变化：ListIterator<String> it = list.listIterator();；调用 listIterator，实参为 无显式参数，返回值写入 it。
         it.next();
-        // 输入：it.next();；接收对象为 it，调用 next 的实参为 无显式参数。
         // 关键变化：it.next();；从 it 取得下一个元素，返回元素值；迭代器位置向前推进。
         it.set("A");
-        // 输入：it.set("A");；接收对象为 it，调用 set 的实参为 "A"。
         // 关键变化：it.set("A");；把 "A" 写入 it 的指定位置，返回旧元素；列表状态更新。
         it.add("x");
-        // 输入：it.add("x");；接收对象为 it，调用 add 的实参为 "x"。
-        // 关键变化：it.add("x");；向 it 加入 "x"，返回 boolean 表示是否发生变化；it 内容更新。
         System.out.println(list);
         // 输出：[A, x, b]
     }
@@ -514,11 +436,7 @@ import java.util.List;
 public class BinarySearchListDemo {
     public static void main(String[] args) {
         List<Integer> sorted = List.of(1, 3, 5, 7);
-        // 输入：List<Integer> sorted = List.of(1, 3, 5, 7);；右侧表达式 List.of(1, 3, 5, 7) 的结果赋给 sorted。
-        // 关键变化：List<Integer> sorted = List.of(1, 3, 5, 7);；按 1, 3, 5, 7 调用 of 创建值，结果写入 sorted。
         int index = Collections.binarySearch(sorted, 5);
-        // 输入：int index = Collections.binarySearch(sorted, 5);；右侧表达式 Collections.binarySearch(sorted, 5) 的结果赋给 index。
-        // 关键变化：int index = Collections.binarySearch(sorted, 5);；调用 binarySearch，实参为 sorted, 5，返回值写入 index。
         System.out.println(index);
         // 输出：2
     }
@@ -535,10 +453,7 @@ import java.util.Collections;
 import java.util.List;
 
 List<String> list = new ArrayList<>(List.of("a", "b", "c"));
-// 输入：List<String> list = new ArrayList<>(List.of("a", "b", "c"));；使用构造参数 List.of("a", "b", "c") 创建 ArrayList<>，结果赋给 list。
-// 关键变化：List<String> list = new ArrayList<>(List.of("a", "b", "c"));；创建 ArrayList<>，构造参数为 List.of("a", "b", "c")，实例写入 list。
 Collections.rotate(list, 1);
-// 输入：Collections.rotate(list, 1);；接收对象为 Collections，调用 rotate 的实参为 list, 1。
 // 关键变化：Collections.rotate(list, 1);；调用 rotate，实参为 list, 1；将 list 向右旋转 1 位；list 顺序更新。
 System.out.println(list);
 // 输出：[c, a, b]
@@ -554,10 +469,7 @@ import java.util.Collections;
 import java.util.List;
 
 List<String> list = new ArrayList<>(List.of("a", "b", "c"));
-// 输入：List<String> list = new ArrayList<>(List.of("a", "b", "c"));；使用构造参数 List.of("a", "b", "c") 创建 ArrayList<>，结果赋给 list。
-// 关键变化：List<String> list = new ArrayList<>(List.of("a", "b", "c"));；创建 ArrayList<>，构造参数为 List.of("a", "b", "c")，实例写入 list。
 Collections.swap(list, 0, 2);
-// 输入：Collections.swap(list, 0, 2);；接收对象为 Collections，调用 swap 的实参为 list, 0, 2。
 // 关键变化：Collections.swap(list, 0, 2);；调用 swap，实参为 list, 0, 2；交换 list 下标 0 和 2 的元素；list 顺序更新。
 System.out.println(list);
 // 输出：[c, b, a]
@@ -572,11 +484,7 @@ import java.util.Collections;
 import java.util.List;
 
 List<String> list = List.of("a", "b", "a");
-// 输入：List<String> list = List.of("a", "b", "a");；右侧表达式 List.of("a", "b", "a") 的结果赋给 list。
-// 关键变化：List<String> list = List.of("a", "b", "a");；按 "a", "b", "a" 调用 of 创建值，结果写入 list。
 int count = Collections.frequency(list, "a");
-// 输入：int count = Collections.frequency(list, "a");；右侧表达式 Collections.frequency(list, "a") 的结果赋给 count。
-// 关键变化：int count = Collections.frequency(list, "a");；调用 frequency，实参为 list, "a"，返回值写入 count。
 System.out.println(count);
 // 输出：2
 ```
@@ -589,14 +497,8 @@ System.out.println(count);
 ```java
 import java.util.ArrayList;
 var names = new ArrayList<String>();
-// 输入：var names = new ArrayList<String>();；使用构造参数 无显式参数 创建 ArrayList<String>，结果赋给 names。
-// 关键变化：var names = new ArrayList<String>();；创建 ArrayList<String>，构造参数为 无显式参数，实例写入 names。
 boolean changed = names.add("Ann");
-// 输入：boolean changed = names.add("Ann");；右侧表达式 names.add("Ann") 的结果赋给 changed。
-// 关键变化：boolean changed = names.add("Ann");；调用 add，实参为 "Ann"，返回值写入 changed。
 names.add("Bob");
-// 输入：names.add("Bob");；接收对象为 names，调用 add 的实参为 "Bob"。
-// 关键变化：names.add("Bob");；向 names 加入 "Bob"，返回 boolean 表示是否发生变化；names 内容更新。
 System.out.println(changed);
 // 输出：true
 System.out.println(names);
@@ -610,8 +512,6 @@ System.out.println(names);
 ```java
 import java.util.List;
 var iterator = List.of("A").iterator();
-// 输入：var iterator = List.of("A").iterator();；右侧表达式 List.of("A").iterator() 的结果赋给 iterator。
-// 关键变化：var iterator = List.of("A").iterator();；按 "A" 调用 of 创建值，结果写入 iterator。
 System.out.println(iterator.hasNext());
 // 输出：true
 System.out.println(iterator.next());
@@ -627,14 +527,8 @@ System.out.println(iterator.hasNext());
 ```java
 import java.util.List;
 var iterator = List.of("A", "B").iterator();
-// 输入：var iterator = List.of("A", "B").iterator();；右侧表达式 List.of("A", "B").iterator() 的结果赋给 iterator。
-// 关键变化：var iterator = List.of("A", "B").iterator();；按 "A", "B" 调用 of 创建值，结果写入 iterator。
 String first = iterator.next();
-// 输入：String first = iterator.next();；右侧表达式 iterator.next() 的结果赋给 first。
-// 关键变化：String first = iterator.next();；调用 next，实参为 无显式参数，返回值写入 first。
 String second = iterator.next();
-// 输入：String second = iterator.next();；右侧表达式 iterator.next() 的结果赋给 second。
-// 关键变化：String second = iterator.next();；调用 next，实参为 无显式参数，返回值写入 second。
 System.out.println(first);
 // 输出：A
 System.out.println(second);
@@ -648,8 +542,6 @@ System.out.println(second);
 ```java
 import java.util.List;
 List<String> names = List.of("A", "B", "C");
-// 输入：List<String> names = List.of("A", "B", "C");；右侧表达式 List.of("A", "B", "C") 的结果赋给 names。
-// 关键变化：List<String> names = List.of("A", "B", "C");；按 "A", "B", "C" 调用 of 创建值，结果写入 names。
 System.out.println(names.size());
 // 输出：3
 System.out.println(names.get(names.size() - 1));
@@ -666,8 +558,6 @@ import java.util.Collection;
 import java.util.Set;
 
 Collection<String> tags = Set.of("java", "sql");
-// 输入：Collection<String> tags = Set.of("java", "sql");；右侧表达式 Set.of("java", "sql") 的结果赋给 tags。
-// 关键变化：Collection<String> tags = Set.of("java", "sql");；按 "java", "sql" 调用 of 创建值，结果写入 tags。
 System.out.println(tags.size());
 // 输出：2
 ```
@@ -679,16 +569,12 @@ System.out.println(tags.size());
 ```java
 import java.util.List;
 List<String> names = List.of("ann", "bob");
-// 输入：List<String> names = List.of("ann", "bob");；右侧表达式 List.of("ann", "bob") 的结果赋给 names。
-// 关键变化：List<String> names = List.of("ann", "bob");；按 "ann", "bob" 调用 of 创建值，结果写入 names。
 long count = names.stream()
         .filter(name -> name.length() == 3)
         .count();
-        // 输入：long count = names.stream() .filter(name -> name.length() == 3) .count();；右侧表达式 names.stream() .filter(name -> name.length() == 3) .count() 的结果赋给 count。
         // 关键变化：long count = names.stream() .filter(name -> name.length() == 3) .count();；统计 上一个链式结果 的元素数量，计数结果写入 count。
         // 输入：filter(name -> name.length() == 3)；对 names 中的 "ann"、"bob" 分别检查长度。
         // 关键变化："ann"、"bob" 都满足长度为 3，filter 后 count 返回 2 并写入 count。
-        // 输入：.count();；接收对象为 上一个链式结果，调用 count 的实参为 无显式参数。
         // 关键变化：.count();；统计 上一个链式结果 中的元素数量，返回 long 计数值；源流内容不变。
 System.out.println(count);
 // 输出：2
@@ -702,11 +588,7 @@ System.out.println(count);
 import java.util.ArrayList;
 import java.util.List;
 List<String> names = new ArrayList<>(List.of("A", "B"));
-// 输入：List<String> names = new ArrayList<>(List.of("A", "B"));；使用构造参数 List.of("A", "B") 创建 ArrayList<>，结果赋给 names。
-// 关键变化：List<String> names = new ArrayList<>(List.of("A", "B"));；创建 ArrayList<>，构造参数为 List.of("A", "B")，实例写入 names。
 String old = names.set(1, "C");
-// 输入：String old = names.set(1, "C");；右侧表达式 names.set(1, "C") 的结果赋给 old。
-// 关键变化：String old = names.set(1, "C");；调用 set，实参为 1, "C"，返回值写入 old。
 System.out.println(old);
 // 输出：B
 System.out.println(names);
@@ -720,11 +602,7 @@ import java.util.List;
 public class ListSummaryDemo {
     public static void main(String[] args) {
         List<String> list = new ArrayList<>(List.of("java"));
-        // 输入：List<String> list = new ArrayList<>(List.of("java"));；使用构造参数 List.of("java") 创建 ArrayList<>，结果赋给 list。
-        // 关键变化：List<String> list = new ArrayList<>(List.of("java"));；创建 ArrayList<>，构造参数为 List.of("java")，实例写入 list。
         list.add("api");
-        // 输入：list.add("api");；接收对象为 list，调用 add 的实参为 "api"。
-        // 关键变化：list.add("api");；向 list 加入 "api"，返回 boolean 表示是否发生变化；list 内容更新。
         System.out.println(list);
         // 输出：[java, api]
     }

@@ -45,14 +45,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 Set<String> tags = new HashSet<>();
-// 输入：Set<String> tags = new HashSet<>();；使用构造参数 无显式参数 创建 HashSet<>，结果赋给 tags。
-// 关键变化：Set<String> tags = new HashSet<>();；创建 HashSet<>，构造参数为 无显式参数，实例写入 tags。
 tags.add("java");
-// 输入：tags.add("java");；接收对象为 tags，调用 add 的实参为 "java"。
-// 关键变化：tags.add("java");；向 tags 加入 "java"，返回 boolean 表示是否发生变化；tags 内容更新。
 tags.add("sql");
-// 输入：tags.add("sql");；接收对象为 tags，调用 add 的实参为 "sql"。
-// 关键变化：tags.add("sql");；向 tags 加入 "sql"，返回 boolean 表示是否发生变化；tags 内容更新。
 System.out.println(tags.size());
 // 输出：2
 ```
@@ -69,8 +63,6 @@ import java.util.Set;
 public class SetAddDemo {
     public static void main(String[] args) {
         Set<String> set = new HashSet<>();
-        // 输入：Set<String> set = new HashSet<>();；使用构造参数 无显式参数 创建 HashSet<>，结果赋给 set。
-        // 关键变化：Set<String> set = new HashSet<>();；创建 HashSet<>，构造参数为 无显式参数，实例写入 set。
         System.out.println(set.add("java"));
         // 输出：true
         System.out.println(set.add("java"));
@@ -91,14 +83,8 @@ import java.util.Set;
 public class SetContainsDemo {
     public static void main(String[] args) {
         Set<String> set = new HashSet<>();
-        // 输入：Set<String> set = new HashSet<>();；使用构造参数 无显式参数 创建 HashSet<>，结果赋给 set。
-        // 关键变化：Set<String> set = new HashSet<>();；创建 HashSet<>，构造参数为 无显式参数，实例写入 set。
         set.add("java");
-        // 输入：set.add("java");；接收对象为 set，调用 add 的实参为 "java"。
-        // 关键变化：set.add("java");；向 set 加入 "java"，返回 boolean 表示是否发生变化；set 内容更新。
         boolean found = set.contains("java");
-        // 输入：boolean found = set.contains("java");；右侧表达式 set.contains("java") 的结果赋给 found。
-        // 关键变化：boolean found = set.contains("java");；调用 contains，实参为 "java"，返回值写入 found。
         System.out.println(found);
         // 输出：true
     }
@@ -117,14 +103,8 @@ import java.util.Set;
 public class SetRemoveDemo {
     public static void main(String[] args) {
         Set<String> set = new HashSet<>();
-        // 输入：Set<String> set = new HashSet<>();；使用构造参数 无显式参数 创建 HashSet<>，结果赋给 set。
-        // 关键变化：Set<String> set = new HashSet<>();；创建 HashSet<>，构造参数为 无显式参数，实例写入 set。
         set.add("java");
-        // 输入：set.add("java");；接收对象为 set，调用 add 的实参为 "java"。
-        // 关键变化：set.add("java");；向 set 加入 "java"，返回 boolean 表示是否发生变化；set 内容更新。
         boolean removed = set.remove("java");
-        // 输入：boolean removed = set.remove("java");；右侧表达式 set.remove("java") 的结果赋给 removed。
-        // 关键变化：boolean removed = set.remove("java");；调用 remove，实参为 "java"，返回值写入 removed。
         System.out.println(removed + ", " + set);
         // 输出：true, []
     }
@@ -143,17 +123,9 @@ import java.util.Set;
 public class LinkedHashSetDemo {
     public static void main(String[] args) {
         Set<String> set = new LinkedHashSet<>();
-        // 输入：Set<String> set = new LinkedHashSet<>();；使用构造参数 无显式参数 创建 LinkedHashSet<>，结果赋给 set。
-        // 关键变化：Set<String> set = new LinkedHashSet<>();；创建 LinkedHashSet<>，构造参数为 无显式参数，实例写入 set。
         set.add("b");
-        // 输入：set.add("b");；接收对象为 set，调用 add 的实参为 "b"。
-        // 关键变化：set.add("b");；向 set 加入 "b"，返回 boolean 表示是否发生变化；set 内容更新。
         set.add("a");
-        // 输入：set.add("a");；接收对象为 set，调用 add 的实参为 "a"。
-        // 关键变化：set.add("a");；向 set 加入 "a"，返回 boolean 表示是否发生变化；set 内容更新。
         set.add("b");
-        // 输入：set.add("b");；接收对象为 set，调用 add 的实参为 "b"。
-        // 关键变化：set.add("b");；向 set 加入 "b"，返回 boolean 表示是否发生变化；set 内容更新。
         System.out.println(set);
         // 输出：[b, a]
     }
@@ -172,11 +144,7 @@ import java.util.Set;
 public class SetUnionDemo {
     public static void main(String[] args) {
         Set<String> all = new LinkedHashSet<>(Set.of("java", "sql"));
-        // 输入：Set<String> all = new LinkedHashSet<>(Set.of("java", "sql"));；使用构造参数 Set.of("java", "sql") 创建 LinkedHashSet<>，结果赋给 all。
-        // 关键变化：Set<String> all = new LinkedHashSet<>(Set.of("java", "sql"));；创建 LinkedHashSet<>，构造参数为 Set.of("java", "sql")，实例写入 all。
         all.addAll(Set.of("sql", "web"));
-        // 输入：all.addAll(Set.of("sql", "web"));；接收对象为 all，调用 addAll 的实参为 Set.of("sql", "web")。
-        // 关键变化：all.addAll(Set.of("sql", "web"));；向 all 加入 Set.of("sql", "web")，返回 boolean 表示是否发生变化；all 内容更新。
         System.out.println(all);
         // 输出：[java, sql, web]
     }
@@ -195,10 +163,7 @@ import java.util.Set;
 public class SetIntersectionDemo {
     public static void main(String[] args) {
         Set<String> common = new LinkedHashSet<>(Set.of("java", "sql", "web"));
-        // 输入：Set<String> common = new LinkedHashSet<>(Set.of("java", "sql", "web"));；使用构造参数 Set.of("java", "sql", "web") 创建 LinkedHashSet<>，结果赋给 common。
-        // 关键变化：Set<String> common = new LinkedHashSet<>(Set.of("java", "sql", "web"));；创建 LinkedHashSet<>，构造参数为 Set.of("java", "sql", "web")，实例写入 common。
         common.retainAll(Set.of("java", "web"));
-        // 输入：common.retainAll(Set.of("java", "web"));；接收对象为 common，调用 retainAll 的实参为 Set.of("java", "web")。
         // 关键变化：common.retainAll(Set.of("java", "web"));；只保留 java 和 web，删除 sql，返回 true；common 变为 [java, web]。
         System.out.println(common);
         // 输出：[java, web]
@@ -218,10 +183,7 @@ import java.util.Set;
 public class SetDifferenceDemo {
     public static void main(String[] args) {
         Set<String> onlyLeft = new LinkedHashSet<>(Set.of("java", "sql", "web"));
-        // 输入：Set<String> onlyLeft = new LinkedHashSet<>(Set.of("java", "sql", "web"));；使用构造参数 Set.of("java", "sql", "web") 创建 LinkedHashSet<>，结果赋给 onlyLeft。
-        // 关键变化：Set<String> onlyLeft = new LinkedHashSet<>(Set.of("java", "sql", "web"));；创建 LinkedHashSet<>，构造参数为 Set.of("java", "sql", "web")，实例写入 onlyLeft。
         onlyLeft.removeAll(Set.of("sql"));
-        // 输入：onlyLeft.removeAll(Set.of("sql"));；接收对象为 onlyLeft，调用 removeAll 的实参为 Set.of("sql")。
         // 关键变化：onlyLeft.removeAll(Set.of("sql"));；删除 onlyLeft 中的 sql，返回 true；onlyLeft 变为 [java, web]。
         System.out.println(onlyLeft);
         // 输出：[java, web]
@@ -241,14 +203,8 @@ import java.util.Set;
 public class SetSizeDemo {
     public static void main(String[] args) {
         Set<Integer> set = new HashSet<>();
-        // 输入：Set<Integer> set = new HashSet<>();；使用构造参数 无显式参数 创建 HashSet<>，结果赋给 set。
-        // 关键变化：Set<Integer> set = new HashSet<>();；创建 HashSet<>，构造参数为 无显式参数，实例写入 set。
         set.add(1);
-        // 输入：set.add(1);；接收对象为 set，调用 add 的实参为 1。
-        // 关键变化：set.add(1);；向 set 加入 1，返回 boolean 表示是否发生变化；set 内容更新。
         set.add(1);
-        // 输入：set.add(1);；接收对象为 set，调用 add 的实参为 1。
-        // 关键变化：set.add(1);；向 set 加入 1，返回 boolean 表示是否发生变化；set 内容更新。
         System.out.println(set.size());
         // 输出：1
     }
@@ -267,13 +223,9 @@ import java.util.Set;
 public class SetIsEmptyDemo {
     public static void main(String[] args) {
         Set<Integer> set = new HashSet<>();
-        // 输入：Set<Integer> set = new HashSet<>();；使用构造参数 无显式参数 创建 HashSet<>，结果赋给 set。
-        // 关键变化：Set<Integer> set = new HashSet<>();；创建 HashSet<>，构造参数为 无显式参数，实例写入 set。
         System.out.println(set.isEmpty());
         // 输出：true
         set.add(1);
-        // 输入：set.add(1);；接收对象为 set，调用 add 的实参为 1。
-        // 关键变化：set.add(1);；向 set 加入 1，返回 boolean 表示是否发生变化；set 内容更新。
         System.out.println(set.isEmpty());
         // 输出：false
     }
@@ -292,10 +244,7 @@ import java.util.Set;
 public class SetClearDemo {
     public static void main(String[] args) {
         Set<Integer> set = new HashSet<>(Set.of(1, 2));
-        // 输入：Set<Integer> set = new HashSet<>(Set.of(1, 2));；使用构造参数 Set.of(1, 2) 创建 HashSet<>，结果赋给 set。
-        // 关键变化：Set<Integer> set = new HashSet<>(Set.of(1, 2));；创建 HashSet<>，构造参数为 Set.of(1, 2)，实例写入 set。
         set.clear();
-        // 输入：set.clear();；接收对象为 set，调用 clear 的实参为 无显式参数。
         // 关键变化：set.clear();；清空 set，无返回值；集合内容变为空。
         System.out.println(set);
         // 输出：[]
@@ -315,14 +264,8 @@ import java.util.Set;
 public class SetCopyOfDemo {
     public static void main(String[] args) {
         Set<String> source = new HashSet<>(Set.of("java"));
-        // 输入：Set<String> source = new HashSet<>(Set.of("java"));；使用构造参数 Set.of("java") 创建 HashSet<>，结果赋给 source。
-        // 关键变化：Set<String> source = new HashSet<>(Set.of("java"));；创建 HashSet<>，构造参数为 Set.of("java")，实例写入 source。
         Set<String> snapshot = Set.copyOf(source);
-        // 输入：Set<String> snapshot = Set.copyOf(source);；右侧表达式 Set.copyOf(source) 的结果赋给 snapshot。
-        // 关键变化：Set<String> snapshot = Set.copyOf(source);；调用 copyOf，实参为 source，返回值写入 snapshot。
         source.add("sql");
-        // 输入：source.add("sql");；接收对象为 source，调用 add 的实参为 "sql"。
-        // 关键变化：source.add("sql");；向 source 加入 "sql"，返回 boolean 表示是否发生变化；source 内容更新。
         System.out.println(snapshot);
         // 输出：[java]
     }
@@ -340,17 +283,9 @@ import java.util.TreeSet;
 public class TreeSetOrderDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>();
-        // 输入：TreeSet<Integer> set = new TreeSet<>();；使用构造参数 无显式参数 创建 TreeSet<>，结果赋给 set。
-        // 关键变化：TreeSet<Integer> set = new TreeSet<>();；创建 TreeSet<>，构造参数为 无显式参数，实例写入 set。
         set.add(30);
-        // 输入：set.add(30);；接收对象为 set，调用 add 的实参为 30。
-        // 关键变化：set.add(30);；向 set 加入 30，返回 boolean 表示是否发生变化；set 内容更新。
         set.add(10);
-        // 输入：set.add(10);；接收对象为 set，调用 add 的实参为 10。
-        // 关键变化：set.add(10);；向 set 加入 10，返回 boolean 表示是否发生变化；set 内容更新。
         set.add(20);
-        // 输入：set.add(20);；接收对象为 set，调用 add 的实参为 20。
-        // 关键变化：set.add(20);；向 set 加入 20，返回 boolean 表示是否发生变化；set 内容更新。
         System.out.println(set);
         // 输出：[10, 20, 30]
     }
@@ -368,14 +303,8 @@ import java.util.TreeSet;
 public class TreeSetFirstDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>();
-        // 输入：TreeSet<Integer> set = new TreeSet<>();；使用构造参数 无显式参数 创建 TreeSet<>，结果赋给 set。
-        // 关键变化：TreeSet<Integer> set = new TreeSet<>();；创建 TreeSet<>，构造参数为 无显式参数，实例写入 set。
         set.add(30);
-        // 输入：set.add(30);；接收对象为 set，调用 add 的实参为 30。
-        // 关键变化：set.add(30);；向 set 加入 30，返回 boolean 表示是否发生变化；set 内容更新。
         set.add(10);
-        // 输入：set.add(10);；接收对象为 set，调用 add 的实参为 10。
-        // 关键变化：set.add(10);；向 set 加入 10，返回 boolean 表示是否发生变化；set 内容更新。
         System.out.println(set.first());
         // 输出：10
     }
@@ -393,14 +322,8 @@ import java.util.TreeSet;
 public class TreeSetLastDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>();
-        // 输入：TreeSet<Integer> set = new TreeSet<>();；使用构造参数 无显式参数 创建 TreeSet<>，结果赋给 set。
-        // 关键变化：TreeSet<Integer> set = new TreeSet<>();；创建 TreeSet<>，构造参数为 无显式参数，实例写入 set。
         set.add(10);
-        // 输入：set.add(10);；接收对象为 set，调用 add 的实参为 10。
-        // 关键变化：set.add(10);；向 set 加入 10，返回 boolean 表示是否发生变化；set 内容更新。
         set.add(30);
-        // 输入：set.add(30);；接收对象为 set，调用 add 的实参为 30。
-        // 关键变化：set.add(30);；向 set 加入 30，返回 boolean 表示是否发生变化；set 内容更新。
         System.out.println(set.last());
         // 输出：30
     }
@@ -418,8 +341,6 @@ import java.util.TreeSet;
 public class TreeSetCeilingDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
-        // 输入：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));；使用构造参数 java.util.Set.of(10, 20, 30) 创建 TreeSet<>，结果赋给 set。
-        // 关键变化：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));；创建 TreeSet<>，构造参数为 java.util.Set.of(10, 20, 30)，实例写入 set。
         System.out.println(set.ceiling(15));
         // 输出：20
         System.out.println(set.ceiling(31));
@@ -439,8 +360,6 @@ import java.util.TreeSet;
 public class TreeSetFloorDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
-        // 输入：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));；使用构造参数 java.util.Set.of(10, 20, 30) 创建 TreeSet<>，结果赋给 set。
-        // 关键变化：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));；创建 TreeSet<>，构造参数为 java.util.Set.of(10, 20, 30)，实例写入 set。
         System.out.println(set.floor(15));
         // 输出：10
         System.out.println(set.floor(9));
@@ -460,8 +379,6 @@ import java.util.TreeSet;
 public class TreeSetLowerDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
-        // 输入：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));；使用构造参数 java.util.Set.of(10, 20, 30) 创建 TreeSet<>，结果赋给 set。
-        // 关键变化：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));；创建 TreeSet<>，构造参数为 java.util.Set.of(10, 20, 30)，实例写入 set。
         System.out.println(set.lower(20));
         // 输出：10
     }
@@ -478,8 +395,6 @@ import java.util.TreeSet;
 public class TreeSetHigherDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));
-        // 输入：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));；使用构造参数 java.util.Set.of(10, 20, 30) 创建 TreeSet<>，结果赋给 set。
-        // 关键变化：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(10, 20, 30));；创建 TreeSet<>，构造参数为 java.util.Set.of(10, 20, 30)，实例写入 set。
         System.out.println(set.higher(20));
         // 输出：30
     }
@@ -496,8 +411,6 @@ import java.util.TreeSet;
 public class TreeSetRangeDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));
-        // 输入：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));；使用构造参数 java.util.Set.of(1, 2, 3, 4) 创建 TreeSet<>，结果赋给 set。
-        // 关键变化：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));；创建 TreeSet<>，构造参数为 java.util.Set.of(1, 2, 3, 4)，实例写入 set。
         System.out.println(set.subSet(2, true, 4, false));
         // 输出：[2, 3]
     }
@@ -514,8 +427,6 @@ import java.util.TreeSet;
 public class TreeSetHeadSetDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));
-        // 输入：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));；使用构造参数 java.util.Set.of(1, 2, 3, 4) 创建 TreeSet<>，结果赋给 set。
-        // 关键变化：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));；创建 TreeSet<>，构造参数为 java.util.Set.of(1, 2, 3, 4)，实例写入 set。
         System.out.println(set.headSet(3, true));
         // 输出：[1, 2, 3]
     }
@@ -532,8 +443,6 @@ import java.util.TreeSet;
 public class TreeSetTailSetDemo {
     public static void main(String[] args) {
         TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));
-        // 输入：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));；使用构造参数 java.util.Set.of(1, 2, 3, 4) 创建 TreeSet<>，结果赋给 set。
-        // 关键变化：TreeSet<Integer> set = new TreeSet<>(java.util.Set.of(1, 2, 3, 4));；创建 TreeSet<>，构造参数为 java.util.Set.of(1, 2, 3, 4)，实例写入 set。
         System.out.println(set.tailSet(3, false));
         // 输出：[4]
     }
@@ -552,8 +461,6 @@ public class EnumSetDemo {
 
     public static void main(String[] args) {
         EnumSet<Permission> set = EnumSet.of(Permission.READ, Permission.WRITE);
-        // 输入：EnumSet<Permission> set = EnumSet.of(Permission.READ, Permission.WRITE);；右侧表达式 EnumSet.of(Permission.READ, Permission.WRITE) 的结果赋给 set。
-        // 关键变化：EnumSet<Permission> set = EnumSet.of(Permission.READ, Permission.WRITE);；按 Permission.READ, Permission.WRITE 调用 of 创建值，结果写入 set。
         System.out.println(set.contains(Permission.WRITE));
         // 输出：true
     }
@@ -573,9 +480,6 @@ public class EnumSetComplementDemo {
     public static void main(String[] args) {
         EnumSet<Permission> missing =
             EnumSet.complementOf(EnumSet.of(Permission.READ));
-            // 输入：EnumSet<Permission> missing = EnumSet.complementOf(EnumSet.of(Permission.READ));；右侧表达式 EnumSet.complementOf(EnumSet.of(Permission.READ)) 的结果赋给 missing。
-            // 关键变化：EnumSet<Permission> missing = EnumSet.complementOf(EnumSet.of(Permission.READ));；按 Permission.READ 调用 of 创建值，结果写入 missing。
-            // 输入：EnumSet.complementOf(EnumSet.of(Permission.READ));；接收对象为 EnumSet，调用 of 的实参为 Permission.READ。
             // 关键变化：EnumSet.complementOf(EnumSet.of(Permission.READ));；按 Permission.READ 调用 of 创建值，返回新实例。
         System.out.println(missing);
         // 输出：[WRITE, DELETE]
@@ -594,8 +498,6 @@ import java.util.Set;
 public class DisjointSetDemo {
     public static void main(String[] args) {
         boolean disjoint = Collections.disjoint(Set.of("java"), Set.of("sql"));
-        // 输入：boolean disjoint = Collections.disjoint(Set.of("java"), Set.of("sql"));；右侧表达式 Collections.disjoint(Set.of("java"), Set.of("sql")) 的结果赋给 disjoint。
-        // 关键变化：boolean disjoint = Collections.disjoint(Set.of("java"), Set.of("sql"));；按 "java" 调用 of 创建值，结果写入 disjoint。
         System.out.println(disjoint);
         // 输出：true
     }
@@ -613,17 +515,9 @@ import java.util.TreeSet;
 public class TreeSetComparatorDemo {
     public static void main(String[] args) {
         TreeSet<String> set = new TreeSet<>(Comparator.comparingInt(String::length));
-        // 输入：TreeSet<String> set = new TreeSet<>(Comparator.comparingInt(String::length));；使用构造参数 Comparator.comparingInt(String::length) 创建 TreeSet<>，结果赋给 set。
-        // 关键变化：TreeSet<String> set = new TreeSet<>(Comparator.comparingInt(String::length));；把方法引用 new TreeSet<>(Comparator.comparingInt(String::length)) 绑定到目标函数式接口，结果写入 set。
         set.add("a");
-        // 输入：set.add("a");；接收对象为 set，调用 add 的实参为 "a"。
-        // 关键变化：set.add("a");；向 set 加入 "a"，返回 boolean 表示是否发生变化；set 内容更新。
         set.add("bb");
-        // 输入：set.add("bb");；接收对象为 set，调用 add 的实参为 "bb"。
-        // 关键变化：set.add("bb");；向 set 加入 "bb"，返回 boolean 表示是否发生变化；set 内容更新。
         set.add("cc");
-        // 输入：set.add("cc");；接收对象为 set，调用 add 的实参为 "cc"。
-        // 关键变化：set.add("cc");；向 set 加入 "cc"，返回 boolean 表示是否发生变化；set 内容更新。
         System.out.println(set);
         // 输出：[a, bb]
     }
@@ -638,14 +532,8 @@ import java.util.Set;
 public class SetSummaryDemo {
     public static void main(String[] args) {
         Set<String> tags = new LinkedHashSet<>();
-        // 输入：Set<String> tags = new LinkedHashSet<>();；使用构造参数 无显式参数 创建 LinkedHashSet<>，结果赋给 tags。
-        // 关键变化：Set<String> tags = new LinkedHashSet<>();；创建 LinkedHashSet<>，构造参数为 无显式参数，实例写入 tags。
         tags.add("java");
-        // 输入：tags.add("java");；接收对象为 tags，调用 add 的实参为 "java"。
-        // 关键变化：tags.add("java");；向 tags 加入 "java"，返回 boolean 表示是否发生变化；tags 内容更新。
         tags.add("java");
-        // 输入：tags.add("java");；接收对象为 tags，调用 add 的实参为 "java"。
-        // 关键变化：tags.add("java");；向 tags 加入 "java"，返回 boolean 表示是否发生变化；tags 内容更新。
         System.out.println(tags);
         // 输出：[java]
     }

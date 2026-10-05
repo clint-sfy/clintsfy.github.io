@@ -46,7 +46,6 @@ MyBatis-Plus 减少简单 CRUD 的样板，但它仍然需要正确的表映射�
 import org.mybatis.spring.annotation.MapperScan;
 
 @MapperScan("example.persistence")
-// 初始状态：@MapperScan("example.persistence")。
 // 作用：@MapperScan("example.persistence")；批量注册 Mapper 接口。
 class PersistenceConfig {}
 // 输出：example.persistence 下的 Mapper 接口可被依赖注入。

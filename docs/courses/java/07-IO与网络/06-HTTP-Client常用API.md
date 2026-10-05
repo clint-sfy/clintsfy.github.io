@@ -47,11 +47,7 @@ public class HttpClientTimeoutDemo {
         HttpClient client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(3))
                 .build();
-                // 输入：HttpClient client = HttpClient.newBuilder() .connectTimeout(Duration.ofSeconds(3)) .build();；右侧表达式 HttpClient.newBuilder() .connectTimeout(Duration.ofSeconds(3)) .build() 的结果赋给 client。
-                // 关键变化：HttpClient client = HttpClient.newBuilder() .connectTimeout(Duration.ofSeconds(3)) .build();；调用 build，实参为 无显式参数，返回值写入 client。
-                // 输入：.connectTimeout(Duration.ofSeconds(3)) .build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.connectTimeout(Duration.ofSeconds(3)) .build();；调用 build，实参为 无显式参数；按已配置的超时和重定向策略构建 HttpClient。
-                // 输入：.build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.build();；调用 build，实参为 无显式参数；完成前面的 builder 配置并返回构造对象。
         System.out.println(client.connectTimeout().orElseThrow().toSeconds());
         // 输出：3
@@ -72,11 +68,7 @@ public class HttpRedirectDemo {
         var client = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
-                // 输入：var client = HttpClient.newBuilder() .followRedirects(HttpClient.Redirect.NORMAL) .build();；右侧表达式 HttpClient.newBuilder() .followRedirects(HttpClient.Redirect.NORMAL) .build() 的结果赋给 client。
-                // 关键变化：var client = HttpClient.newBuilder() .followRedirects(HttpClient.Redirect.NORMAL) .build();；调用 build，实参为 无显式参数，返回值写入 client。
-                // 输入：.followRedirects(HttpClient.Redirect.NORMAL) .build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.followRedirects(HttpClient.Redirect.NORMAL) .build();；调用 build，实参为 无显式参数；按已配置的超时和重定向策略构建 HttpClient。
-                // 输入：.build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.build();；调用 build，实参为 无显式参数；完成前面的 builder 配置并返回构造对象。
         System.out.println(client.followRedirects());
         // 输出：NORMAL
@@ -99,13 +91,9 @@ public class HttpGetRequestDemo {
                 .header("Accept", "application/json")
                 .GET()
                 .build();
-                // 输入：var request = HttpRequest.newBuilder(URI.create("https://example.com/items")) .header("Accept", "application/json") .GET() .build();；右侧表达式 HttpRequest.newBuilder(URI.create("https://example.com/items")) .header("Accept", "application/json") .GET() .build() 的结果赋给 request。
                 // 关键变化：var request = HttpRequest.newBuilder(URI.create("https://example.com/items")) .header("Accept", "application/json") .GET() .build();；按 "https://example.com/items" 调用 create 创建值，结果写入 request。
-                // 输入：.header("Accept", "application/json") .GET() .build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.header("Accept", "application/json") .GET() .build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
-                // 输入：.GET() .build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.GET() .build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
-                // 输入：.build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.build();；调用 build，实参为 无显式参数；完成前面的 builder 配置并返回构造对象。
         System.out.println(request.method() + " " + request.uri());
         // 输出：GET https://example.com/items
@@ -128,13 +116,9 @@ public class HttpPostRequestDemo {
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"java\"}"))
                 .build();
-                // 输入：var request = HttpRequest.newBuilder(URI.create("https://example.com/items")) .header("Content-Type", "application/json") .POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"java\"}")) .build();；右侧表达式 HttpRequest.newBuilder(URI.create("https://example.com/items")) .header("Content-Type", "application/json") .POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"java\"}")) .build() 的结果赋给 request。
                 // 关键变化：var request = HttpRequest.newBuilder(URI.create("https://example.com/items")) .header("Content-Type", "application/json") .POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"java\"}")) .build();；按 "https://example.com/items" 调用 create 创建值，结果写入 request。
-                // 输入：.header("Content-Type", "application/json") .POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"java\"}")) .build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.header("Content-Type", "application/json") .POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"java\"}")) .build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
-                // 输入：.POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"java\"}")) .build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.POST(HttpRequest.BodyPublishers.ofString("{\"name\":\"java\"}")) .build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
-                // 输入：.build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.build();；调用 build，实参为 无显式参数；完成前面的 builder 配置并返回构造对象。
         System.out.println(request.method());
         // 输出：POST
@@ -158,17 +142,11 @@ import java.net.http.HttpResponse;
 public class HttpSendDemo {
     public static void main(String[] args) throws Exception {
         var client = HttpClient.newHttpClient();
-        // 输入：var client = HttpClient.newHttpClient();；右侧表达式 HttpClient.newHttpClient() 的结果赋给 client。
-        // 关键变化：var client = HttpClient.newHttpClient();；调用 newHttpClient，实参为 无显式参数，返回值写入 client。
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
-                // 输入：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build();；右侧表达式 HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build() 的结果赋给 request。
                 // 关键变化：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build();；按 "https://example.com" 调用 create 创建值，结果写入 request。
-                // 输入：.GET().build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.GET().build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        // 输入：HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());；右侧表达式 client.send(request, HttpResponse.BodyHandlers.ofString()) 的结果赋给 response。
-        // 关键变化：HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());；调用 send，实参为 request, HttpResponse.BodyHandlers.ofString()，返回值写入 response。
         System.out.println(response.statusCode());
         // 输出：200
     }
@@ -190,13 +168,9 @@ public class HttpResponseDemo {
     public static void main(String[] args) throws Exception {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
-                // 输入：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build();；右侧表达式 HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build() 的结果赋给 request。
                 // 关键变化：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build();；按 "https://example.com" 调用 create 创建值，结果写入 request。
-                // 输入：.GET().build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.GET().build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
         var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-        // 输入：var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());；右侧表达式 HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString()) 的结果赋给 response。
-        // 关键变化：var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());；调用 send，实参为 request, HttpResponse.BodyHandlers.ofString()，返回值写入 response。
         System.out.println(response.statusCode() + ", " + response.headers().firstValue("content-type").isPresent());
         // 输出：200, true
         System.out.println(response.body().isEmpty());
@@ -220,11 +194,8 @@ public class HttpRequestTimeoutDemo {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .timeout(Duration.ofSeconds(5))
                 .GET().build();
-                // 输入：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .timeout(Duration.ofSeconds(5)) .GET().build();；右侧表达式 HttpRequest.newBuilder(URI.create("https://example.com")) .timeout(Duration.ofSeconds(5)) .GET().build() 的结果赋给 request。
                 // 关键变化：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .timeout(Duration.ofSeconds(5)) .GET().build();；按 "https://example.com" 调用 create 创建值，结果写入 request。
-                // 输入：.timeout(Duration.ofSeconds(5)) .GET().build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.timeout(Duration.ofSeconds(5)) .GET().build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
-                // 输入：.GET().build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.GET().build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
         System.out.println(request.timeout().orElseThrow().toSeconds());
         // 输出：5
@@ -247,19 +218,12 @@ public class HttpAsyncDemo {
     public static void main(String[] args) throws Exception {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
-                // 输入：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build();；右侧表达式 HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build() 的结果赋给 request。
                 // 关键变化：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build();；按 "https://example.com" 调用 create 创建值，结果写入 request。
-                // 输入：.GET().build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.GET().build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
         var future = HttpClient.newHttpClient().sendAsync(
                 request, HttpResponse.BodyHandlers.ofString());
-                // 输入：var future = HttpClient.newHttpClient().sendAsync( request, HttpResponse.BodyHandlers.ofString());；右侧表达式 HttpClient.newHttpClient().sendAsync( request, HttpResponse.BodyHandlers.ofString()) 的结果赋给 future。
-                // 关键变化：var future = HttpClient.newHttpClient().sendAsync( request, HttpResponse.BodyHandlers.ofString());；调用 newHttpClient，实参为 无显式参数，返回值写入 future。
-                // 输入：request, HttpResponse.BodyHandlers.ofString());；接收对象为 HttpResponse.BodyHandlers，调用 ofString 的实参为 无显式参数。
                 // 关键变化：HttpResponse.BodyHandlers.ofString() 不接收显式参数，返回按字符串解码 HTTP 响应体的 BodyHandler。
         int status = future.thenApply(HttpResponse::statusCode).join();
-        // 输入：int status = future.thenApply(HttpResponse::statusCode).join();；右侧表达式 future.thenApply(HttpResponse::statusCode).join() 的结果赋给 status。
-        // 关键变化：int status = future.thenApply(HttpResponse::statusCode).join();；把方法引用 future.thenApply(HttpResponse::statusCode).join() 绑定到目标函数式接口，结果写入 status。
         System.out.println(status);
         // 输出：200
     }
@@ -281,13 +245,9 @@ public class HttpBytesResponseDemo {
     public static void main(String[] args) throws Exception {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
-                // 输入：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build();；右侧表达式 HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build() 的结果赋给 request。
                 // 关键变化：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build();；按 "https://example.com" 调用 create 创建值，结果写入 request。
-                // 输入：.GET().build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.GET().build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
         var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofByteArray());
-        // 输入：var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofByteArray());；右侧表达式 HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofByteArray()) 的结果赋给 response。
-        // 关键变化：var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofByteArray());；调用 send，实参为 request, HttpResponse.BodyHandlers.ofByteArray()，返回值写入 response。
         System.out.println(response.body().length > 0);
         // 输出：true
     }
@@ -310,21 +270,14 @@ import java.nio.file.Path;
 public class HttpFileResponseDemo {
     public static void main(String[] args) throws Exception {
         Path target = Files.createTempFile("http-body-", ".bin");
-        // 输入：Path target = Files.createTempFile("http-body-", ".bin");；右侧表达式 Files.createTempFile("http-body-", ".bin") 的结果赋给 target。
-        // 关键变化：Path target = Files.createTempFile("http-body-", ".bin");；调用 createTempFile，实参为 "http-body-", ".bin"，返回值写入 target。
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
-                // 输入：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build();；右侧表达式 HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build() 的结果赋给 request。
                 // 关键变化：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build();；按 "https://example.com" 调用 create 创建值，结果写入 request。
-                // 输入：.GET().build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.GET().build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
         var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofFile(target));
-        // 输入：var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofFile(target));；右侧表达式 HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofFile(target)) 的结果赋给 response。
-        // 关键变化：var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofFile(target));；调用 send，实参为 request, HttpResponse.BodyHandlers.ofFile(target)，返回值写入 response。
         System.out.println(response.statusCode() + ", " + (Files.size(target) > 0));
         // 输出：200, true
         Files.deleteIfExists(target);
-        // 输入：Files.deleteIfExists(target);；接收对象为 Files，调用 deleteIfExists 的实参为 target。
         // 关键变化：Files.deleteIfExists(target);；删除路径 target；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -345,13 +298,9 @@ public class HttpLinesResponseDemo {
     public static void main(String[] args) throws Exception {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
-                // 输入：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build();；右侧表达式 HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build() 的结果赋给 request。
                 // 关键变化：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build();；按 "https://example.com" 调用 create 创建值，结果写入 request。
-                // 输入：.GET().build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.GET().build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
         var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofLines());
-        // 输入：var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofLines());；右侧表达式 HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofLines()) 的结果赋给 response。
-        // 关键变化：var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofLines());；调用 send，实参为 request, HttpResponse.BodyHandlers.ofLines()，返回值写入 response。
         try (var lines = response.body()) {
         // 输入：try (var lines = response.body()) {；资源变量 lines 接收 response.body()，try 结束时自动关闭。
         // 关键变化：try (var lines = response.body()) {；创建资源 lines，构造表达式为 response.body()；try 结束时关闭该资源。
@@ -377,13 +326,9 @@ public class HttpHeadersDemo {
                 .header("Accept", "application/json")
                 .header("X-Request-Id", "demo-1")
                 .GET().build();
-                // 输入：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .header("Accept", "application/json") .header("X-Request-Id", "demo-1") .GET().build();；右侧表达式 HttpRequest.newBuilder(URI.create("https://example.com")) .header("Accept", "application/json") .header("X-Request-Id", "demo-1") .GET().build() 的结果赋给 request。
                 // 关键变化：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .header("Accept", "application/json") .header("X-Request-Id", "demo-1") .GET().build();；按 "https://example.com" 调用 create 创建值，结果写入 request。
-                // 输入：.header("Accept", "application/json") .header("X-Request-Id", "demo-1") .GET().build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.header("Accept", "application/json") .header("X-Request-Id", "demo-1") .GET().build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
-                // 输入：.header("X-Request-Id", "demo-1") .GET().build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.header("X-Request-Id", "demo-1") .GET().build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
-                // 输入：.GET().build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.GET().build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
         System.out.println(request.headers().firstValue("accept").orElse("missing"));
         // 输出：application/json
@@ -402,8 +347,6 @@ import java.net.http.HttpClient;
 public class HttpVersionDemo {
     public static void main(String[] args) {
         var client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
-        // 输入：var client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();；右侧表达式 HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build() 的结果赋给 client。
-        // 关键变化：var client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();；调用 build，实参为 无显式参数，返回值写入 client。
         System.out.println(client.version());
         // 输出：HTTP_1_1
     }
@@ -423,15 +366,10 @@ public class HttpCancelDemo {
     public static void main(String[] args) {
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .GET().build();
-                // 输入：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build();；右侧表达式 HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build() 的结果赋给 request。
                 // 关键变化：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .GET().build();；按 "https://example.com" 调用 create 创建值，结果写入 request。
-                // 输入：.GET().build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.GET().build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
         var future = HttpClient.newHttpClient().sendAsync(request,
                 java.net.http.HttpResponse.BodyHandlers.ofString());
-                // 输入：var future = HttpClient.newHttpClient().sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString());；右侧表达式 HttpClient.newHttpClient().sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString()) 的结果赋给 future。
-                // 关键变化：var future = HttpClient.newHttpClient().sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString());；调用 newHttpClient，实参为 无显式参数，返回值写入 future。
-                // 输入：java.net.http.HttpResponse.BodyHandlers.ofString());；接收对象为 java.net.http.HttpResponse.BodyHandlers，调用 ofString 的实参为 无显式参数。
                 // 关键变化：java.net.http.HttpResponse.BodyHandlers.ofString() 不接收显式参数，返回按字符串解码 HTTP 响应体的 BodyHandler。
         System.out.println(future.cancel(true));
         // 输出：true
@@ -451,27 +389,19 @@ import java.nio.file.Files;
 public class HttpFileUploadDemo {
     public static void main(String[] args) throws Exception {
         var file = Files.createTempFile("http-upload-", ".txt");
-        // 输入：var file = Files.createTempFile("http-upload-", ".txt");；右侧表达式 Files.createTempFile("http-upload-", ".txt") 的结果赋给 file。
-        // 关键变化：var file = Files.createTempFile("http-upload-", ".txt");；调用 createTempFile，实参为 "http-upload-", ".txt"，返回值写入 file。
         Files.writeString(file, "payload");
-        // 输入：Files.writeString(file, "payload");；接收对象为 Files，调用 writeString 的实参为 file, "payload"。
         // 关键变化：Files.writeString(file, "payload");；将 "payload" 写入路径 file；writeString 返回目标 Path，文件内容更新。
         var request = HttpRequest.newBuilder(URI.create("https://example.com/upload"))
                 .header("Content-Type", "text/plain")
                 .POST(HttpRequest.BodyPublishers.ofFile(file))
                 .build();
-                // 输入：var request = HttpRequest.newBuilder(URI.create("https://example.com/upload")) .header("Content-Type", "text/plain") .POST(HttpRequest.BodyPublishers.ofFile(file)) .build();；右侧表达式 HttpRequest.newBuilder(URI.create("https://example.com/upload")) .header("Content-Type", "text/plain") .POST(HttpRequest.BodyPublishers.ofFile(file)) .build() 的结果赋给 request。
                 // 关键变化：var request = HttpRequest.newBuilder(URI.create("https://example.com/upload")) .header("Content-Type", "text/plain") .POST(HttpRequest.BodyPublishers.ofFile(file)) .build();；按 "https://example.com/upload" 调用 create 创建值，结果写入 request。
-                // 输入：.header("Content-Type", "text/plain") .POST(HttpRequest.BodyPublishers.ofFile(file)) .build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.header("Content-Type", "text/plain") .POST(HttpRequest.BodyPublishers.ofFile(file)) .build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
-                // 输入：.POST(HttpRequest.BodyPublishers.ofFile(file)) .build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.POST(HttpRequest.BodyPublishers.ofFile(file)) .build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
-                // 输入：.build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.build();；调用 build，实参为 无显式参数；完成前面的 builder 配置并返回构造对象。
         System.out.println(request.method() + ", " + Files.size(file));
         // 输出：POST, 7
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -488,12 +418,9 @@ import java.net.PasswordAuthentication;
 public class HttpAuthenticatorDemo {
     public static void main(String[] args) {
         Authenticator authenticator = new Authenticator() {
-        // 输入：Authenticator authenticator = new Authenticator() {；使用构造参数 无显式参数 创建 Authenticator，结果赋给 authenticator。
-        // 关键变化：Authenticator authenticator = new Authenticator() {；创建 Authenticator，构造参数为 无显式参数，实例写入 authenticator。
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication("user", "secret".toCharArray());
-                // 输入：return new PasswordAuthentication("user", "secret".toCharArray());；接收对象为 上一个链式结果，调用 toCharArray 的实参为 无显式参数。
                 // 关键变化：return new PasswordAuthentication("user", "secret".toCharArray());；调用 PasswordAuthentication，实参为 无显式参数；创建用户名为 user、密码为 secret 的 PasswordAuthentication。
             }
         };
@@ -515,11 +442,7 @@ public class HttpBodyHandlerBoundaryDemo {
         HttpResponse.BodyHandler<byte[]> handler = info ->
                 HttpResponse.BodySubscribers.mapping(
                         HttpResponse.BodySubscribers.ofByteArray(), bytes -> {
-                        // 输入：HttpResponse.BodyHandler<byte[]> handler = info -> HttpResponse.BodySubscribers.mapping( HttpResponse.BodySubscribers.ofByteArray(), bytes -> {；右侧表达式 info -> HttpResponse.BodySubscribers.mapping( HttpResponse.BodySubscribers.ofByteArray(), bytes -> { 的结果赋给 handler。
-                        // 关键变化：HttpResponse.BodyHandler<byte[]> handler = info -> HttpResponse.BodySubscribers.mapping( HttpResponse.BodySubscribers.ofByteArray(), bytes -> {；调用 mapping，实参为 HttpResponse.BodySubscribers.ofByteArray(), bytes ->，返回值写入 handler。
-                        // 输入：HttpResponse.BodySubscribers.mapping( HttpResponse.BodySubscribers.ofByteArray(), bytes -> {；接收对象为 HttpResponse.BodySubscribers，调用 mapping 的实参为 HttpResponse.BodySubscribers.ofByteArray(), bytes ->。
                         // 关键变化：mapping(ofByteArray(), bytes -> ...) 把完整字节数组映射为目标类型的 BodySubscriber，handler 接收该处理器。
-                        // 输入：HttpResponse.BodySubscribers.ofByteArray(), bytes -> {；接收对象为 HttpResponse.BodySubscribers，调用 ofByteArray 的实参为 无显式参数。
                         // 关键变化：HttpResponse.BodySubscribers.ofByteArray(), bytes -> {；调用 ofByteArray，实参为 无显式参数；返回收集响应字节的 BodySubscriber。
                             if (bytes.length > 1024) throw new IllegalStateException("too large");
                             return bytes;
@@ -539,10 +462,7 @@ public class HttpBodyHandlerBoundaryDemo {
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 String keyword = URLEncoder.encode("Java 入门", StandardCharsets.UTF_8);
-// 输入：String keyword = URLEncoder.encode("Java 入门", StandardCharsets.UTF_8);；右侧表达式 URLEncoder.encode("Java 入门", StandardCharsets.UTF_8) 的结果赋给 keyword。
-// 关键变化：String keyword = URLEncoder.encode("Java 入门", StandardCharsets.UTF_8);；调用 encode，实参为 "Java 入门", StandardCharsets.UTF_8，返回值写入 keyword。
 String url = "https://example.test/search?q=" + keyword;
-// 输入：String url = "https://example.test/search?q=" + keyword;；右侧表达式 "https://example.test/search?q=" + keyword 的结果赋给 url。
 // 关键变化：String url = "https://example.test/search?q=" + keyword;；拼接完整 URL 文本 "https://example.test/search?q=" + keyword，结果写入 url。
 System.out.println(keyword);
 // 输出：Java+%E5%85%A5%E9%97%A8
@@ -558,8 +478,6 @@ System.out.println(url);
 import java.net.URL;
 
 URL endpoint = new URL("https://example.test:8443/api/users");
-// 输入：URL endpoint = new URL("https://example.test:8443/api/users");；使用构造参数 "https://example.test:8443/api/users" 创建 URL，结果赋给 endpoint。
-// 关键变化：URL endpoint = new URL("https://example.test:8443/api/users");；创建 URL，构造参数为 "https://example.test:8443/api/users"，实例写入 endpoint。
 // endpoint 只保存地址组件，这一行没有发生 DNS 查询或网络 I/O。
 System.out.println(endpoint.getHost() + ":" + endpoint.getPort());
 // 输出：example.test:8443
@@ -572,17 +490,11 @@ System.out.println(endpoint.getHost() + ":" + endpoint.getPort());
 ```java
 import java.net.URL;
 URL endpoint = new URL("https://example.test/api");
-// 输入：URL endpoint = new URL("https://example.test/api");；使用构造参数 "https://example.test/api" 创建 URL，结果赋给 endpoint。
-// 关键变化：URL endpoint = new URL("https://example.test/api");；创建 URL，构造参数为 "https://example.test/api"，实例写入 endpoint。
 var connection = endpoint.openConnection();
-// 输入：var connection = endpoint.openConnection();；右侧表达式 endpoint.openConnection() 的结果赋给 connection。
-// 关键变化：var connection = endpoint.openConnection();；调用 openConnection，实参为 无显式参数，返回值写入 connection。
 // connection 还未读写网络；先在它上设置连接与读取超时。
 connection.setConnectTimeout(3_000);
-// 输入：connection.setConnectTimeout(3_000);；接收对象为 connection，调用 setConnectTimeout 的实参为 3_000。
 // 关键变化：connection.setConnectTimeout(3_000);；调用 setConnectTimeout，实参为 3_000；把 connection 的连接超时设置为 3_000 毫秒；连接配置更新。
 connection.setReadTimeout(5_000);
-// 输入：connection.setReadTimeout(5_000);；接收对象为 connection，调用 setReadTimeout 的实参为 5_000。
 // 关键变化：connection.setReadTimeout(5_000);；调用 setReadTimeout，实参为 5_000；把 connection 的读取超时设置为 5_000 毫秒；连接配置更新。
 System.out.println(connection.getConnectTimeout());
 // 输出：3000
@@ -603,29 +515,18 @@ public class HttpClientDemo {
                 .connectTimeout(Duration.ofSeconds(3))
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
-                // 输入：var client = HttpClient.newBuilder() .connectTimeout(Duration.ofSeconds(3)) .followRedirects(HttpClient.Redirect.NORMAL) .build();；右侧表达式 HttpClient.newBuilder() .connectTimeout(Duration.ofSeconds(3)) .followRedirects(HttpClient.Redirect.NORMAL) .build() 的结果赋给 client。
-                // 关键变化：var client = HttpClient.newBuilder() .connectTimeout(Duration.ofSeconds(3)) .followRedirects(HttpClient.Redirect.NORMAL) .build();；调用 build，实参为 无显式参数，返回值写入 client。
-                // 输入：.connectTimeout(Duration.ofSeconds(3)) .followRedirects(HttpClient.Redirect.NORMAL) .build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.connectTimeout(Duration.ofSeconds(3)) .followRedirects(HttpClient.Redirect.NORMAL) .build();；调用 build，实参为 无显式参数；按已配置的超时和重定向策略构建 HttpClient。
-                // 输入：.followRedirects(HttpClient.Redirect.NORMAL) .build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.followRedirects(HttpClient.Redirect.NORMAL) .build();；调用 build，实参为 无显式参数；按已配置的超时和重定向策略构建 HttpClient。
-                // 输入：.build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.build();；调用 build，实参为 无显式参数；完成前面的 builder 配置并返回构造对象。
         var request = HttpRequest.newBuilder(URI.create("https://example.com"))
                 .timeout(Duration.ofSeconds(5))
                 .header("Accept", "text/html")
                 .GET().build();
-                // 输入：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .timeout(Duration.ofSeconds(5)) .header("Accept", "text/html") .GET().build();；右侧表达式 HttpRequest.newBuilder(URI.create("https://example.com")) .timeout(Duration.ofSeconds(5)) .header("Accept", "text/html") .GET().build() 的结果赋给 request。
                 // 关键变化：var request = HttpRequest.newBuilder(URI.create("https://example.com")) .timeout(Duration.ofSeconds(5)) .header("Accept", "text/html") .GET().build();；按 "https://example.com" 调用 create 创建值，结果写入 request。
-                // 输入：.timeout(Duration.ofSeconds(5)) .header("Accept", "text/html") .GET().build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.timeout(Duration.ofSeconds(5)) .header("Accept", "text/html") .GET().build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
-                // 输入：.header("Accept", "text/html") .GET().build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.header("Accept", "text/html") .GET().build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
-                // 输入：.GET().build();；接收对象为 上一个链式结果，调用 build 的实参为 无显式参数。
                 // 关键变化：.GET().build();；调用 build，实参为 无显式参数；按已配置的方法、请求头和请求体构建 HttpRequest。
         var response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        // 输入：var response = client.send(request, HttpResponse.BodyHandlers.ofString());；右侧表达式 client.send(request, HttpResponse.BodyHandlers.ofString()) 的结果赋给 response。
-        // 关键变化：var response = client.send(request, HttpResponse.BodyHandlers.ofString());；调用 send，实参为 request, HttpResponse.BodyHandlers.ofString()，返回值写入 response。
         if (response.statusCode() / 100 == 2) {
             System.out.println(response.body().contains("Example Domain"));
             // 输出：true

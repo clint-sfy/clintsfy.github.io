@@ -201,7 +201,6 @@ class MethodSecurityConfig {
 
 class ReportService {
     @PreAuthorize("hasAuthority('report:read') and #ownerId == authentication.name")
-// 初始状态：@PreAuthorize("hasAuthority('report:read') and #ownerId == authentication.name")。
 // 作用：@PreAuthorize("hasAuthority('report:read') and #ownerId == authentication.name")；在方法边界做授权。
     public String read(@P("ownerId") String ownerId) {
         return "report-for-" + ownerId;
@@ -386,7 +385,6 @@ System.out.println(request != null ? "scope=report:read" : "missing");
 // 结果：服务方法上的 `@PreAuthorize` 在调用目标方法前执行。
 @Configuration
 @EnableMethodSecurity
-// 初始状态：@EnableMethodSecurity。
 // 作用：@EnableMethodSecurity；启用方法级授权。
 class MethodSecurityConfiguration {
     @Bean

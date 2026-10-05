@@ -85,7 +85,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 class NoteController {
     @PostMapping("/notes")
     String create(@Valid @RequestBody CreateNote request) {
-// 初始状态：String create(@Valid @RequestBody CreateNote request) {。
 // 作用：String create(@Valid @RequestBody CreateNote request) {；触发对象校验。
         return "accepted:" + request.title();
 // 作用：return "accepted:" + request.title();；触发对象校验。
@@ -109,7 +108,6 @@ import org.springframework.validation.annotation.Validated;
 
 interface OnCreate {}
 @Validated(OnCreate.class)
-// 初始状态：@Validated(OnCreate.class)。
 // 作用：@Validated(OnCreate.class)；选择校验分组。
 class CreateNoteService {}
 System.out.println(CreateNoteService.class.isAnnotationPresent(Validated.class));

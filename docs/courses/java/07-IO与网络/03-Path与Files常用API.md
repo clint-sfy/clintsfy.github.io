@@ -45,10 +45,7 @@ import java.nio.file.Paths;
 public class PathCreateDemo {
     public static void main(String[] args) {
         Path first = Path.of("logs", "app.log");
-        // 输入：Path first = Path.of("logs", "app.log");；右侧表达式 Path.of("logs", "app.log") 的结果赋给 first。
-        // 关键变化：Path first = Path.of("logs", "app.log");；按 "logs", "app.log" 调用 of 创建值，结果写入 first。
         Path second = Paths.get("logs", "app.log");
-        // 输入：Path second = Paths.get("logs", "app.log");；右侧表达式 Paths.get("logs", "app.log") 的结果赋给 second。
         // 关键变化：Path second = Paths.get("logs", "app.log");；把路径片段 "logs" 和 "app.log" 组合为 Path 并写入 second；路径对象创建完成。
         System.out.println(first.equals(second));
         // 输出：true
@@ -69,11 +66,7 @@ import java.nio.file.Path;
 public class PathResolveDemo {
     public static void main(String[] args) {
         Path root = Path.of("data");
-        // 输入：Path root = Path.of("data");；右侧表达式 Path.of("data") 的结果赋给 root。
-        // 关键变化：Path root = Path.of("data");；按 "data" 调用 of 创建值，结果写入 root。
         Path file = root.resolve("2026").resolve("report.txt");
-        // 输入：Path file = root.resolve("2026").resolve("report.txt");；右侧表达式 root.resolve("2026").resolve("report.txt") 的结果赋给 file。
-        // 关键变化：Path file = root.resolve("2026").resolve("report.txt");；调用 resolve，实参为 "2026"，返回值写入 file。
         System.out.println(file);
         // 输出：data/2026/report.txt
     }
@@ -91,8 +84,6 @@ import java.nio.file.Path;
 public class PathNormalizeDemo {
     public static void main(String[] args) {
         Path path = Path.of("data", "logs", "..", "app.log");
-        // 输入：Path path = Path.of("data", "logs", "..", "app.log");；右侧表达式 Path.of("data", "logs", "..", "app.log") 的结果赋给 path。
-        // 关键变化：Path path = Path.of("data", "logs", "..", "app.log");；按 "data", "logs", "..", "app.log" 调用 of 创建值，结果写入 path。
         System.out.println(path.normalize());
         // 输出：data/app.log
     }
@@ -110,11 +101,7 @@ import java.nio.file.Path;
 public class PathRelativizeDemo {
     public static void main(String[] args) {
         Path root = Path.of("/srv/app");
-        // 输入：Path root = Path.of("/srv/app");；右侧表达式 Path.of("/srv/app") 的结果赋给 root。
-        // 关键变化：Path root = Path.of("/srv/app");；按 "/srv/app" 调用 of 创建值，结果写入 root。
         Path file = Path.of("/srv/app/config/app.yml");
-        // 输入：Path file = Path.of("/srv/app/config/app.yml");；右侧表达式 Path.of("/srv/app/config/app.yml") 的结果赋给 file。
-        // 关键变化：Path file = Path.of("/srv/app/config/app.yml");；按 "/srv/app/config/app.yml" 调用 of 创建值，结果写入 file。
         System.out.println(root.relativize(file));
         // 输出：config/app.yml
     }
@@ -132,8 +119,6 @@ import java.nio.file.Path;
 public class PathPartsDemo {
     public static void main(String[] args) {
         Path path = Path.of("data", "app.log");
-        // 输入：Path path = Path.of("data", "app.log");；右侧表达式 Path.of("data", "app.log") 的结果赋给 path。
-        // 关键变化：Path path = Path.of("data", "app.log");；按 "data", "app.log" 调用 of 创建值，结果写入 path。
         System.out.println(path.getFileName() + " / " + path.getParent() + " / " + path.getName(0));
         // 输出：app.log / data / data
     }
@@ -152,12 +137,9 @@ import java.nio.file.Path;
 public class FilesCheckDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-files-", ".txt");
-        // 输入：Path file = Files.createTempFile("java-files-", ".txt");；右侧表达式 Files.createTempFile("java-files-", ".txt") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("java-files-", ".txt");；调用 createTempFile，实参为 "java-files-", ".txt"，返回值写入 file。
         System.out.println(Files.exists(file) + ", " + Files.isRegularFile(file) + ", " + Files.isReadable(file));
         // 输出：true, true, true
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -175,30 +157,19 @@ import java.nio.file.Path;
 public class FilesCreateDemo {
     public static void main(String[] args) throws Exception {
         Path directory = Files.createTempDirectory("java-dir-");
-        // 输入：Path directory = Files.createTempDirectory("java-dir-");；右侧表达式 Files.createTempDirectory("java-dir-") 的结果赋给 directory。
-        // 关键变化：Path directory = Files.createTempDirectory("java-dir-");；调用 createTempDirectory，实参为 "java-dir-"，返回值写入 directory。
         Path nested = directory.resolve("a").resolve("b");
-        // 输入：Path nested = directory.resolve("a").resolve("b");；右侧表达式 directory.resolve("a").resolve("b") 的结果赋给 nested。
-        // 关键变化：Path nested = directory.resolve("a").resolve("b");；调用 resolve，实参为 "a"，返回值写入 nested。
         Files.createDirectories(nested);
-        // 输入：Files.createDirectories(nested);；接收对象为 Files，调用 createDirectories 的实参为 nested。
         // 关键变化：Files.createDirectories(nested);；调用 createDirectories，实参为 nested；创建 nested 及缺失的父目录；返回创建后的 Path。
         Path file = Files.createFile(nested.resolve("app.txt"));
-        // 输入：Path file = Files.createFile(nested.resolve("app.txt"));；右侧表达式 Files.createFile(nested.resolve("app.txt")) 的结果赋给 file。
-        // 关键变化：Path file = Files.createFile(nested.resolve("app.txt"));；调用 resolve，实参为 "app.txt"，返回值写入 file。
         System.out.println(Files.isRegularFile(file));
         // 输出：true
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(nested);
-        // 输入：Files.deleteIfExists(nested);；接收对象为 Files，调用 deleteIfExists 的实参为 nested。
         // 关键变化：Files.deleteIfExists(nested);；删除路径 nested；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(nested.getParent());
-        // 输入：Files.deleteIfExists(nested.getParent());；接收对象为 Files，调用 deleteIfExists 的实参为 nested.getParent()。
         // 关键变化：Files.deleteIfExists(nested.getParent());；删除路径 nested.getParent()；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(directory);
-        // 输入：Files.deleteIfExists(directory);；接收对象为 Files，调用 deleteIfExists 的实参为 directory。
         // 关键变化：Files.deleteIfExists(directory);；删除路径 directory；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -219,15 +190,11 @@ import java.nio.file.Path;
 public class FilesTextDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-text-", ".txt");
-        // 输入：Path file = Files.createTempFile("java-text-", ".txt");；右侧表达式 Files.createTempFile("java-text-", ".txt") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("java-text-", ".txt");；调用 createTempFile，实参为 "java-text-", ".txt"，返回值写入 file。
         Files.writeString(file, "你好 Java", StandardCharsets.UTF_8);
-        // 输入：Files.writeString(file, "你好 Java", StandardCharsets.UTF_8);；接收对象为 Files，调用 writeString 的实参为 file, "你好 Java", StandardCharsets.UTF_8。
         // 关键变化：Files.writeString(file, "你好 Java", StandardCharsets.UTF_8);；将 "你好 Java"，字符集为 StandardCharsets.UTF_8 写入路径 file；writeString 返回目标 Path，文件内容更新。
         System.out.println(Files.readString(file, StandardCharsets.UTF_8));
         // 输出：你好 Java
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -248,15 +215,11 @@ import java.util.Arrays;
 public class FilesBytesDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-bytes-", ".bin");
-        // 输入：Path file = Files.createTempFile("java-bytes-", ".bin");；右侧表达式 Files.createTempFile("java-bytes-", ".bin") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("java-bytes-", ".bin");；调用 createTempFile，实参为 "java-bytes-", ".bin"，返回值写入 file。
         Files.write(file, new byte[]{1, 2, 3});
-        // 输入：Files.write(file, new byte[]{1, 2, 3});；接收对象为 Files，调用 write 的实参为 file, new byte[]{1, 2, 3}。
         // 关键变化：Files.write(file, new byte[]{1, 2, 3});；将 new byte[]{1, 2, 3} 写入路径 file；write 返回目标 Path，文件内容更新。
         System.out.println(Arrays.toString(Files.readAllBytes(file)));
         // 输出：[1, 2, 3]
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -276,20 +239,13 @@ import java.nio.file.Path;
 public class FilesBufferedTextDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-buffered-", ".txt");
-        // 输入：Path file = Files.createTempFile("java-buffered-", ".txt");；右侧表达式 Files.createTempFile("java-buffered-", ".txt") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("java-buffered-", ".txt");；调用 createTempFile，实参为 "java-buffered-", ".txt"，返回值写入 file。
         try (var writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
         // 输入：try (var writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {；资源变量 writer 接收 Files.newBufferedWriter(file, StandardCharsets.UTF_8)，try 结束时自动关闭。
         // 关键变化：try (var writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {；创建资源 writer，构造表达式为 Files.newBufferedWriter(file, StandardCharsets.UTF_8)；try 结束时关闭该资源。
             writer.write("first");
-            // 输入：writer.write("first");；接收对象为 writer，调用 write 的实参为 "first"。
-            // 关键变化：writer.write("first");；向 writer 写入 "first"，write 返回 void；目标内容更新。
             writer.newLine();
-            // 输入：writer.newLine();；接收对象为 writer，调用 newLine 的实参为 无显式参数。
             // 关键变化：writer.newLine();；调用 newLine，实参为 无显式参数；向 writer 写入平台换行符；文本内容追加换行。
             writer.write("second");
-            // 输入：writer.write("second");；接收对象为 writer，调用 write 的实参为 "second"。
-            // 关键变化：writer.write("second");；向 writer 写入 "second"，write 返回 void；目标内容更新。
         }
         try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
         // 输入：try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {；资源变量 reader 接收 Files.newBufferedReader(file, StandardCharsets.UTF_8)，try 结束时自动关闭。
@@ -298,7 +254,6 @@ public class FilesBufferedTextDemo {
             // 输出：first
         }
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -317,21 +272,14 @@ import java.nio.file.StandardCopyOption;
 public class FilesCopyDemo {
     public static void main(String[] args) throws Exception {
         Path source = Files.createTempFile("java-source-", ".txt");
-        // 输入：Path source = Files.createTempFile("java-source-", ".txt");；右侧表达式 Files.createTempFile("java-source-", ".txt") 的结果赋给 source。
-        // 关键变化：Path source = Files.createTempFile("java-source-", ".txt");；调用 createTempFile，实参为 "java-source-", ".txt"，返回值写入 source。
         Path target = source.resolveSibling("java-copy.txt");
-        // 输入：Path target = source.resolveSibling("java-copy.txt");；右侧表达式 source.resolveSibling("java-copy.txt") 的结果赋给 target。
-        // 关键变化：Path target = source.resolveSibling("java-copy.txt");；调用 resolveSibling，实参为 "java-copy.txt"，返回值写入 target。
         Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-        // 输入：Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);；接收对象为 Files，调用 copy 的实参为 source, target, StandardCopyOption.REPLACE_EXISTING。
         // 关键变化：Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);；将 source 复制到 target，返回目标 Path；目标文件更新。
         System.out.println(Files.exists(target));
         // 输出：true
         Files.deleteIfExists(source);
-        // 输入：Files.deleteIfExists(source);；接收对象为 Files，调用 deleteIfExists 的实参为 source。
         // 关键变化：Files.deleteIfExists(source);；删除路径 source；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(target);
-        // 输入：Files.deleteIfExists(target);；接收对象为 Files，调用 deleteIfExists 的实参为 target。
         // 关键变化：Files.deleteIfExists(target);；删除路径 target；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -350,18 +298,12 @@ import java.nio.file.StandardCopyOption;
 public class FilesMoveDemo {
     public static void main(String[] args) throws Exception {
         Path source = Files.createTempFile("java-before-", ".txt");
-        // 输入：Path source = Files.createTempFile("java-before-", ".txt");；右侧表达式 Files.createTempFile("java-before-", ".txt") 的结果赋给 source。
-        // 关键变化：Path source = Files.createTempFile("java-before-", ".txt");；调用 createTempFile，实参为 "java-before-", ".txt"，返回值写入 source。
         Path target = source.resolveSibling("java-after.txt");
-        // 输入：Path target = source.resolveSibling("java-after.txt");；右侧表达式 source.resolveSibling("java-after.txt") 的结果赋给 target。
-        // 关键变化：Path target = source.resolveSibling("java-after.txt");；调用 resolveSibling，实参为 "java-after.txt"，返回值写入 target。
         Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-        // 输入：Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);；接收对象为 Files，调用 move 的实参为 source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING。
         // 关键变化：Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);；调用 move，实参为 source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING；将 source 移至 target；返回目标 Path。
         System.out.println(Files.exists(target));
         // 输出：true
         Files.deleteIfExists(target);
-        // 输入：Files.deleteIfExists(target);；接收对象为 Files，调用 deleteIfExists 的实参为 target。
         // 关键变化：Files.deleteIfExists(target);；删除路径 target；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -379,10 +321,7 @@ import java.nio.file.Path;
 public class FilesDeleteDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-delete-", ".txt");
-        // 输入：Path file = Files.createTempFile("java-delete-", ".txt");；右侧表达式 Files.createTempFile("java-delete-", ".txt") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("java-delete-", ".txt");；调用 createTempFile，实参为 "java-delete-", ".txt"，返回值写入 file。
         Files.delete(file);
-        // 输入：Files.delete(file);；接收对象为 Files，调用 delete 的实参为 file。
         // 关键变化：Files.delete(file);；删除存在的路径 file，返回 void；路径不存在时抛出 NoSuchFileException。
         System.out.println(Files.deleteIfExists(file));
         // 输出：false
@@ -402,10 +341,7 @@ import java.nio.file.Path;
 public class FilesLinesDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-lines-", ".txt");
-        // 输入：Path file = Files.createTempFile("java-lines-", ".txt");；右侧表达式 Files.createTempFile("java-lines-", ".txt") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("java-lines-", ".txt");；调用 createTempFile，实参为 "java-lines-", ".txt"，返回值写入 file。
         Files.writeString(file, "java\nsql\njava\n");
-        // 输入：Files.writeString(file, "java\nsql\njava\n");；接收对象为 Files，调用 writeString 的实参为 file, "java\nsql\njava\n"。
         // 关键变化：Files.writeString(file, "java\nsql\njava\n");；将 "java\nsql\njava\n" 写入路径 file；writeString 返回目标 Path，文件内容更新。
         try (var lines = Files.lines(file)) {
         // 输入：try (var lines = Files.lines(file)) {；资源变量 lines 接收 Files.lines(file)，try 结束时自动关闭。
@@ -414,7 +350,6 @@ public class FilesLinesDemo {
             // 输出：2
         }
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -432,13 +367,9 @@ import java.nio.file.Path;
 public class FilesWalkDemo {
     public static void main(String[] args) throws Exception {
         Path directory = Files.createTempDirectory("java-walk-");
-        // 输入：Path directory = Files.createTempDirectory("java-walk-");；右侧表达式 Files.createTempDirectory("java-walk-") 的结果赋给 directory。
-        // 关键变化：Path directory = Files.createTempDirectory("java-walk-");；调用 createTempDirectory，实参为 "java-walk-"，返回值写入 directory。
         Files.writeString(directory.resolve("a.txt"), "a");
-        // 输入：Files.writeString(directory.resolve("a.txt"), "a");；接收对象为 Files，调用 writeString 的实参为 directory.resolve("a.txt"), "a"。
         // 关键变化：Files.writeString(directory.resolve("a.txt"), "a");；将 "a" 写入路径 directory.resolve("a.txt")；writeString 返回目标 Path，文件内容更新。
         Files.createDirectory(directory.resolve("sub"));
-        // 输入：Files.createDirectory(directory.resolve("sub"));；接收对象为 directory，调用 resolve 的实参为 "sub"。
         // 关键变化：Files.createDirectory(directory.resolve("sub"));；向 directory 追加路径片段 "sub"，返回新的 Path；原路径不变。
         try (var paths = Files.walk(directory)) {
         // 输入：try (var paths = Files.walk(directory)) {；资源变量 paths 接收 Files.walk(directory)，try 结束时自动关闭。
@@ -447,13 +378,10 @@ public class FilesWalkDemo {
             // 输出：1
         }
         Files.deleteIfExists(directory.resolve("a.txt"));
-        // 输入：Files.deleteIfExists(directory.resolve("a.txt"));；接收对象为 directory，调用 resolve 的实参为 "a.txt"。
         // 关键变化：Files.deleteIfExists(directory.resolve("a.txt"));；删除路径 directory.resolve("a.txt")；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(directory.resolve("sub"));
-        // 输入：Files.deleteIfExists(directory.resolve("sub"));；接收对象为 directory，调用 resolve 的实参为 "sub"。
         // 关键变化：Files.deleteIfExists(directory.resolve("sub"));；删除路径 directory.resolve("sub")；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(directory);
-        // 输入：Files.deleteIfExists(directory);；接收对象为 Files，调用 deleteIfExists 的实参为 directory。
         // 关键变化：Files.deleteIfExists(directory);；删除路径 directory；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -471,18 +399,11 @@ import java.nio.file.Path;
 public class FilesAttributesDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-attr-", ".txt");
-        // 输入：Path file = Files.createTempFile("java-attr-", ".txt");；右侧表达式 Files.createTempFile("java-attr-", ".txt") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("java-attr-", ".txt");；调用 createTempFile，实参为 "java-attr-", ".txt"，返回值写入 file。
         long size = (long) Files.getAttribute(file, "basic:size");
-        // 输入：long size = (long) Files.getAttribute(file, "basic:size");；右侧表达式 (long) Files.getAttribute(file, "basic:size") 的结果赋给 size。
-        // 关键变化：long size = (long) Files.getAttribute(file, "basic:size");；调用 getAttribute，实参为 file, "basic:size"，返回值写入 size。
         var attributes = Files.readAttributes(file, "basic:size,lastModifiedTime");
-        // 输入：var attributes = Files.readAttributes(file, "basic:size,lastModifiedTime");；右侧表达式 Files.readAttributes(file, "basic:size,lastModifiedTime") 的结果赋给 attributes。
-        // 关键变化：var attributes = Files.readAttributes(file, "basic:size,lastModifiedTime");；调用 readAttributes，实参为 file, "basic:size,lastModifiedTime"，返回值写入 attributes。
         System.out.println(size == (long) attributes.get("size"));
         // 输出：true
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -501,8 +422,6 @@ import java.nio.file.Path;
 public class NoFollowLinksDemo {
     public static void main(String[] args) {
         Path path = Path.of("config");
-        // 输入：Path path = Path.of("config");；右侧表达式 Path.of("config") 的结果赋给 path。
-        // 关键变化：Path path = Path.of("config");；按 "config" 调用 of 创建值，结果写入 path。
         System.out.println(Files.exists(path, LinkOption.NOFOLLOW_LINKS));
         // 输出：false
     }
@@ -520,12 +439,9 @@ import java.nio.file.Path;
 public class SameFileDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-same-", ".txt");
-        // 输入：Path file = Files.createTempFile("java-same-", ".txt");；右侧表达式 Files.createTempFile("java-same-", ".txt") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("java-same-", ".txt");；调用 createTempFile，实参为 "java-same-", ".txt"，返回值写入 file。
         System.out.println(Files.isSameFile(file, file.toAbsolutePath()));
         // 输出：true
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -542,24 +458,16 @@ import java.nio.file.Path;
 public class FilesMismatchDemo {
     public static void main(String[] args) throws Exception {
         Path left = Files.createTempFile("java-left-", ".bin");
-        // 输入：Path left = Files.createTempFile("java-left-", ".bin");；右侧表达式 Files.createTempFile("java-left-", ".bin") 的结果赋给 left。
-        // 关键变化：Path left = Files.createTempFile("java-left-", ".bin");；调用 createTempFile，实参为 "java-left-", ".bin"，返回值写入 left。
         Path right = Files.createTempFile("java-right-", ".bin");
-        // 输入：Path right = Files.createTempFile("java-right-", ".bin");；右侧表达式 Files.createTempFile("java-right-", ".bin") 的结果赋给 right。
-        // 关键变化：Path right = Files.createTempFile("java-right-", ".bin");；调用 createTempFile，实参为 "java-right-", ".bin"，返回值写入 right。
         Files.write(left, new byte[]{1, 2, 3});
-        // 输入：Files.write(left, new byte[]{1, 2, 3});；接收对象为 Files，调用 write 的实参为 left, new byte[]{1, 2, 3}。
         // 关键变化：Files.write(left, new byte[]{1, 2, 3});；将 new byte[]{1, 2, 3} 写入路径 left；write 返回目标 Path，文件内容更新。
         Files.write(right, new byte[]{1, 9, 3});
-        // 输入：Files.write(right, new byte[]{1, 9, 3});；接收对象为 Files，调用 write 的实参为 right, new byte[]{1, 9, 3}。
         // 关键变化：Files.write(right, new byte[]{1, 9, 3});；将 new byte[]{1, 9, 3} 写入路径 right；write 返回目标 Path，文件内容更新。
         System.out.println(Files.mismatch(left, right));
         // 输出：1
         Files.deleteIfExists(left);
-        // 输入：Files.deleteIfExists(left);；接收对象为 Files，调用 deleteIfExists 的实参为 left。
         // 关键变化：Files.deleteIfExists(left);；删除路径 left；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(right);
-        // 输入：Files.deleteIfExists(right);；接收对象为 Files，调用 deleteIfExists 的实参为 right。
         // 关键变化：Files.deleteIfExists(right);；删除路径 right；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -577,18 +485,12 @@ import java.nio.file.attribute.FileTime;
 public class FileTimeDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-time-", ".txt");
-        // 输入：Path file = Files.createTempFile("java-time-", ".txt");；右侧表达式 Files.createTempFile("java-time-", ".txt") 的结果赋给 file。
-        // 关键变化：Path file = Files.createTempFile("java-time-", ".txt");；调用 createTempFile，实参为 "java-time-", ".txt"，返回值写入 file。
         FileTime now = FileTime.fromMillis(0);
-        // 输入：FileTime now = FileTime.fromMillis(0);；右侧表达式 FileTime.fromMillis(0) 的结果赋给 now。
-        // 关键变化：FileTime now = FileTime.fromMillis(0);；调用 fromMillis，实参为 0，返回值写入 now。
         Files.setLastModifiedTime(file, now);
-        // 输入：Files.setLastModifiedTime(file, now);；接收对象为 Files，调用 setLastModifiedTime 的实参为 file, now。
         // 关键变化：Files.setLastModifiedTime(file, now);；调用 setLastModifiedTime，实参为 file, now；把 file 的最后修改时间设为 now；返回目标 Path。
         System.out.println(Files.getLastModifiedTime(file).toMillis());
         // 输出：0
         Files.deleteIfExists(file);
-        // 输入：Files.deleteIfExists(file);；接收对象为 Files，调用 deleteIfExists 的实参为 file。
         // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -610,22 +512,17 @@ import java.util.Map;
 public class ZipFileSystemDemo {
     public static void main(String[] args) throws Exception {
         Path zip = Files.createTempFile("java-zip-", ".zip");
-        // 输入：Path zip = Files.createTempFile("java-zip-", ".zip");；右侧表达式 Files.createTempFile("java-zip-", ".zip") 的结果赋给 zip。
-        // 关键变化：Path zip = Files.createTempFile("java-zip-", ".zip");；调用 createTempFile，实参为 "java-zip-", ".zip"，返回值写入 zip。
         URI uri = URI.create("jar:" + zip.toUri());
-        // 输入：URI uri = URI.create("jar:" + zip.toUri());；右侧表达式 URI.create("jar:" + zip.toUri()) 的结果赋给 uri。
         // 关键变化：URI uri = URI.create("jar:" + zip.toUri());；按 "jar:" + zip.toUri() 调用 create 创建值，结果写入 uri。
         try (FileSystem fs = FileSystems.newFileSystem(uri, Map.of("create", "true"))) {
         // 输入：try (FileSystem fs = FileSystems.newFileSystem(uri, Map.of("create", "true"))) {；资源变量 fs 接收 FileSystems.newFileSystem(uri, Map.of("create", "true"))，try 结束时自动关闭。
         // 关键变化：try (FileSystem fs = FileSystems.newFileSystem(uri, Map.of("create", "true"))) {；创建资源 fs，构造表达式为 FileSystems.newFileSystem(uri, Map.of("create", "true"))；try 结束时关闭该资源。
             Files.writeString(fs.getPath("/inside.txt"), "zip");
-            // 输入：Files.writeString(fs.getPath("/inside.txt"), "zip");；接收对象为 Files，调用 writeString 的实参为 fs.getPath("/inside.txt"), "zip"。
             // 关键变化：Files.writeString(fs.getPath("/inside.txt"), "zip");；将 "zip" 写入路径 fs.getPath("/inside.txt")；writeString 返回目标 Path，文件内容更新。
             System.out.println(Files.exists(fs.getPath("/inside.txt")));
             // 输出：true
         }
         Files.deleteIfExists(zip);
-        // 输入：Files.deleteIfExists(zip);；接收对象为 Files，调用 deleteIfExists 的实参为 zip。
         // 关键变化：Files.deleteIfExists(zip);；删除路径 zip；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
@@ -640,19 +537,11 @@ import java.nio.file.Path;
 public class PathFilesDemo {
     public static void main(String[] args) throws Exception {
         Path directory = Files.createTempDirectory("path-files-demo-");
-        // 输入：Path directory = Files.createTempDirectory("path-files-demo-");；右侧表达式 Files.createTempDirectory("path-files-demo-") 的结果赋给 directory。
-        // 关键变化：Path directory = Files.createTempDirectory("path-files-demo-");；调用 createTempDirectory，实参为 "path-files-demo-"，返回值写入 directory。
         Path source = directory.resolve("source.txt");
-        // 输入：Path source = directory.resolve("source.txt");；右侧表达式 directory.resolve("source.txt") 的结果赋给 source。
-        // 关键变化：Path source = directory.resolve("source.txt");；调用 resolve，实参为 "source.txt"，返回值写入 source。
         Path copy = directory.resolve("copy.txt");
-        // 输入：Path copy = directory.resolve("copy.txt");；右侧表达式 directory.resolve("copy.txt") 的结果赋给 copy。
-        // 关键变化：Path copy = directory.resolve("copy.txt");；调用 resolve，实参为 "copy.txt"，返回值写入 copy。
         Files.writeString(source, "Path + Files", StandardCharsets.UTF_8);
-        // 输入：Files.writeString(source, "Path + Files", StandardCharsets.UTF_8);；接收对象为 Files，调用 writeString 的实参为 source, "Path + Files", StandardCharsets.UTF_8。
         // 关键变化：Files.writeString(source, "Path + Files", StandardCharsets.UTF_8);；将 "Path + Files"，字符集为 StandardCharsets.UTF_8 写入路径 source；writeString 返回目标 Path，文件内容更新。
         Files.copy(source, copy);
-        // 输入：Files.copy(source, copy);；接收对象为 Files，调用 copy 的实参为 source, copy。
         // 关键变化：Files.copy(source, copy);；将 source 复制到 copy，返回目标 Path；目标文件更新。
         try (var paths = Files.list(directory)) {
         // 输入：try (var paths = Files.list(directory)) {；资源变量 paths 接收 Files.list(directory)，try 结束时自动关闭。
@@ -663,13 +552,10 @@ public class PathFilesDemo {
         System.out.println(Files.readString(copy, StandardCharsets.UTF_8));
         // 输出：Path + Files
         Files.deleteIfExists(copy);
-        // 输入：Files.deleteIfExists(copy);；接收对象为 Files，调用 deleteIfExists 的实参为 copy。
         // 关键变化：Files.deleteIfExists(copy);；删除路径 copy；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(source);
-        // 输入：Files.deleteIfExists(source);；接收对象为 Files，调用 deleteIfExists 的实参为 source。
         // 关键变化：Files.deleteIfExists(source);；删除路径 source；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(directory);
-        // 输入：Files.deleteIfExists(directory);；接收对象为 Files，调用 deleteIfExists 的实参为 directory。
         // 关键变化：Files.deleteIfExists(directory);；删除路径 directory；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }

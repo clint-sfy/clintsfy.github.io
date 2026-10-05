@@ -44,8 +44,6 @@ Lambda 不是“自动多线程”，只是把一段行为交给一个有唯一�
 import java.util.function.Predicate;
 
 Predicate<String> longName = name -> name.length() >= 4;
-// 输入：Predicate<String> longName = name -> name.length() >= 4;；右侧表达式 name -> name.length() >= 4 的结果赋给 longName。
-// 关键变化：Predicate<String> longName = name -> name.length() >= 4;；调用 length，实参为 无显式参数，返回值写入 longName。
 System.out.println(longName.test("Java"));
 // 输出：true
 ```
@@ -59,14 +57,8 @@ System.out.println(longName.test("Java"));
 import java.util.function.Predicate;
 
 Predicate<String> notBlank = text -> !text.isBlank();
-// 输入：Predicate<String> notBlank = text -> !text.isBlank();；右侧表达式 text -> !text.isBlank() 的结果赋给 notBlank。
-// 关键变化：Predicate<String> notBlank = text -> !text.isBlank();；调用 isBlank，实参为 无显式参数，返回值写入 notBlank。
 Predicate<String> startsWithJava = text -> text.startsWith("Java");
-// 输入：Predicate<String> startsWithJava = text -> text.startsWith("Java");；右侧表达式 text -> text.startsWith("Java") 的结果赋给 startsWithJava。
-// 关键变化：Predicate<String> startsWithJava = text -> text.startsWith("Java");；调用 startsWith，实参为 "Java"，返回值写入 startsWithJava。
 Predicate<String> valid = notBlank.and(startsWithJava);
-// 输入：Predicate<String> valid = notBlank.and(startsWithJava);；右侧表达式 notBlank.and(startsWithJava) 的结果赋给 valid。
-// 关键变化：Predicate<String> valid = notBlank.and(startsWithJava);；调用 and，实参为 startsWithJava，返回值写入 valid。
 
 System.out.println(valid.test("Java 21"));
 // 输出：true
@@ -81,14 +73,8 @@ System.out.println(valid.test("Java 21"));
 import java.util.function.Predicate;
 
 Predicate<String> isJava = "Java"::equals;
-// 输入：Predicate<String> isJava = "Java"::equals;；右侧表达式 "Java"::equals 的结果赋给 isJava。
-// 关键变化：Predicate<String> isJava = "Java"::equals;；把方法引用 "Java"::equals 绑定到目标函数式接口，结果写入 isJava。
 Predicate<String> isKotlin = "Kotlin"::equals;
-// 输入：Predicate<String> isKotlin = "Kotlin"::equals;；右侧表达式 "Kotlin"::equals 的结果赋给 isKotlin。
-// 关键变化：Predicate<String> isKotlin = "Kotlin"::equals;；把方法引用 "Kotlin"::equals 绑定到目标函数式接口，结果写入 isKotlin。
 Predicate<String> supported = isJava.or(isKotlin);
-// 输入：Predicate<String> supported = isJava.or(isKotlin);；右侧表达式 isJava.or(isKotlin) 的结果赋给 supported。
-// 关键变化：Predicate<String> supported = isJava.or(isKotlin);；调用 or，实参为 isKotlin，返回值写入 supported。
 
 System.out.println(supported.test("Kotlin"));
 // 输出：true
@@ -103,13 +89,8 @@ System.out.println(supported.test("Kotlin"));
 import java.util.function.Predicate;
 
 Predicate<String> blank = String::isBlank;
-// 输入：Predicate<String> blank = String::isBlank;；右侧表达式 String::isBlank 的结果赋给 blank。
-// 关键变化：Predicate<String> blank = String::isBlank;；把方法引用 String::isBlank 绑定到目标函数式接口，结果写入 blank。
 Predicate<String> notBlank = blank.negate();
-// 输入：Predicate<String> notBlank = blank.negate();；右侧表达式 blank.negate() 的结果赋给 notBlank。
-// 关键变化：Predicate<String> notBlank = blank.negate();；调用 negate，实参为 无显式参数，返回值写入 notBlank。
 String input = "Java";
-// 输入：String input = "Java";；右侧表达式 "Java" 的结果赋给 input。
 // 关键变化：String input = "Java";；将 "Java" 的计算结果写入 input；赋值完成。
 
 System.out.println(notBlank.test(input));
@@ -125,8 +106,6 @@ System.out.println(notBlank.test(input));
 import java.util.function.Function;
 
 Function<String, Integer> length = String::length;
-// 输入：Function<String, Integer> length = String::length;；右侧表达式 String::length 的结果赋给 length。
-// 关键变化：Function<String, Integer> length = String::length;；把方法引用 String::length 绑定到目标函数式接口，结果写入 length。
 System.out.println(length.apply("Java"));
 // 输出：4
 ```
@@ -140,14 +119,8 @@ System.out.println(length.apply("Java"));
 import java.util.function.Function;
 
 Function<String, String> trim = String::trim;
-// 输入：Function<String, String> trim = String::trim;；右侧表达式 String::trim 的结果赋给 trim。
-// 关键变化：Function<String, String> trim = String::trim;；把方法引用 String::trim 绑定到目标函数式接口，结果写入 trim。
 Function<String, Integer> length = String::length;
-// 输入：Function<String, Integer> length = String::length;；右侧表达式 String::length 的结果赋给 length。
-// 关键变化：Function<String, Integer> length = String::length;；把方法引用 String::length 绑定到目标函数式接口，结果写入 length。
 Function<String, Integer> trimmedLength = length.compose(trim);
-// 输入：Function<String, Integer> trimmedLength = length.compose(trim);；右侧表达式 length.compose(trim) 的结果赋给 trimmedLength。
-// 关键变化：Function<String, Integer> trimmedLength = length.compose(trim);；调用 compose，实参为 trim，返回值写入 trimmedLength。
 
 System.out.println(trimmedLength.apply(" Java "));
 // 输出：4
@@ -162,14 +135,8 @@ System.out.println(trimmedLength.apply(" Java "));
 import java.util.function.Function;
 
 Function<String, String> trim = String::trim;
-// 输入：Function<String, String> trim = String::trim;；右侧表达式 String::trim 的结果赋给 trim。
-// 关键变化：Function<String, String> trim = String::trim;；把方法引用 String::trim 绑定到目标函数式接口，结果写入 trim。
 Function<String, String> upper = String::toUpperCase;
-// 输入：Function<String, String> upper = String::toUpperCase;；右侧表达式 String::toUpperCase 的结果赋给 upper。
-// 关键变化：Function<String, String> upper = String::toUpperCase;；把方法引用 String::toUpperCase 绑定到目标函数式接口，结果写入 upper。
 Function<String, String> normalize = trim.andThen(upper);
-// 输入：Function<String, String> normalize = trim.andThen(upper);；右侧表达式 trim.andThen(upper) 的结果赋给 normalize。
-// 关键变化：Function<String, String> normalize = trim.andThen(upper);；调用 andThen，实参为 upper，返回值写入 normalize。
 
 System.out.println(normalize.apply(" java "));
 // 输出：JAVA
@@ -186,13 +153,8 @@ import java.util.List;
 import java.util.function.Consumer;
 
 List<String> log = new ArrayList<>();
-// 输入：List<String> log = new ArrayList<>();；使用构造参数 无显式参数 创建 ArrayList<>，结果赋给 log。
-// 关键变化：List<String> log = new ArrayList<>();；创建 ArrayList<>，构造参数为 无显式参数，实例写入 log。
 Consumer<String> record = log::add;
-// 输入：Consumer<String> record = log::add;；右侧表达式 log::add 的结果赋给 record。
-// 关键变化：Consumer<String> record = log::add;；把方法引用 log::add 绑定到目标函数式接口，结果写入 record。
 record.accept("saved");
-// 输入：record.accept("saved");；接收对象为 record，调用 accept 的实参为 "saved"。
 // 关键变化：record.accept("saved");；把 "saved" 交给 record 消费，Consumer 无返回值；副作用状态更新。
 System.out.println(log);
 // 输出：[saved]
@@ -209,16 +171,11 @@ import java.util.List;
 import java.util.function.Consumer;
 
 List<String> output = new ArrayList<>();
-// 输入：List<String> output = new ArrayList<>();；使用构造参数 无显式参数 创建 ArrayList<>，结果赋给 output。
-// 关键变化：List<String> output = new ArrayList<>();；创建 ArrayList<>，构造参数为 无显式参数，实例写入 output。
 Consumer<String> print = text -> output.add("value=" + text);
-// 输入：Consumer<String> print = text -> output.add("value=" + text);；右侧表达式 text -> output.add("value=" + text) 的结果赋给 print。
 // 关键变化：Consumer<String> print = text -> output.add("value=" + text);；Consumer 收到文本后向 output 追加 value= 前缀，lambda 本身返回 void。
 Consumer<String> count = text -> output.add("length=" + text.length());
-// 输入：Consumer<String> count = text -> output.add("length=" + text.length());；右侧表达式 text -> output.add("length=" + text.length()) 的结果赋给 count。
 // 关键变化：Consumer<String> count = text -> output.add("length=" + text.length());；Consumer 收到文本后追加长度文本，lambda 本身返回 void。
 print.andThen(count).accept("Java");
-// 输入：print.andThen(count).accept("Java");；接收对象为 上一个链式结果，调用 accept 的实参为 "Java"。
 // 关键变化：print.andThen(count).accept("Java");；把 "Java" 交给 上一个链式结果 消费，Consumer 无返回值；副作用状态更新。
 System.out.println(output);
 // 输出：[value=Java, length=4]
@@ -233,7 +190,6 @@ System.out.println(output);
 import java.util.function.Supplier;
 
 Supplier<String> requestId = () -> "REQ-20";
-// 输入：Supplier<String> requestId = () -> "REQ-20";；右侧表达式 () -> "REQ-20" 的结果赋给 requestId。
 // 关键变化：Supplier<String> requestId = () -> "REQ-20";；将 () -> "REQ-20" 的计算结果写入 requestId；赋值完成。
 System.out.println(requestId.get());
 // 输出：REQ-20
@@ -248,8 +204,6 @@ System.out.println(requestId.get());
 import java.util.function.UnaryOperator;
 
 UnaryOperator<String> normalize = String::trim;
-// 输入：UnaryOperator<String> normalize = String::trim;；右侧表达式 String::trim 的结果赋给 normalize。
-// 关键变化：UnaryOperator<String> normalize = String::trim;；把方法引用 String::trim 绑定到目标函数式接口，结果写入 normalize。
 System.out.println(normalize.apply(" Java "));
 // 输出：Java
 ```
@@ -263,8 +217,6 @@ System.out.println(normalize.apply(" Java "));
 import java.util.function.BinaryOperator;
 
 BinaryOperator<Integer> add = Integer::sum;
-// 输入：BinaryOperator<Integer> add = Integer::sum;；右侧表达式 Integer::sum 的结果赋给 add。
-// 关键变化：BinaryOperator<Integer> add = Integer::sum;；把方法引用 Integer::sum 绑定到目标函数式接口，结果写入 add。
 System.out.println(add.apply(20, 22));
 // 输出：42
 ```
@@ -278,10 +230,7 @@ System.out.println(add.apply(20, 22));
 import java.util.List;
 
 List<String> names = List.of("Bob", "Ann");
-// 输入：List<String> names = List.of("Bob", "Ann");；右侧表达式 List.of("Bob", "Ann") 的结果赋给 names。
-// 关键变化：List<String> names = List.of("Bob", "Ann");；按 "Bob", "Ann" 调用 of 创建值，结果写入 names。
 names.stream().map(String::toUpperCase).forEach(System.out::println);
-// 输入：names.stream().map(String::toUpperCase).forEach(System.out::println);；接收对象为 上一个链式结果，调用 forEach 的实参为 System.out::println。
 // 关键变化：names.stream().map(String::toUpperCase).forEach(System.out::println);；把 上一个链式结果 的每个元素交给 System.out::println，无返回值；遍历动作完成。
 // 输出：BOB、ANN
 ```
@@ -296,10 +245,7 @@ import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 
 BiPredicate<String, Integer> longEnough = (text, min) -> text.length() >= min;
-// 输入：BiPredicate<String, Integer> longEnough = (text, min) -> text.length() >= min;；右侧表达式 (text, min) -> text.length() >= min 的结果赋给 longEnough。
-// 关键变化：BiPredicate<String, Integer> longEnough = (text, min) -> text.length() >= min;；调用 length，实参为 无显式参数，返回值写入 longEnough。
 BiFunction<String, String, String> join = (left, right) -> left + ":" + right;
-// 输入：BiFunction<String, String, String> join = (left, right) -> left + ":" + right;；右侧表达式 (left, right) -> left + ":" + right 的结果赋给 join。
 // 关键变化：BiFunction<String, String, String> join = (left, right) -> left + ":" + right;；将 (left, right) -> left + ":" + right 的计算结果写入 join；赋值完成。
 System.out.println(longEnough.test("Java", 4));
 // 输出：true
@@ -313,11 +259,8 @@ System.out.println(join.apply("id", "20"));
 
 ```java
 BiFunction<String, Integer, String> join = (left, right) -> left + ":" + right;
-// 输入：BiFunction<String, Integer, String> join = (left, right) -> left + ":" + right;；右侧表达式 (left, right) -> left + ":" + right 的结果赋给 join。
 // 关键变化：BiFunction<String, Integer, String> join = (left, right) -> left + ":" + right;；将 (left, right) -> left + ":" + right 的计算结果写入 join；赋值完成。
 String text = join.apply("id", 20);
-// 输入：String text = join.apply("id", 20);；右侧表达式 join.apply("id", 20) 的结果赋给 text。
-// 关键变化：String text = join.apply("id", 20);；调用 apply，实参为 "id", 20，返回值写入 text。
 // 输出：id:20
 ```
 
@@ -332,7 +275,6 @@ import java.util.function.BiConsumer;
 BiConsumer<String, Integer> printer = (key, value) -> System.out.println(key + "=" + value);
 // 输出：id=20
 printer.accept("id", 20);
-// 输入：printer.accept("id", 20);；接收对象为 printer，调用 accept 的实参为 "id", 20。
 // 关键变化：printer.accept("id", 20);；把 "id", 20 交给 printer 消费，Consumer 无返回值；副作用状态更新。
 ```
 
@@ -346,13 +288,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 List<String> names = List.of("Ann", "Bob");
-// 输入：List<String> names = List.of("Ann", "Bob");；右侧表达式 List.of("Ann", "Bob") 的结果赋给 names。
-// 关键变化：List<String> names = List.of("Ann", "Bob");；按 "Ann", "Bob" 调用 of 创建值，结果写入 names。
 var same = names.stream().collect(
         Collectors.toMap(Function.identity(), String::length));
-        // 输入：var same = names.stream().collect( Collectors.toMap(Function.identity(), String::length));；右侧表达式 names.stream().collect( Collectors.toMap(Function.identity(), String::length)) 的结果赋给 same。
-        // 关键变化：var same = names.stream().collect( Collectors.toMap(Function.identity(), String::length));；把方法引用 names.stream().collect( Collectors.toMap(Function.identity(), String::length)) 绑定到目标函数式接口，结果写入 same。
-        // 输入：Collectors.toMap(Function.identity(), String::length));；接收对象为 Collectors，调用 toMap 的实参为 Function.identity(), String::length。
         // 关键变化：Collectors.toMap(Function.identity(), String::length) 接收两个函数参数，按字符串自身作键、按长度作值；返回映射 Collector。
 System.out.println(same);
 // 输出：{Ann=3, Bob=3}
@@ -369,7 +306,6 @@ interface DiscountRule {
 }
 
 DiscountRule memberRule = price -> price - 10;
-// 输入：DiscountRule memberRule = price -> price - 10;；右侧表达式 price -> price - 10 的结果赋给 memberRule。
 // 关键变化：DiscountRule memberRule = price -> price - 10;；将 price -> price - 10 的计算结果写入 memberRule；赋值完成。
 System.out.println(memberRule.priceAfterDiscount(80));
 // 输出：70
@@ -381,10 +317,8 @@ System.out.println(memberRule.priceAfterDiscount(80));
 
 ```java
 int limit = 10;
-// 输入：int limit = 10;；右侧表达式 10 的结果赋给 limit。
 // 关键变化：int limit = 10;；将 10 的计算结果写入 limit；赋值完成。
 java.util.function.Predicate<Integer> underLimit = value -> value < limit;
-// 输入：java.util.function.Predicate<Integer> underLimit = value -> value < limit;；右侧表达式 value -> value < limit 的结果赋给 underLimit。
 // 关键变化：java.util.function.Predicate<Integer> underLimit = value -> value < limit;；将 value -> value < limit 的计算结果写入 underLimit；赋值完成。
 System.out.println(underLimit.test(8));
 // 输出：true
@@ -408,7 +342,6 @@ public class LambdaDemo {
                                Predicate<Product> filter,
                                Function<Product, String> mapper) {
         return products.stream().filter(filter).map(mapper).toList();
-        // 输入：return products.stream().filter(filter).map(mapper).toList();；接收对象为 上一个链式结果，调用 filter 的实参为 filter。
         // 关键变化：return products.stream().filter(filter).map(mapper).toList();；按 predicate 筛选元素，只保留满足条件的元素。
     }
 
@@ -417,8 +350,6 @@ public class LambdaDemo {
                 new Product("book", 30, 4),
                 new Product("pen", 8, 0),
                 new Product("bag", 80, 2));
-                // 输入：List<Product> products = List.of( new Product("book", 30, 4), new Product("pen", 8, 0), new Product("bag", 80, 2));；使用构造参数 "book", 30, 4 创建 Product，结果赋给 products。
-                // 关键变化：List<Product> products = List.of( new Product("book", 30, 4), new Product("pen", 8, 0), new Product("bag", 80, 2));；创建 Product，构造参数为 "book", 30, 4，实例写入 products。
                 // 输入：new Product("book", 30, 4), new Product("pen", 8, 0), new Product("bag", 80, 2));；输入表达式为 new Product("book", 30, 4), new Product("pen", 8, 0), new Product("bag", 80, 2))。
                 // 关键变化：new Product("book", 30, 4), new Product("pen", 8, 0), new Product("bag", 80, 2));；创建 Product，构造参数保留在外层调用中。
                 // 输入：new Product("pen", 8, 0), new Product("bag", 80, 2));；输入表达式为 new Product("pen", 8, 0), new Product("bag", 80, 2))。
@@ -427,16 +358,8 @@ public class LambdaDemo {
                 // 关键变化：new Product("bag", 80, 2));；创建 Product，构造参数保留在外层调用中。
         int limit = 50; // effectively final，可被 Lambda 捕获
         Predicate<Product> available = product -> product.stock() > 0;
-        // 输入：int limit = 50; Predicate<Product> available = product -> product.stock() > 0;；右侧表达式 50; Predicate<Product> available = product -> product.stock() > 0 的结果赋给 limit。
-        // 关键变化：int limit = 50; Predicate<Product> available = product -> product.stock() > 0;；调用 stock，实参为 无显式参数，返回值写入 limit。
-        // 输入：Predicate<Product> available = product -> product.stock() > 0;；右侧表达式 product -> product.stock() > 0 的结果赋给 available。
-        // 关键变化：Predicate<Product> available = product -> product.stock() > 0;；调用 stock，实参为 无显式参数，返回值写入 available。
         Predicate<Product> affordable = product -> product.price() <= limit;
-        // 输入：Predicate<Product> affordable = product -> product.price() <= limit;；右侧表达式 product -> product.price() <= limit 的结果赋给 affordable。
-        // 关键变化：Predicate<Product> affordable = product -> product.price() <= limit;；调用 price，实参为 无显式参数，返回值写入 affordable。
         Function<Product, String> label = Product::name;
-        // 输入：Function<Product, String> label = Product::name;；右侧表达式 Product::name 的结果赋给 label。
-        // 关键变化：Function<Product, String> label = Product::name;；把方法引用 Product::name 绑定到目标函数式接口，结果写入 label。
 
         System.out.println(labels(products, available.and(affordable), label));
         // 输出：[book]

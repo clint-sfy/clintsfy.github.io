@@ -356,7 +356,6 @@ import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 
 @DisallowConcurrentExecution
-// 初始状态：@DisallowConcurrentExecution。
 // 作用：@DisallowConcurrentExecution；避免同一 JobKey 重叠。
 final class RebuildJob implements Job {
     @Override public void execute(JobExecutionContext context) {

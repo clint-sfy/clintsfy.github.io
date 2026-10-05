@@ -49,7 +49,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-// 初始状态：@SpringBootApplication。
 // 作用：@SpringBootApplication；声明启动入口。
 public class BackendApplication {
     public static void main(String[] args) {
@@ -77,7 +76,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-// 初始状态：@Configuration。
 // 作用：@Configuration；声明配置类。
 class TimeConfiguration {
     @Bean("systemClock")

@@ -60,7 +60,6 @@ System.out.println(first == second);
 
 ```java
 // 语义：重写时先判断类型，再比较参与身份的字段。
-// 调用参数：代码依次使用 "U-1"、true。
 import java.util.Objects;
 
 class UserId {
@@ -125,7 +124,6 @@ System.out.println(ids.contains(new UserId("U-1")));
 
 ```java
 // 语义：toString 适合日志、调试和错误信息。
-// 调用参数：代码依次使用 "User[name="、"]"、"Ann"。
 class User {
     private final String name;
 

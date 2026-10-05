@@ -48,7 +48,6 @@ IoC 容器像一张对象装配图：先读取 Bean 定义，再按依赖关系�
 import org.springframework.stereotype.Component;
 
 @Component
-// 初始状态：@Component。
 // 作用：@Component；注册通用组件。
 class ClockSource {
     String zone() {
@@ -71,7 +70,6 @@ System.out.println(new ClockSource().zone());
 import org.springframework.stereotype.Service;
 
 @Service
-// 初始状态：@Service。
 // 作用：@Service；注册服务组件。
 class GreetingService {
     String greet() {
@@ -160,7 +158,6 @@ class TokenRules {
     private String prefix;
 
     @PostConstruct
-// 初始状态：@PostConstruct。
 // 作用：@PostConstruct；完成初始化校验。
     void initialize() {
         prefix = "Bearer ";
@@ -347,7 +344,6 @@ class AlertService {
 class PrimaryConfiguration {
     @Bean
     @Primary
-// 初始状态：@Primary。
 // 作用：@Primary；声明默认候选。
     Notifier systemClockNotifier() {
         return () -> "system-clock";
@@ -391,7 +387,6 @@ try (var context = new AnnotationConfigApplicationContext(PrimaryConfiguration.c
 class BillingService {
     private final Clock clock;
     @Autowired
-// 初始状态：@Autowired。
 // 作用：@Autowired；旧代码的按类型注入。
     BillingService(Clock clock) {
         this.clock = clock;
@@ -416,7 +411,6 @@ class BillingService {
 class UploadLimits {
     private final long maxBytes;
     UploadLimits(@Value("${app.upload.max-bytes:10485760}") long maxBytes) {
-// 初始状态：UploadLimits(@Value("${app.upload.max-bytes:10485760}") long maxBytes) {。
 // 作用：UploadLimits(@Value("${app.upload.max-bytes:10485760}") long maxBytes) {；注入单个配置值。
         this.maxBytes = maxBytes;
 // 初始状态：maxBytes = maxBytes。
@@ -535,7 +529,6 @@ FilterRegistrationBean<RequestIdFilter> apiFilter() {
 // 结果：容器启用缓存切面，并提供名为 `users` 的缓存。
 @Configuration
 @EnableCaching
-// 初始状态：@EnableCaching。
 // 作用：@EnableCaching；开启 Spring 缓存代理。
 class CacheConfiguration {
     @Bean
@@ -559,7 +552,6 @@ class CacheConfiguration {
 // 结果：未配置 `gen.author` 时，`author()` 返回 `team`。
 @Configuration
 @PropertySource("classpath:generator.properties")
-// 初始状态：@PropertySource("classpath:generator.properties")。
 // 作用：@PropertySource("classpath:generator.properties")；引入额外 properties 资源。
 class GeneratorConfiguration {
     private final Environment environment;
@@ -593,7 +585,6 @@ class CaptchaFacade {
 // 作用：redis.opsForValue().set(key, value);；按名称优先注入。
     }
     boolean ready() { return redis != null; }
-// 初始状态：boolean ready() { return redis != null; }。
 }
 ```
 
