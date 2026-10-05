@@ -167,7 +167,8 @@ async function loadCanonicalRoutes() {
 function outputPathForSource(source) {
   assertSafeRoute(source, 'source')
   const pathParts = source.slice(1).split('/')
-  const outputPath = resolve(PUBLIC_DIRECTORY, ...pathParts, 'index.html')
+  const articleName = pathParts.pop()
+  const outputPath = resolve(PUBLIC_DIRECTORY, ...pathParts, `${articleName}.html`)
   const publicRoot = resolve(PUBLIC_DIRECTORY)
   const relativeOutput = relative(publicRoot, outputPath)
   if (isAbsolute(relativeOutput) || relativeOutput === '..' || relativeOutput.startsWith(`..${sep}`)) {

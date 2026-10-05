@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
-import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { join, relative } from 'node:path'
+import { tmpdir } from 'node:os'
 import { test } from 'node:test'
 
 import {
@@ -8,6 +9,7 @@ import {
   getJavaCourseItems,
 } from '../docs/.vitepress/config/java-course.ts'
 import {
+  generateRedirects,
   renderRedirectHtml,
   validateRedirects,
 } from '../scripts/generate-java-redirects.mjs'
@@ -332,4 +334,57 @@ test('Java redirect HTML repeats one encoded destination in every navigation mec
   const escapedTargetHtml = renderRedirectHtml('/courses/java/引号"&<script>')
   assert.doesNotMatch(escapedTargetHtml, /引号"&<script>/u)
   assert.doesNotMatch(escapedTargetHtml, /<\/script>.*引号/u)
+})
+
+test('Java redirect generator emits one flat HTML file for every legacy route', async () => {
+  const temporaryPublicDirectory = mkdtempSync(join(tmpdir(), 'java-redirects-'))
+  try {
+    const result = await generateRedirects({ publicDirectory: temporaryPublicDirectory })
+    assert.equal(result.count, REDIRECTS.length)
+    assert.ok(
+      existsSync(join(
+        temporaryPublicDirectory,
+        'courses',
+        'java',
+        '11-工程实践',
+        '01-Maven与测试工程.html',
+      )),
+      'Chinese legacy route should become a flat .html file',
+    )
+    assert.ok(
+      existsSync(join(
+        temporaryPublicDirectory,
+        'courses',
+        'java',
+        '13-后端工程',
+        '13-MySQL-8.0.html',
+      )),
+    )
+    assert.equal(
+      existsSync(join(
+        temporaryPublicDirectory,
+        'courses',
+        'java',
+        '13-后端工程',
+        '13-MySQL-8.0',
+        'index.html',
+      )),
+      false,
+      'redirect output must not use a directory-index variant',
+    )
+
+    const generatedFiles = []
+    const collectFiles = (directory) => {
+      for (const entry of readdirSync(directory, { withFileTypes: true })) {
+        const entryPath = join(directory, entry.name)
+        if (entry.isDirectory()) collectFiles(entryPath)
+        else generatedFiles.push(entryPath)
+      }
+    }
+    collectFiles(temporaryPublicDirectory)
+    assert.equal(generatedFiles.length, REDIRECTS.length)
+    assert.ok(generatedFiles.every((filePath) => filePath.endsWith('.html')))
+  } finally {
+    rmSync(temporaryPublicDirectory, { recursive: true, force: true })
+  }
 })
