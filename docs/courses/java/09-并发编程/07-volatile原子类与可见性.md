@@ -69,11 +69,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicIncrementDemo {
     public static void main(String[] args) {
         AtomicInteger count = new AtomicInteger(0);
-// 作用：AtomicInteger count = new AtomicInteger(0);；原子计数，调用后目标状态更新。
+// 作用：AtomicInteger count = new AtomicInteger(0);；原子计数。
 // 初始状态：count = new AtomicInteger(0)。
         int current = count.incrementAndGet();
 // 初始状态：current = count.incrementAndGet()。
-// 作用：int current = count.incrementAndGet();；原子计数，返回调用结果。
+// 作用：int current = count.incrementAndGet();；原子计数。
         System.out.println(current + ", stored=" + count.get());
 // 输出：1, stored=1
     }
@@ -171,11 +171,11 @@ public class LongAdderCounterDemo {
     public static void main(String[] args) {
         LongAdder hits = new LongAdder();
 // 初始状态：hits = new LongAdder()。
-// 作用：LongAdder hits = new LongAdder();；并发统计总量，返回调用结果。
+// 作用：LongAdder hits = new LongAdder();；并发统计总量。
         hits.add(2);
-// 作用：hits.add(2);；并发统计总量，调用后目标状态更新。
+// 作用：hits.add(2);；并发统计总量。
         hits.increment();
-// 作用：hits.increment();；并发统计总量，调用后目标状态更新。
+// 作用：hits.increment();；并发统计总量。
         System.out.println(hits.sum());
 // 输出：3
     }
@@ -240,13 +240,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class WeakCasDemo {
     public static void main(String[] args) {
         AtomicInteger value = new AtomicInteger();
-// 作用：AtomicInteger value = new AtomicInteger();；弱 CAS 边界，调用后目标状态更新。
+// 作用：AtomicInteger value = new AtomicInteger();；弱 CAS 边界。
 // 初始状态：value = new AtomicInteger()。
         boolean changed;
         do {
             changed = value.weakCompareAndSet(0, 1);
 // 初始状态：changed = value.weakCompareAndSet(0, 1)。
-// 作用：changed = value.weakCompareAndSet(0, 1);；弱 CAS 边界，返回调用结果。
+// 作用：changed = value.weakCompareAndSet(0, 1);；弱 CAS 边界。
         } while (!changed);
         System.out.println(changed + ", value=" + value.get());
 // 输出：true, value=1
@@ -266,11 +266,11 @@ public class LongAccumulatorDemo {
     public static void main(String[] args) {
         LongAccumulator max = new LongAccumulator(Math::max, Long.MIN_VALUE);
 // 初始状态：max = new LongAccumulator(Math::max, Long.MIN_VALUE)。
-// 作用：LongAccumulator max = new LongAccumulator(Math::max, Long.MIN_VALUE);；自定义结合运算，返回调用结果。
+// 作用：LongAccumulator max = new LongAccumulator(Math::max, Long.MIN_VALUE);；自定义结合运算。
         max.accumulate(7);
-// 作用：max.accumulate(7);；自定义结合运算，调用后目标状态更新。
+// 作用：max.accumulate(7);；自定义结合运算。
         max.accumulate(3);
-// 作用：max.accumulate(3);；自定义结合运算，调用后目标状态更新。
+// 作用：max.accumulate(3);；自定义结合运算。
         System.out.println(max.get());
 // 输出：7
     }
@@ -285,7 +285,7 @@ public class AtomicStateDemo {
     public static void main(String[] args) {
         AtomicInteger state = new AtomicInteger(0);
 // 初始状态：state = new AtomicInteger(0)。
-// 作用：AtomicInteger state = new AtomicInteger(0);；自定义结合运算，返回调用结果。
+// 作用：AtomicInteger state = new AtomicInteger(0);；自定义结合运算。
         if (state.compareAndSet(0, 1)) {
             System.out.println("initialized=" + state.get());
 // 输出：initialized=1

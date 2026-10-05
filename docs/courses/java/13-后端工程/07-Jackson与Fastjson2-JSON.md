@@ -110,7 +110,7 @@ System.out.println(new ObjectMapper().writeValueAsString(new Session("s-1", "tok
 @com.fasterxml.jackson.annotation.JacksonAnnotationsInside
 @com.fasterxml.jackson.annotation.JsonIgnore
 @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
-// 作用：@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)；组合 Jackson 注解，调用后目标状态更新。
+// 作用：@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)；组合 Jackson 注解。
 // 初始状态：@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)。
 @interface InternalOnly {}
 // 输出：标注 @InternalOnly 的属性按 @JsonIgnore 处理。
@@ -208,7 +208,7 @@ import java.time.OffsetDateTime;
 
 record EventView(@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX") OffsetDateTime occurredAt) {}
 // 输入：occurredAt 初始值来自 OffsetDateTime.parse("2026-10-01T09:00:00+08:00")，保留 +08:00 偏移。
-// 作用：record EventView(@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX") OffsetDateTime occurredAt) {}；约定日期表现，返回调用结果。
+// 作用：record EventView(@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX") OffsetDateTime occurredAt) {}；约定日期表现。
 
 System.out.println(new EventView(OffsetDateTime.parse("2026-10-01T09:00:00+08:00")).occurredAt());
 // 输出：2026-10-01T09:00+08:00
@@ -246,7 +246,7 @@ record UserView(String name, int age) {}
 
 String json = JSON.toJSONString(new UserView("Ann", 18));
 // 初始状态：json = JSON.toJSONString(new UserView("Ann", 18))。
-// 作用：String json = JSON.toJSONString(new UserView("Ann", 18));；用 Fastjson2 序列化，返回调用结果。
+// 作用：String json = JSON.toJSONString(new UserView("Ann", 18));；用 Fastjson2 序列化。
 System.out.println(json.contains("\"name\":\"Ann\"") && json.contains("\"age\":18"));
 // 输出：true
 // 作用：用于在明确边界内用 Fastjson2 把对象序列化为 JSON。
@@ -366,16 +366,16 @@ final class MaskedEmailValueSerializer extends ValueSerializer<String> {
             throws JacksonException {
         int at = value.indexOf('@');
 // 初始状态：at = value.indexOf('@')。
-// 作用：int at = value.indexOf('@');；ValueSerializer/ValueDeserializer，返回调用结果。
+// 作用：int at = value.indexOf('@');；at 为邮箱中 @ 的索引。
         String masked = at > 0 && at < value.length() - 1
                 ? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)
                 : value;
 // 初始状态：masked = at > 0 && at < value.length() - 1。
 // 作用：String masked = at > 0 && at < value.length() - 1；ValueSerializer/ValueDeserializer，返回读取结果。
-// 作用：? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)；ValueSerializer/ValueDeserializer，返回调用结果。
+// 作用：? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)；at=1 时脱敏为 "*"，否则保留首字符并追加 "***"。
         gen.writeString(masked);
 // 初始状态：gen.writeString(masked)。
-// 作用：gen.writeString(masked);；ValueSerializer/ValueDeserializer，调用后目标状态更新。
+// 作用：gen.writeString(masked);；将 masked 写入 JSON 字符串。
     }
 }
 

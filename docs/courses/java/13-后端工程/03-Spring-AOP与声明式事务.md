@@ -51,7 +51,7 @@ import org.springframework.stereotype.Component;
 
 @Aspect
 // 初始状态：@Aspect。
-// 作用：@Aspect；声明切面类，返回调用结果。
+// 作用：@Aspect；声明切面类。
 @Component
 class AuditAspect {
     String name() { return "audit"; }
@@ -76,7 +76,7 @@ import org.aspectj.lang.annotation.Pointcut;
 class AuditPointcuts {
     @Pointcut("execution(* com.example.service..*(..))")
 // 初始状态：@Pointcut("execution(* com.example.service..*(..))")。
-// 作用：@Pointcut("execution(* com.example.service..*(..))")；声明可复用切点，返回调用结果。
+// 作用：@Pointcut("execution(* com.example.service..*(..))")；声明可复用切点。
     void serviceOperation() {}
 }
 
@@ -100,13 +100,13 @@ import org.aspectj.lang.annotation.Aspect;
 class TimingAspect {
     @Around("execution(* com.example.service..*(..))")
 // 初始状态：@Around("execution(* com.example.service..*(..))")。
-// 作用：@Around("execution(* com.example.service..*(..))")；包裹目标调用，返回调用结果。
+// 作用：@Around("execution(* com.example.service..*(..))")；包裹目标调用。
     Object time(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.nanoTime();
-// 作用：long start = System.nanoTime();；包裹目标调用，调用后目标状态更新。
+// 作用：long start = System.nanoTime();；包裹目标调用。
 // 初始状态：start = System.nanoTime()。
         Object result = joinPoint.proceed();
-// 作用：Object result = joinPoint.proceed();；包裹目标调用，调用后目标状态更新。
+// 作用：Object result = joinPoint.proceed();；包裹目标调用。
 // 初始状态：result = joinPoint.proceed()。
         System.out.println("elapsed=" + (System.nanoTime() - start >= 0));
 // 输出：elapsed=true
@@ -134,7 +134,7 @@ class Guard {
         }
         return joinPoint.proceed();
 // 初始状态：return joinPoint.proceed()。
-// 作用：return joinPoint.proceed();；继续执行目标方法，返回调用结果。
+// 作用：return joinPoint.proceed();；继续执行目标方法。
     }
 }
 // 说明：joinPoint.proceed() 才把调用交给目标方法并返回其 Object 结果；省略它会让目标方法完全不执行，调用两次则会重复业务副作用。
@@ -154,7 +154,7 @@ import org.springframework.transaction.annotation.Transactional;
 class TransferService {
     @Transactional
 // 初始状态：@Transactional。
-// 作用：@Transactional；声明事务边界，返回调用结果。
+// 作用：@Transactional；声明事务边界。
     public void transfer() {
         System.out.println("debit then credit");
 // 输出：debit then credit
@@ -205,7 +205,7 @@ class OrderService {
     void submit() {
         this.writeAudit();
 // 初始状态：this.writeAudit()。
-// 作用：this.writeAudit();；识别代理绕过，调用后目标状态更新。
+// 作用：this.writeAudit();；识别代理绕过。
         System.out.println("self call completed");
 // 输出：self call completed
     }
@@ -235,7 +235,7 @@ import org.springframework.core.annotation.Order;
 @Aspect
 @Order(1)
 // 初始状态：@Order(1)。
-// 作用：@Order(1)；确定多个通知顺序，返回调用结果。
+// 作用：@Order(1)；确定多个通知顺序。
 class SecurityAspect {
     @Before("execution(* com.example..service..*(..))")
     void check() {
@@ -261,12 +261,12 @@ class ImportService {
     ImportService(TransactionTemplate template) {
         this.template = template;
 // 初始状态：template = template。
-// 作用：this.template = template;；程序化事务，返回调用结果。
+// 作用：this.template = template;；程序化事务。
     }
 
     String importOne() {
         return template.execute(status -> {
-// 作用：return template.execute(status -> {；程序化事务，调用后目标状态更新。
+// 作用：return template.execute(status -> {；程序化事务。
 // 初始状态：return template.execute(status -> {。
             System.out.println("imported");
 // 输出：imported
@@ -311,9 +311,9 @@ class OrderService {
     void refreshAll() {
         OrderService proxy = (OrderService) AopContext.currentProxy();
 // 初始状态：proxy = (OrderService) AopContext.currentProxy()。
-// 作用：OrderService proxy = (OrderService) AopContext.currentProxy();；显式穿过当前代理，返回调用结果。
+// 作用：OrderService proxy = (OrderService) AopContext.currentProxy();；显式穿过当前代理。
         proxy.refreshOne(42L);
-// 作用：proxy.refreshOne(42L);；显式穿过当前代理，调用后目标状态更新。
+// 作用：proxy.refreshOne(42L);；显式穿过当前代理。
     }
     @Transactional
     public void refreshOne(long id) {
@@ -335,13 +335,13 @@ class OrderService {
 @Configuration
 @EnableAspectJAutoProxy(exposeProxy = true)
 // 初始状态：exposeProxy = true)。
-// 作用：@EnableAspectJAutoProxy(exposeProxy = true)；开启基于代理的 AOP，返回调用结果。
+// 作用：@EnableAspectJAutoProxy(exposeProxy = true)；开启基于代理的 AOP。
 class AopConfiguration {
     @Bean
     AuditAspect auditAspect() {
         return new AuditAspect();
 // 初始状态：return new AuditAspect()。
-// 作用：return new AuditAspect();；开启基于代理的 AOP，调用后目标状态更新。
+// 作用：return new AuditAspect();；开启基于代理的 AOP。
     }
     String mode() { return "proxy"; }
 }
@@ -374,16 +374,16 @@ class PaymentService {
     PaymentService(Ledger ledger) {
         this.ledger = ledger;
 // 初始状态：ledger = ledger。
-// 作用：this.ledger = ledger;；开启基于代理的 AOP，返回调用结果。
+// 作用：this.ledger = ledger;；开启基于代理的 AOP。
     }
 
     @Transactional(rollbackFor = IllegalStateException.class)
     public void transfer(String from, String to, int amount) {
         ledger.debit(from, amount);
-// 作用：ledger.debit(from, amount);；开启基于代理的 AOP，调用后目标状态更新。
+// 作用：ledger.debit(from, amount);；开启基于代理的 AOP。
 // 初始状态：ledger.debit(from, amount)。
         ledger.credit(to, amount);
-// 作用：ledger.credit(to, amount);；开启基于代理的 AOP，调用后目标状态更新。
+// 作用：ledger.credit(to, amount);；开启基于代理的 AOP。
         System.out.println("transfer committed");
 // 输出：transfer committed
     }

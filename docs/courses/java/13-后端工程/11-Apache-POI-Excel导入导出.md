@@ -50,7 +50,7 @@ Excel 日期没有独立的“日期对象”存储，常见实现是数字加�
 ```java
 try (InputStream in = Files.newInputStream(path); Workbook workbook = WorkbookFactory.create(in)) {
 // 初始状态：in = Files.newInputStream(path); Workbook workbook = WorkbookFactory.create(in))。
-// 作用：try (InputStream in = Files.newInputStream(path); Workbook workbook = WorkbookFactory.create(in)) {；识别并打开工作簿，返回调用结果。
+// 作用：try (InputStream in = Files.newInputStream(path); Workbook workbook = WorkbookFactory.create(in)) {；识别并打开工作簿。
     System.out.println(workbook.getNumberOfSheets());
 // 输出：工作簿中的工作表数量。
 }
@@ -224,9 +224,9 @@ System.out.println(validation != null);
 ```java
 validation.createPromptBox("状态", "请选择启用或停用");
 // 初始状态：validation.createPromptBox("状态", "请选择启用或停用")。
-// 作用：validation.createPromptBox("状态", "请选择启用或停用");；设置输入提示，返回调用结果。
+// 作用：validation.createPromptBox("状态", "请选择启用或停用");；设置输入提示。
 validation.setShowPromptBox(true);
-// 作用：validation.setShowPromptBox(true);；设置输入提示，调用后目标状态更新。
+// 作用：validation.setShowPromptBox(true);；设置输入提示。
 System.out.println(validation.getShowPromptBox());
 // 输出：true
 // 说明：validation.createPromptBox("Status", "Choose ACTIVE or DISABLED") 设置选中目标单元格时的标题和提示文本，不负责验证服务端导入值。
@@ -418,14 +418,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 List<String> importExcel(InputStream input) throws Exception {
-// 作用：List<String> importExcel(InputStream input) throws Exception {；建立导入边界，调用后目标状态更新。
+// 作用：List<String> importExcel(InputStream input) throws Exception {；建立导入边界。
     List<String> rows = new ArrayList<>();
 // 初始状态：rows = new ArrayList<>()。
-// 作用：List<String> rows = new ArrayList<>();；建立导入边界，返回调用结果。
+// 作用：List<String> rows = new ArrayList<>();；建立导入边界。
     if (input == null) throw new IllegalArgumentException("input required");
 // 初始状态：if (input == null) throw new IllegalArgumentException("input required")。
     try (InputStream in = new BufferedInputStream(input);
-// 作用：try (InputStream in = new BufferedInputStream(input);；建立导入边界，调用后目标状态更新。
+// 作用：try (InputStream in = new BufferedInputStream(input);；建立导入边界。
 // 初始状态：in = new BufferedInputStream(input)。
             var workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create(in)) {
 // 初始状态：workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create(in))。
@@ -439,12 +439,12 @@ List<String> importExcel(InputStream input) throws Exception {
 // 作用：var cell = row.getCell(0, org.apache.poi.ss.usermodel.Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);；建立导入边界，返回读取结果。
 // 初始状态：cell = row.getCell(0, org.apache.poi.ss.usermodel.Row.MissingCellPolicy.RETURN_BLANK_AS_NULL)。
             String value = cell == null ? "" : new org.apache.poi.ss.usermodel.DataFormatter().formatCellValue(cell);
-// 作用：String value = cell == null ? "" : new org.apache.poi.ss.usermodel.DataFormatter().formatCellValue(cell);；建立导入边界，调用后目标状态更新。
+// 作用：String value = cell == null ? "" : new org.apache.poi.ss.usermodel.DataFormatter().formatCellValue(cell);；建立导入边界。
 // 初始状态：value = cell == null ? "" : new org.apache.poi.ss.usermodel.DataFormatter().formatCellValue(cell)。
             if (value.isBlank()) throw new IllegalArgumentException("row validation failed");
 // 初始状态：if (value.isBlank()) throw new IllegalArgumentException("row validation failed")。
             rows.add(value);
-// 作用：rows.add(value);；建立导入边界，调用后目标状态更新。
+// 作用：rows.add(value);；建立导入边界。
         }
     }
     return rows;
@@ -466,28 +466,28 @@ import java.util.List;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 byte[] exportExcel(List<String> values) throws Exception {
-// 作用：byte[] exportExcel(List<String> values) throws Exception {；建立导出边界，调用后目标状态更新。
+// 作用：byte[] exportExcel(List<String> values) throws Exception {；建立导出边界。
     try (var output = new ByteArrayOutputStream()) {
 // 初始状态：output = new ByteArrayOutputStream())。
-// 作用：try (var output = new ByteArrayOutputStream()) {；建立导出边界，返回调用结果。
+// 作用：try (var output = new ByteArrayOutputStream()) {；建立导出边界。
         SXSSFWorkbook workbook = new SXSSFWorkbook(100);
-// 作用：SXSSFWorkbook workbook = new SXSSFWorkbook(100);；建立导出边界，调用后目标状态更新。
+// 作用：SXSSFWorkbook workbook = new SXSSFWorkbook(100);；建立导出边界。
 // 初始状态：workbook = new SXSSFWorkbook(100)。
         try (workbook) {
             var sheet = workbook.createSheet("data");
-// 作用：var sheet = workbook.createSheet("data");；建立导出边界，调用后目标状态更新。
+// 作用：var sheet = workbook.createSheet("data");；建立导出边界。
 // 初始状态：sheet = workbook.createSheet("data")。
             for (int i = 0; i < values.size(); i++)
                 sheet.createRow(i).createCell(0).setCellValue(values.get(i));
 // 作用：sheet.createRow(i).createCell(0).setCellValue(values.get(i));；建立导出边界，返回读取结果。
 // 初始状态：i = 0; i < values.size(); i++)。
             workbook.write(output);
-// 作用：workbook.write(output);；建立导出边界，调用后目标状态更新。
+// 作用：workbook.write(output);；建立导出边界。
         } finally {
             if (!workbook.dispose()) System.err.println("poi-temp-cleanup=failed");
         }
         return output.toByteArray();
-// 作用：return output.toByteArray();；建立导出边界，调用后目标状态更新。
+// 作用：return output.toByteArray();；建立导出边界。
     }
 }
 System.out.println("exportedNonEmpty=true");

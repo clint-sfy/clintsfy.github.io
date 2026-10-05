@@ -320,15 +320,15 @@ public class WaitMonitorRuleDemo {
     public static void main(String[] args) {
         Object lock = new Object();
 // 初始状态：lock = new Object()。
-// 作用：Object lock = new Object();；Object 返回本次调用的结果。
+// 作用：Object lock = new Object();；创建监视器对象 lock，当前线程尚未持有它。
         try {
             lock.wait();
 // 初始状态：lock.wait()。
-// 作用：lock.wait();；wait 返回本次调用的结果。
+// 作用：lock.wait();；未持有 lock 时调用 wait，会抛出 IllegalMonitorStateException。
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
 // 初始状态：Thread.currentThread().interrupt()。
-// 作用：Thread.currentThread().interrupt();；currentThread 返回本次调用的结果。
+// 作用：Thread.currentThread().interrupt();；恢复当前线程的中断状态。
         } catch (IllegalMonitorStateException ex) {
             System.out.println(ex.getClass().getSimpleName());
 // 输出：IllegalMonitorStateException
@@ -352,7 +352,7 @@ public class MonitorBlockingBoundaryDemo {
     public static void main(String[] args) {
         new MonitorBlockingBoundaryDemo().shortWork();
 // 初始状态：new MonitorBlockingBoundaryDemo().shortWork()。
-// 作用：new MonitorBlockingBoundaryDemo().shortWork();；shortWork 返回本次调用的结果。
+// 作用：new MonitorBlockingBoundaryDemo().shortWork();；调用 shortWork()，打印完成消息。
     }
 }
 ```
@@ -373,13 +373,13 @@ public class SynchronizedStateDemo {
     public static void main(String[] args) {
         var state = new SynchronizedStateDemo();
 // 初始状态：state = new SynchronizedStateDemo()。
-// 作用：var state = new SynchronizedStateDemo();；SynchronizedStateDemo 返回本次调用的结果。
+// 作用：var state = new SynchronizedStateDemo();；创建 value=0 的状态对象 state。
         state.add(2);
 // 初始状态：state.add(2)。
-// 作用：state.add(2);；add 返回本次调用的结果。
+// 作用：state.add(2);；state.value 变为 2。
         state.add(3);
 // 初始状态：state.add(3)。
-// 作用：state.add(3);；add 返回本次调用的结果。
+// 作用：state.add(3);；state.value 变为 5，最终输出 5。
         System.out.println(state.value());
 // 输出：5
     }

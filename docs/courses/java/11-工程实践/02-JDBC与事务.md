@@ -32,11 +32,11 @@ PreparedStatement 参数绑定可防止 SQL 注入，并帮助数据库复用执
 // 说明：PreparedStatement：绑定查询参数 的具体调用为 String sql = "select name from account where id = ?";
 String sql = "select name from account where id = ?";
 // 初始状态：sql = "select name from account where id = ?"。
-// 作用：String sql = "select name from account where id = ?";；绑定查询参数，返回调用结果。
+// 作用：String sql = "select name from account where id = ?";；绑定查询参数。
 try (var ps = connection.prepareStatement(sql)) {
 // 初始状态：ps = connection.prepareStatement(sql))。
     ps.setLong(1, 42L);
-// 作用：ps.setLong(1, 42L);；绑定查询参数，调用后目标状态更新。
+// 作用：ps.setLong(1, 42L);；绑定查询参数。
     try (var rs = ps.executeQuery()) {
 // 初始状态：rs = ps.executeQuery())。
         if (rs.next()) System.out.println(rs.getString("name"));

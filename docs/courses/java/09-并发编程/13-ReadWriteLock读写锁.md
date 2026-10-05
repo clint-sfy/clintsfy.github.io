@@ -378,10 +378,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ReadWriteCacheDemo {
     private final Map<String, String> cache = new HashMap<>();
 // 初始状态：cache = new HashMap<>()。
-// 作用：private final Map<String, String> cache = new HashMap<>();；读写路径分离，返回调用结果。
+// 作用：private final Map<String, String> cache = new HashMap<>();；读写路径分离。
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 // 初始状态：lock = new ReentrantReadWriteLock()。
-// 作用：private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();；读写路径分离，返回调用结果。
+// 作用：private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();；读写路径分离。
 
     String get(String key) {
         lock.readLock().lock();
@@ -401,15 +401,15 @@ public class ReadWriteCacheDemo {
     void put(String key, String value) {
         lock.writeLock().lock();
 // 初始状态：lock.writeLock().lock()。
-// 作用：lock.writeLock().lock();；读写路径分离，调用后目标状态更新。
+// 作用：lock.writeLock().lock();；读写路径分离。
         try {
             cache.put(key, value);
 // 初始状态：cache.put(key, value)。
-// 作用：cache.put(key, value);；读写路径分离，调用后目标状态更新。
+// 作用：cache.put(key, value);；读写路径分离。
         } finally {
             lock.writeLock().unlock();
 // 初始状态：lock.writeLock().unlock()。
-// 作用：lock.writeLock().unlock();；读写路径分离，调用后目标状态更新。
+// 作用：lock.writeLock().unlock();；读写路径分离。
         }
     }
 
@@ -419,7 +419,7 @@ public class ReadWriteCacheDemo {
 // 作用：var cache = new ReadWriteCacheDemo();；读写路径分离，返回读取结果。
         cache.put("language", "Java");
 // 初始状态：cache.put("language", "Java")。
-// 作用：cache.put("language", "Java");；读写路径分离，调用后目标状态更新。
+// 作用：cache.put("language", "Java");；读写路径分离。
         System.out.println(cache.get("language"));
 // 输出：Java
     }

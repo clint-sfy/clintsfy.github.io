@@ -194,10 +194,10 @@ public class ServiceClassLoaderDemo {
     public static void main(String[] args) {
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
 // 初始状态：loader = Thread.currentThread().getContextClassLoader()。
-// 作用：ClassLoader loader = Thread.currentThread().getContextClassLoader();；currentThread 返回本次调用的结果。
+// 作用：ClassLoader loader = Thread.currentThread().getContextClassLoader();；读取当前线程上下文 ClassLoader 到 loader。
         ServiceLoader<Plugin> services = ServiceLoader.load(Plugin.class, loader);
 // 初始状态：services = ServiceLoader.load(Plugin.class, loader)。
-// 作用：ServiceLoader<Plugin> services = ServiceLoader.load(Plugin.class, loader);；load 返回本次调用的结果。
+// 作用：ServiceLoader<Plugin> services = ServiceLoader.load(Plugin.class, loader);；按 Plugin.class 和 loader 创建服务加载器，后续检查非 null。
         System.out.println(services != null);
 // 输出：true
     }
@@ -293,7 +293,7 @@ public final class FactoryFormatter implements com.example.spi.Formatter {
     public static FactoryFormatter provider() {
         return new FactoryFormatter();
 // 初始状态：return new FactoryFormatter()。
-// 作用：return new FactoryFormatter();；FactoryFormatter 返回本次调用的结果。
+// 作用：return new FactoryFormatter();；创建 FactoryFormatter，provider() 返回该实例。
     }
 
     public String format(String value) { return "factory:" + value; }
@@ -314,7 +314,7 @@ public class ServiceThreadBoundaryDemo {
     public static void main(String[] args) {
         ServiceLoader<ThreadService> loader = ServiceLoader.load(ThreadService.class);
 // 初始状态：loader = ServiceLoader.load(ThreadService.class)。
-// 作用：ServiceLoader<ThreadService> loader = ServiceLoader.load(ThreadService.class);；load 返回本次调用的结果。
+// 作用：ServiceLoader<ThreadService> loader = ServiceLoader.load(ThreadService.class);；按 ThreadService.class 创建加载器，非 null 表示加载器可用。
         System.out.println(loader != null);
 // 输出：true
         // 不应让多个线程无协调地共享同一个 ServiceLoader 迭代器
@@ -334,7 +334,7 @@ public class ModuleLayerServiceDemo {
     public static void main(String[] args) {
         ServiceLoader<Object> loader = ServiceLoader.load(ModuleLayer.boot(), Object.class);
 // 初始状态：loader = ServiceLoader.load(ModuleLayer.boot(), Object.class)。
-// 作用：ServiceLoader<Object> loader = ServiceLoader.load(ModuleLayer.boot(), Object.class);；从模块层加载服务，调用后目标状态更新。
+// 作用：ServiceLoader<Object> loader = ServiceLoader.load(ModuleLayer.boot(), Object.class);；从模块层加载服务。
         System.out.println(loader != null);
 // 输出：true
     }
@@ -351,7 +351,7 @@ public class ServiceLoaderDemo {
     public static void main(String[] args) {
         ServiceLoader<Formatter> services = ServiceLoader.load(Formatter.class);
 // 初始状态：services = ServiceLoader.load(Formatter.class)。
-// 作用：ServiceLoader<Formatter> services = ServiceLoader.load(Formatter.class);；从模块层加载服务，调用后目标状态更新。
+// 作用：ServiceLoader<Formatter> services = ServiceLoader.load(Formatter.class);；从模块层加载服务。
         Formatter formatter = services.findFirst().orElse(value -> "default:" + value);
 // 作用：Formatter formatter = services.findFirst().orElse(value -> "default:" + value);；从模块层加载服务，返回读取结果。
 // 初始状态：formatter = services.findFirst().orElse(value -> "default:" + value)。

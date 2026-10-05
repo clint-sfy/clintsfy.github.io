@@ -50,13 +50,13 @@ import java.util.regex.Pattern;
 
 private static final Pattern CONTEXT_ID = Pattern.compile("[A-Za-z0-9._:-]{1,64}");
 // 初始状态：CONTEXT_ID = Pattern.compile("[A-Za-z0-9._:-]{1,64}")。
-// 作用：private static final Pattern CONTEXT_ID = Pattern.compile("[A-Za-z0-9._:-]{1,64}");；compile 返回本次调用的结果。
+// 作用：private static final Pattern CONTEXT_ID = Pattern.compile("[A-Za-z0-9._:-]{1,64}");；长度为 1-64，且只匹配安全上下文字符。
 
 static String safeContextId(String raw) {
     if (raw == null || raw.length() > 64 || raw.indexOf('\r') >= 0 || raw.indexOf('\n') >= 0
             || !CONTEXT_ID.matcher(raw).matches()) return "invalid";
 // 初始状态：|| !CONTEXT_ID.matcher(raw).matches()) return "invalid"。
-// 作用：|| !CONTEXT_ID.matcher(raw).matches()) return "invalid";；matcher 返回本次调用的结果。
+// 作用：|| !CONTEXT_ID.matcher(raw).matches()) return "invalid";；raw 不匹配时返回 "invalid"。
     return raw;
 }
 // 结果：safeContextId("trace-01") 返回 "trace-01"，传入换行符或超过 64 个字符时返回 "invalid"
@@ -106,7 +106,7 @@ import org.slf4j.Logger;
 void process(Logger log, String taskId) {
     log.info("task={} state={}", taskId, "running");
 // 初始状态：task = {} state={}", taskId, "running")。
-// 作用：log.info("task={} state={}", taskId, "running");；记录参数化事件，返回调用结果。
+// 作用：log.info("task={} state={}", taskId, "running");；记录参数化事件。
     System.out.println("logged=" + taskId);
 // 输出：logged=task-7
 }
@@ -143,7 +143,7 @@ try {
 
 ```java
 String appender = "RollingFileAppender";
-// 作用：String appender = "RollingFileAppender";；限制日志占用，调用后目标状态更新。
+// 作用：String appender = "RollingFileAppender";；限制日志占用。
 // 初始状态：appender = "RollingFileAppender"。
 String policy = "SizeAndTimeBasedRollingPolicy";
 // 初始状态：policy = "SizeAndTimeBasedRollingPolicy"。
@@ -220,7 +220,7 @@ class OperationLogAspect {
     Object logOperation(ProceedingJoinPoint joinPoint) throws Throwable {
         Object result = joinPoint.proceed();
 // 初始状态：result = joinPoint.proceed()。
-// 作用：Object result = joinPoint.proceed();；只记录业务边界，返回调用结果。
+// 作用：Object result = joinPoint.proceed();；只记录业务边界。
         System.out.println("audit=success:" + joinPoint.getSignature().getName());
 // 输出：audit=success:update
         return result;
@@ -266,12 +266,12 @@ final class CacheReader {
     String read(String key) {
         log.debug("reading cache key={}", key);
 // 初始状态：key = {}", key)。
-// 作用：log.debug("reading cache key={}", key);；记录可按需开启的调试细节，返回调用结果。
+// 作用：log.debug("reading cache key={}", key);；记录可按需开启的调试细节。
         String value = "hit";
 // 初始状态：value = "hit"。
         log.debug("cache result key={} present={}", key, value != null);
 // 初始状态：key = {} present={}", key, value != null)。
-// 作用：log.debug("cache result key={} present={}", key, value != null);；记录可按需开启的调试细节，返回调用结果。
+// 作用：log.debug("cache result key={} present={}", key, value != null);；记录可按需开启的调试细节。
         return value;
     }
 }

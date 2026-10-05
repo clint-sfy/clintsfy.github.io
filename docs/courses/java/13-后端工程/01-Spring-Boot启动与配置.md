@@ -175,8 +175,8 @@ import org.springframework.boot.diagnostics.FailureAnalysis;
 FailureAnalysis analysis = new FailureAnalysis(
     "端口已被占用", "server.port", new IllegalStateException("bind failed"));
 // 初始状态：analysis = new FailureAnalysis(。
-// 作用：FailureAnalysis analysis = new FailureAnalysis(；先看根因与条件报告，返回调用结果。
-// 作用："端口已被占用", "server.port", new IllegalStateException("bind failed"));；先看根因与条件报告，返回调用结果。
+// 作用：FailureAnalysis analysis = new FailureAnalysis(；先看根因与条件报告。
+// 作用："端口已被占用", "server.port", new IllegalStateException("bind failed"));；先看根因与条件报告。
 System.out.println(analysis.getDescription());
 // 输出：端口已被占用
 // 作用：用于把“启动失败”拆成配置解析、Bean 创建、端口占用和条件不匹配等可验证原因。

@@ -129,15 +129,15 @@ public class SemaphoreTryDemo {
     public static void main(String[] args) {
         Semaphore semaphore = new Semaphore(1);
 // 初始状态：semaphore = new Semaphore(1)。
-// 作用：Semaphore semaphore = new Semaphore(1);；拒绝或降级，返回调用结果。
+// 作用：Semaphore semaphore = new Semaphore(1);；拒绝或降级。
         if (semaphore.tryAcquire()) {
-// 作用：if (semaphore.tryAcquire()) {；拒绝或降级，调用后目标状态更新。
+// 作用：if (semaphore.tryAcquire()) {；拒绝或降级。
             try {
                 System.out.println("accepted");
 // 输出：accepted
             } finally {
                 semaphore.release();
-// 作用：semaphore.release();；拒绝或降级，调用后目标状态更新。
+// 作用：semaphore.release();；拒绝或降级。
             }
         } else {
             System.out.println("busy");
@@ -161,14 +161,14 @@ public class BarrierDemo {
     public static void main(String[] args) throws Exception {
         CyclicBarrier barrier = new CyclicBarrier(1,
                 () -> {
-// 作用：CyclicBarrier barrier = new CyclicBarrier(1,；阶段汇合，调用后目标状态更新。
+// 作用：CyclicBarrier barrier = new CyclicBarrier(1,；阶段汇合。
 // 初始状态：barrier = new CyclicBarrier(1,。
                     System.out.println("phase complete");
 // 输出：phase complete
                 });
         barrier.await();
 // 初始状态：barrier.await()。
-// 作用：barrier.await();；阶段汇合，调用后目标状态更新。
+// 作用：barrier.await();；阶段汇合。
     }
 }
 ```
@@ -186,11 +186,11 @@ import java.util.concurrent.CyclicBarrier;
 public class BarrierResetDemo {
     public static void main(String[] args) {
         CyclicBarrier barrier = new CyclicBarrier(2);
-// 作用：CyclicBarrier barrier = new CyclicBarrier(2);；重置破坏的屏障，调用后目标状态更新。
+// 作用：CyclicBarrier barrier = new CyclicBarrier(2);；重置破坏的屏障。
 // 初始状态：barrier = new CyclicBarrier(2)。
         barrier.reset();
 // 初始状态：barrier.reset()。
-// 作用：barrier.reset();；重置破坏的屏障，返回调用结果。
+// 作用：barrier.reset();；重置破坏的屏障。
         System.out.println("parties=" + barrier.getParties());
 // 输出：parties=2
     }

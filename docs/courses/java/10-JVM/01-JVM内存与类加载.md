@@ -157,7 +157,7 @@ public class ClassInitializationDemo {
     static class Config {
         static final String VALUE = new String("ready");
 // 初始状态：VALUE = new String("ready")。
-// 作用：static final String VALUE = new String("ready");；类首次主动使用时执行，返回调用结果。
+// 作用：static final String VALUE = new String("ready");；类首次主动使用时执行。
 
         static {
             System.out.println("init once");
@@ -184,9 +184,9 @@ public class DirectMemoryDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(4);
 // 初始状态：buffer = ByteBuffer.allocateDirect(4)。
-// 作用：ByteBuffer buffer = ByteBuffer.allocateDirect(4);；堆外缓冲的边界，调用后目标状态更新。
+// 作用：ByteBuffer buffer = ByteBuffer.allocateDirect(4);；堆外缓冲的边界。
         buffer.putInt(42).flip();
-// 作用：buffer.putInt(42).flip();；堆外缓冲的边界，调用后目标状态更新。
+// 作用：buffer.putInt(42).flip();；堆外缓冲的边界。
         System.out.println(buffer.getInt());
 // 输出：42
     }
@@ -231,7 +231,7 @@ public class ClassUnloadHintDemo {
     public static void main(String[] args) {
         Object plugin = new Object();
 // 初始状态：plugin = new Object()。
-// 作用：Object plugin = new Object();；Object 返回本次调用的结果。
+// 作用：Object plugin = new Object();；创建待弱引用跟踪的 plugin 对象。
         WeakReference<Object> reference = new WeakReference<>(plugin);
 // 初始状态：reference = new WeakReference<>(plugin)。
 // 作用：WeakReference<Object> reference = new WeakReference<>(plugin);；调用返回本次结果。

@@ -239,9 +239,9 @@ public class VarHandleDemo {
 // 作用：VarHandle handle = MethodHandles.lookup().findVarHandle(；低层次内存访问工具，返回读取结果。
         var box = new VarHandleDemo();
 // 初始状态：box = new VarHandleDemo()。
-// 作用：var box = new VarHandleDemo();；低层次内存访问工具，返回调用结果。
+// 作用：var box = new VarHandleDemo();；低层次内存访问工具。
         handle.set(box, 42);
-// 作用：handle.set(box, 42);；低层次内存访问工具，调用后目标状态更新。
+// 作用：handle.set(box, 42);；低层次内存访问工具。
         System.out.println(handle.get(box));
 // 输出：42
     }
@@ -294,10 +294,10 @@ public class StopSignalDemo {
     public static void main(String[] args) {
         AtomicBoolean running = new AtomicBoolean(true);
 // 初始状态：running = new AtomicBoolean(true)。
-// 作用：AtomicBoolean running = new AtomicBoolean(true);；没有同步就没有可靠推理，返回调用结果。
+// 作用：AtomicBoolean running = new AtomicBoolean(true);；没有同步就没有可靠推理。
         running.set(false);
 // 初始状态：running.set(false)。
-// 作用：running.set(false);；没有同步就没有可靠推理，调用后目标状态更新。
+// 作用：running.set(false);；没有同步就没有可靠推理。
         System.out.println("running=" + running.get());
 // 输出：running=false
     }

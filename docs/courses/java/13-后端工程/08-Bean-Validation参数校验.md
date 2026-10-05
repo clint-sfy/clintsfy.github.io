@@ -189,7 +189,7 @@ import java.lang.annotation.Target;
 class StrongCodeValidator implements ConstraintValidator<StrongCode, String> {
     @Override public boolean isValid(String value, ConstraintValidatorContext context) {
         return value == null || value.matches("[A-Z]{2}-\\d{4}");
-// 作用：return value == null || value.matches("[A-Z]{2}-\\d{4}");；实现自定义约束，调用后目标状态更新。
+// 作用：return value == null || value.matches("[A-Z]{2}-\\d{4}");；实现自定义约束。
 // 初始状态：return value == null || value.matches("[A-Z]{2}-\\d{4}")。
     }
 }
@@ -215,10 +215,10 @@ List<FieldViolation> fieldErrors(BindingResult result) {
     List<FieldViolation> errors = result.getFieldErrors().stream()
         .map(error -> new FieldViolation(error.getField(), error.getDefaultMessage()))
         .toList();
-// 作用：.toList();；稳定输出 FieldError，调用后目标状态更新。
+// 作用：.toList();；稳定输出 FieldError。
 // 初始状态：errors = result.getFieldErrors().stream()。
 // 作用：List<FieldViolation> errors = result.getFieldErrors().stream()；稳定输出 FieldError，返回读取结果。
-// 作用：.map(error -> new FieldViolation(error.getField(), error.getDefaultMessage()))；稳定输出 FieldError，返回调用结果。
+// 作用：.map(error -> new FieldViolation(error.getField(), error.getDefaultMessage()))；稳定输出 FieldError。
     return errors;
 }
 
@@ -363,7 +363,7 @@ class LocaleExample {
 @Documented
 @Constraint(validatedBy = SlugValidator.class)
 // 初始状态：validatedBy = SlugValidator.class)。
-// 作用：@Constraint(validatedBy = SlugValidator.class)；声明自定义约束，返回调用结果。
+// 作用：@Constraint(validatedBy = SlugValidator.class)；声明自定义约束。
 @Target({ ElementType.FIELD, ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Slug {

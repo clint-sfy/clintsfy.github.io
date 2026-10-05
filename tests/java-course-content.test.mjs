@@ -165,7 +165,14 @@ const COMMENT_CONTRACT_PATHS = ARTICLE_PATHS.filter((file) =>
   /^docs\/courses\/java\/(?:08-|09-|10-|11-|12-|13-)/u.test(file),
 )
 
-const JAVA_COMMENT_CONTRACT_FORBIDDEN = /当前对象|具体参数|具体实参|当前值|具体结果|该操作|执行预期分支|后续代码可观察|示例输入固定|当前资源或任务状态|后续语句继续使用该值|本例中的具体调用|\/\/\s*\//u
+const FORBIDDEN_GENERIC_COMMENT_TAILS = [
+  '返回本次调用的结果',
+  '返回调用结果',
+  '返回本次调用结果',
+  '调用后目标状态更新',
+  '得到调用结果',
+]
+const JAVA_COMMENT_CONTRACT_FORBIDDEN = /当前对象|具体参数|具体实参|当前值|具体结果|该操作|执行预期分支|后续代码可观察|示例输入固定|当前资源或任务状态|后续语句继续使用该值|本例中的具体调用|返回本次调用的结果|返回调用结果|返回本次调用结果|调用后目标状态更新|得到调用结果|\/\/\s*\//u
 
 // Snapshot of the RuoYi external-call audit used for this course revision.
 // It deliberately lives in the test instead of depending on uncommitted audit reports:
@@ -303,6 +310,7 @@ const BACKEND_CROSS_LINKS = [
 
 const BACKEND_FORBIDDEN_TERMS = ['若依', 'RuoYi', '实践任务', '练习题', '面试常问']
 const FORBIDDEN_TEMPLATE_PHRASES = [
+  ...FORBIDDEN_GENERIC_COMMENT_TAILS,
   '本例演示',
   '本段示例的具体调用入口',
   '下方结果',
@@ -2893,6 +2901,12 @@ names.add("Bob");
 
   const templateFixture = '// 作用：foo(具体参数)；后续代码继续使用该值。\n// // 输出：1'
   assert.match(templateFixture, JAVA_COMMENT_CONTRACT_FORBIDDEN, 'generic and recursive comments must remain bad fixtures')
+  const genericTailFixture = '// 作用：LockSupport.park();；返回调用结果。'
+  assert.match(
+    genericTailFixture,
+    JAVA_COMMENT_CONTRACT_FORBIDDEN,
+    'generic return-result tails must remain a locked bad fixture',
+  )
 
   const violations = []
   for (const relativePath of COMMENT_CONTRACT_PATHS) {

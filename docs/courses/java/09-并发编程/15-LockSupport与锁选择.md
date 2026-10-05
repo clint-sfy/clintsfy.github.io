@@ -87,10 +87,10 @@ public class PermitBeforeParkDemo {
     public static void main(String[] args) {
         LockSupport.unpark(Thread.currentThread());
 // 初始状态：LockSupport.unpark(Thread.currentThread())。
-// 作用：LockSupport.unpark(Thread.currentThread());；许可不会累积，返回调用结果。
+// 作用：LockSupport.unpark(Thread.currentThread());；为当前线程设置许可，下一次 park 会立即返回。
         LockSupport.park();
 // 初始状态：LockSupport.park()。
-// 作用：LockSupport.park();；许可不会累积，返回调用结果。
+// 作用：LockSupport.park();；消费当前线程已有许可后立即返回，没有许可才会阻塞。
         System.out.println("passed without blocking");
 // 输出：passed without blocking
     }
@@ -297,14 +297,14 @@ public class ReentrantLockChoiceDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new ReentrantLock();
 // 初始状态：lock = new ReentrantLock()。
-// 作用：var lock = new ReentrantLock();；需要中断、超时或 Condition，返回调用结果。
+// 作用：var lock = new ReentrantLock();；需要中断、超时或 Condition。
         if (lock.tryLock(1, TimeUnit.MILLISECONDS)) {
             try {
                 System.out.println("lock acquired");
 // 输出：lock acquired
             } finally {
                 lock.unlock();
-// 作用：lock.unlock();；需要中断、超时或 Condition，调用后目标状态更新。
+// 作用：lock.unlock();；需要中断、超时或 Condition。
             }
         } else {
             System.out.println("busy");
@@ -328,7 +328,7 @@ public class ReadWriteChoiceDemo {
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
 // 初始状态：lock = new ReentrantReadWriteLock()。
-// 作用：var lock = new ReentrantReadWriteLock();；读多写少时分离访问，返回调用结果。
+// 作用：var lock = new ReentrantReadWriteLock();；读多写少时分离访问。
         lock.readLock().lock();
 // 作用：lock.readLock().lock();；读多写少时分离访问，返回读取结果。
         try {
@@ -497,7 +497,7 @@ public class LockNeedDecisionDemo {
     public static void main(String[] args) {
         UserView view = new UserView("Ada", 3);
 // 初始状态：view = new UserView("Ada", 3)。
-// 作用：UserView view = new UserView("Ada", 3);；UserView 返回本次调用的结果。
+// 作用：UserView view = new UserView("Ada", 3);；创建 name="Ada"、level=3 的 UserView。
         System.out.println(view.name() + ":" + view.level());
 // 输出：Ada:3
     }
@@ -517,7 +517,7 @@ public class LockRequirementDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new ReentrantLock();
 // 初始状态：lock = new ReentrantLock()。
-// 作用：var lock = new ReentrantLock();；ReentrantLock 返回本次调用的结果。
+// 作用：var lock = new ReentrantLock();；创建 lock，tryLock 最多等待 1 毫秒。
         if (lock.tryLock(1, java.util.concurrent.TimeUnit.MILLISECONDS)) {
             try {
                 System.out.println("bounded wait is available");
@@ -525,7 +525,7 @@ public class LockRequirementDemo {
             } finally {
                 lock.unlock();
 // 初始状态：lock.unlock()。
-// 作用：lock.unlock();；unlock 返回本次调用的结果。
+// 作用：lock.unlock();；释放当前线程持有的 ReentrantLock。
             }
         }
     }
@@ -544,32 +544,32 @@ import java.util.concurrent.locks.ReentrantLock;
 public class LockChoiceCaseDemo {
     private final ReentrantLock lock = new ReentrantLock();
 // 初始状态：lock = new ReentrantLock()。
-// 作用：private final ReentrantLock lock = new ReentrantLock();；ReentrantLock 返回本次调用的结果。
+// 作用：private final ReentrantLock lock = new ReentrantLock();；创建 lock 保护 count 字段。
     private int count;
 
     void increment() {
         lock.lock();
 // 初始状态：lock.lock()。
-// 作用：lock.lock();；lock 返回本次调用的结果。
+// 作用：lock.lock();；获取 lock 后进入 count++ 临界区。
         try {
             count++;
         } finally {
             lock.unlock();
 // 初始状态：lock.unlock()。
-// 作用：lock.unlock();；unlock 返回本次调用的结果。
+// 作用：lock.unlock();；finally 中释放 lock，避免锁泄漏。
         }
     }
 
     public static void main(String[] args) {
         var counter = new LockChoiceCaseDemo();
 // 初始状态：counter = new LockChoiceCaseDemo()。
-// 作用：var counter = new LockChoiceCaseDemo();；LockChoiceCaseDemo 返回本次调用的结果。
+// 作用：var counter = new LockChoiceCaseDemo();；创建 count 初始为 0 的计数器。
         counter.increment();
 // 初始状态：counter.increment()。
-// 作用：counter.increment();；increment 返回本次调用的结果。
+// 作用：counter.increment();；第一次加锁后 count 变为 1。
         counter.increment();
 // 初始状态：counter.increment()。
-// 作用：counter.increment();；increment 返回本次调用的结果。
+// 作用：counter.increment();；第二次加锁后 count 变为 2。
         System.out.println(counter.count);
 // 输出：2
     }

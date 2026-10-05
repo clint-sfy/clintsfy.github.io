@@ -188,15 +188,15 @@ public class JfrApiDemo {
     public static void main(String[] args) throws Exception {
         try (Recording recording = new Recording()) {
 // 初始状态：recording = new Recording())。
-// 作用：try (Recording recording = new Recording()) {；在代码中控制 JFR，调用后目标状态更新。
+// 作用：try (Recording recording = new Recording()) {；在代码中控制 JFR。
             recording.start();
-// 作用：recording.start();；在代码中控制 JFR，调用后目标状态更新。
+// 作用：recording.start();；在代码中控制 JFR。
             System.out.println("recording");
 // 输出：recording
             recording.stop();
-// 作用：recording.stop();；在代码中控制 JFR，调用后目标状态更新。
+// 作用：recording.stop();；在代码中控制 JFR。
             recording.dump(Path.of("diagnostic.jfr"));
-// 作用：recording.dump(Path.of("diagnostic.jfr"));；在代码中控制 JFR，调用后目标状态更新。
+// 作用：recording.dump(Path.of("diagnostic.jfr"));；在代码中控制 JFR。
         }
     }
 }
@@ -246,13 +246,13 @@ public class JfrEventSettingDemo {
     public static void main(String[] args) throws Exception {
         try (Recording recording = new Recording()) {
 // 初始状态：recording = new Recording())。
-// 作用：try (Recording recording = new Recording()) {；按事件降低噪声，调用后目标状态更新。
+// 作用：try (Recording recording = new Recording()) {；按事件降低噪声。
             recording.enable("jdk.CPULoad").withPeriod(java.time.Duration.ofSeconds(1));
-// 作用：recording.enable("jdk.CPULoad").withPeriod(java.time.Duration.ofSeconds(1));；按事件降低噪声，调用后目标状态更新。
+// 作用：recording.enable("jdk.CPULoad").withPeriod(java.time.Duration.ofSeconds(1));；按事件降低噪声。
             recording.start();
-// 作用：recording.start();；按事件降低噪声，调用后目标状态更新。
+// 作用：recording.start();；按事件降低噪声。
             recording.stop();
-// 作用：recording.stop();；按事件降低噪声，调用后目标状态更新。
+// 作用：recording.stop();；按事件降低噪声。
             System.out.println("cpu event configured");
 // 输出：cpu event configured
         }

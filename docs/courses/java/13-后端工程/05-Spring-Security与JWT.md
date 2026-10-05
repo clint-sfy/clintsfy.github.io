@@ -88,18 +88,18 @@ import java.util.Base64;
 
 String encodedSecret = System.getenv("JWT_SECRET");
 // 初始状态：encodedSecret = System.getenv("JWT_SECRET")。
-// 作用：String encodedSecret = System.getenv("JWT_SECRET");；getenv 返回本次调用的结果。
+// 作用：String encodedSecret = System.getenv("JWT_SECRET");；读取 JWT_SECRET 环境变量作为 Base64URL 密钥文本。
 String compactToken = System.getenv("JWT_COMPACT_TOKEN");
 // 初始状态：compactToken = System.getenv("JWT_COMPACT_TOKEN")。
-// 作用：String compactToken = System.getenv("JWT_COMPACT_TOKEN");；getenv 返回本次调用的结果。
+// 作用：String compactToken = System.getenv("JWT_COMPACT_TOKEN");；读取 JWT_COMPACT_TOKEN 作为待解析 compact JWT。
 byte[] signingKey = Base64.getUrlDecoder().decode(encodedSecret);
 // 初始状态：signingKey = Base64.getUrlDecoder().decode(encodedSecret)。
-// 作用：byte[] signingKey = Base64.getUrlDecoder().decode(encodedSecret);；getUrlDecoder 返回本次调用的结果。
+// 作用：byte[] signingKey = Base64.getUrlDecoder().decode(encodedSecret);；按 Base64URL 解码 encodedSecret，得到签名字节。
 Claims claims = Jwts.parser().setSigningKey(signingKey)
     .parseClaimsJws(compactToken).getBody();
 // 初始状态：claims = Jwts.parser().setSigningKey(signingKey)。
-// 作用：.parseClaimsJws(compactToken).getBody();；，返回读取结果。
-// 作用：Claims claims = Jwts.parser().setSigningKey(signingKey)；parser 返回本次调用的结果。
+// 作用：.parseClaimsJws(compactToken).getBody();；按 signingKey 验证 compactToken 并提取 Claims。
+// 作用：Claims claims = Jwts.parser().setSigningKey(signingKey)；claims.subject 最终为 user-7。
 System.out.println(claims.getSubject());
 // 输出：user-7
 ```
@@ -135,14 +135,14 @@ SecurityFilterChain apiSecurity(HttpSecurity http) throws Exception {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/health", "/login").permitAll()
             .anyRequest().authenticated());
-// 作用：.csrf(csrf -> csrf.disable())；建立认证授权过滤链，调用后目标状态更新。
-// 作用：.sessionManagement(session -> session.sessionCreationPolicy(；建立认证授权过滤链，调用后目标状态更新。
-// 作用：.authorizeHttpRequests(auth -> auth；建立认证授权过滤链，调用后目标状态更新。
-// 作用：.requestMatchers("/health", "/login").permitAll()；建立认证授权过滤链，调用后目标状态更新。
-// 作用：.anyRequest().authenticated());；建立认证授权过滤链，调用后目标状态更新。
+// 作用：.csrf(csrf -> csrf.disable())；建立认证授权过滤链。
+// 作用：.sessionManagement(session -> session.sessionCreationPolicy(；建立认证授权过滤链。
+// 作用：.authorizeHttpRequests(auth -> auth；建立认证授权过滤链。
+// 作用：.requestMatchers("/health", "/login").permitAll()；建立认证授权过滤链。
+// 作用：.anyRequest().authenticated());；建立认证授权过滤链。
 // 初始状态：.csrf(csrf -> csrf.disable())。
     return http.build();
-// 作用：return http.build();；建立认证授权过滤链，调用后目标状态更新。
+// 作用：return http.build();；建立认证授权过滤链。
 }
 
 System.out.println("policy=" + SessionCreationPolicy.STATELESS);
@@ -195,21 +195,21 @@ class MethodSecurityConfig {
     @Bean ReportService reportService() {
         return new ReportService();
 // 初始状态：return new ReportService()。
-// 作用：return new ReportService();；在方法边界做授权，调用后目标状态更新。
+// 作用：return new ReportService();；在方法边界做授权。
     }
 }
 
 class ReportService {
     @PreAuthorize("hasAuthority('report:read') and #ownerId == authentication.name")
 // 初始状态：@PreAuthorize("hasAuthority('report:read') and #ownerId == authentication.name")。
-// 作用：@PreAuthorize("hasAuthority('report:read') and #ownerId == authentication.name")；在方法边界做授权，返回调用结果。
+// 作用：@PreAuthorize("hasAuthority('report:read') and #ownerId == authentication.name")；在方法边界做授权。
     public String read(@P("ownerId") String ownerId) {
         return "report-for-" + ownerId;
     }
 }
 
 try (var context = new AnnotationConfigApplicationContext(MethodSecurityConfig.class)) {
-// 作用：try (var context = new AnnotationConfigApplicationContext(MethodSecurityConfig.class)) {；在方法边界做授权，调用后目标状态更新。
+// 作用：try (var context = new AnnotationConfigApplicationContext(MethodSecurityConfig.class)) {；在方法边界做授权。
 // 初始状态：context = new AnnotationConfigApplicationContext(MethodSecurityConfig.class))。
     ReportService service = context.getBean(ReportService.class);
 // 作用：ReportService service = context.getBean(ReportService.class);；在方法边界做授权，返回读取结果。
@@ -224,7 +224,7 @@ try (var context = new AnnotationConfigApplicationContext(MethodSecurityConfig.c
     SecurityContextHolder.getContext().setAuthentication(
         new TestingAuthenticationToken("user-8", "n/a"));
 // 作用：SecurityContextHolder.getContext().setAuthentication(；在方法边界做授权，返回读取结果。
-// 作用：new TestingAuthenticationToken("user-8", "n/a"));；在方法边界做授权，调用后目标状态更新。
+// 作用：new TestingAuthenticationToken("user-8", "n/a"));；在方法边界做授权。
 // 初始状态：new TestingAuthenticationToken("user-8", "n/a"))。
     try {
         service.read("user-7");
@@ -234,7 +234,7 @@ try (var context = new AnnotationConfigApplicationContext(MethodSecurityConfig.c
 // 输出：denied=403
     }
     SecurityContextHolder.clearContext();
-// 作用：SecurityContextHolder.clearContext();；在方法边界做授权，调用后目标状态更新。
+// 作用：SecurityContextHolder.clearContext();；在方法边界做授权。
 }
 // 作用：用于把依赖方法参数或细粒度权限的授权放在服务方法入口；它需要 `@EnableMethodSecurity` 和 Spring 容器创建的 Bean 代理，不能代替 URL 层的粗粒度防护。
 ```
@@ -387,13 +387,13 @@ System.out.println(request != null ? "scope=report:read" : "missing");
 @Configuration
 @EnableMethodSecurity
 // 初始状态：@EnableMethodSecurity。
-// 作用：@EnableMethodSecurity；启用方法级授权，返回调用结果。
+// 作用：@EnableMethodSecurity；启用方法级授权。
 class MethodSecurityConfiguration {
     @Bean
     MethodSecurityExpressionHandler expressionHandler() {
         return new DefaultMethodSecurityExpressionHandler();
 // 初始状态：return new DefaultMethodSecurityExpressionHandler()。
-// 作用：return new DefaultMethodSecurityExpressionHandler();；启用方法级授权，调用后目标状态更新。
+// 作用：return new DefaultMethodSecurityExpressionHandler();；启用方法级授权。
     }
     String layer() { return "service"; }
 }

@@ -69,10 +69,10 @@ public class ListAddDemo {
     public static void main(String[] args) {
         List<String> list = new ArrayList<>(List.of("a", "c"));
         // 输入：List<String> list = new ArrayList<>(List.of("a", "c"));；使用构造参数 List.of("a", "c") 创建 ArrayList<>，结果赋给 list。
-        // 关键变化：List<String> list = new ArrayList<>(List.of("a", "c"));；创建 ArrayList<>，构造参数为 List.of("a", "c")，实例写入 list。
+        // 关键变化：List<String> list = new ArrayList<>(List.of("a", "c"));；创建 ArrayList<>，构造参数为 List.of("a", "c")，list 初始为 [a, c]。
         list.add("d");
         // 输入：list.add("d");；接收对象为 list，调用 add 的实参为 "d"。
-        // 关键变化：list.add("d");；向 list 加入 "d"，返回 boolean 表示是否发生变化；list 内容更新。
+        // 关键变化：list.add("d");；向 list 追加 "d"，list 变为 [a, c, d]。
         list.add(1, "b");
         // 输入：list.add(1, "b");；接收对象为 list，调用 add 的实参为 1, "b"。
         // 关键变化：list.add(1, "b");；在索引 1 插入 "b"，该重载返回 void；list 变为 [a, b, c, d]。

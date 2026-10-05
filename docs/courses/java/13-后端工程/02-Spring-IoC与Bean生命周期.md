@@ -134,7 +134,7 @@ class UserService {
     String endpoint() {
         return gateway.endpoint();
 // 初始状态：return gateway.endpoint()。
-// 作用：return gateway.endpoint();；表达必需依赖，返回调用结果。
+// 作用：return gateway.endpoint();；表达必需依赖。
     }
 }
 
@@ -226,10 +226,10 @@ class GreetingTarget implements Greeting {
 
 var factory = new ProxyFactory(new GreetingTarget());
 // 初始状态：factory = new ProxyFactory(new GreetingTarget())。
-// 作用：var factory = new ProxyFactory(new GreetingTarget());；识别被包装的 Bean，返回调用结果。
+// 作用：var factory = new ProxyFactory(new GreetingTarget());；识别被包装的 Bean。
 factory.addAdvice((MethodInterceptor) invocation -> invocation.proceed());
 // 初始状态：factory.addAdvice((MethodInterceptor) invocation -> invocation.proceed())。
-// 作用：factory.addAdvice((MethodInterceptor) invocation -> invocation.proceed());；识别被包装的 Bean，调用后目标状态更新。
+// 作用：factory.addAdvice((MethodInterceptor) invocation -> invocation.proceed());；识别被包装的 Bean。
 Greeting proxy = (Greeting) factory.getProxy();
 // 初始状态：proxy = (Greeting) factory.getProxy()。
 // 作用：Greeting proxy = (Greeting) factory.getProxy();；识别被包装的 Bean，返回读取结果。
@@ -339,7 +339,7 @@ class AlertService {
 
     String selectedChannel() {
         return notifier.channel();
-// 作用：return notifier.channel();；声明默认候选，调用后目标状态更新。
+// 作用：return notifier.channel();；声明默认候选。
     }
 }
 
@@ -348,7 +348,7 @@ class PrimaryConfiguration {
     @Bean
     @Primary
 // 初始状态：@Primary。
-// 作用：@Primary；声明默认候选，返回调用结果。
+// 作用：@Primary；声明默认候选。
     Notifier systemClockNotifier() {
         return () -> "system-clock";
     }
@@ -361,13 +361,13 @@ class PrimaryConfiguration {
     @Bean
     AlertService alertService(Notifier notifier) {
         return new AlertService(notifier);
-// 作用：return new AlertService(notifier);；声明默认候选，调用后目标状态更新。
+// 作用：return new AlertService(notifier);；声明默认候选。
 // 初始状态：return new AlertService(notifier)。
     }
 }
 
 try (var context = new AnnotationConfigApplicationContext(PrimaryConfiguration.class)) {
-// 作用：try (var context = new AnnotationConfigApplicationContext(PrimaryConfiguration.class)) {；声明默认候选，调用后目标状态更新。
+// 作用：try (var context = new AnnotationConfigApplicationContext(PrimaryConfiguration.class)) {；声明默认候选。
 // 初始状态：context = new AnnotationConfigApplicationContext(PrimaryConfiguration.class))。
     System.out.println(context.getBean(Notifier.class).channel());
 // 输出：system-clock
@@ -440,7 +440,7 @@ class AuditConfiguration {
     @Bean
     @ConditionalOnProperty(name = "app.audit.enabled", havingValue = "true")
 // 初始状态：name = "app.audit.enabled", havingValue = "true")。
-// 作用：@ConditionalOnProperty(name = "app.audit.enabled", havingValue = "true")；按开关装配 Bean，返回调用结果。
+// 作用：@ConditionalOnProperty(name = "app.audit.enabled", havingValue = "true")；按开关装配 Bean。
     AuditSink auditSink() {
         return event -> System.out.println(event);
 // 输出：仅当 `app.audit.enabled=true` 时容器中存在 `AuditSink`。
@@ -536,13 +536,13 @@ FilterRegistrationBean<RequestIdFilter> apiFilter() {
 @Configuration
 @EnableCaching
 // 初始状态：@EnableCaching。
-// 作用：@EnableCaching；开启 Spring 缓存代理，返回调用结果。
+// 作用：@EnableCaching；开启 Spring 缓存代理。
 class CacheConfiguration {
     @Bean
     CacheManager cacheManager() {
         return new ConcurrentMapCacheManager("users");
 // 初始状态：return new ConcurrentMapCacheManager("users")。
-// 作用：return new ConcurrentMapCacheManager("users");；开启 Spring 缓存代理，调用后目标状态更新。
+// 作用：return new ConcurrentMapCacheManager("users");；开启 Spring 缓存代理。
     }
     String configuredCache() { return "users"; }
 }

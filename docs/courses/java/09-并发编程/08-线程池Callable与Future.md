@@ -237,12 +237,12 @@ public class AbortPolicyDemo {
                 new ThreadPoolExecutor.AbortPolicy());
 // 初始状态：new java.util.concurrent.SynchronousQueue<>(),。
 // 初始状态：executor = new ThreadPoolExecutor(。
-// 作用：var executor = new ThreadPoolExecutor(；AbortPolicy 拒绝，返回调用结果。
+// 作用：var executor = new ThreadPoolExecutor(；AbortPolicy 拒绝。
         executor.shutdown();
-// 作用：executor.shutdown();；AbortPolicy 拒绝，调用后目标状态更新。
+// 作用：executor.shutdown();；AbortPolicy 拒绝。
         try {
             executor.execute(() -> { });
-// 作用：executor.execute(() -> { });；AbortPolicy 拒绝，调用后目标状态更新。
+// 作用：executor.execute(() -> { });；AbortPolicy 拒绝。
         } catch (RejectedExecutionException ex) {
             System.out.println("rejected");
 // 输出：rejected

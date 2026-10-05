@@ -94,16 +94,16 @@ import java.util.concurrent.CompletableFuture;
 public class ThenComposeDemo {
     static CompletableFuture<String> loadName(int id) {
         return CompletableFuture.completedFuture("user-" + id);
-// 作用：return CompletableFuture.completedFuture("user-" + id);；串联两个异步阶段，调用后目标状态更新。
+// 作用：return CompletableFuture.completedFuture("user-" + id);；串联两个异步阶段。
     }
 
     public static void main(String[] args) {
         String result = CompletableFuture.completedFuture(7)
                 .thenCompose(ThenComposeDemo::loadName)
                 .join();
-// 作用：.thenCompose(ThenComposeDemo::loadName)；串联两个异步阶段，调用后目标状态更新。
+// 作用：.thenCompose(ThenComposeDemo::loadName)；串联两个异步阶段。
 // 初始状态：result = CompletableFuture.completedFuture(7)。
-// 作用：String result = CompletableFuture.completedFuture(7)；串联两个异步阶段，返回调用结果。
+// 作用：String result = CompletableFuture.completedFuture(7)；串联两个异步阶段。
         System.out.println(result);
 // 输出：user-7
     }
@@ -295,11 +295,11 @@ public class ThenApplyAsyncDemo {
     public static void main(String[] args) {
         try (var executor = Executors.newSingleThreadExecutor()) {
 // 初始状态：executor = Executors.newSingleThreadExecutor())。
-// 作用：try (var executor = Executors.newSingleThreadExecutor()) {；把变换交给指定执行器，返回调用结果。
+// 作用：try (var executor = Executors.newSingleThreadExecutor()) {；把变换交给指定执行器。
             String result = CompletableFuture.completedFuture("java")
                     .thenApplyAsync(String::toUpperCase, executor)
                     .join();
-// 作用：.thenApplyAsync(String::toUpperCase, executor)；把变换交给指定执行器，调用后目标状态更新。
+// 作用：.thenApplyAsync(String::toUpperCase, executor)；把变换交给指定执行器。
 // 初始状态：result = CompletableFuture.completedFuture("java")。
             System.out.println(result);
 // 输出：JAVA
@@ -319,16 +319,16 @@ import java.util.concurrent.CompletableFuture;
 public class ExceptionallyComposeDemo {
     static CompletableFuture<String> backup() {
         return CompletableFuture.completedFuture("backup");
-// 作用：return CompletableFuture.completedFuture("backup");；异步降级分支，调用后目标状态更新。
+// 作用：return CompletableFuture.completedFuture("backup");；异步降级分支。
     }
 
     public static void main(String[] args) {
         String value = CompletableFuture.<String>failedFuture(new RuntimeException())
                 .exceptionallyCompose(error -> backup())
                 .join();
-// 作用：.exceptionallyCompose(error -> backup())；异步降级分支，调用后目标状态更新。
+// 作用：.exceptionallyCompose(error -> backup())；异步降级分支。
 // 初始状态：value = CompletableFuture.<String>failedFuture(new RuntimeException())。
-// 作用：String value = CompletableFuture.<String>failedFuture(new RuntimeException())；异步降级分支，返回调用结果。
+// 作用：String value = CompletableFuture.<String>failedFuture(new RuntimeException())；异步降级分支。
         System.out.println(value);
 // 输出：backup
     }
@@ -367,11 +367,11 @@ import java.util.concurrent.CompletableFuture;
 public class MinimalStageDemo {
     public static void main(String[] args) {
         CompletableFuture<String> source = CompletableFuture.completedFuture("value");
-// 作用：CompletableFuture<String> source = CompletableFuture.completedFuture("value");；只暴露完成阶段接口，调用后目标状态更新。
+// 作用：CompletableFuture<String> source = CompletableFuture.completedFuture("value");；只暴露完成阶段接口。
 // 初始状态：source = CompletableFuture.completedFuture("value")。
         var view = source.minimalCompletionStage();
 // 初始状态：view = source.minimalCompletionStage()。
-// 作用：var view = source.minimalCompletionStage();；只暴露完成阶段接口，返回调用结果。
+// 作用：var view = source.minimalCompletionStage();；只暴露完成阶段接口。
         System.out.println(view.toCompletableFuture().join());
 // 输出：value
     }
@@ -387,14 +387,14 @@ public class CompletablePipelineDemo {
     public static void main(String[] args) {
         try (var executor = Executors.newFixedThreadPool(2)) {
 // 初始状态：executor = Executors.newFixedThreadPool(2))。
-// 作用：try (var executor = Executors.newFixedThreadPool(2)) {；只暴露完成阶段接口，返回调用结果。
+// 作用：try (var executor = Executors.newFixedThreadPool(2)) {；只暴露完成阶段接口。
             var result = CompletableFuture
                     .supplyAsync(() -> "java", executor)
                     .thenApply(String::toUpperCase)
                     .thenCombine(CompletableFuture.completedFuture(" API"), String::concat)
                     .exceptionally(error -> "fallback")
                     .join();
-// 作用：.supplyAsync(() -> "java", executor)；只暴露完成阶段接口，调用后目标状态更新。
+// 作用：.supplyAsync(() -> "java", executor)；只暴露完成阶段接口。
 // 初始状态：result = CompletableFuture。
             System.out.println(result);
 // 输出：JAVA API

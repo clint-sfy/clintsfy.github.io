@@ -94,11 +94,11 @@ System.out.println(keys == null ? 0 : keys.size());
 
 ```java
 DefaultRedisScript<Long> script = new DefaultRedisScript<>("return redis.call('INCR', KEYS[1])", Long.class);
-// 作用：DefaultRedisScript<Long> script = new DefaultRedisScript<>("return redis.call('INCR', KEYS[1])", Long.class);；原子执行 Lua 脚本，调用后目标状态更新。
+// 作用：DefaultRedisScript<Long> script = new DefaultRedisScript<>("return redis.call('INCR', KEYS[1])", Long.class);；原子执行 Lua 脚本。
 // 初始状态：script = new DefaultRedisScript<>("return redis.call('INCR', KEYS[1])", Long.class)。
 Long value = redisTemplate.execute(script, List.of("counter"));
 // 初始状态：value = redisTemplate.execute(script, List.of("counter"))。
-// 作用：Long value = redisTemplate.execute(script, List.of("counter"));；原子执行 Lua 脚本，调用后目标状态更新。
+// 作用：Long value = redisTemplate.execute(script, List.of("counter"));；原子执行 Lua 脚本。
 System.out.println(value);
 // 输出：counter 自增后的值。
 // 说明：execute(script, List.of("counter:42"), "10") 在 Redis 单次 Lua 执行中检查并更新 key counter:42，返回值按脚本声明类型转换；keys 与 argv 分开传入。
@@ -208,7 +208,7 @@ Set 只保证成员唯一，不保证顺序；集合过大时应限制基数并�
 import java.time.Duration;
 
 redis.opsForValue().set("app:token:7", "opaque", Duration.ofSeconds(60));
-// 作用：redis.opsForValue().set("app:token:7", "opaque", Duration.ofSeconds(60));；让缓存拥有明确生命周期，调用后目标状态更新。
+// 作用：redis.opsForValue().set("app:token:7", "opaque", Duration.ofSeconds(60));；让缓存拥有明确生命周期。
 // 初始状态：redis.opsForValue().set("app:token:7", "opaque", Duration.ofSeconds(60))。
 Long seconds = redis.getExpire("app:token:7");
 // 初始状态：seconds = redis.getExpire("app:token:7")。
@@ -382,11 +382,11 @@ String key = "app:rate:user:7:202610010930";
 // 初始状态：key = "app:rate:user:7:202610010930"。
 Long count = redis.opsForValue().increment(key);
 // 初始状态：count = redis.opsForValue().increment(key)。
-// 作用：Long count = redis.opsForValue().increment(key);；用原子计数和过期窗口，返回调用结果。
+// 作用：Long count = redis.opsForValue().increment(key);；用原子计数和过期窗口。
 if (count != null && count == 1) {
     redis.expire(key, Duration.ofSeconds(60));
 // 初始状态：redis.expire(key, Duration.ofSeconds(60))。
-// 作用：redis.expire(key, Duration.ofSeconds(60));；用原子计数和过期窗口，返回调用结果。
+// 作用：redis.expire(key, Duration.ofSeconds(60));；用原子计数和过期窗口。
 }
 boolean accepted = count != null && count <= 100;
 // 初始状态：accepted = count != null && count <= 100。

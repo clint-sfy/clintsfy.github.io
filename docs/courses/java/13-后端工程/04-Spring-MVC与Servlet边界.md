@@ -51,7 +51,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 // 初始状态：@RestController。
-// 作用：@RestController；声明 JSON 控制器，返回调用结果。
+// 作用：@RestController；声明 JSON 控制器。
 class HealthController {
     @GetMapping("/health")
     String health() {
@@ -78,7 +78,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/users")
 // 初始状态：@RequestMapping("/users")。
-// 作用：@RequestMapping("/users")；声明共享路径前缀，返回调用结果。
+// 作用：@RequestMapping("/users")；声明共享路径前缀。
 class UserController {
     String basePath() { return "/users"; }
 }
@@ -224,7 +224,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 HandlerInterceptor interceptor = new HandlerInterceptor() {};
 // 初始状态：interceptor = new HandlerInterceptor() {}。
-// 作用：HandlerInterceptor interceptor = new HandlerInterceptor() {};；拦截 MVC Handler，返回调用结果。
+// 作用：HandlerInterceptor interceptor = new HandlerInterceptor() {};；拦截 MVC Handler。
 System.out.println(interceptor.preHandle(null, null, new Object()));
 // 输出：true
 // 说明：HandlerInterceptor.preHandle 在目标 Controller 前检查 X-User-Id；返回 true 才继续。只有 addInterceptors 注册后生效，直接 new 不会拦截请求。
@@ -547,12 +547,12 @@ final class RequestIdFilter implements Filter {
                          ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
 // 初始状态：public void doFilter(ServletRequest request,。
-// 作用：public void doFilter(ServletRequest request,；放行到下一个过滤器，调用后目标状态更新。
+// 作用：public void doFilter(ServletRequest request,；放行到下一个过滤器。
         request.setAttribute("requestId", UUID.randomUUID().toString());
-// 作用：request.setAttribute("requestId", UUID.randomUUID().toString());；放行到下一个过滤器，调用后目标状态更新。
+// 作用：request.setAttribute("requestId", UUID.randomUUID().toString());；放行到下一个过滤器。
         chain.doFilter(request, response);
 // 初始状态：chain.doFilter(request, response)。
-// 作用：chain.doFilter(request, response);；放行到下一个过滤器，返回调用结果。
+// 作用：chain.doFilter(request, response);；放行到下一个过滤器。
         System.out.println("response completed");
 // 输出：下游处理完成后打印 `response completed`。
     }
@@ -616,15 +616,15 @@ class StaticConfiguration implements WebMvcConfigurer {
 CorsConfiguration apiCors() {
     CorsConfiguration cors = new CorsConfiguration();
 // 初始状态：cors = new CorsConfiguration()。
-// 作用：CorsConfiguration cors = new CorsConfiguration();；声明 CORS 白名单，返回调用结果。
+// 作用：CorsConfiguration cors = new CorsConfiguration();；声明 CORS 白名单。
     cors.setAllowedOrigins(List.of("https://app.example.com"));
-// 作用：cors.setAllowedOrigins(List.of("https:；声明 CORS 白名单，调用后目标状态更新。
+// 作用：cors.setAllowedOrigins(List.of("https://app.example.com"));；声明 CORS 白名单，只接受来自 https://app.example.com 的请求。
     cors.setAllowedMethods(List.of("GET", "POST"));
 // 作用：cors.setAllowedMethods(List.of("GET", "POST"));；声明 CORS 白名单，返回读取结果。
     cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-// 作用：cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));；声明 CORS 白名单，调用后目标状态更新。
+// 作用：cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));；声明 CORS 白名单。
     cors.setAllowCredentials(true);
-// 作用：cors.setAllowCredentials(true);；声明 CORS 白名单，调用后目标状态更新。
+// 作用：cors.setAllowCredentials(true);；声明 CORS 白名单。
     return cors;
 }
 ```
@@ -651,7 +651,7 @@ UrlBasedCorsConfigurationSource corsSource(CorsConfiguration apiCors) {
 // 作用：CorsConfiguration open = new CorsConfiguration();；按 URL 注册 CORS。
 // 初始状态：open = new CorsConfiguration()。
     open.setAllowedOrigins(List.of("https://docs.example.com"));
-// 作用：open.setAllowedOrigins(List.of("https:；按 URL 注册 CORS。
+// 作用：open.setAllowedOrigins(List.of("https://docs.example.com"));；按 URL 注册 CORS，只接受来自 https://docs.example.com 的请求。
     source.registerCorsConfiguration("/docs/**", open);
 // 初始状态：source.registerCorsConfiguration("/docs/**", open)。
 // 作用：source.registerCorsConfiguration("/docs/**", open);；按 URL 注册 CORS。

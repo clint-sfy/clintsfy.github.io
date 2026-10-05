@@ -76,9 +76,9 @@ interface UserMapper {
 ```java
 PageHelper.startPage(2, 20);
 // 初始状态：PageHelper.startPage(2, 20)。
-// 作用：PageHelper.startPage(2, 20);；开启一次分页查询，调用后目标状态更新。
+// 作用：PageHelper.startPage(2, 20);；开启一次分页查询。
 List<User> users = userMapper.selectAll();
-// 作用：List<User> users = userMapper.selectAll();；开启一次分页查询，调用后目标状态更新。
+// 作用：List<User> users = userMapper.selectAll();；开启一次分页查询。
 // 初始状态：users = userMapper.selectAll()。
 System.out.println(users.size() <= 20);
 // 输出：true
@@ -97,7 +97,7 @@ String orderBy = switch (sortKey) {
 };
 PageHelper.orderBy(orderBy);
 // 初始状态：PageHelper.orderBy(orderBy)。
-// 作用：PageHelper.orderBy(orderBy);；设置受控排序，返回调用结果。
+// 作用：PageHelper.orderBy(orderBy);；设置受控排序。
 // 输出：排序字段只能来自代码白名单。
 // 说明：白名单把请求 sort=name 映射为数据库表达式 user_name asc，再交给 PageHelper.orderBy；原始请求参数不能直接拼入 ORDER BY。
 ```
@@ -128,7 +128,7 @@ try {
 ```java
 PageInfo<User> page = new PageInfo<>(users);
 // 初始状态：page = new PageInfo<>(users)。
-// 作用：PageInfo<User> page = new PageInfo<>(users);；构造分页元数据，返回调用结果。
+// 作用：PageInfo<User> page = new PageInfo<>(users);；构造分页元数据。
 System.out.println(page.getPageNum() + "/" + page.getTotal());
 // 输出：当前页码/符合条件的总记录数。
 // 说明：new PageInfo<>(users) 从 PageHelper 结果读取 pageNum、pageSize、total 和当前页列表；普通 List 本身没有总行数元数据。
@@ -257,7 +257,7 @@ class User {
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 // 初始状态：username = username; }。
-// 作用：public void setUsername(String username) { this.username = username; }；复用通用 CRUD，调用后目标状态更新。
+// 作用：public void setUsername(String username) { this.username = username; }；复用通用 CRUD。
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 // 初始状态：status = status; }。
@@ -278,7 +278,7 @@ class UserReader {
 
     void showName() {
         User user = mapper.selectById(7L);
-// 作用：User user = mapper.selectById(7L);；复用通用 CRUD，调用后目标状态更新。
+// 作用：User user = mapper.selectById(7L);；复用通用 CRUD。
 // 初始状态：user = mapper.selectById(7L)。
         System.out.println(user.getUsername());
 // 输出：ann
@@ -304,19 +304,19 @@ class UserFacade {
     UserFacade(UserService service) {
         this.service = service;
 // 初始状态：service = service。
-// 作用：this.service = service;；组织服务层 CRUD，返回调用结果。
+// 作用：this.service = service;；组织服务层 CRUD。
     }
 
     boolean create() {
         User entity = new User();
 // 初始状态：entity = new User()。
-// 作用：User entity = new User();；组织服务层 CRUD，调用后目标状态更新。
+// 作用：User entity = new User();；组织服务层 CRUD。
         entity.setUsername("ann");
-// 作用：entity.setUsername("ann");；组织服务层 CRUD，调用后目标状态更新。
+// 作用：entity.setUsername("ann");；组织服务层 CRUD。
         entity.setStatus("ACTIVE");
-// 作用：entity.setStatus("ACTIVE");；组织服务层 CRUD，调用后目标状态更新。
+// 作用：entity.setStatus("ACTIVE");；组织服务层 CRUD。
         boolean saved = service.save(entity);
-// 作用：boolean saved = service.save(entity);；组织服务层 CRUD，调用后目标状态更新。
+// 作用：boolean saved = service.save(entity);；组织服务层 CRUD。
 // 初始状态：saved = service.save(entity)。
         System.out.println(saved + "/" + entity.getId());
 // 输出：true/42

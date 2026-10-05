@@ -220,37 +220,37 @@ import org.apache.velocity.app.VelocityEngine;
 public class GenerateModelDemo {
     public static void main(String[] args) {
         Properties config = new Properties();
-// 作用：Properties config = new Properties();；按 UTF-8 加载受信任模板，调用后目标状态更新。
+// 作用：Properties config = new Properties();；按 UTF-8 加载受信任模板。
 // 初始状态：config = new Properties()。
         // config 把 engine 的模板根目录固定为 templates。
         config.setProperty("resource.loaders", "file");
-// 作用：config.setProperty("resource.loaders", "file");；按 UTF-8 加载受信任模板，调用后目标状态更新。
+// 作用：config.setProperty("resource.loaders", "file");；按 UTF-8 加载受信任模板。
         config.setProperty("resource.loader.file.path", "templates");
-// 作用：config.setProperty("resource.loader.file.path", "templates");；按 UTF-8 加载受信任模板，调用后目标状态更新。
+// 作用：config.setProperty("resource.loader.file.path", "templates");；按 UTF-8 加载受信任模板。
         config.setProperty("resource.default_encoding", "UTF-8");
-// 作用：config.setProperty("resource.default_encoding", "UTF-8");；按 UTF-8 加载受信任模板，调用后目标状态更新。
+// 作用：config.setProperty("resource.default_encoding", "UTF-8");；按 UTF-8 加载受信任模板。
         VelocityEngine engine = new VelocityEngine(config);
-// 作用：VelocityEngine engine = new VelocityEngine(config);；按 UTF-8 加载受信任模板，调用后目标状态更新。
+// 作用：VelocityEngine engine = new VelocityEngine(config);；按 UTF-8 加载受信任模板。
 // 初始状态：engine = new VelocityEngine(config)。
         engine.init();
-// 作用：engine.init();；按 UTF-8 加载受信任模板，调用后目标状态更新。
+// 作用：engine.init();；按 UTF-8 加载受信任模板。
         VelocityContext context = new VelocityContext();
-// 作用：VelocityContext context = new VelocityContext();；按 UTF-8 加载受信任模板，调用后目标状态更新。
+// 作用：VelocityContext context = new VelocityContext();；按 UTF-8 加载受信任模板。
 // 初始状态：context = new VelocityContext()。
         context.put("packageName", "example.user");
-// 作用：context.put("packageName", "example.user");；按 UTF-8 加载受信任模板，调用后目标状态更新。
+// 作用：context.put("packageName", "example.user");；按 UTF-8 加载受信任模板。
         context.put("className", "UserView");
-// 作用：context.put("className", "UserView");；按 UTF-8 加载受信任模板，调用后目标状态更新。
+// 作用：context.put("className", "UserView");；按 UTF-8 加载受信任模板。
         // context 为 model.vm 中的 $packageName 和 $className 提供确定值。
         Template template = engine.getTemplate("java/model.vm", StandardCharsets.UTF_8.name());
 // 初始状态：template = engine.getTemplate("java/model.vm", StandardCharsets.UTF_8.name())。
 // 作用：Template template = engine.getTemplate("java/model.vm", StandardCharsets.UTF_8.name());；按 UTF-8 加载受信任模板，返回读取结果。
         StringWriter writer = new StringWriter();
-// 作用：StringWriter writer = new StringWriter();；按 UTF-8 加载受信任模板，调用后目标状态更新。
+// 作用：StringWriter writer = new StringWriter();；按 UTF-8 加载受信任模板。
 // 初始状态：writer = new StringWriter()。
         // template 从 engine 的受信任目录加载；merge 只把渲染结果写入 writer。
         template.merge(context, writer);
-// 作用：template.merge(context, writer);；按 UTF-8 加载受信任模板，调用后目标状态更新。
+// 作用：template.merge(context, writer);；按 UTF-8 加载受信任模板。
         System.out.println(writer.toString().replace(System.lineSeparator(), " ").trim());
 // 输出：package example.user; public record UserView(long id, String name) {}
     }

@@ -51,7 +51,7 @@ import org.junit.jupiter.api.Test;
 class PriceTest {
     @Test
 // 初始状态：@Test。
-// 作用：@Test；声明单元测试，返回调用结果。
+// 作用：@Test；声明单元测试。
     void totalsTwoItems() {
         assertEquals(30, 10 + 20);
     }
@@ -83,7 +83,7 @@ var error = assertThrows(IllegalArgumentException.class,
 // 说明：SLF4J 参数化日志：记录结构化上下文 的具体调用为 logger.info("order accepted, orderId={}", orderId);
 logger.info("order accepted, orderId={}", orderId);
 // 初始状态：orderId = {}", orderId)。
-// 作用：logger.info("order accepted, orderId={}", orderId);；记录结构化上下文，返回调用结果。
+// 作用：logger.info("order accepted, orderId={}", orderId);；记录结构化上下文。
 // 输出：INFO order accepted, orderId=42（前提：orderId 为 42 且 INFO 级别已启用）。
 ```
 
