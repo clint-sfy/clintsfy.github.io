@@ -2,6 +2,7 @@ import type { DefaultTheme } from 'vitepress';
 import fg from 'fast-glob';
 import matter from 'gray-matter';
 import { getChineseZodiac, getChineseZodiacAlias } from '../theme/utils.ts';
+import { getJavaCourseItems } from './java-course.ts';
 const sync = fg.sync;
 
 export const sidebar: DefaultTheme.Config['sidebar'] = {
@@ -19,7 +20,7 @@ export const sidebar: DefaultTheme.Config['sidebar'] = {
   '/courses/agent/': getItems("courses/agent"),
   '/courses/c_plus/': getItems("courses/c_plus"),
   '/courses/python/': getItems("courses/python"),
-  '/courses/java/': getItems("courses/java"),
+  '/courses/java/': getJavaCourseItems(),
   '/courses/tangyudi/': getItems("courses/tangyudi"),
   '/courses/yuanzi/': getItems("courses/yuanzi"),
   '/courses/algorithm/': getItems("courses/algorithm"),

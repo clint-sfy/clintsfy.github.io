@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { sidebar } from '../docs/.vitepress/config/sidebar.ts'
+import { getJavaCourseItems } from '../docs/.vitepress/config/java-course.ts'
 
 function collectLinkedItems(items, result = []) {
   for (const item of items ?? []) {
@@ -21,4 +22,8 @@ test('sidebar link labels use inline markup inside VitePress text elements', () 
       `sidebar label for ${item.link} must not put a block element inside VitePress <p class="text">`,
     )
   }
+})
+
+test('Java sidebar is supplied by the canonical course manifest builder', () => {
+  assert.deepEqual(sidebar['/courses/java/'], getJavaCourseItems())
 })
