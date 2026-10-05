@@ -1,6 +1,6 @@
 # Java 路线专业准确性审阅记录
 
-本记录把结构/API 标题覆盖与专业准确性分开。自动测试验证文件、真实操作标题、用途、初始状态、关键变化、可观察结果以及风险边界；它们不执行 MySQL，也不证明锁行为或生产性能。下面是 Task 6 实施者在 2026-10-05 对照 MySQL 8.0 Reference Manual 的专业准确性自审证据，不能冒充独立人工专家签字。独立审稿由路线协调者在集成阶段补充。
+本记录把结构/API 标题覆盖与专业准确性分开。自动测试验证文件、真实操作标题、用途、初始状态、关键变化、可观察结果以及风险边界；它们不执行 MySQL，也不证明锁行为或生产性能。下面是 Task 6–7 实施者在 2026-10-05 对照 MySQL 8.0、Connector/J、JDK 20及MyBatis官方文档的专业准确性自审证据，不能冒充独立人工专家签字。独立审稿由路线协调者在集成阶段补充。
 
 ## Task 6：MySQL 05–10
 
@@ -71,3 +71,35 @@
 ### 验证范围与待独立审稿
 
 实施者已按种子行手推 SQL 输出，检查每个多会话步骤、回滚边界、版本标注、SQL方言及计划不确定性。当前机器未找到 mysql 客户端；Docker Desktop Linux engine 管道不存在，无法运行隔离 MySQL 容器。本次没有连接或修改已有数据库，不宣称真实 MySQL 执行通过。独立审稿仍需确认这些例子的语法、并发交错可操作性、官方依据与锁边界；运行证据与专业审稿应分别登记。
+
+## Task 7：MySQL运维与Java边界
+
+基线为MySQL 8.0/InnoDB与JDK 20。文章11有13个操作H3，文章12有6个操作H3，重写JDBC有14个操作H3；权限/恢复命令只用于隔离环境。以下主张可分别对照对应官方章节复核，不以标题覆盖替代专业审阅。
+
+| 文章 | 可独立复核的主张 | 精确官方依据 | 自审证据与限制 |
+| --- | --- | --- | --- |
+| 11 | user@host是独立身份，真实匹配需CURRENT_USER；host不是数据库名 | [8.2.6 Connection Verification](https://dev.mysql.com/doc/refman/8.0/en/connection-access.html) | 通过，受控来源与代理/DNS边界明确；未跑真实认证 |
+| 11 | 认证、REQUIRE SSL、客户端VERIFY_IDENTITY与对象授权各有职责 | [CREATE USER](https://dev.mysql.com/doc/refman/8.0/en/create-user.html)、[Encrypted Connections](https://dev.mysql.com/doc/refman/8.0/en/using-encrypted-connections.html) | 通过，随机密码8.0.18+，不包含真实秘密；未做TLS握手 |
+| 11 | CREATE/ALTER/DROP USER与GRANT/REVOKE分离，注销不删除业务表或必然终止会话 | [Account Management](https://dev.mysql.com/doc/refman/8.0/en/account-management-statements.html)、[DROP USER](https://dev.mysql.com/doc/refman/8.0/en/drop-user.html) | 通过，DEFINER与小版本限制邻接标注；管理员操作未执行 |
+| 11 | 角色成员与会话激活不同，默认角色影响后续登录 | [8.2.10 Using Roles](https://dev.mysql.com/doc/refman/8.0/en/roles.html) | 通过，GRANT角色→默认角色→新连接CURRENT_ROLE步骤明确 |
+| 11 | SHOW GRANTS用于权限复核，不是完整行为审计 | [SHOW GRANTS](https://dev.mysql.com/doc/refman/8.0/en/show-grants.html) | 通过，补充拒绝测试与托管/插件审计保留、脱敏边界 |
+| 11 | single-transaction用于事务表快照，quick流式读取，期间DDL可能破坏一致性 | [6.5.4 mysqldump — Transactional Options](https://dev.mysql.com/doc/refman/8.0/en/mysqldump.html#option_mysqldump_single-transaction) | 通过，未宣称无锁；不混入非事务表；导出未执行 |
+| 11 | routines/events须选取，单库逻辑备份不包含账号、配置、binlog或密钥 | [mysqldump](https://dev.mysql.com/doc/refman/8.0/en/mysqldump.html) | 通过，no-tablespaces/GTID OFF只定位独立库演练，按对象授备份权限 |
+| 11 | SQL恢复可执行破坏性语句，隔离实例与对象/DEFINER/事件控制不可省略 | [Executing SQL Statements from a Text File](https://dev.mysql.com/doc/refman/8.0/en/mysql-batch-commands.html) | 通过，3307隔离实例、审查SOURCE文件、禁止force忽略错误；恢复未执行 |
+| 11 | 完整备份+连续日志及精确事务边界才支持PITR | [9.5 Point-in-Time Recovery](https://dev.mysql.com/doc/refman/8.0/en/point-in-time-recovery.html) | 通过，source-data 8.0.26+、短全局锁与额外权限明确，不提供生产重放命令 |
+| 11 | 物理备份需一致工具/停机快照协议与版本、页格式、keyring等条件 | [9.2 Backup Methods](https://dev.mysql.com/doc/refman/8.0/en/backup-methods.html) | 通过，不把在线复制datadir当备份，托管供应商恢复流程单独验证 |
+| 11 | 文件校验/行数不能代替结构与应用验证，恢复演练必须记录RPO/RTO | [9.1 Backup and Recovery Types](https://dev.mysql.com/doc/refman/8.0/en/backup-types.html) | 通过，基础订单3/80手推核对；恢复耗时与可用性未实测 |
+| 12/JDBC | DriverManager与DataSource分层，DataSource不保证有池，close前须结束事务 | [JDK20 DataSource](https://docs.oracle.com/en/java/javase/20/docs/api/java.sql/javax/sql/DataSource.html)、[Connection](https://docs.oracle.com/en/java/javase/20/docs/api/java.sql/java/sql/Connection.html) | 通过，独立物理连接与池代理分开，编译通过，运行未验证 |
+| JDBC | URL证书/超时/时区显式配置，PREFERRED不等于服务端身份验证 | [Connector/J URL](https://dev.mysql.com/doc/connector-j/en/connector-j-reference-jdbc-url-format.html)、[Configuration Properties](https://dev.mysql.com/doc/connector-j/en/connector-j-reference-configuration-properties.html) | 通过，毫秒与秒分开，禁止把不安全连接属性当通用修复 |
+| JDBC | 参数值绑定不绑定标识符，getInt(NULL)需立即wasNull，键来自同一语句 | [PreparedStatement](https://docs.oracle.com/en/java/javase/20/docs/api/java.sql/java/sql/PreparedStatement.html)、[ResultSet](https://docs.oracle.com/en/java/javase/20/docs/api/java.sql/java/sql/ResultSet.html) | 通过，注入输入与0/true/0/false推导明确，批量生成键不机械推断 |
+| JDBC | BatchUpdateException计数可能部分或含失败项，执行批次不等于提交 | [JDK20 BatchUpdateException](https://docs.oracle.com/en/java/javase/20/docs/api/java.sql/java/sql/BatchUpdateException.html)、[Connector/J Implementation Notes](https://dev.mysql.com/doc/connector-j/en/connector-j-reference-implementation-notes.html) | 通过，-2/-3与驱动重写/继续执行分开；真实批失败未执行 |
+| JDBC | 未决事务setAutoCommit(true)可提交，回滚/复位失败不能继续复用 | [JDK20 Connection](https://docs.oracle.com/en/java/javase/20/docs/api/java.sql/java/sql/Connection.html) | 通过，失败不设置true，物理连接abort/close，池需专用淘汰API；保存原异常链 |
+| JDBC | fetchSize默认非分页，游标需useCursorFetch，MIN_VALUE为驱动扩展 | [Connector/J Implementation Notes](https://dev.mysql.com/doc/connector-j/en/connector-j-reference-implementation-notes.html)、[Performance Extensions](https://dev.mysql.com/doc/connector-j/en/connector-j-connp-props-performance-extensions.html) | 通过，服务端预编译、占连接、消费/关闭及网络预算明确 |
+| JDBC | queryTimeout秒、networkTimeout毫秒与池等待各有预算；cancel不证明事务结束 | [JDK20 Statement](https://docs.oracle.com/en/java/javase/20/docs/api/java.sql/java/sql/Statement.html)、[Connection](https://docs.oracle.com/en/java/javase/20/docs/api/java.sql/java/sql/Connection.html) | 通过，三个独立H3；Executor关闭与原超时恢复，取消协作线程前提明确 |
+| 12 | MyBatis BATCH先缓冲后flush，计数/键映射需真实驱动测试，Spring需相同事务资源 | [MyBatis Java API](https://mybatis.org/mybatis-3/java-api.html)、[MyBatis-Spring SqlSession](https://mybatis.org/spring/sqlsession.html)、[Transactions](https://mybatis.org/spring/transactions.html) | 通过，两次insert→flush计数2→rollback，复用第14章映射；编译通过，映射执行未验证 |
+| 12/14 | TypeHandler负责类型，嵌套查询可能N+1；别名/查询次数/日志脱敏需验证 | [Mapper XML — resultMap and TypeHandler](https://mybatis.org/mybatis-3/sqlmap-xml.html) | 通过，JOIN例固定列名；详细映射仍归第14章 |
+| 07补正 | 排名按amount定义peer，外层数值display_order稳定展示甲乙而不改变名次 | [Window Function Descriptions](https://dev.mysql.com/doc/refman/8.0/en/window-function-descriptions.html) | 通过，RANK与DENSE_RANK均修正，测试保留纯amount窗口排序 |
+
+### Task 7运行证据与独立审稿边界
+
+JDK20编译器`javac --release 20`成功编译JDBC的12个Java方法体片段及桥接文章的5个Java片段，桥接使用本机已缓存的MyBatis3.5.19 jar；没有增加生产依赖。语法检查不代表URL、TLS、映射或驱动运行正确。mysql客户端仍未找到，Docker Linux engine管道不存在，未运行权限、备份、恢复、PITR或JDBC数据库测试；这些状态保留为“未执行”。独立审稿应复核矩阵中的权限匹配、DDL/GTID边界、恢复顺序、批量计数与连接失败状态，运行证据另行记录。

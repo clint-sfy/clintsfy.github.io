@@ -32,6 +32,8 @@ description: 先掌握原生 MyBatis XML、参数绑定与事务边界，再对�
 
 MyBatis 不是自动替你猜 SQL 的黑盒，而是把 SQL、参数和结果映射组织成可审查的调用。Mapper 负责数据访问，业务事务通常在 Service 边界开启；`#{}` 能把值交给 JDBC 预编译，不能用 `${}` 拼接用户输入。动态 SQL 方便组合条件，但条件分支越多越需要测试空条件、空集合和重复列名。
 
+本文拥有映射、动态SQL、分页、批处理与插件的实现；[MySQL事务与锁](/courses/java/11-MySQL-8/09-事务MVCC隔离级别与锁)拥有隔离/MVCC/锁语义，[JDBC](/courses/java/12-工程实践/02-JDBC与事务)拥有Java资源、生成键和批失败契约，[Spring事务](/courses/java/14-后端工程/03-Spring-AOP与声明式事务)拥有代理与传播。进入本篇前可先读 [Java衔接](/courses/java/11-MySQL-8/12-Java-JDBC与MyBatis衔接)：TypeHandler、ExecutorType.BATCH、useGeneratedKeys及N+1的交接边界在该入口定位，详细实现仍在本章统一维护。
+
 MyBatis-Plus 减少简单 CRUD 的样板，但它仍然需要正确的表映射、事务配置、分页拦截器和数据库索引。本文把 MP 作为独立扩展知识示例，不能把示例当作某个样本已经采用 MyBatis-Plus 的证据；实际项目应以自己的依赖、版本和团队约束为准。Spring Boot 4.1.0、MyBatis Spring Boot 4.1.0 与 MP 不是同一套版本号，升级时要分别查兼容矩阵。
 
 本文按 JDK 20 的写法组织 Java 片段；代码不依赖 JDK 20 之后的 API。覆盖样本的 Java 基线为 Java 17，框架片段需要容器、数据源和实际数据库才能运行，不能把独立片段当成完整应用配置。

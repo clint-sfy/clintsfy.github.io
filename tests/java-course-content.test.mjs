@@ -127,7 +127,7 @@ const EXPECTED_ARTICLES_BY_CHAPTER = {
     '04-JVM诊断命令与JFR.md',
     '05-GC日志与问题定位.md',
   ],
-  '11-MySQL-8': ['01-环境连接与数据库对象.md', '02-表设计与DDL.md', '03-数据类型字符集与时区.md', '04-数据写入更新与删除.md', '05-查询过滤排序与分页.md', '06-连接子查询与集合查询.md', '07-聚合CTE窗口函数与JSON.md', '08-约束与索引设计.md', '09-事务MVCC隔离级别与锁.md', '10-EXPLAIN慢SQL与性能优化.md'],
+  '11-MySQL-8': ['01-环境连接与数据库对象.md', '02-表设计与DDL.md', '03-数据类型字符集与时区.md', '04-数据写入更新与删除.md', '05-查询过滤排序与分页.md', '06-连接子查询与集合查询.md', '07-聚合CTE窗口函数与JSON.md', '08-约束与索引设计.md', '09-事务MVCC隔离级别与锁.md', '10-EXPLAIN慢SQL与性能优化.md', '11-用户权限备份与恢复.md', '12-Java-JDBC与MyBatis衔接.md'],
   '12-工程实践': [
     '01-Maven与测试工程.md',
     '02-JDBC与事务.md',
@@ -308,7 +308,8 @@ const ARTICLE_CONTRACT_MANIFEST = {
   entries: [
     ...['01-环境连接与数据库对象', '02-表设计与DDL', '03-数据类型字符集与时区', '04-数据写入更新与删除'].map((name) => ({ path: `docs/courses/java/11-MySQL-8/${name}.md`, source: 'new' })),
     ...['05-查询过滤排序与分页', '06-连接子查询与集合查询', '07-聚合CTE窗口函数与JSON', '08-约束与索引设计', '09-事务MVCC隔离级别与锁', '10-EXPLAIN慢SQL与性能优化'].map((name) => ({ path: `docs/courses/java/11-MySQL-8/${name}.md`, source: 'new' })),
-    // Future entries use { path: 'docs/courses/java/...md', source: 'new' | 'migrated' | 'rewritten' }.
+    ...['11-用户权限备份与恢复', '12-Java-JDBC与MyBatis衔接'].map((name) => ({ path: `docs/courses/java/11-MySQL-8/${name}.md`, source: 'new' })),
+    { path: 'docs/courses/java/12-工程实践/02-JDBC与事务.md', source: 'rewritten' },
   ],
 }
 const ARTICLE_CONTRACT_FRONTMATTER_FIELDS = [
@@ -348,6 +349,53 @@ test('MySQL foundation and MySQL CRUD preserve searchable operations and safe ex
   assert.match(crud, /ROW_COUNT\(\)/u)
   assert.match(crud, /START TRANSACTION[\s\S]*ROLLBACK/u)
   assert.match(crud, /风险[\s\S]*WHERE/u)
+})
+
+test('MySQL operations preserve permission and recovery boundaries', () => {
+  const path = 'docs/courses/java/11-MySQL-8/11-用户权限备份与恢复.md'
+  assert.ok(existsSync(join(REPO_ROOT, path)), `${path} is missing`)
+  const article = readMarkdown(path)
+  assert.deepEqual(inspectArticleContract(article, { path }), [])
+  const headings = getArticleContractH3Subsections(getArticleContractSection(article.body, '常用用法')).map(({ heading }) => getArticleContractOperationHeadingLabel(heading))
+  for (const operation of ['CREATE USER', 'ALTER USER', 'DROP USER', 'GRANT', 'REVOKE', 'SHOW GRANTS', 'CREATE ROLE', 'SET DEFAULT ROLE', 'mysqldump', 'mysql', 'SHOW BINARY LOGS', 'SELECT restore drill']) assert.ok(headings.includes(operation), operation)
+  for (const term of ['最小权限', 'VERIFY_IDENTITY', '--single-transaction', '--quick', '--routines', '--events', '--triggers', '--set-gtid-purged=OFF', 'DDL', '物理备份', 'PITR', '恢复演练', '校验和', '行数', '托管']) assert.ok(article.body.includes(term), term)
+  assert.doesNotMatch(article.body, /mysqlpump\s+--/u)
+})
+
+test('MySQL operations GRANT and REVOKE require executable native statements', () => {
+  for (const operation of ['GRANT', 'REVOKE']) {
+    const target = operation === 'GRANT' ? 'TO' : 'FROM'
+    assert.equal(isArticleContractOperationHeading(operation, `\`\`\`sql\n${operation} SELECT ON learning_lab.users ${target} 'lab';\n\`\`\``), true)
+    assert.equal(isArticleContractOperationHeading(operation, `\`\`\`sql\n-- ${operation} SELECT;\nSELECT 1;\n\`\`\``), false)
+  }
+})
+
+test('data access boundary keeps Java lifecycle canonical and links database internals', () => {
+  const bridge = readMarkdown('docs/courses/java/11-MySQL-8/12-Java-JDBC与MyBatis衔接.md')
+  assert.deepEqual(inspectArticleContract(bridge, { path: 'mysql-bridge' }), [])
+  for (const term of ['Connector/J', 'DataSource', 'TypeHandler', 'ExecutorType.BATCH', 'N+1', 'transaction manager', 'useGeneratedKeys']) assert.ok(bridge.body.includes(term), term)
+  const jdbc = readMarkdown('docs/courses/java/12-工程实践/02-JDBC与事务.md')
+  assert.deepEqual(inspectArticleContract(jdbc, { path: 'jdbc' }), [])
+  const jdbcHeadings = getArticleContractH3Subsections(getArticleContractSection(jdbc.body, '常用用法')).map(({ heading }) => getArticleContractOperationHeadingLabel(heading))
+  for (const operation of ['DriverManager.getConnection', 'DataSource.getConnection', 'PreparedStatement.setString', 'ResultSet.wasNull', 'PreparedStatement.getGeneratedKeys', 'PreparedStatement.executeBatch', 'Connection.setSavepoint', 'PreparedStatement.setFetchSize', 'PreparedStatement.setQueryTimeout', 'Connection.setNetworkTimeout', 'Statement.cancel', 'SQLException.getSQLState']) assert.ok(jdbcHeadings.includes(operation), operation)
+  for (const term of ['DriverManager', 'try-with-resources', 'PreparedStatement', 'wasNull', 'RETURN_GENERATED_KEYS', 'BatchUpdateException', 'setFetchSize', 'setQueryTimeout', 'setNetworkTimeout', 'cancel', 'getSQLState', 'getErrorCode', 'setSavepoint', 'getTransactionIsolation', 'Testcontainers']) assert.ok(jdbc.body.includes(term), term)
+  for (const path of ['docs/courses/java/12-工程实践/02-JDBC与事务.md', 'docs/courses/java/14-后端工程/03-Spring-AOP与声明式事务.md', 'docs/courses/java/14-后端工程/06-MyBatis核心与MyBatis-Plus重点.md']) {
+    const body = readMarkdown(path).body
+    assert.match(body, /\/courses\/java\/11-MySQL-8\/09-事务MVCC隔离级别与锁/u, path)
+    assert.doesNotMatch(body, /^### .*?(?:MVCC|next-key|间隙锁|快照读)/mu, path)
+  }
+})
+
+test('MySQL operations inventory has exactly twelve articles and deterministic rank display', () => {
+  const files = readdirSync(join(REPO_ROOT, 'docs/courses/java/11-MySQL-8')).filter((file) => file.endsWith('.md')).sort()
+  assert.deepEqual(files, ['index.md', ...EXPECTED_ARTICLES_BY_CHAPTER['11-MySQL-8']].sort())
+  assert.equal(files.length, 13)
+  const ranking = readMarkdown('docs/courses/java/11-MySQL-8/07-聚合CTE窗口函数与JSON.md').body
+  for (const operation of ['SELECT RANK()', 'SELECT DENSE_RANK()']) {
+    const section = getArticleContractH3Subsections(getArticleContractSection(ranking, '常用用法')).find(({ heading }) => getArticleContractOperationHeadingLabel(heading) === operation)
+    assert.match(section.content, /OVER\(ORDER BY amount DESC\)/u)
+    assert.match(section.content, /ORDER BY amount DESC,display_order;/u)
+  }
 })
 
 const MYSQL_QUERY_INTERNALS_TOPICS = {
@@ -2061,6 +2109,11 @@ function isArticleContractOperationHeading(heading, content = '') {
     )
   }
   if (!label || /^(?:示例|操作|用法|案例|说明|注意|风险|边界)/u.test(label)) return false
+  if (/^(GRANT|REVOKE)$/iu.test(label)) {
+    return getArticleContractCodeBlocks(content).some(({ code, language }) =>
+      language === 'sql' && new RegExp(`(?:^|[;\\n])\\s*${label}\\b`, 'imu').test(lexArticleContractCode(code, language).executable),
+    )
+  }
   const sqlOrRedis = label.match(/^(SELECT|INSERT|UPDATE|DELETE|SET|GET|MGET|MSET|INCR|DECR|HSET|HGET|HMGET|HGETALL|HSCAN|LPUSH|RPUSH|LPOP|RPOP|SADD|SMEMBERS|ZADD|ZRANGE|EXISTS|EXPIRE|TTL|SCAN|FLUSHALL|FLUSHDB|KEYS|DEL|UNLINK|TRUNCATE|DROP|CREATE|ALTER|LOCK|UNLOCK|EXPLAIN|WITH|SHOW|DESCRIBE|MYSQLDUMP|BACKUP|RESTORE|EVAL|EVALSHA|SCRIPT|MONITOR|DEBUG|REPLICAOF|SLAVEOF|MIGRATE|SLOWLOG|INFO|LATENCY|MEMORY|CONFIG)(?:\s+(TABLE|DATABASE|INSTANCE|TABLES|INTO))?/iu)
   if (sqlOrRedis) {
     const operationPattern = sqlOrRedis[1].replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
@@ -4388,13 +4441,13 @@ test('Java course keeps the expected Markdown files, article counts, chapters, a
 
   assert.equal(
     markdownPaths.length,
-    104,
-    'rule java-markdown-count: expected 104 Markdown files',
+    106,
+    'rule java-markdown-count: expected 106 Markdown files',
   )
   assert.equal(
     markdownPaths.filter((file) => !file.endsWith('/index.md')).length,
-    102,
-    'rule java-article-count: expected 102 course articles',
+    104,
+    'rule java-article-count: expected 104 course articles',
   )
   assert.equal(
     chapterDirectories.length,
@@ -4494,7 +4547,7 @@ test('List iterator and remove examples show calls, state, and output', () => {
   assert.match(removeExample, /\/\/ numbers：\[10, 20, 30\][\s\S]*remove\(1\)[\s\S]*remove\(Integer\.valueOf\(30\)\)[\s\S]*\/\/ 输出：\[10\]/u)
 })
 
-test('all 102 Java articles keep the unified API heading format', () => {
+test('all 104 Java articles keep the unified API heading format', () => {
   const violations = []
   for (const relativePath of ARTICLE_PATHS) {
     const { body } = readMarkdown(relativePath)
@@ -4902,7 +4955,7 @@ int first = numbers.get(0);
   )
 })
 
-test('all 102 Java articles put API purpose prose before examples and retain observable results', () => {
+test('all 104 Java articles put API purpose prose before examples and retain observable results', () => {
   const violations = []
   for (const relativePath of ARTICLE_PATHS) {
     const { body } = readMarkdown(relativePath)

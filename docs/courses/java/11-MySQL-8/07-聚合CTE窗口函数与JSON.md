@@ -105,13 +105,13 @@ FROM learning_lab.orders WHERE id BETWEEN 101 AND 103 ORDER BY user_id,rn;
 ```sql
 -- 输入：甲40、乙40、丙15，peer按金额定义。
 SELECT name,RANK() OVER(ORDER BY amount DESC) AS r
-FROM (SELECT '甲' name,40 amount UNION ALL SELECT '乙',40 UNION ALL SELECT '丙',15) scores
-ORDER BY amount DESC,name;
+FROM (SELECT 1 display_order,'甲' name,40 amount UNION ALL SELECT 2,'乙',40 UNION ALL SELECT 3,'丙',15) scores
+ORDER BY amount DESC,display_order;
 -- 关键变化：甲乙并列1，丙跳到3。
 -- 输出：甲/1、乙/1、丙/3。
 ```
 
-窗口 ORDER BY 若加入唯一姓名就不再并列；展示顺序可在外层 ORDER BY 另加姓名。
+窗口 ORDER BY 若加入唯一序号就不再并列；展示顺序在外层另加数值display_order，避免中文姓名的排序规则影响甲乙输出次序。
 
 ### SELECT DENSE_RANK()：让并列排名连续
 
@@ -120,8 +120,8 @@ ORDER BY amount DESC,name;
 ```sql
 -- 输入：甲40、乙40、丙15。
 SELECT name,DENSE_RANK() OVER(ORDER BY amount DESC) AS r
-FROM (SELECT '甲' name,40 amount UNION ALL SELECT '乙',40 UNION ALL SELECT '丙',15) scores
-ORDER BY amount DESC,name;
+FROM (SELECT 1 display_order,'甲' name,40 amount UNION ALL SELECT 2,'乙',40 UNION ALL SELECT 3,'丙',15) scores
+ORDER BY amount DESC,display_order;
 -- 关键变化：甲乙并列1，丙得到2。
 -- 输出：甲/1、乙/1、丙/2。
 ```
