@@ -1,11 +1,16 @@
 import assert from 'node:assert/strict'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { join, relative } from 'node:path'
 import { test } from 'node:test'
 
 import {
   JAVA_COURSE_CHAPTERS,
   getJavaCourseItems,
 } from '../docs/.vitepress/config/java-course.ts'
+import {
+  renderRedirectHtml,
+  validateRedirects,
+} from '../scripts/generate-java-redirects.mjs'
 
 const EXPECTED_CHAPTER_IDS = [
   '01-Java基础',
@@ -54,6 +59,53 @@ function collectLinks(items, result = []) {
   }
   return result
 }
+
+function findArticle(chapterId, fileName) {
+  const chapter = JAVA_COURSE_CHAPTERS.find((item) => item.id === chapterId)
+  assert.ok(chapter, `chapter ${chapterId} must exist in the canonical manifest`)
+  const article = chapter.articles.find((item) => item.file.endsWith(`/${fileName}`))
+  assert.ok(article, `${chapterId}/${fileName} must exist in the canonical manifest`)
+  return article
+}
+
+function routeForLegacyFile(filePath) {
+  return `/${relative('.', filePath).replaceAll('\\', '/').replace(/^docs\//u, '').replace(/\.md$/u, '')}`
+}
+
+function listExistingLegacyRoutes() {
+  const roots = ['11-工程实践', '12-设计与项目', '13-后端工程']
+  return roots.flatMap((chapterId) => {
+    const directory = join('docs', 'courses', 'java', chapterId)
+    return readdirSync(directory, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+      .map((entry) => routeForLegacyFile(join(directory, entry.name)))
+  })
+}
+
+function expectedRedirectTarget(source) {
+  if (source.endsWith('/13-MySQL-8.0')) {
+    return findArticle('11-MySQL-8', '01-环境连接与数据库对象.md').route
+  }
+  if (source.endsWith('/14-Redis')) {
+    return findArticle('15-Redis', '01-基础连接与数据模型.md').route
+  }
+
+  const match = source.match(/^\/courses\/java\/(11-工程实践|12-设计与项目|13-后端工程)\/(.+)$/u)
+  assert.ok(match, `legacy route ${source} must belong to an old Java chapter`)
+  const targetChapter = {
+    '11-工程实践': '12-工程实践',
+    '12-设计与项目': '13-设计与项目',
+    '13-后端工程': '14-后端工程',
+  }[match[1]]
+  return findArticle(targetChapter, `${match[2]}.md`).route
+}
+
+const REDIRECTS = JSON.parse(
+  readFileSync('docs/.vitepress/data/java-redirects.json', 'utf8'),
+)
+const CANONICAL_ROUTES = new Set(
+  JAVA_COURSE_CHAPTERS.flatMap((chapter) => chapter.articles.map((article) => article.route)),
+)
 
 test('Java roadmap manifest keeps the exact 01-15 chapter order', () => {
   assert.deepEqual(
@@ -229,4 +281,55 @@ test('Java sidebar keeps a target fallback when a compatibility slot becomes can
     !(backendGroup?.items ?? []).some((item) => item.link === redisArticle.legacyRoute),
     'a compatibility canonical article must not hide or duplicate the target fallback',
   )
+})
+
+test('Java permanent redirects map every existing legacy route exactly once', () => {
+  const legacyRoutes = listExistingLegacyRoutes()
+  assert.equal(REDIRECTS.length, legacyRoutes.length, 'redirect count must derive from legacy content')
+  assert.equal(new Set(REDIRECTS.map((entry) => entry.source)).size, REDIRECTS.length)
+  assert.deepEqual(
+    new Set(REDIRECTS.map((entry) => entry.source)),
+    new Set(legacyRoutes),
+  )
+
+  validateRedirects(REDIRECTS, CANONICAL_ROUTES)
+  for (const entry of REDIRECTS) {
+    assert.equal(entry.target, expectedRedirectTarget(entry.source))
+    assert.ok(CANONICAL_ROUTES.has(entry.target), `redirect target ${entry.target} must be canonical`)
+  }
+})
+
+test('Java redirect validation rejects duplicate, missing, colliding, and unsafe routes', () => {
+  const fixtures = JSON.parse(
+    readFileSync('tests/fixtures/java-course/invalid-redirects.json', 'utf8'),
+  )
+
+  for (const [name, entries] of Object.entries(fixtures)) {
+    assert.throws(
+      () => validateRedirects(entries, CANONICAL_ROUTES),
+      undefined,
+      `${name} fixture must be rejected`,
+    )
+  }
+})
+
+test('Java redirect HTML repeats one encoded destination in every navigation mechanism', () => {
+  const target = findArticle('11-MySQL-8', '01-环境连接与数据库对象.md').route
+  const encodedTarget = encodeURI(target)
+  const escapedTarget = encodedTarget
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll("'", '&#39;')
+  const html = renderRedirectHtml(target)
+
+  assert.match(html, new RegExp(`<link rel="canonical" href="${escapedTarget}"`))
+  assert.match(html, new RegExp(`content="0; url=${escapedTarget}"`))
+  assert.match(html, new RegExp(`location\\.replace\\(${JSON.stringify(encodedTarget)}\\)`))
+  assert.match(html, new RegExp(`<a href="${escapedTarget}"`))
+
+  const escapedTargetHtml = renderRedirectHtml('/courses/java/引号"&<script>')
+  assert.doesNotMatch(escapedTargetHtml, /引号"&<script>/u)
+  assert.doesNotMatch(escapedTargetHtml, /<\/script>.*引号/u)
 })

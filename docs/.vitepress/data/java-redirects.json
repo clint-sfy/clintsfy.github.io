@@ -1,0 +1,74 @@
+[
+  {
+    "source": "/courses/java/11-工程实践/01-Maven与测试工程",
+    "target": "/courses/java/12-工程实践/01-Maven与测试工程"
+  },
+  {
+    "source": "/courses/java/11-工程实践/02-JDBC与事务",
+    "target": "/courses/java/12-工程实践/02-JDBC与事务"
+  },
+  {
+    "source": "/courses/java/11-工程实践/04-Velocity代码生成",
+    "target": "/courses/java/12-工程实践/04-Velocity代码生成"
+  },
+  {
+    "source": "/courses/java/12-设计与项目/01-设计原则模式与综合复习",
+    "target": "/courses/java/13-设计与项目/01-设计原则模式与综合复习"
+  },
+  {
+    "source": "/courses/java/13-后端工程/01-Spring-Boot启动与配置",
+    "target": "/courses/java/14-后端工程/01-Spring-Boot启动与配置"
+  },
+  {
+    "source": "/courses/java/13-后端工程/02-Spring-IoC与Bean生命周期",
+    "target": "/courses/java/14-后端工程/02-Spring-IoC与Bean生命周期"
+  },
+  {
+    "source": "/courses/java/13-后端工程/03-Spring-AOP与声明式事务",
+    "target": "/courses/java/14-后端工程/03-Spring-AOP与声明式事务"
+  },
+  {
+    "source": "/courses/java/13-后端工程/04-Spring-MVC与Servlet边界",
+    "target": "/courses/java/14-后端工程/04-Spring-MVC与Servlet边界"
+  },
+  {
+    "source": "/courses/java/13-后端工程/05-Spring-Security与JWT",
+    "target": "/courses/java/14-后端工程/05-Spring-Security与JWT"
+  },
+  {
+    "source": "/courses/java/13-后端工程/06-MyBatis核心与MyBatis-Plus重点",
+    "target": "/courses/java/14-后端工程/06-MyBatis核心与MyBatis-Plus重点"
+  },
+  {
+    "source": "/courses/java/13-后端工程/07-Jackson与Fastjson2-JSON",
+    "target": "/courses/java/14-后端工程/07-Jackson与Fastjson2-JSON"
+  },
+  {
+    "source": "/courses/java/13-后端工程/08-Bean-Validation参数校验",
+    "target": "/courses/java/14-后端工程/08-Bean-Validation参数校验"
+  },
+  {
+    "source": "/courses/java/13-后端工程/09-SLF4J与Logback日志",
+    "target": "/courses/java/14-后端工程/09-SLF4J与Logback日志"
+  },
+  {
+    "source": "/courses/java/13-后端工程/10-文件上传下载与资源安全",
+    "target": "/courses/java/14-后端工程/10-文件上传下载与资源安全"
+  },
+  {
+    "source": "/courses/java/13-后端工程/11-Apache-POI-Excel导入导出",
+    "target": "/courses/java/14-后端工程/11-Apache-POI-Excel导入导出"
+  },
+  {
+    "source": "/courses/java/13-后端工程/12-Quartz定时任务",
+    "target": "/courses/java/14-后端工程/12-Quartz定时任务"
+  },
+  {
+    "source": "/courses/java/13-后端工程/13-MySQL-8.0",
+    "target": "/courses/java/11-MySQL-8/01-环境连接与数据库对象"
+  },
+  {
+    "source": "/courses/java/13-后端工程/14-Redis",
+    "target": "/courses/java/15-Redis/01-基础连接与数据模型"
+  }
+]

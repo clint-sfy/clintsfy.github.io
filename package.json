@@ -11,7 +11,9 @@
   },
   "scripts": {
     "dev": "vitepress dev docs",
+    "generate:java-redirects": "node scripts/generate-java-redirects.mjs",
     "build": "vitepress build docs",
+    "prebuild": "pnpm generate:java-redirects",
     "preview": "vitepress preview docs",
     "test": "node --loader ./tests/typescript-loader.mjs --test"
   },

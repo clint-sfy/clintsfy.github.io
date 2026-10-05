@@ -1,0 +1,36 @@
+{
+  "duplicateSources": [
+    {
+      "source": "/courses/java/13-后端工程/01-Spring-Boot启动与配置",
+      "target": "/courses/java/14-后端工程/01-Spring-Boot启动与配置"
+    },
+    {
+      "source": "/courses/java/13-后端工程/01-Spring-Boot启动与配置",
+      "target": "/courses/java/14-后端工程/02-Spring-IoC与Bean生命周期"
+    }
+  ],
+  "missingCanonicalTarget": [
+    {
+      "source": "/courses/java/13-后端工程/01-Spring-Boot启动与配置",
+      "target": "/courses/java/14-后端工程/not-in-manifest"
+    }
+  ],
+  "canonicalSourceCollision": [
+    {
+      "source": "/courses/java/14-后端工程/01-Spring-Boot启动与配置",
+      "target": "/courses/java/14-后端工程/02-Spring-IoC与Bean生命周期"
+    }
+  ],
+  "unsafeRoutes": [
+    {
+      "source": "/courses/java/13-后端工程/../14-后端工程/01-Spring-Boot启动与配置",
+      "target": "/courses/java/14-后端工程/01-Spring-Boot启动与配置"
+    }
+  ],
+  "nonCourseRoutes": [
+    {
+      "source": "/about/old-java-route",
+      "target": "/courses/java/14-后端工程/01-Spring-Boot启动与配置"
+    }
+  ]
+}
