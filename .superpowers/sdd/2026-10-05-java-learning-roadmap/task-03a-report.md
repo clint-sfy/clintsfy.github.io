@@ -25,4 +25,4 @@ Status: `DONE_WITH_CONCERNS`
 
 ## Commit
 
-Pending.
+Implementation commit: `e83b577ca` (`docs(java): remove mechanical code comments`).
