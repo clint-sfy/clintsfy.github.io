@@ -178,3 +178,36 @@ git diff --check
 The remaining full-suite failure is `tests/open-source-data.test.mjs` expecting
 `getItems("courses/java")`; Task 1 now supplies the Java sidebar through
 `getJavaCourseItems()`. The ownership brief excludes that unrelated test file.
+
+### Review fix round 2
+
+Status: `DONE_WITH_CONCERNS`
+
+SQL WHERE analysis now retains quoted literals in a same-length semantic mask
+while still excluding comments. Boolean splitting respects quotes and
+parentheses, and recognizes equal string, numeric, and boolean comparisons in
+OR branches. The Java scanner associates SQL/Redis literal occurrences with
+the actual execution-call line, handles literal concatenation and text blocks,
+and conservatively requires an execution-line boundary for dynamic SQL
+construction. H3 receiver checks reject an unrelated `Foo.get` while allowing
+receiver types and actual calls to agree. Comment checks retain literal
+arguments for tautological restatement detection and reject only enumerated
+no-information phrases; arbitrary informative comments remain accepted.
+
+Verification:
+
+```text
+corepack pnpm@9.15.9 exec node --test --test-name-pattern="article contract checks|article contract rejects tautological|danger boundary requires|danger and executable|danger boundaries|operation H3|article contract manifest" tests/java-course-content.test.mjs
+→ 8 pass, 0 fail
+
+corepack pnpm@9.15.9 exec node --test tests/java-course-content.test.mjs
+→ 44 pass, 0 fail
+
+corepack pnpm@9.15.9 test
+→ 80 pass, 1 fail (the known stale sidebar-source assertion in tests/open-source-data.test.mjs)
+
+git diff --check
+→ pass
+```
+
+Commit: pending.
