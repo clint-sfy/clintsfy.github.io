@@ -2826,6 +2826,51 @@ test('Flyway migrations and Hikari routing expose the approved searchable bounda
   assert.deepEqual(violations, [], `rule migration-pool-routing-topics${formatViolations(violations)}`)
 })
 
+test('Flyway and Hikari examples preserve safe operational behavior', () => {
+  const flyway = readMarkdown('docs/courses/java/12-工程实践/03-Flyway数据库迁移.md').body
+  const validate = flyway.split('### flyway.validate：')[1].split(/^### /mu)[0]
+  assert.match(validate, /resolved-but-not-applied migration 失败/u)
+  assert.match(validate, /flyway migrate/u)
+  assert.doesNotMatch(validate, /V2 pending[\s\S]*?flyway validate/u)
+
+  const clean = flyway.split('### flyway.clean：')[1].split(/^### /mu)[0]
+  assert.match(clean, /jdbc:mysql:\/\/127\.0\.0\.1:3307\/test_db/u)
+  assert.match(clean, /-cleanDisabled=false/u)
+  assert.match(clean, /\*\*危险/u)
+
+  const callbacks = flyway.split('### flyway.migrate：Flyway callbacks')[1].split(/^### /mu)[0]
+  assert.match(callbacks, /flyway\.locations=filesystem:sql\/migrations/u)
+  assert.match(callbacks, /flyway\.callbackLocations=filesystem:sql\/callbacks/u)
+  assert.match(callbacks, /INSERT INTO migration_audit/u)
+  assert.match(callbacks, /SELECT event_name, COUNT\(\*\)/u)
+  assert.doesNotMatch(callbacks, /echo .*callback.*recorded/iu)
+
+  const hikari = readMarkdown('docs/courses/java/12-工程实践/05-HikariCP与多数据源.md').body
+  assert.match(hikari, /HikariCP 5\.1\.0/u)
+  assert.match(hikari, /setMaximumPoolSize\(12\)/u)
+  assert.doesNotMatch(hikari, /默认maximumPoolSize为10/u)
+  for (const [heading, pattern] of [
+    ['setConnectionTimeout', /250 毫秒/u],
+    ['setValidationTimeout', /250 毫秒/u],
+    ['setIdleTimeout', /10,?000 毫秒/u],
+    ['setMaxLifetime', /30,?000 毫秒/u],
+    ['setKeepaliveTime', /30,?000 毫秒/u],
+    ['setLeakDetectionThreshold', /2,?000 毫秒/u],
+  ]) {
+    const section = hikari.split(`### HikariConfig.${heading}：`)[1].split(/^### /mu)[0]
+    assert.match(section, pattern, `${heading} must document the official constraint`)
+  }
+  const lifetime = hikari.split('### HikariConfig.setMaxLifetime：')[1].split(/^### /mu)[0]
+  assert.match(lifetime, /在用连接不会被强制关闭/u)
+  assert.match(lifetime, /归还池时/u)
+  assert.match(hikari, /setRegisterMbeans\(true\)/u)
+  assert.match(hikari, /com\.zaxxer\.hikari:type=Pool \(orders-primary\)/u)
+
+  const transaction = hikari.split('### @Transactional：transaction pinning')[1].split(/^### /mu)[0]
+  assert.match(transaction, /finally/u)
+  assert.match(transaction, /DbRouteContext\.clear\(\)/u)
+})
+
 test('article contract checks frontmatter, exact H2 order, and searchable operation headings', () => {
   const valid = createValidArticleContractFixture()
   assert.deepEqual(inspectArticleContract(valid, { path: 'valid-fixture.md' }), [])

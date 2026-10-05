@@ -34,7 +34,7 @@ Flyway 通过迁移文件和 schema history 表记录已应用的版本及校验
 # 文件：V2__add_status.sql
 # 关键变化：migrate按V1、V2顺序应用迁移。
 flyway info
-flyway migrate
+flyway -validateOnMigrate=true migrate
 # 输出：info 显示 V1、V2 成功；schema history 对应版本记录成功状态与校验和。
 ```
 
@@ -66,15 +66,16 @@ SELECT id FROM account WHERE status = 'active';
 用于部署前发现文件缺失、版本或校验和与已应用记录不一致的情况。
 
 ```shell
-# 初始状态：V1 已应用，仓库中 V1 与原始文件相同且包含 V2。
+# 初始状态：隔离验证库中 V1 已应用、仓库新增的 V2 为 pending。
+flyway info
+# 关键变化：migrate 在应用 V2 前执行 validateOnMigrate；V2 从 pending 变为 success。
+flyway -validateOnMigrate=true migrate
 flyway validate
 flyway info
-# 关键变化：validate 对比可用迁移和 history；info 显示 V2 pending。
-flyway migrate
-# 输出：校验成功后 V2 进入 history；校验失败时部署流水线停止并保留诊断。
+# 输出：迁移后 validate 成功，info 显示 V1、V2 已应用。
 ```
 
-校验和不匹配常表示已应用迁移被改写，不能通过改文件掩盖差异。先比较提交、环境和 history，再决定恢复原文件或制定新的前向修复。[validate 命令](https://documentation.red-gate.com/flyway/reference/commands/validate)。
+若库中尚未应用仓库已解析出的 V2，`validate` 会因 resolved-but-not-applied migration 失败；不要把失败误判为 checksum 问题。正常部署应运行 `flyway migrate`，它会在执行待应用迁移前验证；需要独立验证时，先对齐隔离库版本，或有意识地配置 `ignoreMigrationPatterns` 并说明跳过的检查。校验和不匹配常表示已应用迁移被改写，不能通过改文件掩盖差异。[validate 命令](https://documentation.red-gate.com/flyway/reference/commands/validate)。
 
 ### flyway.repair：Flyway repair 有证据地修复 history 元数据
 
@@ -108,20 +109,19 @@ flyway info
 
 ### flyway.clean：Flyway clean 仅重置可丢弃实验库
 
-用于销毁隔离开发或测试 schema 中的对象，以便重建干净环境。
+用于销毁隔离开发或测试 schema 中的对象以便重建；**危险：**`clean` 会删除目标 schema 对象，以下命令仅限已核实的本机一次性 MySQL `test_db`，并只在该命令上临时覆盖 `cleanDisabled=false`，绝不可用于生产或共享环境。
 
 ```shell
-# 初始状态：一次性容器 test_db 内有测试表；先确认 JDBC URL、库名与容器身份。
-flyway info
-# 关键变化：仅在 CI 临时库执行 clean，随后按仓库迁移重建。
-flyway clean
-flyway migrate
-flyway info
-# 输出：对象被删除后按迁移重建；测试断言结构和初始数据恢复。
-echo "clean后迁移版本已重新应用"
+# 初始状态：已用 `docker ps` 核实一次性容器发布 127.0.0.1:3307，目标 schema 为 test_db。
+flyway -url="jdbc:mysql://127.0.0.1:3307/test_db" -user="$LAB_DB_USER" -password="$LAB_DB_PASSWORD" info
+# 关键变化：再次确认 info 输出的数据库身份确为本机 test_db 后，仅对这个 disposable URL 临时放开 clean。
+flyway -url="jdbc:mysql://127.0.0.1:3307/test_db" -user="$LAB_DB_USER" -password="$LAB_DB_PASSWORD" -cleanDisabled=false clean
+flyway -url="jdbc:mysql://127.0.0.1:3307/test_db" -user="$LAB_DB_USER" -password="$LAB_DB_PASSWORD" migrate
+flyway -url="jdbc:mysql://127.0.0.1:3307/test_db" -user="$LAB_DB_USER" -password="$LAB_DB_PASSWORD" info
+# 输出：在 test_db 查询表结构与 Flyway history，确认目标对象被迁移重建。
 ```
 
-**危险：**`clean` 会删除配置 schema 中的数据库对象，绝不可用于生产。生产配置应禁用 clean，并由凭证/权限和流水线目标校验提供多层保护。[clean 命令](https://documentation.red-gate.com/flyway/reference/commands/clean)。
+生产配置应保持 clean 禁用，并由凭证、权限与流水线目标校验提供多层保护。[clean 命令](https://documentation.red-gate.com/flyway/reference/commands/clean)。
 
 ### flyway.migrate：Flyway outOfOrder 处理迟到版本
 
@@ -139,18 +139,33 @@ flyway migrate -outOfOrder=true
 
 ### flyway.migrate：Flyway callbacks 连接迁移生命周期钩子
 
-用于在 `beforeMigrate`、`afterMigrate` 等生命周期边界执行审计或环境校验。
+用于在数据库迁移生命周期中执行可审阅的审计钩子，并显式指定脚本位置。
 
-```shell
-# 初始状态：callbacks/afterMigrate.sql 仅记录当前 schema 与迁移批次审计信息。
-flyway info
-flyway migrate
-echo "callback audit row recorded"
-# 关键变化：迁移完成后执行 afterMigrate callback。
-# 输出：部署日志和审计表出现批次记录；回调失败依命令结果处理，不宣称迁移已完整成功。
+```sql
+-- sql/callbacks/afterMigrate.sql
+INSERT INTO migration_audit (event_name, recorded_at)
+VALUES ('afterMigrate', CURRENT_TIMESTAMP);
+-- 输出：运行migrate后查询migration_audit，应能看到afterMigrate记录。
 ```
 
-回调可能改变数据库状态，避免隐藏业务 DDL、不可重入操作和泄露凭据的日志；迁移本体仍应清楚表达业务结构变化。[Flyway callbacks](https://documentation.red-gate.com/flyway/flyway-concepts/callbacks)。
+```properties
+# conf/flyway.conf
+flyway.locations=filesystem:sql/migrations
+flyway.callbackLocations=filesystem:sql/callbacks
+```
+
+```shell
+# 初始状态：隔离 MySQL 库中 migration_audit 已由版本迁移创建。
+flyway info
+# 关键变化：读取conf/flyway.conf中指定的迁移和callback目录后执行迁移。
+flyway migrate
+# 关键变化：afterMigrate callback 在 migrate 之后向数据库写入一行。
+mysql --host=127.0.0.1 --port=3307 --user="$LAB_DB_USER" --password="$LAB_DB_PASSWORD" test_db \
+  --execute="SELECT event_name, COUNT(*) FROM migration_audit WHERE event_name='afterMigrate' GROUP BY event_name;"
+# 输出：查询结果中的行数大于0，才说明本次测试库中能观察到 callback 审计记录。
+```
+
+以下 `afterMigrate.sql` 是最小 MySQL 示例；`migration_audit` 表由版本迁移预先创建，并包含 `event_name`、`recorded_at` 列。生产审计应使用幂等键、受限权限和组织定义的保留策略。回调可能改变数据库状态，避免隐藏业务 DDL、不可重入操作和泄露凭据的日志；迁移本体仍应清楚表达业务结构变化。Flyway 的 `validate` 会拒绝待应用版本，因此 CI 中若克隆库仍有待迁移版本，应使用 `info` + `migrate` + 迁移后集成测试；将 validation-only job 放在已迁移到当前版本的克隆库上。[Flyway callbacks](https://documentation.red-gate.com/flyway/flyway-concepts/callbacks)、[callbackLocations](https://documentation.red-gate.com/flyway/reference/configuration/flyway-namespace/flyway-callback-locations-setting)。
 
 ### CREATE TABLE：Flyway placeholders 注入受控环境值
 
@@ -196,18 +211,17 @@ WHERE table_schema=DATABASE() AND table_name='account' AND column_name='display_
 
 采用 expand-contract：先增加兼容结构，再分阶段回填和切换，最后另批移除旧结构。每步按 MySQL 8.0/InnoDB 的具体 DDL 算法、锁、空间和隐式提交影响预演；备份、恢复点与应用回滚策略一起审阅。对不可逆数据转换，准备补偿或恢复方案，而不是承诺反向脚本必然无损。
 
-### flyway.validate：CI migration ownership 让部署顺序唯一
+### flyway.migrate：CI migration ownership 让部署顺序唯一
 
 用于在构建和发布期间只由一个受控身份负责迁移。
 
 ```shell
-# 初始状态：CI 对隔离 MySQL 8.0 克隆运行 validate 与 migrate，再运行迁移后集成测试。
-flyway validate
-flyway migrate
+# 初始状态：CI 使用隔离 MySQL 8.0 克隆；仓库可能含尚未应用的迁移。
 flyway info
-echo "deployed migration version recorded"
+flyway -validateOnMigrate=true migrate
+flyway info
 # 关键变化：迁移版本从pending变为success，部署作业使用专用权限应用同一已审阅制品。
-# 输出：流水线记录目标环境、迁移版本和结果；应用副本不并发抢做结构变更。
+# 输出：流水线检查迁移后的 schema history 和集成测试；migrate前显式执行validation，validation-only检查另对已对齐版本的克隆库运行。
 ```
 
 可由发布流水线、独立迁移作业或应用启动迁移担任所有者，但需选一个可观测、可审计的策略。多副本同时启动时，依赖工具锁也不能替代部署顺序、超时、权限和失败告警设计；生产应用运行账号与迁移账号应分离。
