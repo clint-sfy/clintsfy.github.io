@@ -10,6 +10,8 @@ export interface JavaCourseArticle {
   readonly legacyRoute?: string;
   readonly legacyTitle?: string;
   readonly legacyFallbackPriority?: number;
+  /** Marks the canonical article that owns this legacy source during staging. */
+  readonly legacyFallbackTarget?: boolean;
 }
 
 export interface JavaCourseChapter {
@@ -24,6 +26,7 @@ type ArticleDefinition = readonly [
   legacyFile?: string,
   legacyTitle?: string,
   legacyFallbackPriority?: number,
+  legacyFallbackTarget?: boolean,
 ];
 
 const LEGACY_CHAPTER_IDS: Readonly<Record<string, string>> = {
@@ -38,7 +41,14 @@ function routeFromFile(file: string): string {
 
 function createArticle(
   chapterId: string,
-  [fileName, title, explicitLegacyFile, legacyTitle, legacyFallbackPriority]: ArticleDefinition,
+  [
+    fileName,
+    title,
+    explicitLegacyFile,
+    legacyTitle,
+    legacyFallbackPriority,
+    legacyFallbackTarget,
+  ]: ArticleDefinition,
 ): JavaCourseArticle {
   const file = `docs/courses/java/${chapterId}/${fileName}`;
   const legacyChapterId = LEGACY_CHAPTER_IDS[chapterId];
@@ -56,6 +66,7 @@ function createArticle(
           legacyRoute: routeFromFile(legacyFile),
           legacyTitle,
           legacyFallbackPriority,
+          legacyFallbackTarget,
         }
       : {}),
   };
@@ -79,7 +90,15 @@ const article = (
   legacyFile?: string,
   legacyTitle?: string,
   legacyFallbackPriority?: number,
-): ArticleDefinition => [fileName, title, legacyFile, legacyTitle, legacyFallbackPriority];
+  legacyFallbackTarget?: boolean,
+): ArticleDefinition => [
+  fileName,
+  title,
+  legacyFile,
+  legacyTitle,
+  legacyFallbackPriority,
+  legacyFallbackTarget,
+];
 
 /**
  * The sole source of order for the Java learning route.
@@ -192,6 +211,8 @@ export const JAVA_COURSE_CHAPTERS: readonly JavaCourseChapter[] = [
       '环境连接与数据库对象',
       'docs/courses/java/13-后端工程/13-MySQL-8.0.md',
       'MySQL 8.0',
+      undefined,
+      true,
     ),
     article('02-表设计与DDL.md', '表设计与 DDL'),
     article('03-数据类型字符集与时区.md', '数据类型、字符集与时区'),
@@ -254,6 +275,8 @@ export const JAVA_COURSE_CHAPTERS: readonly JavaCourseChapter[] = [
       '基础连接与数据模型',
       'docs/courses/java/13-后端工程/14-Redis.md',
       'Redis',
+      undefined,
+      true,
     ),
     article('02-String与计数器.md', 'String 与计数器'),
     article('03-Hash与对象字段.md', 'Hash 与对象字段'),
@@ -307,26 +330,35 @@ function resolveAvailableArticles(
   const canonicalFiles = new Set(
     articles.filter((article) => fileExists(article.file)).map((article) => article.file),
   );
-  const legacyFilesClaimedByCanonical = new Set(
-    articles
-      .filter((article) => canonicalFiles.has(article.file) && article.legacyFile)
-      .map((article) => article.legacyFile as string),
-  );
+  const legacyCandidates = new Map<string, JavaCourseArticle[]>();
+  for (const article of articles) {
+    if (!article.legacyFile || !fileExists(article.legacyFile)) continue;
+    const candidates = legacyCandidates.get(article.legacyFile) ?? [];
+    candidates.push(article);
+    legacyCandidates.set(article.legacyFile, candidates);
+  }
   const fallbackWinners = new Map<string, JavaCourseArticle>();
 
-  for (const article of articles) {
-    if (
-      canonicalFiles.has(article.file) ||
-      !article.legacyFile ||
-      legacyFilesClaimedByCanonical.has(article.legacyFile) ||
-      !fileExists(article.legacyFile)
-    ) {
-      continue;
-    }
+  for (const [legacyFile, candidates] of legacyCandidates) {
+    const canonicalTargetExists = candidates.some(
+      (article) => article.legacyFallbackTarget && canonicalFiles.has(article.file),
+    );
+    if (canonicalTargetExists) continue;
 
-    const currentWinner = fallbackWinners.get(article.legacyFile);
-    if (!currentWinner || compareFallbackPriority(article, currentWinner) > 0) {
-      fallbackWinners.set(article.legacyFile, article);
+    const availableFallbacks = candidates.filter((article) => !canonicalFiles.has(article.file));
+    const targetFallback = availableFallbacks.find((article) => article.legacyFallbackTarget);
+    const canonicalCompatibilityExists = candidates.some(
+      (article) => !article.legacyFallbackTarget && canonicalFiles.has(article.file),
+    );
+    const winner = canonicalCompatibilityExists && targetFallback
+      ? targetFallback
+      : availableFallbacks.reduce<JavaCourseArticle | undefined>((current, article) => {
+          if (!current || compareFallbackPriority(article, current) > 0) return article;
+          return current;
+        }, undefined);
+
+    if (winner) {
+      fallbackWinners.set(legacyFile, winner);
     }
   }
 

@@ -203,3 +203,30 @@ test('Java sidebar canonical files win over legacy fallbacks when both paths are
     'the legacy route must not be duplicated after its canonical file appears',
   )
 })
+
+test('Java sidebar keeps a target fallback when a compatibility slot becomes canonical', () => {
+  const redisArticle = JAVA_COURSE_CHAPTERS
+    .find((chapter) => chapter.id === '15-Redis')
+    ?.articles[0]
+  const backendCompatibilityArticle = JAVA_COURSE_CHAPTERS
+    .find((chapter) => chapter.id === '14-后端工程')
+    ?.articles[13]
+  assert.ok(redisArticle?.legacyFile)
+  assert.ok(redisArticle?.legacyRoute)
+  assert.ok(backendCompatibilityArticle)
+
+  const groups = getJavaCourseItems(JAVA_COURSE_CHAPTERS, {
+    fileExists: (file) =>
+      file === backendCompatibilityArticle.file || file === redisArticle.legacyFile || existsSync(file),
+  })
+  const redisGroup = groups.find((group) => stripMarkup(group.text).startsWith('Redis'))
+  const backendGroup = groups.find((group) => stripMarkup(group.text).startsWith('后端工程'))
+  const links = groups.flatMap((group) => (group.items ?? []).map((item) => item.link))
+
+  assert.equal(redisGroup?.items?.[0]?.link, redisArticle.legacyRoute)
+  assert.equal(links.filter((link) => link === redisArticle.legacyRoute).length, 1)
+  assert.ok(
+    !(backendGroup?.items ?? []).some((item) => item.link === redisArticle.legacyRoute),
+    'a compatibility canonical article must not hide or duplicate the target fallback',
+  )
+})
