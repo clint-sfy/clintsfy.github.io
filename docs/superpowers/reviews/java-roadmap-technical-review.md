@@ -103,3 +103,19 @@
 ### Task 7运行证据与独立审稿边界
 
 JDK20编译器`javac --release 20`成功编译JDBC的12个Java方法体片段及桥接文章的5个Java片段，桥接使用本机已缓存的MyBatis3.5.19 jar；没有增加生产依赖。语法检查不代表URL、TLS、映射或驱动运行正确。mysql客户端仍未找到，Docker Linux engine管道不存在，未运行权限、备份、恢复、PITR或JDBC数据库测试；这些状态保留为“未执行”。独立审稿应复核矩阵中的权限匹配、DDL/GTID边界、恢复顺序、批量计数与连接失败状态，运行证据另行记录。
+
+### Task 8：迁移、连接池与多数据源
+
+新增 Flyway 文章含 12 个操作 H3，HikariCP/多数据源文章含 16 个操作 H3；JDBC 文章的网络超时示例同步修正。以下范围依据官方文档，示例依赖版本由项目 BOM/依赖管理固定，不宣称完成真实 MySQL 执行。
+
+| 主题 | 可复核主张 | 官方依据与自审结果 |
+| --- | --- | --- |
+| Flyway版本迁移 | `V版本__描述` 文件按版本应用；已部署内容不应改写，checksum 用于验证迁移历史 | [Versioned migrations](https://documentation.red-gate.com/flyway/flyway-concepts/migrations/versioned-migrations)、[Validate](https://documentation.red-gate.com/flyway/reference/commands/validate)；通过，示例覆盖 V1→V2 与 history 结果 |
+| Repeatable、占位符、回调 | repeatable 变更后重跑且在 pending 版本迁移后执行；callbacks/placeholders 属于迁移机制 | [Repeatable migrations](https://documentation.red-gate.com/fd/repeatable-migrations-273973335.html)、[Placeholders](https://documentation.red-gate.com/flyway/flyway-concepts/migrations/migration-placeholders)、[Callbacks](https://documentation.red-gate.com/flyway/flyway-concepts/callbacks)；通过，示例分开表达文件定义与 migrate 命令 |
+| baseline、repair、clean、outOfOrder | baseline 可跳过旧版本，repair 维护 history 而非还原对象，clean 删除配置 schema 对象，out-of-order 改变部署顺序 | [Flyway commands](https://documentation.red-gate.com/flyway/reference/commands)、[Clean](https://documentation.red-gate.com/flyway/reference/commands/clean)、[FAQ](https://documentation.red-gate.com/flyway/reference/usage/frequently-asked-questions)；通过，危险警告紧邻命令；要求克隆核对和人工审批 |
+| Liquibase与DDL回退 | changeset/changelog 可表达 change 与 rollback；MySQL DDL 的可回滚性按语句确认，建议 expand-contract 与前向修复 | [Liquibase changesets](https://docs.liquibase.com/concepts/changelogs/changeset.html)、[Rollback](https://docs.liquibase.com/commands/rollback/rollback.html)、[MySQL atomic DDL](https://dev.mysql.com/doc/refman/8.0/en/atomic-ddl.html)、[implicit commits](https://dev.mysql.com/doc/refman/8.0/en/implicit-commit.html)；通过，未宣称通用事务回滚 |
+| Hikari配置与观测 | pool size 按数据库总预算及测量；连接借用、验证、idle/max lifetime、keepalive、泄漏阈值均为不同边界 | [HikariCP configuration](https://github.com/brettwooldridge/HikariCP)、[Pool sizing](https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing)、[Metrics](https://github.com/brettwooldridge/HikariCP/wiki/Metrics)；通过，示例数值明确为教学值，指标用于诊断而非精确控制 |
+| Spring路由与事务 | routing datasource 在获取连接时解析 lookup key；Spring 事务 advisor 与线程绑定连接意味着不能在事务中途切换物理库 | [AbstractRoutingDataSource API](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/datasource/lookup/AbstractRoutingDataSource.html)、[事务实现](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-decl-explained.html)、[Advisor order](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html)；通过，包含 ThreadLocal finally 清理、副本延迟和各库迁移责任 |
+| JDBC networkTimeout复位 | 原 timeout getter 位于保护范围；即使 getter 失败也关闭示例 Executor；复位异常附加到原 SQLException，不替代原失败 | [JDK20 Connection](https://docs.oracle.com/en/java/javase/20/docs/api/java.sql/java/sql/Connection.html)；代码路径静态复核通过，当前环境仅有 `javac 1.8.0_221`，未能执行 `--release 20` 编译 |
+
+红测先以缺少 Flyway 页面失败；新增文章、H3/API 格式和严格文章合同测试转绿。全量 `pnpm test` 为 96/96 通过，VitePress build 成功（约 58 秒；存在既有 chunk-size 和语法高亮语言提示）。构建生成的 18 个 `docs/public/courses/java` 兼容页已删除。JDK20 编译与数据库集成执行仍未验证；本机只有 JDK8，未安装或启动数据库。独立审稿应检查迁移命令在锁定 Flyway 版本的参数兼容性、池指标的 Actuator 实际绑定及事务拦截器具体顺序。

@@ -186,7 +186,7 @@ test('Java sidebar uses the migrated canonical inventory', () => {
     ['并发编程', 15, true],
     ['JVM', 5, true],
     ['MySQL 8', 12, true],
-    ['工程实践', 3, true],
+    ['工程实践', 5, true],
     ['设计与项目', 1, true],
     ['后端工程', 12, true],
     ['Redis', 0, true],

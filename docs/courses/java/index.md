@@ -28,13 +28,17 @@ showComment: false
 | 4. 标准库 | [函数式与时间](/courses/java/06-函数式与时间/01-Lambda与函数式接口)、[IO与网络](/courses/java/07-IO与网络/01-IO与NIO) | 已完成：函数式、时间、I/O、NIO、HTTP Client 和 Socket |
 | 5. 运行时 | [反射与模块](/courses/java/08-反射与模块/01-反射与注解)、[并发编程](/courses/java/09-并发编程/01-线程基础与执行器)、[JVM](/courses/java/10-JVM/01-JVM内存与类加载) | 已完成：反射、模块、并发工具、线程池、异步编排和 JVM 诊断 |
 | 6. 数据库基础 | MySQL 8（第 11 章，内容整理中） | 规划中：SQL、事务、索引与 JDBC 边界 |
-| 7. 工程实践 | [工程实践](/courses/java/12-工程实践/01-Maven与测试工程)、[设计与项目](/courses/java/13-设计与项目/01-设计原则模式与综合复习) | 已迁移：Maven、JDBC、代码生成、设计原则与综合复习 |
+| 7. 工程实践 | [工程实践](/courses/java/12-工程实践/01-Maven与测试工程)、[设计与项目](/courses/java/13-设计与项目/01-设计原则模式与综合复习) | Maven、JDBC、Flyway迁移、Hikari连接池、多数据源、代码生成与设计原则 |
 | 8. 后端工程 | [后端工程](/courses/java/14-后端工程/01-Spring-Boot启动与配置) | 已迁移：Spring、MyBatis、JSON、校验、日志、文件、Excel 与 Quartz |
 | 9. Redis | Redis（第 15 章，内容整理中） | 规划中：数据结构、缓存、脚本、持久化与运维 |
 
 ## 工程实践路由
 
+- [Maven、JUnit 与日志工程](/courses/java/12-工程实践/01-Maven与测试工程)
+- [JDBC 与事务](/courses/java/12-工程实践/02-JDBC与事务)
+- [Flyway 数据库迁移](/courses/java/12-工程实践/03-Flyway数据库迁移)
 - [Velocity 代码生成](/courses/java/12-工程实践/04-Velocity代码生成)
+- [HikariCP 与多数据源](/courses/java/12-工程实践/05-HikariCP与多数据源)
 
 ## 后端工程路由
 

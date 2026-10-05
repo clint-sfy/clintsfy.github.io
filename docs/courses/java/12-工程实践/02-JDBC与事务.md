@@ -280,19 +280,33 @@ try (PreparedStatement statement = connection.prepareStatement("SELECT 1")) {
 // 初始：方法参数Connection connection健康，应用拥有该连接，尚无活动事务。
 Connection owned = connection;
 java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();
-int originalTimeout = owned.getNetworkTimeout();
+int originalTimeout = 0;
+boolean timeoutRead = false;
+SQLException failure = null;
 try {
+    // 初始状态：网络超时getter本身也可能失败；先进入try，确保Executor最终关闭。
+    originalTimeout = owned.getNetworkTimeout();
+    timeoutRead = true;
     owned.setNetworkTimeout(executor,5000);
     // 关键变化：网络响应预算变为5000毫秒，不替代语句或池等待超时。
     System.out.println(owned.getNetworkTimeout());
     // 输出：驱动支持并成功设置时5000；不支持时抛SQLFeatureNotSupportedException。
+} catch (SQLException error) {
+    failure = error;
+    throw error;
 } finally {
-    try { owned.setNetworkTimeout(executor,originalTimeout); }
-    finally { executor.shutdown(); }
+    try {
+        if (timeoutRead) owned.setNetworkTimeout(executor,originalTimeout);
+    } catch (SQLException resetError) {
+        if (failure != null) failure.addSuppressed(resetError);
+        else throw resetError;
+    } finally {
+        executor.shutdown();
+    }
 }
 ```
 
-JDBC网络超时触发时连接按契约关闭；驱动socketTimeout是另一个配置入口，不能假设所有超时都保持连接可复用。生产从池借出时，复位失败须淘汰连接；Executor应按应用生命周期集中管理，此段独立创建仅便于看清关闭顺序。
+JDBC网络超时触发时连接按契约关闭；驱动socketTimeout是另一个配置入口，不能假设所有超时都保持连接可复用。getter失败时不会尝试用未初始化值复位，但Executor仍会关闭；设置或读取后的原始失败会保留，复位异常作为suppressed异常附加。生产从池借出时，复位失败须淘汰连接；Executor应按应用生命周期集中管理，此段独立创建仅便于看清关闭顺序。
 
 ### Statement.cancel：请求取消正在执行的语句
 

@@ -131,7 +131,9 @@ const EXPECTED_ARTICLES_BY_CHAPTER = {
   '12-工程实践': [
     '01-Maven与测试工程.md',
     '02-JDBC与事务.md',
+    '03-Flyway数据库迁移.md',
     '04-Velocity代码生成.md',
+    '05-HikariCP与多数据源.md',
   ],
   '13-设计与项目': ['01-设计原则模式与综合复习.md'],
   '14-后端工程': [
@@ -310,6 +312,7 @@ const ARTICLE_CONTRACT_MANIFEST = {
     ...['05-查询过滤排序与分页', '06-连接子查询与集合查询', '07-聚合CTE窗口函数与JSON', '08-约束与索引设计', '09-事务MVCC隔离级别与锁', '10-EXPLAIN慢SQL与性能优化'].map((name) => ({ path: `docs/courses/java/11-MySQL-8/${name}.md`, source: 'new' })),
     ...['11-用户权限备份与恢复', '12-Java-JDBC与MyBatis衔接'].map((name) => ({ path: `docs/courses/java/11-MySQL-8/${name}.md`, source: 'new' })),
     { path: 'docs/courses/java/12-工程实践/02-JDBC与事务.md', source: 'rewritten' },
+    ...['03-Flyway数据库迁移', '05-HikariCP与多数据源'].map((name) => ({ path: `docs/courses/java/12-工程实践/${name}.md`, source: 'new' })),
   ],
 }
 const ARTICLE_CONTRACT_FRONTMATTER_FIELDS = [
@@ -2096,6 +2099,35 @@ function getArticleContractJavaExecutable(content) {
 
 function isArticleContractOperationHeading(heading, content = '') {
   const label = getArticleContractOperationHeadingLabel(heading)
+  const flywayOperation = label.match(/^flyway\.(info|migrate|validate|repair|baseline|clean)(?:\(\))?$/iu)
+  if (flywayOperation) {
+    const command = flywayOperation[1].toLowerCase()
+    return getArticleContractCodeBlocks(content).some(({ code, language }) =>
+      ['shell', 'bash', 'sh'].includes(language) &&
+      new RegExp(`(?:^|[;\\n])\\s*flyway\\s+(?:-[^\\s]+\\s+)*${command}\\b`, 'imu').test(lexArticleContractCode(code, language).executable),
+    )
+  }
+  if (/^liquibase\.update$/iu.test(label)) {
+    return getArticleContractCodeBlocks(content).some(({ code, language }) =>
+      ['shell', 'bash', 'sh'].includes(language) &&
+      /(?:^|[;\n])\s*liquibase\s+update\b/imu.test(lexArticleContractCode(code, language).executable),
+    )
+  }
+  const jdbcOperation = label.match(/^Connection\.(commit|rollback|setAutoCommit|getNetworkTimeout|setNetworkTimeout)$/u)
+  if (jdbcOperation) {
+    return new RegExp(`\\b[A-Za-z_$][\\w$]*\\s*\\.\\s*${jdbcOperation[1]}\\s*\\(`, 'u').test(getArticleContractJavaExecutable(content))
+  }
+  if (/^AbstractRoutingDataSource\.determineCurrentLookupKey$/u.test(label)) {
+    const executable = getArticleContractJavaExecutable(content)
+    return /extends\s+AbstractRoutingDataSource/u.test(executable) &&
+      /determineCurrentLookupKey\s*\(/u.test(executable)
+  }
+  const hikariProperty = label.match(/^HikariConfig\.(set(?:MaximumPoolSize|MinimumIdle|ConnectionTimeout|ValidationTimeout|IdleTimeout|MaxLifetime|KeepaliveTime|LeakDetectionThreshold))$/u)
+  if (hikariProperty) {
+    const method = hikariProperty[1]
+    const executable = getArticleContractJavaExecutable(content)
+    return new RegExp(`\\b[A-Za-z_$][\\w$]*\\s*\\.\\s*${method}\\s*\\(`, 'u').test(executable)
+  }
   if (/^(START TRANSACTION|SAVEPOINT|ANALYZE TABLE)(?:\s|$)/iu.test(label)) {
     const command = label.match(/^(START TRANSACTION|SAVEPOINT|ANALYZE TABLE)/iu)[1]
     return getArticleContractCodeBlocks(content).some(({ code, language }) =>
@@ -2768,6 +2800,31 @@ function assertArticleContractIssueTypes(fixture, expectedTypes, label) {
   )
   return issues
 }
+
+test('Flyway migrations and Hikari routing expose the approved searchable boundaries', () => {
+  const requirements = {
+    'docs/courses/java/12-工程实践/03-Flyway数据库迁移.md': [
+      'Flyway versioned migration', 'Flyway repeatable migration', 'Flyway validate',
+      'Flyway repair', 'Flyway clean', 'Flyway baseline', 'outOfOrder',
+      'Flyway callbacks', 'Flyway placeholders', 'Liquibase changeset',
+    ],
+    'docs/courses/java/12-工程实践/05-HikariCP与多数据源.md': [
+      'HikariConfig', 'maximumPoolSize', 'minimumIdle', 'connectionTimeout',
+      'validationTimeout', 'idleTimeout', 'maxLifetime', 'keepaliveTime',
+      'leakDetectionThreshold', 'HikariPoolMXBean', 'AbstractRoutingDataSource',
+      'transaction pinning', 'read-your-writes',
+    ],
+  }
+  const violations = []
+  for (const [path, headings] of Object.entries(requirements)) {
+    const { body } = readMarkdown(path)
+    const h3s = [...body.matchAll(/^###\s+(.+)$/gmu)].map((match) => match[1])
+    for (const heading of headings) {
+      if (!h3s.some((actual) => actual.includes(heading))) violations.push(`${path} [heading:${heading}]`)
+    }
+  }
+  assert.deepEqual(violations, [], `rule migration-pool-routing-topics${formatViolations(violations)}`)
+})
 
 test('article contract checks frontmatter, exact H2 order, and searchable operation headings', () => {
   const valid = createValidArticleContractFixture()
@@ -4441,13 +4498,13 @@ test('Java course keeps the expected Markdown files, article counts, chapters, a
 
   assert.equal(
     markdownPaths.length,
-    106,
-    'rule java-markdown-count: expected 106 Markdown files',
+    108,
+    'rule java-markdown-count: expected 108 Markdown files',
   )
   assert.equal(
     markdownPaths.filter((file) => !file.endsWith('/index.md')).length,
-    104,
-    'rule java-article-count: expected 104 course articles',
+    106,
+    'rule java-article-count: expected 106 course articles',
   )
   assert.equal(
     chapterDirectories.length,
@@ -4547,7 +4604,7 @@ test('List iterator and remove examples show calls, state, and output', () => {
   assert.match(removeExample, /\/\/ numbers：\[10, 20, 30\][\s\S]*remove\(1\)[\s\S]*remove\(Integer\.valueOf\(30\)\)[\s\S]*\/\/ 输出：\[10\]/u)
 })
 
-test('all 104 Java articles keep the unified API heading format', () => {
+test('all 106 Java articles keep the unified API heading format', () => {
   const violations = []
   for (const relativePath of ARTICLE_PATHS) {
     const { body } = readMarkdown(relativePath)
@@ -4955,7 +5012,7 @@ int first = numbers.get(0);
   )
 })
 
-test('all 104 Java articles put API purpose prose before examples and retain observable results', () => {
+test('all 106 Java articles put API purpose prose before examples and retain observable results', () => {
   const violations = []
   for (const relativePath of ARTICLE_PATHS) {
     const { body } = readMarkdown(relativePath)
