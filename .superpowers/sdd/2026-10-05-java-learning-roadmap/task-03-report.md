@@ -246,4 +246,38 @@ git diff --check
 → pass
 ```
 
-Commit: `4a04f4b03` (`test(java): fix remaining article gate review issues`).
+Commit: `a33ae3ebf` (`test(java): fix remaining article gate review issues`).
+
+### Review fix round 4
+
+Status: `DONE`
+
+Constructor receiver matching now scans the exact constructor's balanced
+argument list and requires the documented method immediately after its closing
+parenthesis. `new Foo().get()` and a nested-argument
+`new StringBuilder(String.valueOf(7)).append("A")` pass, while unrelated
+`Foo.bar()` or `new Foo().bar()` plus `names.get()` still fail `[h3:name]`.
+
+Anchored full-comment patterns reject bare TODO/FIXME/TBD markers and generic
+phrases including `待补充具体说明`. Concrete comments such as
+`TODO: users.id=7 写入后返回1` and equivalent FIXME/generic-prefix comments pass.
+
+Verification:
+
+```text
+corepack pnpm@9.15.9 exec node --test --test-name-pattern="article contract rejects tautological|operation H3" tests/java-course-content.test.mjs
+→ 2 pass, 0 fail
+
+corepack pnpm@9.15.9 exec node --test tests/java-course-content.test.mjs
+→ 44 pass, 0 fail
+
+git diff --check
+→ pass
+```
+
+Implementation commit: `b5de64d96bd8d076d9f6150243f03200116ed48f`
+(`test(java): match constructor receivers and bare placeholders`), changing
+only `tests/java-course-content.test.mjs`. This report is recorded in a separate
+subsequent documentation commit; its SHA is supplied in the completion message
+rather than an impossible self-reference. The round 3 SHA above was corrected
+to the actual commit present in Git history. No course content changed.
