@@ -432,12 +432,12 @@ public class CollectorsDemo {
                 new Order("ann", "book", 20),
                 new Order("ann", "pen", 8),
                 new Order("bob", "book", 20));
-                // 输入：new Order("ann", "book", 20), new Order("ann", "pen", 8), new Order("bob", "book", 20));；输入表达式为 new Order("ann", "book", 20), new Order("ann", "pen", 8), new Order("bob", "book", 20))。
-                // 关键变化：new Order("ann", "book", 20), new Order("ann", "pen", 8), new Order("bob", "book", 20));；创建 Order，构造参数保留在外层调用中。
-                // 输入：new Order("ann", "pen", 8), new Order("bob", "book", 20));；输入表达式为 new Order("ann", "pen", 8), new Order("bob", "book", 20))。
-                // 关键变化：new Order("ann", "pen", 8), new Order("bob", "book", 20));；创建 Order，构造参数保留在外层调用中。
-                // 输入：new Order("bob", "book", 20));；输入表达式为 new Order("bob", "book", 20))。
-                // 关键变化：new Order("bob", "book", 20));；创建 Order，构造参数保留在外层调用中。
+
+
+
+
+
+
         var totals = orders.stream().collect(Collectors.groupingBy(
                 Order::user, Collectors.summingInt(Order::amount)));
                 // 关键变化：Order::user, Collectors.summingInt(Order::amount)));；调用 summingInt，实参为 Order::amount))；返回按 Order::amount 求和的 Collector。

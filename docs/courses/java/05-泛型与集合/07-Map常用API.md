@@ -505,7 +505,7 @@ public class AccessOrderMapDemo {
     public static void main(String[] args) {
         LinkedHashMap<String, Integer> map =
             new LinkedHashMap<>(16, 0.75f, true);
-            // 输入：new LinkedHashMap<>(16, 0.75f, true);；输入表达式为 new LinkedHashMap<>(16, 0.75f, true)。
+
             // 关键变化：new LinkedHashMap<>(16, 0.75f, true);；使用初始容量 16、负载因子 0.75 和 accessOrder=true 创建按访问顺序迭代的 LinkedHashMap。
         map.put("A", 1);
         map.put("B", 2);

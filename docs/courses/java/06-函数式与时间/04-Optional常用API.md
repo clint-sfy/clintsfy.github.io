@@ -43,7 +43,7 @@ description: 用 Optional 表达可能缺失的返回值，掌握转换、兜底
 import java.util.Optional;
 
 String input = null;
-// 关键变化：String input = null;；将 null 的计算结果写入 input；赋值完成。
+
 Optional<String> value = Optional.ofNullable(input);
 System.out.println(value.isEmpty());
 // 输出：true

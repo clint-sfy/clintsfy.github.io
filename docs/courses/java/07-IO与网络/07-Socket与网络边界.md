@@ -78,7 +78,7 @@ public class SocketAcceptDemo {
                     // 输出：true
                 } catch (Exception e) {
                     throw new RuntimeException(e);
-                    // 输入：throw new RuntimeException(e);；输入表达式为 throw new RuntimeException(e)。
+
                     // 关键变化：throw new RuntimeException(e);；创建并抛出异常实例，异常控制流向上层传播。
                 }
             });
@@ -121,7 +121,7 @@ public class SocketTextDemo {
                     // 关键变化：writer.println(reader.readLine().toUpperCase());；向 writer 写入 reader.readLine().toUpperCase() 并换行；输出流新增一行。
                 } catch (Exception e) {
                     throw new RuntimeException(e);
-                    // 输入：throw new RuntimeException(e);；输入表达式为 throw new RuntimeException(e)。
+
                     // 关键变化：throw new RuntimeException(e);；创建并抛出异常实例，异常控制流向上层传播。
                 }
             }, "socket-text-service");
@@ -160,8 +160,8 @@ public class SocketTimeoutDemo {
         // 输入：try (ServerSocket server = new ServerSocket(0)) {；资源变量 server 接收 new ServerSocket(0)，try 结束时自动关闭。
         // 关键变化：try (ServerSocket server = new ServerSocket(0)) {；创建资源 server，构造表达式为 new ServerSocket(0)；try 结束时关闭该资源。
             new Thread(() -> {
-            // 输入：new Thread(() -> {；输入表达式为 new Thread(() -> {。
-            // 关键变化：new Thread(() -> {；创建 Thread，构造参数保留在外层调用中。
+
+
                 try (Socket ignored = server.accept()) { }
                 catch (Exception ignored) { }
             }, "socket-timeout-service").start();
@@ -224,7 +224,7 @@ public class UdpLoopbackDemo {
                     // 关键变化：sender.send(new DatagramPacket(bytes, bytes.length, InetAddress.getLoopbackAddress(), receiver.getLocalPort()));；让 sender 向本机 receiver 端口发送 bytes 数据报，send 返回 void。
                     // 关键变化：InetAddress.getLoopbackAddress() 不接收显式参数，返回本机回环地址，再与 receiver.getLocalPort() 组成目标地址。
             byte[] received = new byte[16];
-            // 关键变化：byte[] received = new byte[16];；将 new byte[16] 的计算结果写入 received；赋值完成。
+
             DatagramPacket packet = new DatagramPacket(received, received.length);
             receiver.receive(packet);
             // 关键变化：receiver.receive(packet);；阻塞接收数据报并把内容写入 packet，receive 返回 void；packet 的 length 更新。
@@ -250,8 +250,8 @@ public class SocketHalfCloseDemo {
         // 输入：try (ServerSocket server = new ServerSocket(0)) {；资源变量 server 接收 new ServerSocket(0)，try 结束时自动关闭。
         // 关键变化：try (ServerSocket server = new ServerSocket(0)) {；创建资源 server，构造表达式为 new ServerSocket(0)；try 结束时关闭该资源。
             new Thread(() -> {
-            // 输入：new Thread(() -> {；输入表达式为 new Thread(() -> {。
-            // 关键变化：new Thread(() -> {；创建 Thread，构造参数保留在外层调用中。
+
+
                 try (Socket socket = server.accept()) {
                 // 输入：try (Socket socket = server.accept()) {；资源变量 socket 接收 server.accept()，try 结束时自动关闭。
                 // 关键变化：try (Socket socket = server.accept()) {；创建资源 socket，构造表达式为 server.accept()；try 结束时关闭该资源。
@@ -259,7 +259,7 @@ public class SocketHalfCloseDemo {
                     // 输出：true
                 } catch (Exception e) {
                     throw new RuntimeException(e);
-                    // 输入：throw new RuntimeException(e);；输入表达式为 throw new RuntimeException(e)。
+
                     // 关键变化：throw new RuntimeException(e);；创建并抛出异常实例，异常控制流向上层传播。
                 }
             }, "socket-half-close-service").start();
@@ -425,7 +425,7 @@ public class SocketDemo {
                     // 关键变化：out.println("echo:" + in.readLine());；向 out 写入 "echo:" + in.readLine() 并换行；输出流新增一行。
                 } catch (Exception e) {
                     throw new RuntimeException(e);
-                    // 输入：throw new RuntimeException(e);；输入表达式为 throw new RuntimeException(e)。
+
                     // 关键变化：throw new RuntimeException(e);；创建并抛出异常实例，异常控制流向上层传播。
                 }
             }, "socket-echo-service");

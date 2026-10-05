@@ -184,7 +184,7 @@ import java.util.stream.Collectors;
 var parts = List.of(10, 25, 80, 5).stream().collect(
         Collectors.partitioningBy(amount -> amount >= 20));
         // 关键变化：var parts = List.of(10, 25, 80, 5).stream().collect( Collectors.partitioningBy(amount -> amount >= 20));；在流上调用 collect 处理元素，结果写入 parts。
-        // 关键变化：Collectors.partitioningBy(amount -> amount >= 20));；将 20)) 的计算结果写入 Collectors.partitioningBy(amount -> amount >；赋值完成。
+
 System.out.println(parts);
 // 输出：{false=[10, 5], true=[25, 80]}
 ```
@@ -320,9 +320,9 @@ public class StreamGroupDemo {
                 new Order("ann", List.of("book", "pen"), 28),
                 new Order("bob", List.of("cup"), 35),
                 new Order("ann", List.of("cup"), 20));
-                // 关键变化：new Order("ann", List.of("book", "pen"), 28), new Order("bob", List.of("cup"), 35), new Order("ann", List.of("cup"), 20));；创建 Order，构造参数保留在外层调用中。
-                // 关键变化：new Order("bob", List.of("cup"), 35), new Order("ann", List.of("cup"), 20));；创建 Order，构造参数保留在外层调用中。
-                // 关键变化：new Order("ann", List.of("cup"), 20));；创建 Order，构造参数保留在外层调用中。
+
+
+
         var items = orders.stream().flatMap(order -> order.items().stream()).distinct().sorted().toList();
         // 关键变化：var items = orders.stream().flatMap(order -> order.items().stream()).distinct().sorted().toList();；在流上调用 flatMap 处理元素，结果写入 items。
         var totals = orders.stream().collect(Collectors.groupingBy(

@@ -583,9 +583,9 @@ public class StreamDemo {
                 new Order("alice", List.of("book", "pen"), new BigDecimal("20.00"), true),
                 new Order("bob", List.of("bag"), new BigDecimal("80.00"), false),
                 new Order("alice", List.of("cup"), new BigDecimal("35.00"), true));
-                // 关键变化：new Order("alice", List.of("book", "pen"), new BigDecimal("20.00"), true), new Order("bob", List.of("bag"), new BigDecimal("80.00"), false), new Order("alice", List.of("cup"), new BigDecimal("35.00"), true));；创建 Order，构造参数保留在外层调用中。
-                // 关键变化：new Order("bob", List.of("bag"), new BigDecimal("80.00"), false), new Order("alice", List.of("cup"), new BigDecimal("35.00"), true));；创建 Order，构造参数保留在外层调用中。
-                // 关键变化：new Order("alice", List.of("cup"), new BigDecimal("35.00"), true));；创建 Order，构造参数保留在外层调用中。
+
+
+
 
         Map<String, BigDecimal> totals = orders.stream()
                 .filter(Order::paid)

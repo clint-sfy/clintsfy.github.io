@@ -978,7 +978,44 @@ const JAVA_RESULT_COMMENT_LABEL = /(?:输出|结果|返回|异常)\s*[:：]/u
 const JAVA_ACTION_EFFECT_PATTERN = /(?:变为|变成|更新|追加|插入|删除|移除|写入|读取|返回|得到|产生|注册|匹配|替换|合并|累加|递减|递增|阻塞|唤醒|等待|创建|关闭|释放|格式化|判断|比较|校验|验证|转换|复制|获取|计算|查找|截取|拼接|检查|选择|遍历|处理|提供|取得|生成|启动|提交|停止|触发|保留|保持|消费|生产|长度|数量|元素|字段|键|值|状态|结果|集合|列表|队列|映射|异常|成功|失败|生效|调用后|之后|此时|最终|现在|剩余|内容|字符串|文本|时间|线程|任务|锁|配置|规则|响应|请求|对象|文件|目录|连接|资源|流|字节|索引|位置|引用|实例|类型|名称|标识)/u
 const JAVA_OUTPUT_CALL_PATTERN = /\bSystem\.out\.(?:print|println|printf)\s*\(/u
 const FORBIDDEN_EXAMPLE_COMMENT_PATTERN = /关键输入或调用是|执行后[^\r\n]*(?:完成|进入|得到|产生)|本例演示|示例完成|本次输出调用已产生可观察结果|接收对象或返回值按该参数产生对应状态|使用给定参数产生该输出|使用具体参数[^\r\n。]*(?:计算并返回结果|完成判断并返回布尔结果)|使用表达式中的具体参数完成本次调用|保存该调用按具体参数计算出的返回值|追加具体参数 当前元素|按具体键值参数 当前键和值|按具体参数 当前索引或条件|写入具体参数 当前值|标准输出写入具体参数 当前值|[^\r\n。]+按这次调用的具体参数完成更新|处理当前语句中的具体状态|后续代码可观察该调用产生的状态|该配置语句明确示例中的具体边界/u
-const FORBIDDEN_NO_INFORMATION_COMMENT_PATTERN = /^(?:(?:TODO|FIXME|TBD)(?:\s*[:：])?\s*(?:(?:待补充(?:具体说明)?|此处(?:需要)?补充(?:具体)?说明|执行后得到预期结果|操作成功|如上所述|输出结果如下|此处省略))?|(?:调用参数\s*[:：]\s*代码依次使用\s+\S+)|待补充(?:具体说明)?|此处(?:需要)?补充(?:具体)?说明|执行后得到预期结果|操作成功|如上所述|输出结果如下|此处省略)[。.!！]?$/iu
+const FORBIDDEN_NO_INFORMATION_COMMENT_PATTERN = /^(?:(?:TODO|FIXME|TBD)(?:\s*[:：])?\s*(?:(?:待补充(?:具体说明)?|此处(?:需要)?补充(?:具体)?说明|执行后得到预期结果|操作成功|如上所述|输出结果如下|此处省略))?|(?:调用参数\s*[:：]\s*代码依次使用\s+\S+)|待补充(?:具体说明)?|此处(?:需要)?补充(?:具体)?说明|执行后得到预期结果|操作成功|如上所述|输出结果如下|此处省略|输入表达式为\s*.+|(?:创建|构造)\s*\w+，?\s*构造参数保留在外层调用中|将\s*.+?\s*的计算结果写入\s*.+?；?\s*赋值完成|.+构造参数保留在外层调用中|.+的计算结果写入.+赋值完成)[。.!！]?$/iu
+
+function inspectJavaCodeComments(code) {
+  const lines = code.split(/\r?\n/u)
+  const issues = []
+  for (let index = 0; index < lines.length; index += 1) {
+    const commentMatch = lines[index].match(/^\s*\/\/\s*(.*)$/u)
+    if (!commentMatch) continue
+    const comment = commentMatch[1].trim().replace(/[。.!?]+$/u, '')
+    if (FORBIDDEN_NO_INFORMATION_COMMENT_PATTERN.test(comment)) {
+      issues.push(`line ${index + 1} generic or mechanical comment: ${comment}`)
+    }
+    if (/^(?:输入|初始(?:状态)?|前置(?:条件)?)\s*[:：]/u.test(comment)) continue
+
+    const adjacent = [lines[index - 1] ?? '', lines[index + 1] ?? '']
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith('//') && !/^(?:import|package)\b/u.test(line))
+    const normalizedComment = comment
+      .replace(/^(?:输入|初始(?:状态)?|前置(?:条件)?|作用|关键变化|当前状态|效果|说明)\s*[:：]\s*/u, '')
+      .replace(/[。.!?;；]+$/u, '')
+      .replace(/\s+/gu, ' ')
+      .toLowerCase()
+    if (normalizedComment.length < 8) continue
+    if (adjacent.some((statement) => {
+      const normalizedStatement = statement
+        .replace(/[;{}]+$/gu, '')
+        .replace(/\s+/gu, ' ')
+        .trim()
+        .toLowerCase()
+      const withoutDeclaration = normalizedStatement
+        .replace(/^(?:(?:final\s+)?(?:var|[A-Za-z_$][\w$.]*(?:<[^>]+>)?(?:\[\])?)\s+)(?=[A-Za-z_$][\w$]*\s*=)/u, '')
+      return normalizedComment === normalizedStatement || normalizedComment === withoutDeclaration
+    })) {
+      issues.push(`line ${index + 1} comment repeats adjacent code: ${comment}`)
+    }
+  }
+  return issues
+}
 
 const WEAK_EXPLANATION_ANCHORS = new Set([
   'abstract', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const',
@@ -2794,6 +2831,40 @@ System.out.println(builder);
 // 输出：b。`,
   })
   assertArticleContractIssueTypes(informativeFreeFormComment, [], 'matrix/informative-free-form-comment.md')
+})
+
+test('existing Java Markdown rejects mechanical comments without requiring routine-line comments', () => {
+  const badFixtures = [
+    ['var value = source();\n// 关键变化：var value = source();', 'exact assignment restatement'],
+    ['items.add("book");\n// 输入表达式为 items.add("book")', 'input expression narration'],
+    ['new Order("ann", 20);\n// 关键变化：创建 Order，构造参数保留在外层调用中。', 'constructor narration'],
+    ['int total = amount + tax;\n// 关键变化：将 amount + tax 的计算结果写入 total；赋值完成。', 'generated assignment narration'],
+    ['builder.append("x");\n// 调用参数：代码依次使用 "x"。', 'generic call narration'],
+  ]
+  for (const [code, label] of badFixtures) {
+    assert.ok(inspectJavaCodeComments(code).length > 0, `${label} must be rejected`)
+  }
+
+  const informativeFixtures = [
+    'String input = "x";\nitems.add(input);',
+    'buffer.compact();\n// 关键变化：未读字节移动到开头，position 指向剩余数据末端。',
+    'InputStream input = Channels.newInputStream(channel);\n// 关键变化：关闭 input 会关闭底层 channel。',
+    'System.out.println(value);\n// 输出：2,3',
+  ]
+  for (const code of informativeFixtures) {
+    assert.deepEqual(inspectJavaCodeComments(code), [], 'routine lines may be unannotated and informative comments remain valid')
+  }
+
+  const violations = []
+  for (const relativePath of [JAVA_INDEX_PATH, ...ARTICLE_PATHS]) {
+    const { body } = readMarkdown(relativePath)
+    for (const [blockIndex, code] of getJavaBlocks(body).entries()) {
+      for (const issue of inspectJavaCodeComments(code)) {
+        violations.push(`${relativePath} [java-block-${blockIndex + 1}] ${issue}`)
+      }
+    }
+  }
+  assert.deepEqual(violations, [], `rule java-mechanical-comments${formatViolations(violations)}`)
 })
 
 test('danger boundary requires an explicit warning for dangerous MySQL and Redis operations', () => {

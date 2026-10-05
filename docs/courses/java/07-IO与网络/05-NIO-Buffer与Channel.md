@@ -86,7 +86,7 @@ public class ByteBufferGetDemo {
         ByteBuffer buffer = ByteBuffer.wrap(new byte[]{1, 2, 3});
         while (buffer.hasRemaining()) {
             System.out.println(buffer.get());
-            // 输出：1
+            // 输出：循环依次打印 1、2、3。
         }
     }
 }
@@ -112,9 +112,9 @@ public class ByteBufferReuseDemo {
         buffer.compact();
         // 关键变化：buffer.compact();；调用 compact，实参为 无显式参数；保留 buffer 的未读字节并切回写模式；position 移到剩余数据末端。
         buffer.put((byte) 3).flip();
-// 关键变化：buffer.put((byte) 3).flip();；put 写入 (byte) 3 后返回同一 ByteBuffer，flip 将 position 置 0、limit 置 1。
+// 关键变化：buffer.put((byte) 3).flip();；compact 后 position 为 1，写入 3 后 position 为 2；flip 将 position 置 0、limit 置 2。
         System.out.println(buffer.get() + "," + buffer.get());
-        // 输出：2
+        // 输出：2,3
     }
 }
 ```

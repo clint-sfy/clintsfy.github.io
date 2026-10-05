@@ -91,7 +91,7 @@ import java.util.function.Predicate;
 Predicate<String> blank = String::isBlank;
 Predicate<String> notBlank = blank.negate();
 String input = "Java";
-// 关键变化：String input = "Java";；将 "Java" 的计算结果写入 input；赋值完成。
+
 
 System.out.println(notBlank.test(input));
 // 输出：true
@@ -190,7 +190,7 @@ System.out.println(output);
 import java.util.function.Supplier;
 
 Supplier<String> requestId = () -> "REQ-20";
-// 关键变化：Supplier<String> requestId = () -> "REQ-20";；将 () -> "REQ-20" 的计算结果写入 requestId；赋值完成。
+
 System.out.println(requestId.get());
 // 输出：REQ-20
 ```
@@ -246,7 +246,7 @@ import java.util.function.BiPredicate;
 
 BiPredicate<String, Integer> longEnough = (text, min) -> text.length() >= min;
 BiFunction<String, String, String> join = (left, right) -> left + ":" + right;
-// 关键变化：BiFunction<String, String, String> join = (left, right) -> left + ":" + right;；将 (left, right) -> left + ":" + right 的计算结果写入 join；赋值完成。
+
 System.out.println(longEnough.test("Java", 4));
 // 输出：true
 System.out.println(join.apply("id", "20"));
@@ -259,7 +259,7 @@ System.out.println(join.apply("id", "20"));
 
 ```java
 BiFunction<String, Integer, String> join = (left, right) -> left + ":" + right;
-// 关键变化：BiFunction<String, Integer, String> join = (left, right) -> left + ":" + right;；将 (left, right) -> left + ":" + right 的计算结果写入 join；赋值完成。
+
 String text = join.apply("id", 20);
 // 输出：id:20
 ```
@@ -306,7 +306,7 @@ interface DiscountRule {
 }
 
 DiscountRule memberRule = price -> price - 10;
-// 关键变化：DiscountRule memberRule = price -> price - 10;；将 price -> price - 10 的计算结果写入 memberRule；赋值完成。
+
 System.out.println(memberRule.priceAfterDiscount(80));
 // 输出：70
 ```
@@ -317,9 +317,9 @@ System.out.println(memberRule.priceAfterDiscount(80));
 
 ```java
 int limit = 10;
-// 关键变化：int limit = 10;；将 10 的计算结果写入 limit；赋值完成。
+
 java.util.function.Predicate<Integer> underLimit = value -> value < limit;
-// 关键变化：java.util.function.Predicate<Integer> underLimit = value -> value < limit;；将 value -> value < limit 的计算结果写入 underLimit；赋值完成。
+
 System.out.println(underLimit.test(8));
 // 输出：true
 ```
@@ -350,12 +350,12 @@ public class LambdaDemo {
                 new Product("book", 30, 4),
                 new Product("pen", 8, 0),
                 new Product("bag", 80, 2));
-                // 输入：new Product("book", 30, 4), new Product("pen", 8, 0), new Product("bag", 80, 2));；输入表达式为 new Product("book", 30, 4), new Product("pen", 8, 0), new Product("bag", 80, 2))。
-                // 关键变化：new Product("book", 30, 4), new Product("pen", 8, 0), new Product("bag", 80, 2));；创建 Product，构造参数保留在外层调用中。
-                // 输入：new Product("pen", 8, 0), new Product("bag", 80, 2));；输入表达式为 new Product("pen", 8, 0), new Product("bag", 80, 2))。
-                // 关键变化：new Product("pen", 8, 0), new Product("bag", 80, 2));；创建 Product，构造参数保留在外层调用中。
-                // 输入：new Product("bag", 80, 2));；输入表达式为 new Product("bag", 80, 2))。
-                // 关键变化：new Product("bag", 80, 2));；创建 Product，构造参数保留在外层调用中。
+
+
+
+
+
+
         int limit = 50; // effectively final，可被 Lambda 捕获
         Predicate<Product> available = product -> product.stock() > 0;
         Predicate<Product> affordable = product -> product.price() <= limit;
