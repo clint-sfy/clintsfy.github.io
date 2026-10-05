@@ -32,6 +32,17 @@ const EXPECTED_CHAPTER_IDS = [
   '15-Redis',
 ]
 
+test('MySQL foundation inventory exposes the index and four canonical articles', () => {
+  const chapter = JAVA_COURSE_CHAPTERS.find((entry) => entry.id === '11-MySQL-8')
+  const names = ['01-环境连接与数据库对象', '02-表设计与DDL', '03-数据类型字符集与时区', '04-数据写入更新与删除']
+  const titles = ['环境连接与数据库对象', '表设计与 DDL', '数据类型、字符集与时区', '数据写入、更新与删除']
+  assert.ok(existsSync(join('docs/courses/java/11-MySQL-8/index.md')), 'MySQL index is missing')
+  for (const name of names) {
+    assert.ok(existsSync(join(`docs/courses/java/11-MySQL-8/${name}.md`)), `${name} is missing`)
+    assert.ok(chapter.articles.some((article) => article.file === `docs/courses/java/11-MySQL-8/${name}.md` && article.title === titles[names.indexOf(name)]))
+  }
+})
+
 const EXPECTED_CHAPTER_LABELS = [
   'Java基础',
   '数组与文本',
@@ -174,7 +185,7 @@ test('Java sidebar uses the migrated canonical inventory', () => {
     ['反射与模块', 7, true],
     ['并发编程', 15, true],
     ['JVM', 5, true],
-    ['MySQL 8', 0, true],
+    ['MySQL 8', 4, true],
     ['工程实践', 3, true],
     ['设计与项目', 1, true],
     ['后端工程', 12, true],
