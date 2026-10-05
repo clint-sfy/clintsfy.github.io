@@ -1638,10 +1638,16 @@ function getArticleContractH3Subsections(section) {
 }
 
 function getArticleContractCodeBlocks(content) {
-  return [...content.matchAll(/```([A-Za-z][\w-]*)[^\r\n]*\r?\n([\s\S]*?)```/gu)].map((match) => ({
-    language: match[1].toLowerCase(),
-    code: match[2],
-  }))
+  return [...content.matchAll(/```([A-Za-z][\w-]*)[^\r\n]*\r?\n([\s\S]*?)```/gu)].map((match) => {
+    const matchStart = match.index ?? 0
+    const codeStart = matchStart + match[0].indexOf(match[2])
+    const codeStartLine = content.slice(0, codeStart).split(/\r?\n/u).length - 1
+    return {
+      language: match[1].toLowerCase(),
+      code: match[2],
+      codeStartLine,
+    }
+  })
 }
 
 function stripArticleContractComments(code, language) {
@@ -1656,6 +1662,180 @@ function stripArticleContractComments(code, language) {
     .filter((line) => !commentPattern.test(line))
     .join('\n')
     .trim()
+}
+
+function lexArticleContractCode(code, language) {
+  const lineCommentMarkers = language === 'java'
+    ? ['//']
+    : language === 'sql'
+      ? ['--', '#']
+      : ['#']
+  const executable = []
+  const stringLiterals = []
+  const comments = []
+  let blockComment = false
+  let lineComment = false
+  let commentValue = ''
+  let commentStart = 0
+  let commentLine = 0
+  let quote = null
+  let literalValue = ''
+  let literalStart = 0
+  let literalLine = 0
+  let line = 0
+
+  const appendSpace = () => executable.push(' ')
+  const appendNewline = () => {
+    executable.push('\n')
+    line += 1
+  }
+
+  for (let index = 0; index < code.length; index += 1) {
+    const current = code[index]
+    const next = code[index + 1] ?? ''
+
+    if (lineComment) {
+      if (current === '\n') {
+        comments.push({ value: commentValue.trim(), start: commentStart, line: commentLine })
+        lineComment = false
+        commentValue = ''
+        appendNewline()
+      } else if (current === '\r' && next === '\n') {
+        appendSpace()
+      } else {
+        commentValue += current
+        appendSpace()
+      }
+      continue
+    }
+
+    if (blockComment) {
+      if (current === '*' && next === '/') {
+        comments.push({ value: commentValue.trim(), start: commentStart, line: commentLine })
+        appendSpace()
+        appendSpace()
+        index += 1
+        blockComment = false
+        commentValue = ''
+      } else if (current === '\n') {
+        commentValue += current
+        appendNewline()
+      } else {
+        commentValue += current
+        appendSpace()
+      }
+      continue
+    }
+
+    if (quote !== null) {
+      if (current === '\\' && next) {
+        literalValue += next
+        appendSpace()
+        appendSpace()
+        index += 1
+        continue
+      }
+      if (current === quote) {
+        // SQL escapes a quote by doubling it; keep the doubled quote inside
+        // one literal rather than ending the literal early.
+        if (next === quote) {
+          literalValue += current
+          appendSpace()
+          appendSpace()
+          index += 1
+          continue
+        }
+        stringLiterals.push({
+          value: literalValue,
+          start: literalStart,
+          end: index + 1,
+          line: literalLine,
+        })
+        appendSpace()
+        quote = null
+        literalValue = ''
+        continue
+      }
+      if (current === '\n') {
+        literalValue += current
+        appendNewline()
+      } else {
+        literalValue += current
+        appendSpace()
+      }
+      continue
+    }
+
+    if (current === '/' && next === '*') {
+      commentStart = index
+      commentLine = line
+      commentValue = ''
+      appendSpace()
+      appendSpace()
+      index += 1
+      blockComment = true
+      continue
+    }
+
+    const commentMarker = lineCommentMarkers.find((marker) =>
+      code.startsWith(marker, index),
+    )
+    if (commentMarker) {
+      commentStart = index
+      commentLine = line
+      commentValue = ''
+      for (let markerIndex = 0; markerIndex < commentMarker.length; markerIndex += 1) appendSpace()
+      index += commentMarker.length - 1
+      lineComment = true
+      continue
+    }
+
+    if (current === '"' || current === "'" || (language === 'sql' && current === '`')) {
+      quote = current
+      literalValue = ''
+      literalStart = index
+      literalLine = line
+      appendSpace()
+      continue
+    }
+
+    executable.push(current)
+    if (current === '\n') line += 1
+  }
+
+  if (lineComment || blockComment) {
+    comments.push({ value: commentValue.trim(), start: commentStart, line: commentLine })
+  }
+
+  return {
+    executable: executable.join(''),
+    stringLiterals,
+    comments,
+  }
+}
+
+function hasArticleContractTautologicalComment(code, language) {
+  const lexical = lexArticleContractCode(code, language)
+  const statements = lexical.executable
+    .split(/;|\r?\n/u)
+    .map((statement) => statement.replace(/\s+/gu, ' ').trim())
+    .filter(Boolean)
+  return lexical.comments.some(({ value }) => {
+    const comment = value
+      .replace(/^(?:输入|初始(?:状态)?|前置(?:条件)?|作用|关键变化|当前状态|效果|输出|结果|返回|说明)\s*[:：]\s*/u, '')
+      .replace(/[。.!?]+$/u, '')
+      .replace(/\s+/gu, ' ')
+      .trim()
+      .toLowerCase()
+    if (!comment) return false
+    return statements.some((statement) => {
+      const normalizedStatement = statement
+        .replace(/^(?:(?:final\s+)?(?:var|[A-Za-z_$][\w$]*(?:<[^>]+>)?)\s+)?(?=[A-Za-z_$][\w$]*\s*=)/u, '')
+        .replace(/[。.!?]+$/u, '')
+        .toLowerCase()
+      return normalizedStatement.length >= 8 && comment === normalizedStatement
+    })
+  })
 }
 
 function getArticleContractEvidenceLines(content, pattern) {
@@ -1726,81 +1906,322 @@ function hasArticleContractObservableResult(content, blocks) {
   })
 }
 
-function isArticleContractOperationHeading(heading) {
-  const label = heading.split(/[：:]/u, 1)[0].replaceAll('`', '').trim()
+function getArticleContractOperationHeadingLabel(heading) {
+  return heading.split(/[：:]/u, 1)[0].replaceAll('`', '').trim()
+}
+
+function getArticleContractJavaExecutable(content) {
+  return getArticleContractCodeBlocks(content)
+    .filter(({ language }) => language === 'java')
+    .map(({ code }) => lexArticleContractCode(code, 'java').executable)
+    .join('\n')
+}
+
+function isArticleContractOperationHeading(heading, content = '') {
+  const label = getArticleContractOperationHeadingLabel(heading)
   if (!label || /^(?:示例|操作|用法|案例|说明|注意|风险|边界)/u.test(label)) return false
-  const javaLike = /^@?[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*(?:\([^)]*\))?/u
-  const sqlOrRedis = /^(?:SELECT|INSERT|UPDATE|DELETE|SET|GET|MGET|MSET|INCR|DECR|HSET|HGET|HMGET|HGETALL|HSCAN|LPUSH|RPUSH|LPOP|RPOP|SADD|SMEMBERS|ZADD|ZRANGE|EXISTS|EXPIRE|TTL|SCAN|FLUSHALL|FLUSHDB|KEYS|DEL|UNLINK|TRUNCATE|DROP|CREATE|ALTER|LOCK|UNLOCK|EXPLAIN|WITH|SHOW|DESCRIBE|MYSQLDUMP|EVAL|EVALSHA|SCRIPT|MONITOR|DEBUG|REPLICAOF|SLAVEOF|MIGRATE|SLOWLOG|INFO|LATENCY|MEMORY|CONFIG)\b/iu
-  return javaLike.test(label) || sqlOrRedis.test(label)
+  const sqlOrRedis = label.match(/^(SELECT|INSERT|UPDATE|DELETE|SET|GET|MGET|MSET|INCR|DECR|HSET|HGET|HMGET|HGETALL|HSCAN|LPUSH|RPUSH|LPOP|RPOP|SADD|SMEMBERS|ZADD|ZRANGE|EXISTS|EXPIRE|TTL|SCAN|FLUSHALL|FLUSHDB|KEYS|DEL|UNLINK|TRUNCATE|DROP|CREATE|ALTER|LOCK|UNLOCK|EXPLAIN|WITH|SHOW|DESCRIBE|MYSQLDUMP|BACKUP|RESTORE|EVAL|EVALSHA|SCRIPT|MONITOR|DEBUG|REPLICAOF|SLAVEOF|MIGRATE|SLOWLOG|INFO|LATENCY|MEMORY|CONFIG)(?:\s+(TABLE|DATABASE|INSTANCE|TABLES|INTO))?/iu)
+  if (sqlOrRedis) {
+    const operationPattern = sqlOrRedis[1].replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+    const sources = getArticleContractCodeBlocks(content)
+      .flatMap(({ language, code }) => {
+        if (['sql', 'redis', 'shell', 'bash', 'sh'].includes(language)) {
+          return [lexArticleContractCode(code, language).executable]
+        }
+        if (language === 'java') {
+          return getJavaExecutionStringLiterals(code).map(({ value, mode }) =>
+            mode === 'jdbc' ? lexArticleContractCode(value, 'sql').executable : value,
+          )
+        }
+        return []
+      })
+      .join('\n')
+    const commandPrefix = '(?:redis-cli\\s+(?:(?:-[A-Za-z][\\w-]*|--[\\w-]+)(?:\\s+\\S+)?\\s+)*)?'
+    return new RegExp(`(?:^|[;\\n])\\s*${commandPrefix}${operationPattern}\\b`, 'iu').test(sources)
+  }
+
+  const javaLike = /^@?[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*(?:\([^)]*\))?$/u
+  if (!javaLike.test(label)) return false
+  const executable = getArticleContractJavaExecutable(content)
+  const normalized = label.replace(/\([^)]*\)$/u, '')
+  const knownApiHeading = Object.values(REQUIRED_EXTERNAL_API_HEADINGS)
+    .flat()
+    .some((entry) => entry === normalized)
+  if (!executable.trim()) return knownApiHeading
+  const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+
+  if (normalized.startsWith('@')) {
+    return new RegExp(`${escaped}\\b`, 'u').test(executable)
+  }
+
+  const segments = normalized.split('.')
+  const method = segments.at(-1) ?? normalized
+  const escapedMethod = method.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+  if (segments.length > 1) {
+    return new RegExp(`\\.\\s*${escapedMethod}\\s*\\(`, 'u').test(executable) ||
+      new RegExp(`\\b${escapedMethod}\\s*\\(`, 'u').test(executable)
+  }
+
+  const builtInType = new Set([
+    'String', 'StringBuilder', 'StringBuffer', 'List', 'Set', 'Map', 'Queue', 'Deque',
+    'Path', 'File', 'URI', 'URL', 'Optional', 'Stream', 'LocalDate', 'LocalTime',
+    'LocalDateTime', 'Instant', 'Duration', 'Period', 'Pattern', 'Matcher', 'Class',
+  ])
+  return new RegExp(`\\bnew\\s+${escaped}(?:\\s*<[^>]*>)?\\s*\\(`, 'u').test(executable) ||
+    new RegExp(`\\b${escaped}\\s*\\.\\s*[A-Za-z_$][\\w$]*\\s*\\(`, 'u').test(executable) ||
+    (builtInType.has(normalized) && new RegExp(`\\b${escaped}\\s+[A-Za-z_$][\\w$]*\\s*=`, 'u').test(executable))
 }
 
 function getDangerousArticleContractOperations(code, language) {
-  if (!['sql', 'redis', 'shell', 'bash', 'sh', 'java'].includes(language)) return []
-  const executable = stripArticleContractComments(code, language)
-  if (!executable) return []
-  const operations = new Set()
-  const escapedToken = (token) => token.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
-
-  if (language !== 'java') {
-    for (const token of DANGEROUS_MYSQL_REDIS_TOKENS) {
-      const allowedTokens = language === 'sql'
-        ? MYSQL_DANGER_TOKENS
-        : ['redis'].includes(language)
-          ? REDIS_DANGER_TOKENS
-          : SHELL_DANGER_TOKENS
-      if (!allowedTokens.has(token)) continue
-      if (!new RegExp(`\\b${escapedToken(token)}\\b`, 'iu').test(executable)) continue
-      if (['UPDATE', 'DELETE'].includes(token)) {
-        const statements = executable.split(';').filter((statement) =>
-          new RegExp(`\\b${token}\\b`, 'iu').test(statement),
-        )
-        if (statements.some((statement) => {
-          const where = statement.match(/\bWHERE\b([\s\S]*)$/iu)?.[1]?.trim()
-          return !where || /^(?:1\s*=\s*1|TRUE)\s*$/iu.test(where) || /^([A-Za-z_]\w*)\s*=\s*\1\s*$/iu.test(where)
-        })) operations.add(token)
-        continue
-      }
-      if (token === 'DEL' || token === 'UNLINK') {
-        const lines = executable.split(/\r?\n/u).filter((line) =>
-          new RegExp(`\\b${token}\\b`, 'iu').test(line),
-        )
-        const hasBroadArguments = lines.some((line) => {
-          const argumentText = line.replace(new RegExp(`^[\\s\\S]*?\\b${token}\\b`, 'iu'), '').trim()
-          const argumentsList = argumentText.split(/\s+/u).filter(Boolean)
-          return argumentsList.length > 1 || /\*|(?:big|large|huge|hot)[_:\-]?(?:key|keys|hash|list|set|values?)/iu.test(argumentText)
-        })
-        if (hasBroadArguments) {
-          operations.add(token)
-        }
-        continue
-      }
-      operations.add(token)
-    }
-  }
-
-  if (language === 'java') {
-    if (/\b(?:RedisTemplate|redisTemplate)\.keys\s*\(/u.test(executable)) operations.add('KEYS')
-    if (/\b(?:RedisTemplate|redisTemplate)\.(?:delete|unlink)\s*\([^)]*(?:big|large|huge|hot)[_:\-]?(?:key|keys)?/iu.test(executable)) {
-      operations.add('DEL')
-    }
-  }
-  return [...operations]
+  return getHardenedDangerousArticleContractOperations(code, language)
 }
 
-function hasArticleContractRiskBoundary(content, operation) {
-  const boundaryLines = content
-    .split(/\r?\n/u)
-    .map((line) => line.trim())
-    .filter((line) => /(?:风险|边界|警告|注意)\s*[:：]|(?:仅(?:在|用于)|禁止|不要|避免|谨慎|不得|不应|切勿|测试环境|受控|全表|大键|锁表|备份|恢复|阻塞)/iu.test(line))
-  if (boundaryLines.length === 0) return false
-  const operationPattern = operation === 'DEL' || operation === 'UNLINK'
-    ? /(?:DEL|UNLINK|大键|大对象|单键|键)/iu
+function getArticleContractLineIndex(text, offset) {
+  return text.slice(0, offset).split(/\r?\n/u).length - 1
+}
+
+function getArticleContractStatementAround(executable, offset) {
+  const start = executable.lastIndexOf(';', offset) + 1
+  const semicolonEnd = executable.indexOf(';', offset)
+  const end = semicolonEnd < 0 ? executable.length : semicolonEnd
+  return { start, end, text: executable.slice(start, end) }
+}
+
+function isArticleContractTautologicalWhere(where) {
+  const normalized = where.replace(/[()]/gu, ' ').replace(/\s+/gu, ' ').trim()
+  if (!normalized) return true
+  const isTautologicalTerm = (term) => {
+    const atom = term.trim()
+    if (/^(?:TRUE|1\s*=\s*1)$/iu.test(atom)) return true
+    if (/\b([A-Za-z_]\w*)\s*=\s*\1\b/iu.test(atom)) return true
+    const equality = atom.match(/^(?:['"]([^'"]*)['"]|(\d+(?:\.\d+)?))\s*=\s*(?:['"]([^'"]*)['"]|(\d+(?:\.\d+)?))$/u)
+    return Boolean(equality && (equality[1] ?? equality[2]) === (equality[3] ?? equality[4]))
+  }
+  const disjuncts = normalized.split(/\bOR\b/iu)
+  return disjuncts.some((disjunct) => disjunct.split(/\bAND\b/iu).every(isTautologicalTerm))
+}
+
+function hasArticleContractBroadKeyArguments(argumentText) {
+  const argumentsList = argumentText.split(/\s+/u).filter(Boolean)
+  return argumentsList.length > 1 ||
+    /\*|\b(?:big|large|huge|hot)[A-Za-z0-9_:\-*]*(?:key|keys|hash|list|set|values?)?/iu.test(argumentText)
+}
+
+function getRedisCliCommand(line) {
+  const normalized = line.trim().replace(/^\$\s*/u, '')
+  if (!/^redis-cli\b/iu.test(normalized)) return null
+  const tokens = normalized.split(/\s+/u).slice(1)
+  const optionsWithValues = new Set(['-h', '-p', '-s', '-a', '-u', '-n', '--user', '--pass', '--cacert', '--cert', '--key', '--tls-ciphers', '--tls-ciphersuites'])
+  let index = 0
+  while (tokens[index]?.startsWith('-')) {
+    if (optionsWithValues.has(tokens[index])) index += 1
+    index += 1
+  }
+  const operation = tokens[index]?.toUpperCase()
+  if (!operation) return null
+  return { operation, argumentText: tokens.slice(index + 1).join(' ') }
+}
+
+function getArticleContractShellDangerousOccurrences(code) {
+  const executable = lexArticleContractCode(code, 'shell').executable
+  const occurrences = []
+  executable.split(/\r?\n/u).forEach((line, lineIndex) => {
+    const redisCommand = getRedisCliCommand(line)
+    if (redisCommand && REDIS_DANGER_TOKENS.has(redisCommand.operation)) {
+      if (
+        !['DEL', 'UNLINK'].includes(redisCommand.operation) ||
+        hasArticleContractBroadKeyArguments(redisCommand.argumentText)
+      ) {
+        occurrences.push({ operation: redisCommand.operation, lineIndex, source: 'redis-cli' })
+      }
+      return
+    }
+
+    const command = line.trim().replace(/^\$\s*/u, '').split(/\s+/u)[0]?.toUpperCase()
+    if (command === 'MYSQLDUMP') occurrences.push({ operation: 'MYSQLDUMP', lineIndex, source: 'shell' })
+  })
+  return occurrences
+}
+
+function getArticleContractRedisDangerousOccurrences(code) {
+  const executable = lexArticleContractCode(code, 'redis').executable
+  const occurrences = []
+  executable.split(/\r?\n/u).forEach((line, lineIndex) => {
+    const normalized = line.trim().replace(/^(?:redis>\s*|[\w.-]+:\d+>\s*)/iu, '')
+    const [command = '', ...args] = normalized.split(/\s+/u)
+    const operation = command.toUpperCase()
+    if (!REDIS_DANGER_TOKENS.has(operation)) return
+    if (['DEL', 'UNLINK'].includes(operation) && !hasArticleContractBroadKeyArguments(args.join(' '))) return
+    occurrences.push({ operation, lineIndex, source: 'redis-cli' })
+  })
+  return occurrences
+}
+
+function getArticleContractDirectDangerousOccurrences(code, language) {
+  if (['shell', 'bash', 'sh'].includes(language)) return getArticleContractShellDangerousOccurrences(code)
+  if (language === 'redis') return getArticleContractRedisDangerousOccurrences(code)
+  const lexical = lexArticleContractCode(code, language)
+  const executable = lexical.executable
+  const allowedTokens = language === 'sql'
+    ? MYSQL_DANGER_TOKENS
+    : language === 'redis'
+      ? REDIS_DANGER_TOKENS
+      : SHELL_DANGER_TOKENS
+  const occurrences = []
+  for (const token of DANGEROUS_MYSQL_REDIS_TOKENS) {
+    if (!allowedTokens.has(token)) continue
+    const escapedToken = token.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+    const pattern = new RegExp(`\\b${escapedToken}\\b`, 'giu')
+    for (const match of executable.matchAll(pattern)) {
+      const offset = match.index ?? 0
+      const statement = getArticleContractStatementAround(executable, offset)
+      if (token === 'UPDATE' || token === 'DELETE') {
+        const where = statement.text.match(/\bWHERE\b([\s\S]*)$/iu)?.[1]?.trim()
+        if (!isArticleContractTautologicalWhere(where ?? '')) continue
+      }
+      if (token === 'DEL' || token === 'UNLINK') {
+        const lineStart = Math.max(executable.lastIndexOf('\n', offset), 0) + 1
+        const lineEnd = executable.indexOf('\n', offset)
+        const line = executable.slice(lineStart, lineEnd < 0 ? executable.length : lineEnd)
+        const argumentText = line.replace(new RegExp(`^[\\s\\S]*?\\b${escapedToken}\\b`, 'iu'), '').trim()
+        if (!hasArticleContractBroadKeyArguments(argumentText)) continue
+      }
+      occurrences.push({
+        operation: token,
+        lineIndex: getArticleContractLineIndex(executable, offset),
+        source: 'direct',
+      })
+    }
+  }
+  return occurrences
+}
+
+function getJavaCallArguments(code, openIndex) {
+  let depth = 0
+  for (let index = openIndex; index < code.length; index += 1) {
+    if (code[index] === '(') depth += 1
+    if (code[index] === ')') {
+      depth -= 1
+      if (depth === 0) return code.slice(openIndex + 1, index)
+    }
+  }
+  return code.slice(openIndex + 1)
+}
+
+function getJavaExecutionCalls(code) {
+  const executable = lexArticleContractCode(code, 'java').executable
+  const jdbcPattern = /\b(?:jdbcTemplate|namedParameterJdbcTemplate|jdbcOperations|statement|preparedStatement|connection|entityManager|sqlSession)\s*\.\s*(?:execute|update|query|batchUpdate|executeUpdate|executeQuery|prepareStatement)\s*\(/giu
+  const redisPattern = /\b(?:redisTemplate|stringRedisTemplate|redisOperations)\s*\.\s*(?:execute|eval|evalSha)\s*\(/giu
+  const calls = []
+  for (const [mode, pattern] of [['jdbc', jdbcPattern], ['redis', redisPattern]]) {
+    for (const match of executable.matchAll(pattern)) {
+      const openIndex = executable.indexOf('(', match.index ?? 0)
+      const args = getJavaCallArguments(executable, openIndex)
+      calls.push({ mode, start: openIndex + 1, end: openIndex + 1 + args.length, args })
+    }
+  }
+  return calls
+}
+
+function getJavaExecutionStringLiterals(code) {
+  const lexical = lexArticleContractCode(code, 'java')
+  const calls = getJavaExecutionCalls(code)
+  const literals = []
+  for (const literal of lexical.stringLiterals) {
+    const directCall = calls.find((call) => literal.start >= call.start && literal.end <= call.end)
+    if (directCall) {
+      literals.push({ ...literal, mode: directCall.mode })
+      continue
+    }
+
+    const declaration = code.slice(0, literal.start).match(/\b(?:String|var)\s+([A-Za-z_$][\w$]*)\s*=\s*$/u)
+    if (!declaration) continue
+    const name = declaration[1]
+    const passedToCall = calls.find((call) =>
+      [...call.args.matchAll(/\b[A-Za-z_$][\w$]*\b/gu)].some(([identifier]) => identifier === name),
+    )
+    if (passedToCall) literals.push({ ...literal, mode: passedToCall.mode })
+  }
+  return literals
+}
+
+function getJavaEmbeddedStringOccurrences(value, mode) {
+  if (mode === 'jdbc') return getArticleContractDirectDangerousOccurrences(value, 'sql').map((occurrence) => ({
+    ...occurrence,
+    source: 'java-string',
+  }))
+
+  const occurrences = []
+  const redisCallPattern = /redis\.call\s*\(\s*['"]([A-Za-z][A-Za-z ]*)['"]/giu
+  for (const match of value.matchAll(redisCallPattern)) {
+    const operation = match[1].toUpperCase()
+    if (!REDIS_DANGER_TOKENS.has(operation)) continue
+    occurrences.push({ operation, lineIndex: 0, source: 'java-string' })
+  }
+  return occurrences
+}
+
+function getDangerousJavaArticleContractOperations(code) {
+  const lexical = lexArticleContractCode(code, 'java')
+  const executable = lexical.executable
+  const occurrences = []
+  for (const literal of getJavaExecutionStringLiterals(code)) {
+    const { mode } = literal
+    for (const occurrence of getJavaEmbeddedStringOccurrences(literal.value, mode)) {
+      occurrences.push({
+        ...occurrence,
+        lineIndex: literal.line + occurrence.lineIndex,
+      })
+    }
+  }
+
+  const methodPattern = /\b(?:RedisTemplate|redisTemplate|stringRedisTemplate|redisOperations)\s*\.\s*(keys|delete|unlink)\s*\(/giu
+  for (const match of executable.matchAll(methodPattern)) {
+    const offset = match.index ?? 0
+    const method = match[1].toUpperCase()
+    if (method === 'KEYS') {
+      occurrences.push({ operation: 'KEYS', lineIndex: getArticleContractLineIndex(executable, offset), source: 'java-call' })
+      continue
+    }
+    const openIndex = executable.indexOf('(', offset)
+    const argumentsText = getJavaCallArguments(code, openIndex)
+    if (hasArticleContractBroadKeyArguments(argumentsText)) {
+      occurrences.push({ operation: 'DEL', lineIndex: getArticleContractLineIndex(executable, offset), source: 'java-call' })
+    }
+  }
+  return occurrences
+}
+
+function getHardenedDangerousArticleContractOperations(code, language) {
+  if (!['sql', 'redis', 'shell', 'bash', 'sh', 'java'].includes(language)) return []
+  if (language === 'java') return getDangerousJavaArticleContractOperations(code)
+  return getArticleContractDirectDangerousOccurrences(code, language)
+}
+
+function hasArticleContractRiskBoundary(content, operation, occurrence = null, block = null) {
+  if (!occurrence || !block) return false
+  const lines = content.split(/\r?\n/u)
+  const operationLine = block.codeStartLine + occurrence.lineIndex
+  const windowRadius = 2
+  const start = Math.max(0, operationLine - windowRadius)
+  const end = Math.min(lines.length - 1, operationLine + windowRadius)
+  const riskPattern = /(?:风险|边界|警告|注意)\s*[:：]|(?:仅(?:在|用于)|只在|限制|禁止|不要|避免|谨慎|不得|不应|切勿|测试环境|受控|生产环境|先备份|恢复策略|可恢复|备份验证|超时)/iu
+  const operationPattern = new RegExp(escapedRiskToken(operation), 'iu')
+  const evidencePattern = operation === 'DEL' || operation === 'UNLINK'
+    ? /(?:大键|大对象|单键|通配|键范围|批量|低峰|异步|影响范围|阻塞|生产)/iu
     : operation === 'KEYS'
-      ? /(?:KEYS|SCAN|键空间|阻塞|生产)/iu
+      ? /(?:测试环境|受控|生产|SCAN|阻塞|性能|键空间)/iu
       : operation === 'UPDATE' || operation === 'DELETE'
-        ? /(?:UPDATE|DELETE|全表|WHERE|条件|范围|行)/iu
-        : new RegExp(escapedRiskToken(operation), 'iu')
-  return boundaryLines.some((line) => operationPattern.test(line))
+        ? /(?:全表|WHERE|条件|范围|行|主键|影响行数)/iu
+        : ['LOCK TABLES', 'LOCK INSTANCE FOR BACKUP', 'FLUSH TABLES WITH READ LOCK'].includes(operation)
+          ? /(?:锁表|锁实例|事务|超时|释放|阻塞|维护窗口)/iu
+          : ['MYSQLDUMP', 'BACKUP', 'RESTORE'].includes(operation)
+            ? /(?:备份|恢复|一致性|验证|可恢复|演练)/iu
+            : /(?:测试环境|受控|生产环境|范围|影响|低峰|超时|阻塞|权限|备份|恢复)/iu
+  return lines
+    .slice(start, end + 1)
+    .map((line) => line.trim())
+    .some((line) => riskPattern.test(line) && operationPattern.test(line) && evidencePattern.test(line))
 }
 
 function escapedRiskToken(token) {
@@ -1842,7 +2263,7 @@ function inspectArticleContract(article, { path = 'article.md' } = {}) {
 
   for (const { heading, content } of subsections) {
     const prefix = `${path} [${heading}]`
-    if (!isArticleContractOperationHeading(heading)) {
+    if (!isArticleContractOperationHeading(heading, content)) {
       violations.push(`[h3:name] ${prefix} must start with a real API, SQL, or Redis operation name`)
       continue
     }
@@ -1856,10 +2277,14 @@ function inspectArticleContract(article, { path = 'article.md' } = {}) {
     } else if (codeIndex < 0) {
       violations.push(`[example:code] ${prefix} needs a supported executable code block`)
     } else {
-      const purpose = stripMarkdown(lines.slice(first, codeIndex).filter((line) => line.trim() !== '').join(' '))
+      const purposeLines = lines.slice(first, codeIndex).filter((line) => line.trim() !== '')
+      const purpose = stripMarkdown(purposeLines.join(' '))
+      const sentenceEnds = purpose.match(/[。！？!?]|\.(?=\s|$)/gu) ?? []
       if (
-        lines.slice(first, codeIndex).filter((line) => line.trim() !== '').length !== 1 ||
+        purposeLines.length > 2 ||
         purpose.length < 10 ||
+        sentenceEnds.length < 1 ||
+        sentenceEnds.length > 2 ||
         !/[。！？.!?]$/u.test(purpose)
       ) {
         violations.push(`[example:purpose] ${prefix} purpose must be one complete sentence`)
@@ -1886,6 +2311,9 @@ function inspectArticleContract(article, { path = 'article.md' } = {}) {
     if (FORBIDDEN_EXAMPLE_COMMENT_PATTERN.test(content) || FORBIDDEN_TEMPLATE_PHRASES.some((phrase) => content.includes(phrase))) {
       violations.push(`[example:template] ${prefix} contains generic template wording`)
     }
+    if (supportedBlocks.some(({ language, code }) => hasArticleContractTautologicalComment(code, language))) {
+      violations.push(`[example:tautological-comment] ${prefix} contains a comment that only restates adjacent code`)
+    }
     if (!hasArticleContractInitialState(content, supportedBlocks)) {
       violations.push(`[example:state] ${prefix} needs a concrete initial input or state`)
     }
@@ -1896,10 +2324,11 @@ function inspectArticleContract(article, { path = 'article.md' } = {}) {
       violations.push(`[example:result] ${prefix} needs an observable output, result, assertion, or log`)
     }
 
-    for (const { language, code } of supportedBlocks) {
-      for (const operation of getDangerousArticleContractOperations(code, language)) {
-        if (!hasArticleContractRiskBoundary(content, operation)) {
-          violations.push(`[danger:boundary] ${prefix} ${operation} needs a nearby explicit risk boundary`)
+    for (const block of supportedBlocks) {
+      const { language, code } = block
+      for (const occurrence of getDangerousArticleContractOperations(code, language)) {
+        if (!hasArticleContractRiskBoundary(content, occurrence.operation, occurrence, block)) {
+          violations.push(`[danger:boundary] ${prefix} ${occurrence.operation} needs a nearby explicit risk boundary`)
         }
       }
     }
@@ -2006,6 +2435,46 @@ INCR demo:count
   }
 }
 
+function createArticleContractOperationFixture({
+  heading,
+  language,
+  code,
+  purpose = '用途：用于把一个具体操作绑定到可复现的输入、状态变化和结果。',
+  boundary = '',
+}) {
+  const fixture = createValidArticleContractFixture()
+  const codeLines = code.trim().split(/\r?\n/u)
+  if (boundary) codeLines.splice(Math.min(1, codeLines.length), 0, boundary)
+  const operationSection = [
+    `### ${heading}`,
+    '',
+    purpose,
+    '',
+    `\`\`\`${language}`,
+    codeLines.join('\n'),
+    '\`\`\`',
+  ].join('\n')
+  fixture.body = fixture.body.replace(
+    /### `INCR`：递增计数器[\s\S]*?```redis[\s\S]*?```/u,
+    operationSection,
+  )
+  return fixture
+}
+
+function articleContractIssueTypes(issues) {
+  return issues.map((issue) => issue.match(/^\[[^\]]+\]/u)?.[0] ?? issue)
+}
+
+function assertArticleContractIssueTypes(fixture, expectedTypes, label) {
+  const issues = inspectArticleContract(fixture, { path: label })
+  assert.deepEqual(
+    articleContractIssueTypes(issues),
+    expectedTypes,
+    `${label} should emit exactly the intended issue types${formatViolations(issues)}`,
+  )
+  return issues
+}
+
 test('article contract checks frontmatter, exact H2 order, and searchable operation headings', () => {
   const valid = createValidArticleContractFixture()
   assert.deepEqual(inspectArticleContract(valid, { path: 'valid-fixture.md' }), [])
@@ -2042,15 +2511,27 @@ test('article contract checks frontmatter, exact H2 order, and searchable operat
 
   const missingPurpose = readContractFixture('missing-purpose.md')
   const issues = inspectArticleContract(missingPurpose, { path: 'missing-purpose.md' })
-  assert.ok(
-    issues.some((issue) => issue.startsWith('[example:purpose]')),
+  assert.deepEqual(
+    articleContractIssueTypes(issues),
+    ['[example:purpose]'],
     `missing-purpose fixture should fail for purpose only${formatViolations(issues)}`,
   )
-  assert.deepEqual(
-    issues.filter((issue) => !issue.startsWith('[example:purpose]')),
-    [],
-    'missing-purpose fixture must not fail unrelated article-contract rules',
-  )
+
+  const twoPurposeSentences = createArticleContractOperationFixture({
+    heading: 'INCR：递增计数器',
+    language: 'redis',
+    purpose: '用途：用于递增已有计数器。它会原子地返回更新后的数值。',
+    code: '# 初始状态：demo:count = 1。\nSET demo:count 1\n# 关键变化：demo:count 从 1 递增为 2。\nINCR demo:count\n# 输出：命令返回整数 2。',
+  })
+  assertArticleContractIssueTypes(twoPurposeSentences, [], 'two-purpose-sentences.md')
+
+  const threePurposeSentences = createArticleContractOperationFixture({
+    heading: 'INCR：递增计数器',
+    language: 'redis',
+    purpose: '用途：用于递增已有计数器。它会原子地更新值。读者可以观察返回结果。',
+    code: '# 初始状态：demo:count = 1。\nSET demo:count 1\n# 关键变化：demo:count 从 1 递增为 2。\nINCR demo:count\n# 输出：命令返回整数 2。',
+  })
+  assertArticleContractIssueTypes(threePurposeSentences, ['[example:purpose]'], 'three-purpose-sentences.md')
 })
 
 test('example state checks reject output-only and template-comment fixtures', () => {
@@ -2058,29 +2539,57 @@ test('example state checks reject output-only and template-comment fixtures', ()
     readContractFixture('only-final-output.md'),
     { path: 'only-final-output.md' },
   )
-  assert.ok(
-    onlyOutputIssues.some((issue) => issue.startsWith('[example:state]')),
-    `only-final-output fixture should require executable state${formatViolations(onlyOutputIssues)}`,
-  )
   assert.deepEqual(
-    onlyOutputIssues.filter((issue) => !issue.startsWith('[example:state]')),
-    [],
-    'only-final-output fixture must not fail unrelated article-contract rules',
+    articleContractIssueTypes(onlyOutputIssues),
+    ['[example:state]'],
+    `only-final-output fixture should require executable state${formatViolations(onlyOutputIssues)}`,
   )
 
   const templateIssues = inspectArticleContract(
     readContractFixture('template-comment.md'),
     { path: 'template-comment.md' },
   )
-  assert.ok(
-    templateIssues.some((issue) => issue.startsWith('[example:template]')),
+  assert.deepEqual(
+    articleContractIssueTypes(templateIssues),
+    ['[example:template]'],
     `template-comment fixture should reject generic wording${formatViolations(templateIssues)}`,
   )
-  assert.deepEqual(
-    templateIssues.filter((issue) => !issue.startsWith('[example:template]')),
-    [],
-    'template-comment fixture must not fail unrelated article-contract rules',
+})
+
+test('article contract rejects tautological adjacent comments but accepts concrete state and lifecycle facts', () => {
+  assertArticleContractIssueTypes(
+    readContractFixture('tautological-comment.md'),
+    ['[example:tautological-comment]'],
+    'tautological-comment.md',
   )
+
+  for (const transition of [
+    '// 关键变化：list 当前包含 [a, c]。',
+    '// 关键变化：input 与 channel 共享读取位置，关闭 input 会关闭 channel。',
+  ]) {
+    const fixture = createArticleContractOperationFixture({
+      heading: 'List.add：更新列表',
+      language: 'java',
+      code: `var list = new ArrayList<>(List.of("a"));
+list.add("c");
+${transition}
+System.out.println(list);
+// 输出：[a, c]。`,
+    })
+    assertArticleContractIssueTypes(fixture, [], `matrix/informative-${transition.length}.md`)
+  }
+
+  const noRoutineDeclarationComments = createArticleContractOperationFixture({
+    heading: 'StringBuilder.append：追加文本',
+    language: 'java',
+    code: `String seed = "a";
+StringBuilder builder = new StringBuilder(seed);
+builder.append("b");
+// 关键变化：builder 从 a 追加为 ab。
+System.out.println(builder);
+// 输出：ab。`,
+  })
+  assertArticleContractIssueTypes(noRoutineDeclarationComments, [], 'matrix/no-routine-comments.md')
 })
 
 test('danger boundary requires an explicit warning for dangerous MySQL and Redis operations', () => {
@@ -2088,14 +2597,10 @@ test('danger boundary requires an explicit warning for dangerous MySQL and Redis
     readContractFixture('danger-without-warning.md'),
     { path: 'danger-without-warning.md' },
   )
-  assert.ok(
-    dangerIssues.some((issue) => issue.startsWith('[danger:boundary]')),
-    `danger-without-warning fixture should require a risk boundary${formatViolations(dangerIssues)}`,
-  )
   assert.deepEqual(
-    dangerIssues.filter((issue) => !issue.startsWith('[danger:boundary]')),
-    [],
-    'danger-without-warning fixture must not fail unrelated article-contract rules',
+    articleContractIssueTypes(dangerIssues),
+    ['[danger:boundary]'],
+    `danger-without-warning fixture should require a risk boundary${formatViolations(dangerIssues)}`,
   )
 
   const safeKeyedSql = {
@@ -2115,6 +2620,536 @@ test('danger boundary requires an explicit warning for dangerous MySQL and Redis
     [],
     'keyed UPDATE/SELECT examples should not be classified as dangerous',
   )
+})
+
+test('danger and executable parsing matrix keeps boundaries local and ignores literal or comment text', () => {
+  const matrix = [
+    {
+      name: 'keys-boundary-cannot-be-borrowed-from-scan-only-warning',
+      heading: 'KEYS：扫描键空间',
+      language: 'redis',
+      code: `# 初始状态：demo:count = 1。
+SET demo:count 1
+# 风险边界：SCAN 用于生产环境遍历键空间，避免阻塞。
+KEYS demo:*
+# 关键变化：demo:keys 从空结果变为 1 条匹配结果。
+# 输出：命令返回 1 个匹配键。`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'redis-cli-keys-without-boundary',
+      heading: 'KEYS：扫描键空间',
+      language: 'shell',
+      code: `# 初始状态：demo:count = 1。
+redis-cli --user reader --pass secret -h 127.0.0.1 -p 6379 KEYS demo:*
+# 关键变化：匹配结果包含 demo:count。
+# 输出：命令返回 1 个匹配键。`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'redis-cli-keyed-value-is-not-a-dangerous-command',
+      heading: 'SET：保存命令名称文本',
+      language: 'shell',
+      code: `# 初始状态：demo:message 不存在。
+redis-cli SET demo:message DELETE
+# 关键变化：demo:message 被保存为 DELETE。
+# 输出：返回 OK。`,
+      expected: [],
+    },
+    {
+      name: 'keys-without-boundary',
+      heading: 'KEYS：扫描键空间',
+      language: 'redis',
+      code: `# 初始状态：demo:count = 1。
+SET demo:count 1
+KEYS demo:*
+# 关键变化：demo:keys 从空结果变为 1 条匹配结果。
+# 输出：命令返回 1 个匹配键。`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'keys-boundary-without-impact-evidence',
+      heading: 'KEYS：扫描键空间',
+      language: 'redis',
+      code: `# 初始状态：demo:count = 1。
+SET demo:count 1
+# 风险边界：KEYS 有风险。
+KEYS demo:*
+# 关键变化：demo:keys 从空结果变为 1 条匹配结果。
+# 输出：命令返回 1 个匹配键。`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'keys-with-local-boundary',
+      heading: 'KEYS：扫描键空间',
+      language: 'redis',
+      code: `# 初始状态：demo:count = 1。
+SET demo:count 1
+# 风险边界：KEYS 只在受控测试环境执行，生产环境使用 SCAN 以避免阻塞键空间。
+KEYS demo:*
+# 关键变化：demo:keys 从空结果变为 1 条匹配结果。
+# 输出：命令返回 1 个匹配键。`,
+      expected: [],
+    },
+    {
+      name: 'del-big-key-without-boundary',
+      heading: 'DEL：删除多个键',
+      language: 'redis',
+      code: `# 初始状态：demo:count = 1。
+SET demo:count 1
+DEL demo:* archive:*
+# 关键变化：demo:* 和 archive:* 两个键范围被删除。
+# 输出：命令返回删除数量 2。`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'del-big-key-with-local-boundary',
+      heading: 'DEL：删除大键',
+      language: 'redis',
+      code: `# 初始状态：big:session:hash 有大量字段。
+SET big:session:hash 1
+# 风险边界：DEL 只在受控低峰窗口删除 big:key，并先确认影响范围。
+DEL big:key
+# 关键变化：big:key 被删除。
+# 输出：命令返回删除数量 1。`,
+      expected: [],
+    },
+    {
+      name: 'del-single-key-is-bounded',
+      heading: 'DEL：删除单个键',
+      language: 'redis',
+      code: `# 初始状态：demo:count = 1。
+SET demo:count 1
+DEL demo:count
+# 关键变化：demo:count 被删除。
+# 输出：命令返回删除数量 1。`,
+      expected: [],
+    },
+    {
+      name: 'unlink-big-key-without-boundary',
+      heading: 'UNLINK：异步删除大键',
+      language: 'redis',
+      code: `# 初始状态：big:session:hash 有大量字段。
+SET big:session:hash 1
+UNLINK big:session:hash
+# 关键变化：big:session:hash 进入异步回收队列。
+# 输出：命令返回删除数量 1。`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'unlink-big-key-with-local-boundary',
+      heading: 'UNLINK：异步删除大键',
+      language: 'redis',
+      code: `# 初始状态：big:session:hash 有大量字段。
+SET big:session:hash 1
+# 风险边界：UNLINK 只在受控低峰窗口处理 big:key，并观察异步回收状态。
+UNLINK big:key
+# 关键变化：big:key 进入异步回收队列。
+# 输出：命令返回删除数量 1。`,
+      expected: [],
+    },
+    {
+      name: 'delete-without-where',
+      heading: 'DELETE：删除全表数据',
+      language: 'sql',
+      code: `-- 初始状态：users 表有 id = 7 的记录。
+INSERT INTO users(id, name) VALUES (7, 'Bob');
+DELETE FROM users;
+-- 关键变化：users 表中的记录被删除。
+SELECT COUNT(*) FROM users;`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'delete-with-local-boundary',
+      heading: 'DELETE：删除全表数据',
+      language: 'sql',
+      code: `-- 初始状态：users 表有 id = 7 的记录。
+INSERT INTO users(id, name) VALUES (7, 'Bob');
+-- 风险边界：DELETE 必须在受控维护窗口执行，并先备份后核对影响范围。
+DELETE FROM users;
+-- 关键变化：users 表中的记录被删除。
+SELECT COUNT(*) FROM users;`,
+      expected: [],
+    },
+    {
+      name: 'delete-with-primary-key',
+      heading: 'DELETE：按主键删除',
+      language: 'sql',
+      code: `-- 初始状态：users 表有 id = 7 的记录。
+INSERT INTO users(id, name) VALUES (7, 'Bob');
+DELETE FROM users WHERE id = 7;
+-- 关键变化：users.id = 7 的记录被删除。
+SELECT COUNT(*) FROM users WHERE id = 7;`,
+      expected: [],
+    },
+    {
+      name: 'update-with-or-tautology',
+      heading: 'UPDATE：包含 OR 恒真条件',
+      language: 'sql',
+      code: `-- 初始状态：users 表有 id = 7 的记录。
+INSERT INTO users(id, name) VALUES (7, 'Bob');
+UPDATE users SET name = 'Ann' WHERE id = 7 OR 1 = 1;
+-- 关键变化：users 表可能被恒真条件更新。
+SELECT name FROM users WHERE id = 7;`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'update-with-where-true',
+      heading: 'UPDATE：WHERE TRUE',
+      language: 'sql',
+      code: `-- 初始状态：users 表有 id = 7 的记录。
+INSERT INTO users(id, name) VALUES (7, 'Bob');
+UPDATE users SET name = 'Ann' WHERE TRUE;
+-- 关键变化：users 表可能被 WHERE TRUE 更新。
+SELECT name FROM users WHERE id = 7;`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'delete-with-one-equals-one',
+      heading: 'DELETE：WHERE 1 = 1',
+      language: 'sql',
+      code: `-- 初始状态：users 表有 id = 7 的记录。
+INSERT INTO users(id, name) VALUES (7, 'Bob');
+DELETE FROM users WHERE 1 = 1;
+-- 关键变化：users 表可能被 1 = 1 删除条件覆盖。
+SELECT COUNT(*) FROM users;`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'delete-with-or-numeric-tautology',
+      heading: 'DELETE：OR 条件包含恒真项',
+      language: 'sql',
+      code: `-- 初始状态：users 表有 id = 7 的记录。
+INSERT INTO users(id, name) VALUES (7, 'Bob');
+DELETE FROM users WHERE id = 7 OR 2 = 2;
+-- 关键变化：users 表的记录可能全部被删除。
+SELECT COUNT(*) FROM users;`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'delete-with-false-predicate-is-not-broad',
+      heading: 'DELETE：使用恒假条件',
+      language: 'sql',
+      code: `-- 初始状态：users 表有 id = 7 的记录。
+INSERT INTO users(id, name) VALUES (7, 'Bob');
+DELETE FROM users WHERE FALSE;
+-- 关键变化：users 表中的记录保持不变。
+SELECT COUNT(*) FROM users;`,
+      expected: [],
+    },
+    {
+      name: 'update-with-local-boundary',
+      heading: 'UPDATE：包含 OR 恒真条件',
+      language: 'sql',
+      code: `-- 初始状态：users 表有 id = 7 的记录。
+INSERT INTO users(id, name) VALUES (7, 'Bob');
+-- 风险边界：UPDATE 的 WHERE TRUE OR 条件可能覆盖全表，必须先备份并限制影响范围。
+UPDATE users SET name = 'Ann' WHERE TRUE OR id = 7;
+-- 关键变化：users 表可能被恒真条件更新。
+SELECT name FROM users WHERE id = 7;`,
+      expected: [],
+    },
+    {
+      name: 'lock-without-boundary',
+      heading: 'LOCK TABLES：锁定表',
+      language: 'sql',
+      code: `-- 初始状态：users 表可供维护。
+INSERT INTO users(id, name) VALUES (7, 'Bob');
+LOCK TABLES users WRITE;
+-- 关键变化：users 表进入写锁状态。
+SELECT 1;`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'lock-with-local-boundary',
+      heading: 'LOCK TABLES：锁定表',
+      language: 'sql',
+      code: `-- 初始状态：users 表可供维护。
+INSERT INTO users(id, name) VALUES (7, 'Bob');
+-- 风险边界：LOCK TABLES 只在受控维护窗口持有，并设置超时后释放锁。
+LOCK TABLES users WRITE;
+-- 关键变化：users 表进入写锁状态。
+SELECT 1;`,
+      expected: [],
+    },
+    {
+      name: 'lock-boundary-cannot-be-borrowed-from-backup-warning',
+      heading: 'LOCK TABLES：锁定表',
+      language: 'sql',
+      code: `-- 初始状态：users 表可供维护。
+INSERT INTO users(id, name) VALUES (7, 'Bob');
+-- 风险边界：BACKUP 需要验证一致性并保留可恢复文件。
+LOCK TABLES users WRITE;
+-- 关键变化：users 表进入写锁状态。
+SELECT 1;`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'backup-without-boundary',
+      heading: 'BACKUP：备份数据库',
+      language: 'sql',
+      code: `-- 初始状态：备份任务 id = 1。
+INSERT INTO backup_jobs(id, name) VALUES (1, 'daily');
+BACKUP DATABASE app TO DISK = '/tmp/app.bak';
+-- 关键变化：app 数据库生成 backup 文件。
+SELECT 1;`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'backup-with-local-boundary',
+      heading: 'BACKUP：备份数据库',
+      language: 'sql',
+      code: `-- 初始状态：备份任务 id = 1。
+INSERT INTO backup_jobs(id, name) VALUES (1, 'daily');
+-- 风险边界：BACKUP 需要先验证一致性并保留可恢复的备份文件。
+BACKUP DATABASE app TO DISK = '/tmp/app.bak';
+-- 关键变化：app 数据库生成备份文件。
+SELECT 1;`,
+      expected: [],
+    },
+    {
+      name: 'sql-literal-and-comment-are-not-commands',
+      heading: 'SELECT：读取说明文本',
+      language: 'sql',
+      code: `-- 初始状态：说明行 id = 1。
+INSERT INTO notes(id, body) VALUES (1, 'ready');
+SELECT 'DELETE' AS note; -- DELETE 只是注释文本
+-- 关键变化：note 返回文字 DELETE 而不改变数据。
+SELECT 1;`,
+      expected: [],
+    },
+    {
+      name: 'redis-literal-and-comment-are-not-commands',
+      heading: 'SET：保存命令名称文本',
+      language: 'redis',
+      code: `# 初始状态：demo:message 不存在。
+SET demo:message "KEYS"
+# KEYS 只是说明文本，不是本次执行的命令。
+# 关键变化：demo:message 被保存为 KEYS。
+# 输出：返回 1 个值。
+GET demo:message`,
+      expected: [],
+    },
+    {
+      name: 'redis-unquoted-value-is-not-a-command',
+      heading: 'SET：保存命令名称文本',
+      language: 'redis',
+      code: `# 初始状态：demo:message 不存在。
+SET demo:message KEYS
+# 关键变化：demo:message 被保存为 KEYS。
+# 输出：返回 OK。
+GET demo:message`,
+      expected: [],
+    },
+    {
+      name: 'java-literal-is-not-a-jdbc-command',
+      heading: 'String：保存 SQL 名称文本',
+      language: 'java',
+      code: `String label = "DELETE";
+// 关键变化：label 保持为说明文本 DELETE。
+System.out.println(label);
+// 输出：DELETE。`,
+      expected: [],
+    },
+    {
+      name: 'java-jdbc-string-is-executable-sql',
+      heading: 'jdbcTemplate.update：执行删除',
+      language: 'java',
+      code: `String id = "7";
+jdbcTemplate.update("DELETE FROM users");
+// 关键变化：DELETE 语句影响 users 表中的记录。
+System.out.println("affected=1");
+// 输出：affected=1。`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'java-jdbc-string-with-local-boundary',
+      heading: 'jdbcTemplate.update：执行删除',
+      language: 'java',
+      code: `String id = "7";
+// 风险边界：DELETE 只在受控维护窗口执行，并先备份后核对影响范围。
+jdbcTemplate.update("DELETE FROM users");
+// 关键变化：DELETE 语句影响 users 表中的记录。
+System.out.println("affected=1");
+// 输出：affected=1。`,
+      expected: [],
+    },
+    {
+      name: 'java-jdbc-variable-is-executable-sql',
+      heading: 'jdbcTemplate.update：执行删除',
+      language: 'java',
+      code: `String sql = "DELETE FROM users";
+jdbcTemplate.update(sql);
+// 关键变化：DELETE 语句影响 users 表中的记录。
+System.out.println("affected=1");
+// 输出：affected=1。`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'java-redis-script-variable-is-executable',
+      heading: 'DefaultRedisScript：执行 Redis 脚本',
+      language: 'java',
+      code: `String script = "return redis.call('FLUSHALL')";
+redisTemplate.execute(new DefaultRedisScript<>(script, Long.class));
+// 关键变化：Redis 实例中的数据被脚本清空。
+System.out.println("done");
+// 输出：done。`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'java-unrelated-sql-label-near-jdbc-call',
+      heading: 'jdbcTemplate.query：查询记录',
+      language: 'java',
+      code: `String label = "DELETE FROM users";
+String sql = "SELECT name FROM users WHERE id = 7";
+var names = jdbcTemplate.query(sql, rowMapper);
+// 关键变化：names 从空集合更新为 id = 7 的查询结果。
+System.out.println(names.size());
+// 输出：1。`,
+      expected: [],
+    },
+    {
+      name: 'java-redis-script-string-is-executable',
+      heading: 'DefaultRedisScript：执行 Redis 脚本',
+      language: 'java',
+      code: `String key = "demo:count";
+redisTemplate.execute(new DefaultRedisScript<>("return redis.call('FLUSHALL')", Long.class));
+// 关键变化：Redis 实例中的数据被脚本清空。
+System.out.println("done");
+// 输出：done。`,
+      expected: ['[danger:boundary]'],
+    },
+    {
+      name: 'java-redis-script-string-with-local-boundary',
+      heading: 'DefaultRedisScript：执行 Redis 脚本',
+      language: 'java',
+      code: `String key = "demo:count";
+// 风险边界：FLUSHALL 只在受控测试实例执行，并先备份后验证恢复路径。
+redisTemplate.execute(new DefaultRedisScript<>("return redis.call('FLUSHALL')", Long.class));
+// 关键变化：Redis 实例中的数据被脚本清空。
+System.out.println("done");
+// 输出：done。`,
+      expected: [],
+    },
+  ]
+
+  for (const scenario of matrix) {
+    const fixture = createArticleContractOperationFixture({
+      heading: scenario.heading,
+      language: scenario.language,
+      code: scenario.code,
+      boundary: scenario.boundary,
+    })
+    assertArticleContractIssueTypes(fixture, scenario.expected, `matrix/${scenario.name}.md`)
+  }
+})
+
+test('danger boundaries are associated with each executable occurrence', () => {
+  const fixture = createArticleContractOperationFixture({
+    heading: 'KEYS：对比两个键空间查询',
+    language: 'redis',
+    code: `# 初始状态：demo:count = 1。
+SET demo:count 1
+KEYS demo:*
+# 风险边界：KEYS 只在受控测试环境执行，生产环境使用 SCAN 以避免阻塞键空间。
+# 说明：这里刻意留出距离，避免后一条命令继承前一条边界。
+# 说明：后一条命令仍然需要单独评估。
+KEYS archive:*
+# 关键变化：demo:count 从 1 递增为 2。
+# 输出：命令返回 2 个匹配结果。`,
+  })
+
+  const issues = inspectArticleContract(fixture, { path: 'matrix/keys-per-occurrence.md' })
+  assert.deepEqual(articleContractIssueTypes(issues), ['[danger:boundary]'])
+  assert.match(issues[0], /KEYS needs a nearby explicit risk boundary/u)
+})
+
+test('danger boundaries describe the matching operation instead of a neighboring danger', () => {
+  const fixture = createArticleContractOperationFixture({
+    heading: 'DEL：删除多个键',
+    language: 'redis',
+    code: `# 初始状态：demo:1 和 demo:2 都存在。
+# 风险边界：KEYS 只在受控测试环境执行，生产环境使用 SCAN 避免阻塞键空间。
+DEL demo:1 demo:2
+# 关键变化：demo:1 和 demo:2 被删除。
+# 输出：命令返回删除数量 2。`,
+  })
+
+  assertArticleContractIssueTypes(fixture, ['[danger:boundary]'], 'matrix/del-wrong-operation-boundary.md')
+})
+
+test('operation H3 names correlate with executable APIs instead of arbitrary identifiers', () => {
+  for (const heading of ['Foo：任意标识符', 'NotAnApi：任意标识符']) {
+    const fixture = createArticleContractOperationFixture({
+      heading,
+      language: 'java',
+      code: `int count = 1;
+// 关键变化：count 从 1 更新为 2。
+count = 2;
+System.out.println(count);
+// 输出：2。`,
+    })
+    assertArticleContractIssueTypes(fixture, ['[h3:name]'], `matrix/${heading.split('：')[0]}.md`)
+  }
+
+  const positiveExamples = [
+    {
+      heading: 'StringBuilder.append：追加文本',
+      code: `String seed = "A";
+StringBuilder builder = new StringBuilder();
+builder.append("A");
+// 关键变化：builder 从空文本更新为 A。
+System.out.println(builder);
+// 输出：A。`,
+    },
+    {
+      heading: '@Configuration：声明配置类',
+      code: `String profile = "demo";
+@Configuration
+class DemoConfig {}
+// 关键变化：DemoConfig 被注册为配置类。
+System.out.println(DemoConfig.class);
+// 输出：DemoConfig。`,
+    },
+    {
+      heading: 'List.size：读取列表数量',
+      code: `String seed = "A";
+int count = List.of(seed).size();
+// 关键变化：count 从 0 更新为 1。
+System.out.println(count);
+// 输出：1。`,
+    },
+  ]
+  for (const example of positiveExamples) {
+    const fixture = createArticleContractOperationFixture({
+      heading: example.heading,
+      language: 'java',
+      code: example.code,
+    })
+    assertArticleContractIssueTypes(fixture, [], `matrix/${example.heading}.md`)
+  }
+
+  for (const example of [
+    {
+      heading: 'DELETE：删除记录',
+      language: 'sql',
+      code: `-- 初始状态：users 表有 id = 7 的记录。
+SELECT name FROM users WHERE id = 7;
+-- 关键变化：查询返回 id = 7 的姓名。
+-- 输出：返回 Bob。`,
+    },
+    {
+      heading: 'KEYS：扫描键空间',
+      language: 'redis',
+      code: `# 初始状态：demo:count = 1。
+GET demo:count
+# 关键变化：读取 demo:count 的值 1。
+# 输出：返回 1。`,
+    },
+  ]) {
+    const fixture = createArticleContractOperationFixture(example)
+    assertArticleContractIssueTypes(fixture, ['[h3:name]'], `matrix/mismatched-${example.heading}.md`)
+  }
 })
 
 test('article contract manifest scopes strict checks to explicit new or rewritten routes', () => {
