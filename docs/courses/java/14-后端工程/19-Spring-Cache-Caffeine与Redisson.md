@@ -162,6 +162,59 @@ isHeldByCurrentThread 与 unlock 之间仍可能丢失锁，IllegalMonitorStateE
 
 两级缓存写路径可为：数据库提交 → 发布带版本的失效事件 → 删除 L2 → 所有节点失效 L1。每一步可能失败，需可靠事件/重试、版本判断和 TTL；普通广播丢失后落后实例会继续读旧 L1。CacheManager 本身不会自动串联两级缓存，组合读写/失败策略要自定义并用多实例故障测试证明陈旧窗口。强一致要求不满足时关闭该路径缓存。
 
+### `Cache.asMap`：两级缓存一致性与版本失效
+
+用途：用于演示多个 L1 的失效丢失和延迟事件处理，把允许陈旧窗口与修复行为变成可观察状态。
+
+```java
+// 初始状态：内存模型代表两个实例的 L1；shared 仅模拟 L2，不声称已连接 Redis。
+record Versioned(long version, String state) {}
+String key = "tenant-a:7";
+com.github.benmanes.caffeine.cache.Cache<String,Versioned> first = com.github.benmanes.caffeine.cache.Caffeine.newBuilder().build();
+com.github.benmanes.caffeine.cache.Cache<String,Versioned> second = com.github.benmanes.caffeine.cache.Caffeine.newBuilder().build();
+java.util.Map<String,Versioned> shared = new java.util.concurrent.ConcurrentHashMap<>();
+Versioned old = new Versioned(1, "PAID");
+first.put(key, old); second.put(key, old); shared.put(key, old);
+Versioned committed = new Versioned(2, "CANCELLED");
+shared.remove(key); first.invalidate(key);
+// 关键变化：数据库提交 v2 后 L2/A 失效；B 丢失事件，仍返回 v1=PAID。
+org.junit.jupiter.api.Assertions.assertEquals("PAID", second.getIfPresent(key).state());
+second.invalidate(key);
+second.put(key, committed);
+first.put(key, committed);
+long delayedEventVersion = 1;
+first.asMap().computeIfPresent(key, (k, value) -> value.version() <= delayedEventVersion ? null : value);
+// 关键变化：重试事件使 B 重新加载 v2；晚到的 v1 失效不能删除 A 已有的 v2。
+org.junit.jupiter.api.Assertions.assertEquals(2L, second.getIfPresent(key).version());
+org.junit.jupiter.api.Assertions.assertEquals(2L, first.getIfPresent(key).version());
+// 结果：两个 L1 最终均为 v2；丢失事件后的旧值 PAID 是模型明确展示的故障。
+```
+
+生产 L2 失效/回填需要同样的版本保护；单纯删除后并发旧读仍可回填旧数据。可靠事件或 outbox、重试和周期修复承担传播，独立 TTL 限制未收到事件实例的陈旧窗口。这个内存模型只验证状态规则，不验证 Redis、消息可靠性或跨实例传输。应在真实两实例测试中断开 B 的订阅、更新数据库、恢复并核对版本及陈旧持续时间；超过业务允许窗口时改读事实数据库。
+
+### `PreparedStatement.executeUpdate`：fencing 在资源端拒绝旧持有者
+
+用途：用于把递增 token 放进数据库的原子条件更新，让过期锁持有者无法覆盖新持有者已完成的写入。
+
+```java
+// 初始状态：隔离 MySQL 表 fenced_orders 有 id=7/state=PAID/last_token=40；token 由可靠递增协议分配。
+// 风险：UPDATE 仅限主键 WHERE id=7，额外比较 last_token，必须检查影响行数。
+String sql = "UPDATE fenced_orders SET state=?,last_token=? WHERE id=? AND last_token<?";
+java.sql.Connection connection = testConnection;
+try (java.sql.PreparedStatement update = connection.prepareStatement(sql)) {
+    update.setString(1, "CANCELLED"); update.setLong(2, 42); update.setLong(3, 7); update.setLong(4, 42);
+    int accepted = update.executeUpdate();
+    // 关键变化：新持有者 42 将数据库 last_token 从 40 提升到 42。
+    update.setString(1, "PAID"); update.setLong(2, 41); update.setLong(3, 7); update.setLong(4, 41);
+    int stale = update.executeUpdate();
+    org.junit.jupiter.api.Assertions.assertEquals(1, accepted);
+    org.junit.jupiter.api.Assertions.assertEquals(0, stale);
+    // 结果：42 更新 1 行，暂停后恢复的 41 更新 0 行；需真实数据库 fixture 执行这两个断言。
+}
+```
+
+`testConnection` 由隔离数据库测试提供；初始建表为 `id BIGINT PRIMARY KEY, state VARCHAR(20), last_token BIGINT NOT NULL`，写入一行 `(7,'PAID',40)`。资源端必须把 token 检查与写入原子化，不能先 SELECT 再无条件 UPDATE；事务未提交前也不应宣布完成。普通 RLock 不发这种 fencing token；递增、故障恢复和同 token 重试语义必须独立设计，上例严格递增条件会拒绝同 token 再写。token 不是身份凭证，授权、唯一约束和幂等仍需要执行；可恢复备份必须避免计数器回退重新发出旧 token。此处未执行真实 SQL，不能将编译或本地锁所有权断言当作 fencing 生效。
+
 ## 易混点
 
 TTL 由 provider 配置，Cacheable 不设置它；sync 不等于跨节点锁；refresh 不等于定时最新；持锁不等于外部写入安全。分布式锁不能替代数据库约束、事务或幂等键。

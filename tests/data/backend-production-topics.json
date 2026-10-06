@@ -12,6 +12,7 @@
     "boundaries": ["Flyway", "清理", "Docker", "CI", "复用", "未执行"]
   },
   "16-MyBatis生产边界.md": {
+    "topics": ["#{} 与 ${}", "排序白名单", "二级缓存", "N+1"],
     "apis": ["resultMap", "association", "collection", "discriminator", "choose", "where", "trim", "set", "foreach", "selectKey", "XMLMapperBuilder.parse", "SqlSession.flushStatements", "SqlSession.clearCache", "PaginationInnerInterceptor", "LambdaQueryWrapper", "OptimisticLockerInnerInterceptor", "BaseTypeHandler", "@Intercepts"],
     "boundaries": ["association", "collection", "discriminator", "choose", "trim", "where", "set", "foreach", "selectKey", "#{", "${", "一级缓存", "二级缓存", "N+1", "白名单", "脱敏"]
   },
@@ -20,10 +21,12 @@
     "boundaries": ["URI", "连接复用", "超时", "取消", "幂等键", "抖动", "非幂等", "响应体"]
   },
   "18-Actuator-Micrometer与可观测性.md": {
+    "topics": ["Actuator 安全", "readiness", "liveness", "Prometheus", "优雅停机"],
     "apis": ["Health.up", "Counter.builder", "Timer.builder", "Gauge.builder", "Observation.createNotStarted", "MDC.put"],
     "boundaries": ["management.endpoints.web.exposure.include", "readiness", "liveness", "Prometheus", "高基数", "优雅停机", "SLO"]
   },
   "19-Spring-Cache-Caffeine与Redisson.md": {
+    "topics": ["两级缓存一致性", "fencing"],
     "apis": ["@Cacheable", "@CachePut", "@CacheEvict", "Caffeine.newBuilder", "LoadingCache.refresh", "RLock.tryLock", "RLock.unlock"],
     "boundaries": ["自调用", "condition", "unless", "sync", "两级缓存", "最终一致性", "watchdog", "租约", "fencing", "数据库约束"]
   }

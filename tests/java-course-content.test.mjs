@@ -48,6 +48,12 @@ test('backend production topics keep seven searchable API contracts and explicit
     violations.push(...inspectArticleContract(article, { path }))
     const headings = getArticleContractHeadings(article.body, 3).map(({ heading }) => heading)
     for (const api of gate.apis) assert.ok(headings.some((heading) => heading.startsWith(`\`${api}\``)), `${file}: searchable H3 ${api}`)
+    const topicHeadings = (gate.topics ?? []).map(topic => {
+      const matches = headings.filter(heading => heading.includes(topic))
+      assert.equal(matches.length, 1, `${file}: exactly one searchable production-topic H3 ${topic}`)
+      return matches[0]
+    })
+    assert.equal(new Set(topicHeadings).size, (gate.topics ?? []).length, `${file}: production topics need independent H3 sections`)
     for (const boundary of gate.boundaries) assert.ok(article.body.includes(boundary), `${file}: boundary ${boundary}`)
     assert.ok(article.body.includes('JDK 20'), `${file}: JDK baseline`)
     assert.match(article.body, /https:\/\/(?:docs\.spring\.io|springdoc\.org|docs\.junit\.org|java\.testcontainers\.org|mybatis\.org|github\.com|redisson\.pro)/u)

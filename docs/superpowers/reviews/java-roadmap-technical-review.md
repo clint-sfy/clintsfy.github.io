@@ -144,3 +144,18 @@ JDK20编译器`javac --release 20`成功编译JDBC的12个Java方法体片段及
 Redis 的三处前向引用当前保留明确文章名称和规划路径，不生成指向尚不存在页面的链接；对应 Redis 文章上线时应转为真实链接。章节 manifest 已预留七篇 metadata，本批无需另改顺序或标签。验证工具使用独立的 `.superpowers/sdd/2026-10-05-java-learning-roadmap/task09-compile`，不增加站点生产依赖；JDK 20 位于 `C:/MySoftware/Java/jdk-20.0.2`，PATH 的 JDK 8 不代表机器没有 JDK 20。
 
 Task 9 最终证据（2026-10-06，Asia/Shanghai）：JDK20 `--release 20` 编译 51/51，真实依赖下独立运行断言 28/28（含 MyBatis 解析与 BoundSql）；全量 `pnpm test` 101/101，`pnpm build` 退出 0（122.15 秒），`git diff --check` 无错误。七篇构建 HTML 均有学习目标/常用用法标题。旧路径目标目前 17/18 已构建，原 Redis 跳转目标 `/courses/java/15-Redis/01-基础连接与数据模型` 属于 Task 10 尚未创建，不能将其报告为可达；生成的 18 个兼容页按重定向表精确清理，可由构建重新生成。Node loader、chunk-size 与既有高亮语言提示仍存在。数据库/容器/网络服务/多实例故障测试未执行，独立专业审稿和最终发布检查留给后续任务。
+
+### Task 9 修订 1：生产主题独立检索与可观察示例
+
+针对审稿意见，16/18/19 增加 11 个独立 H3：参数绑定与文本替换、排序白名单、二级缓存、N+1、安全访问、readiness、liveness、Prometheus、优雅停机、两级缓存一致性、fencing。每个标题保留真实 API 名，正文独立说明用途、初始状态、关键变化和结果；`backend-production-topics.json` 与内容测试要求每个主题唯一命中一个 H3，且不同主题不可复用同一标题。七篇合计 72 个操作 H3、63 个 Java 示例。
+
+| 修订主题 | 示例与边界 | 自审依据 |
+| --- | --- | --- |
+| MyBatis 四主题 | BoundSql 对比绑定/替换，Map 白名单拒绝任意排序，真实 XML 注册 namespace cache，两阶段批量查询规避逐行读取 | [MyBatis XML](https://mybatis.org/mybatis-3/sqlmap-xml.html)；本地解析可运行；真实缓存命中/SQL 次数须数据库测试 |
+| Actuator 安全和探针 | 两条过滤链保护管理/业务路径；MockMvc 四身份矩阵；真实 availability 对象分别观察 readiness/liveness | [Boot 3.4 endpoints](https://docs.spring.io/spring-boot/3.4/reference/actuator/endpoints.html)、[Application availability](https://docs.spring.io/spring-boot/3.4/reference/features/spring-application.html)；完整 Boot 安全测试仅编译，探针部署未运行 |
+| Prometheus 与停机 | 真实 registry 抓取 `orders_accepted_total` 和有限标签；线程池关闭后已接收短任务完成 | [Micrometer Prometheus](https://docs.micrometer.io/micrometer/reference/implementations/prometheus.html)、[Boot graceful shutdown](https://docs.spring.io/spring-boot/3.4/reference/web/graceful-shutdown.html)；本地断言不等价于服务器采集或 HTTP 停机验证 |
+| 两级一致性和 fencing | 两个真实 Caffeine L1 配内存 L2 模型重现旧读/版本修复；数据库条件更新应拒绝旧 token | [Caffeine](https://github.com/ben-manes/caffeine/wiki)、[Redisson locks](https://redisson.pro/docs/data-and-services/locks-and-synchronizers/)；内存模型不冒充 Redis/消息集成，JDBC 示例仅编译，普通 RLock 不承诺生成 fencing token |
+
+本轮坚持稀疏的状态/关键变化/结果注释。Prometheus 示例执行时确认 `_created` 后缀规范化会影响指标名称，改用无歧义的 `orders.accepted` 并按真实抓取文本断言。集成执行限制与原批次保持一致，详细红绿、命令、结果及提交记录在 task-09-report.md 的修订 1 节。
+
+修订验证：63/63 Java 示例编译，36/36 本地运行断言通过；聚焦 8/8、全量 101/101；构建退出 0（106.65 秒），三篇修改后的构建页面包含新增主题；精确清理 18 个生成兼容页，`git diff --check` 无错误。

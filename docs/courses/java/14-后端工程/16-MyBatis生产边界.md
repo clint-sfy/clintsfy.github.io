@@ -407,7 +407,105 @@ class PrepareCounter implements org.apache.ibatis.plugin.Interceptor {
 
 插件顺序、缓存与执行器会改变拦截次数。生产 SQL 日志应脱敏、限长、采样，密码/令牌不能输出；查慢 SQL 应记录语句标识、耗时和行数，避免拼接完整参数。用 Testcontainers 对映射、空集合、并发版本、缓存失效、批次失败和插件组合建立回归。
 
+### `BoundSql.getParameterMappings`：#{} 与 ${} 的绑定区别
+
+用途：用于检查参数占位符与文本替换的不同生成结果，防止把用户输入拼接进 SQL。
+
+```java
+// 初始状态：name 含单引号；教学替换片段只用于离线渲染，不执行 SQL。
+org.apache.ibatis.session.Configuration config = new org.apache.ibatis.session.Configuration();
+org.apache.ibatis.scripting.xmltags.XMLLanguageDriver driver = new org.apache.ibatis.scripting.xmltags.XMLLanguageDriver();
+java.util.Map<String,Object> input = java.util.Map.of("name", "O'Reilly");
+org.apache.ibatis.mapping.BoundSql bound = driver.createSqlSource(config,
+    "SELECT id FROM buyers WHERE name=#{name}", java.util.Map.class).getBoundSql(input);
+org.apache.ibatis.mapping.BoundSql unsafe = driver.createSqlSource(config,
+    "SELECT id FROM buyers WHERE name='${name}'", java.util.Map.class).getBoundSql(input);
+// 关键变化：#{} 生成一个 JDBC 占位符；${} 将 O'Reilly 原样插入文本并破坏引号结构。
+org.junit.jupiter.api.Assertions.assertEquals(1, bound.getParameterMappings().size());
+org.junit.jupiter.api.Assertions.assertFalse(bound.getSql().contains("O'Reilly"));
+org.junit.jupiter.api.Assertions.assertTrue(unsafe.getSql().contains("O'Reilly"));
+// 结果：bound 有 1 个参数，unsafe 含原始输入；禁止将 unsafe 交给数据库执行。
+```
+
+`#{}` 不能绑定列名、表名或排序方向；这些必须由代码选择可信常量。它也不提供租户授权，参数值仍须业务校验。`${}` 只有已经选出的受控 SQL 常量才可考虑使用。
+
+### `Map.get`：排序白名单与稳定顺序
+
+用途：用于把客户端排序标识映射为固定 SQL 常量，拒绝任意字段和表达式输入。
+
+```java
+// 初始状态：API 只公开 created/id 两种排序；恶意输入包含 SQL 片段。
+java.util.Map<String,String> columns = java.util.Map.of("created", "created_at", "id", "id");
+String requested = "created";
+String column = columns.get(requested);
+String sqlOrder = column == null ? null : "ORDER BY " + column + " ASC, id ASC";
+// 关键变化：外部 created 被转换为受控 created_at 常量，追加 id 保证并列时稳定排序。
+org.junit.jupiter.api.Assertions.assertEquals("ORDER BY created_at ASC, id ASC", sqlOrder);
+org.junit.jupiter.api.Assertions.assertNull(columns.get("created_at DESC; DROP TABLE orders"));
+// 结果：合法排序固定为 created_at/id，注入输入找不到映射，调用层应返回 400。
+```
+
+只将 `sqlOrder` 这样的代码常量传给已受控的 Mapper 排序片段；方向也要枚举白名单。不要在 map 查不到时退回请求原文，后者会取消白名单保护。
+
+### `Configuration.getCache`：二级缓存 namespace 与失效边界
+
+用途：用于确认 Mapper 已显式声明二级缓存，并检查它的 namespace 身份而不误认为全库缓存。
+
+```java
+// 初始状态：教学 Mapper 只有 cache 声明，没有执行数据库查询。
+String xml = """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    <mapper namespace="lesson.CachedOrders"><cache readOnly="false"/></mapper>
+    """;
+org.apache.ibatis.session.Configuration config = new org.apache.ibatis.session.Configuration();
+new org.apache.ibatis.builder.xml.XMLMapperBuilder(new java.io.StringReader(xml), config,
+    "CachedOrders.xml", config.getSqlFragments()).parse();
+org.apache.ibatis.cache.Cache cache = config.getCache("lesson.CachedOrders");
+// 关键变化：声明的 cache 注册到 lesson.CachedOrders，不是所有 Mapper 共用一个自动缓存。
+org.junit.jupiter.api.Assertions.assertEquals("lesson.CachedOrders", cache.getId());
+// 结果：namespace 身份被断言；这里没有声称缓存命中或跨 namespace 失效已执行。
+```
+
+MyBatis 在事务完成时把结果传播到二级缓存，同 namespace 写操作默认刷新它；其他 namespace 写入、手工 SQL 和其他应用不会自动通知。联表结果尤其容易陈旧。readOnly=false 的缓存值通常要求可序列化；readOnly=true 共享引用则要求应用严格不修改对象。生产回归应以两个 session 查询、一次提交写入、第三次重读检查失效，并单独证明外部写入的陈旧风险；无法接受时禁用二级缓存。
+
+### `SqlSession.selectList`：N+1 的两阶段批量查询
+
+用途：用于先分页获得根 ID，再用一次集合查询取得明细，避免每个根对象追加一次查询。
+
+```java
+// 初始状态：testFactory 配置下方 PageIds/Lines 映射；隔离库有订单 7/8 与三条明细。
+org.apache.ibatis.session.SqlSessionFactory factory = testFactory;
+try (org.apache.ibatis.session.SqlSession session = factory.openSession()) {
+    java.util.List<Long> ids = session.selectList("lesson.BatchReads.pageIds");
+    java.util.List<java.util.Map<String,Object>> lines = ids.isEmpty() ? java.util.List.of()
+        : session.selectList("lesson.BatchReads.lines", java.util.Map.of("ids", ids));
+    // 关键变化：非空页只触发 pageIds 和 lines 两次查询，不循环调用单订单明细 Mapper。
+    org.junit.jupiter.api.Assertions.assertEquals(java.util.List.of(7L, 8L), ids);
+    org.junit.jupiter.api.Assertions.assertEquals(3, lines.size());
+    // 结果：fixture 断言 2 个 ID/3 条明细；SQL 日志还必须确认准备语句数为 2。
+}
+```
+
+Mapper 放入具有上文相同声明/DOCTYPE 的 `lesson.BatchReads` namespace：
+
+```xml
+<mapper namespace="lesson.BatchReads">
+  <select id="pageIds" resultType="long">
+    SELECT id FROM orders ORDER BY id LIMIT 2
+  </select>
+  <select id="lines" resultType="map">
+    SELECT id,order_id,sku FROM order_lines WHERE order_id IN
+    <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+    ORDER BY order_id,id
+  </select>
+</mapper>
+```
+
+这个示例需要真实 fixture，未运行 SQL。与 100 张订单各一次明细查询的 101 次对照，应启用上文 `PrepareCounter`/脱敏 SQL 日志检查为两次；对象组装在内存按 order_id 分组。两阶段查询的并发视图取决于事务隔离，不能承诺自动同一快照；空页不发第二个 IN 查询。
+
 ## 易混点
+
 
 解析 XML 通过只是静态证据，不验证 JOIN 数据；flush 不是 commit；clearCache 不更新隔离快照；SQL 分页不是对象图分页。Wrapper、插件、缓存都不会自动承担授权和一致性职责。
 
