@@ -10,7 +10,7 @@ const SOURCE = process.env.RUOYI_SOURCE_ROOT || SOURCE_CANDIDATES.find(existsSyn
 const GENERATED = /(?:^|\/)(?:target|generated-sources|generated)(?:\/|$)/u
 const PRIVATE = /^com\.ruoyi\./u
 const IMPORT = /\bimport\s+(static\s+)?([\w.]+)(?:\.\*)?\s*;/gu
-const SIMPLE_JDK = new Set(['String', 'Object', 'Byte', 'Short', 'Integer', 'Long', 'Float', 'Double', 'Boolean', 'Math', 'System', 'Exception', 'RuntimeException', 'Class', 'Thread', 'StringBuilder'])
+const SIMPLE_JDK = new Set(['String', 'Object', 'Byte', 'Short', 'Integer', 'Long', 'Float', 'Double', 'Boolean', 'Math', 'System', 'Character', 'Runtime', 'Exception', 'RuntimeException', 'Class', 'Thread', 'StringBuilder'])
 
 function executableJava(source) {
   // Retain offsets while removing comments, strings, and character literals.
@@ -127,6 +127,7 @@ export function scanJavaSource(source, sourcePath) {
   const add = symbol => counts.set(symbol, (counts.get(symbol) ?? 0) + 1)
   for (const match of code.matchAll(/@([A-Za-z_$][\w$]*)\b/gu)) if (imports.has(match[1])) add(`@${match[1]}`)
   for (const match of code.matchAll(/\bnew\s+([A-Za-z_$][\w$]*)\s*(?:<[^>]*>)?\s*\(/gu)) if (imports.has(match[1])) add(match[1])
+  for (const match of code.matchAll(/\bSystem\.(?:out|err)\.(print|println|printf)\s*\(/gu)) add(`PrintStream.${match[1]}`)
   for (const match of code.matchAll(/\b([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)\s*\(/gu)) {
     const receiver = receiverType(match[1], match.index)
     if (receiver) add(`${receiver}.${match[2]}`)
@@ -256,15 +257,41 @@ function removeJavaComments(source) {
     match.startsWith('"') || match.startsWith("'") ? match : match.replace(/[^\r\n]/gu, ' '))
 }
 
+function chainedExampleType(expression, openParen, initialType) {
+  const methodTypes = {
+    iterator: 'Iterator',
+    matcher: 'Matcher',
+    schedule: 'Future',
+    scheduleAtFixedRate: 'Future',
+    scheduleWithFixedDelay: 'Future',
+    stream: 'Stream',
+    submit: 'Future',
+  }
+  let type = initialType
+  let cursor = closeParenthesis(expression, openParen) + 1
+  while (cursor > 0 && cursor < expression.length) {
+    const call = expression.slice(cursor).match(/^\s*\.\s*([A-Za-z_$][\w$]*)\s*\(/u)
+    if (!call) break
+    const callOpen = cursor + call[0].lastIndexOf('(')
+    const callClose = closeParenthesis(expression, callOpen)
+    if (callClose < 0) break
+    type = methodTypes[call[1]] ?? type
+    cursor = callClose + 1
+  }
+  return type
+}
+
 function inferredExampleType(expression) {
-  const construction = expression.match(/\bnew\s+([A-Z][A-Za-z0-9_$]*)/u)
-  if (construction) return construction[1]
+  const outer = expression.trim()
+  const construction = outer.match(/^new\s+([A-Z][A-Za-z0-9_$]*)(?:\s*<[^;=(){}]*>)?\s*\(/u)
+  if (construction) return chainedExampleType(outer, construction.index + construction[0].lastIndexOf('('), construction[1])
+  const factory = outer.match(/^(List|Set|Map|Stream|Optional)\.(?:of|ofNullable|asList|empty)\s*\(/u)
+  if (factory) return chainedExampleType(outer, factory.index + factory[0].lastIndexOf('('), factory[1])
   if (/\.iterator\s*\(/u.test(expression)) return 'Iterator'
   if (/\.matcher\s*\(/u.test(expression)) return 'Matcher'
   if (/\.(?:submit|schedule|scheduleAtFixedRate|scheduleWithFixedDelay)\s*\(/u.test(expression)) return 'Future'
   if (/\.stream\s*\(/u.test(expression)) return 'Stream'
-  const factory = expression.match(/\b(List|Set|Map|Stream|Optional)\.(?:of|ofNullable|asList|empty)\s*\(/u)
-  return factory?.[1]
+  return undefined
 }
 
 const EXAMPLE_SUPERTYPES = {
@@ -383,6 +410,36 @@ export function validateCoverage(data, {repoRoot = ROOT, scanned = []} = {}) {
   if (!Array.isArray(ruoyi) || !Array.isArray(official)) return ['separate ruoyi and official record arrays required']
   if ('total' in data.ruoyi && data.ruoyi.total !== ruoyi.length) issues.push('RuoYi denominator differs from records')
   if ('total' in data.official && data.official.total !== official.length) issues.push('official denominator differs from records')
+  // This separately reviewed file, not the attribution manifest, is the authority
+  // for exclusions so manifest metadata cannot approve its own private fallback.
+  const exclusionBaselinePath = join(repoRoot, 'tests/data/ruoyi-private-exclusion-baseline.json')
+  const baselineBySymbol = new Map()
+  if (existsSync(exclusionBaselinePath)) {
+    const baseline = JSON.parse(readFileSync(exclusionBaselinePath, 'utf8'))
+    if (!Array.isArray(baseline.records)) issues.push('reviewed private-exclusion baseline must contain records')
+    else for (const record of baseline.records) {
+      if (!record || typeof record.symbol !== 'string' || !record.symbol.trim()) { issues.push('reviewed private-exclusion baseline has invalid symbol'); continue }
+      if (baselineBySymbol.has(record.symbol)) issues.push(`reviewed private-exclusion baseline has duplicate symbol ${record.symbol}`)
+      if (record.classification !== 'project-private' || !['project-specific', 'false-positive', 'generated'].includes(record.exclusionKind) || !record.evidence || !record.reason) {
+        issues.push(`${record.symbol}: invalid reviewed private-exclusion baseline entry`)
+      }
+      baselineBySymbol.set(record.symbol, record)
+    }
+  } else if (ruoyi.some(record => record.classification === 'project-private')) {
+    issues.push('reviewed private-exclusion baseline missing')
+  }
+  if (existsSync(exclusionBaselinePath)) {
+    const manifestBySymbol = new Map(ruoyi.map(record => [record.symbol, record]))
+    for (const [symbol, expected] of baselineBySymbol) {
+      const actual = manifestBySymbol.get(symbol)
+      if (!actual || actual.classification !== expected.classification || actual.exclusionKind !== expected.exclusionKind || actual.evidence !== expected.evidence || actual.reason !== expected.reason) {
+        issues.push(`${symbol}: classification or metadata drift from reviewed private-exclusion baseline`)
+      }
+    }
+    for (const record of ruoyi) if (record.classification === 'project-private' && !baselineBySymbol.has(record.symbol)) {
+      issues.push(`${record.symbol}: not in reviewed private-exclusion baseline`)
+    }
+  }
   const paths = canonicalPaths(repoRoot)
   const cache = new Map()
   const heading = (article, label, context, directSymbol) => {
@@ -471,6 +528,7 @@ function bootstrapAttribution(repoRoot = ROOT) {
       [/^\?StringBuilder\.append\(\)\.append$/u, '02-数组与文本/02-String与文本处理.md', () => 'StringBuilder.append', 'StringBuilder.append returns the builder for chaining.'],
       [/^\?RedisTemplate\.opsFor/u, '15-Redis/13-RedisTemplate序列化与连接管理.md', () => 'RedisTemplate', 'RedisTemplate operation views are introduced in this integration lesson.'],
       [/^\?BigDecimal\.(?:add|subtract|multiply|divide)\(\)\./u, '02-数组与文本/06-大数与精确计算.md', match => `BigDecimal.${match[0].match(/BigDecimal\.(add|subtract|multiply|divide)/u)[1]}`, 'The BigDecimal arithmetic lesson explains the first operation; the chained conversion is contextual.'],
+      [/^\?Runtime\.getRuntime\(\)\.(?:freeMemory|maxMemory|totalMemory)$/u, '10-JVM/01-JVM内存与类加载.md', () => 'Runtime', 'The Runtime lesson demonstrates these JVM memory counters as part of inspecting the current process.'],
       [/^\?String\.(substring|trim)\(\)\./u, '02-数组与文本/02-String与文本处理.md', match => match[1] === 'trim' ? 'trim' : 'String.substring', 'String transformation chaining is explained in the matching text-operation section.'],
       [/^\?(?:Long|Integer)\.(?:decode|valueOf)\(\)\./u, '02-数组与文本/03-常用类与包装类型.md', () => '自动装箱/拆箱', 'Wrapper conversion and unboxing are explained in this section.'],
       [/^\?(?:Info|OpenAPI|SecurityScheme)\./u, '14-后端工程/13-OpenAPI与统一错误契约.md', () => '@Operation', 'Swagger model-builder chains configure the OpenAPI endpoint and security contract.'],
@@ -482,6 +540,8 @@ function bootstrapAttribution(repoRoot = ROOT) {
     // executable concept section; anything outside them fails closed instead
     // of receiving a private/unresolved fallback attribution.
     const reviewedConcepts = [
+      [/^Character\.(?:isWhitespace|isUpperCase|toLowerCase|toUpperCase)$/u, '02-数组与文本/03-常用类与包装类型.md', 'Character.isLetter', 'Character predicates and case conversion use the same Unicode-aware character API family demonstrated here.'],
+      [/^Runtime\.getRuntime$/u, '10-JVM/01-JVM内存与类加载.md', 'Runtime', 'Runtime.getRuntime is demonstrated in the JVM memory section; its public process-memory methods are contextual uses.'],
       [/^@Retention$/u, '08-反射与模块/04-注解定义与运行时读取.md', '@Retention(RUNTIME)', 'Retention policy determines whether an annotation survives for runtime reflection.'],
       [/^@(?:Before|AfterReturning|AfterThrowing)$/u, '14-后端工程/03-Spring-AOP与声明式事务.md', '@Around', 'AspectJ advice annotations share the join-point and proxy model demonstrated by Around.'],
       [/^@(?:Schema|Tag)$/u, '14-后端工程/13-OpenAPI与统一错误契约.md', '@Operation', 'OpenAPI annotations describe the generated endpoint contract.'],

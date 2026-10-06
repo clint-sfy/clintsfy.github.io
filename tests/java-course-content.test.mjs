@@ -66,6 +66,52 @@ test('RuoYi attribution manifest keeps recovered public and handwritten-generato
   assert.ok(records.every(record => record.classification !== 'unresolved' && !/\bunresolved\b/iu.test(record.reason)))
 })
 
+test('reviewed private-exclusion baseline rejects blanket private conversion and classification drift', async () => {
+  const { validateCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const data = {
+    ruoyi: JSON.parse(readFileSync(join(REPO_ROOT, 'tests/data/ruoyi-external-api-coverage.json'), 'utf8')),
+    official: JSON.parse(readFileSync(join(REPO_ROOT, 'tests/data/official-common-api-coverage.json'), 'utf8')),
+  }
+  const scanned = JSON.parse(readFileSync(join(REPO_ROOT, 'tests/data/ruoyi-java-scan-input.json'), 'utf8')).records
+  const scanBySymbol = new Map(scanned.map(record => [record.symbol, record]))
+  const blanketPrivate = structuredClone(data.ruoyi)
+  for (const record of blanketPrivate.records) {
+    record.classification = 'project-private'
+    record.exclusionKind = 'project-specific'
+    record.reason = 'Project integration detail omitted from the general curriculum.'
+    record.evidence = scanBySymbol.get(record.symbol).files[0]
+    record.article = ''
+    record.heading = ''
+  }
+  const blanketIssues = validateCoverage({ruoyi: blanketPrivate, official: data.official}, {repoRoot: REPO_ROOT, scanned})
+  assert.ok(blanketIssues.filter(issue => issue.includes('reviewed private-exclusion baseline')).length >= data.ruoyi.records.length)
+  for (const symbol of ['List.size', 'Map.size', 'Velocity.getTemplate']) {
+    assert.ok(blanketIssues.some(issue => issue.includes(symbol) && issue.includes('reviewed private-exclusion baseline')), `${symbol} cannot be converted to a private exclusion`)
+  }
+
+  const drifted = structuredClone(data.ruoyi)
+  const knownExclusion = drifted.records.find(record => record.classification === 'project-private')
+  knownExclusion.classification = 'covered-by-concept'
+  const driftIssues = validateCoverage({ruoyi: drifted, official: data.official}, {repoRoot: REPO_ROOT, scanned})
+  assert.ok(driftIssues.some(issue => issue.includes(knownExclusion.symbol) && issue.includes('reviewed private-exclusion baseline')))
+})
+
+test('pinned source snapshot includes Character, Runtime, and console API frequency floors', () => {
+  const records = JSON.parse(readFileSync(join(REPO_ROOT, 'tests/data/ruoyi-java-scan-input.json'), 'utf8')).records
+  const bySymbol = new Map(records.map(record => [record.symbol, record]))
+  for (const [symbol, floor] of [
+    ['Character.isWhitespace', 1],
+    ['Character.isUpperCase', 3],
+    ['Character.toLowerCase', 1],
+    ['Character.toUpperCase', 1],
+    ['Runtime.getRuntime', 3],
+    ['?Runtime.getRuntime().totalMemory', 1],
+    ['?Runtime.getRuntime().maxMemory', 1],
+    ['?Runtime.getRuntime().freeMemory', 1],
+    ['PrintStream.println', 8],
+  ]) assert.ok((bySymbol.get(symbol)?.frequency ?? 0) >= floor, `${symbol} must appear at least ${floor} times in the pinned source scan`)
+})
+
 test('RuoYi attribution uses a committed scan snapshot when source checkout is absent', async () => {
   const { loadScanInput } = await import('../scripts/audit-ruoyi-java-apis.mjs')
   const previous = process.env.RUOYI_SOURCE_ROOT
@@ -254,10 +300,14 @@ test('RuoYi direct examples resolve concrete and fluent receiver types', async (
       ['Logger.error', 'log.error("task failed", exception);'],
       ['StringWriter.toString', 'import java.io.*;\nStringWriter writer = new StringWriter();\nwriter.toString();'],
       ['List.size', 'import java.util.Map;\nMap<String, String> values = Map.of();\nvalues.size();'],
+      ['List.size', 'import java.util.ArrayList; import java.util.Map;\nvar values = Map.of(1, new ArrayList<String>());\nvalues.size();', false],
+      ['Map.size', 'import java.util.ArrayList; import java.util.Map;\nvar values = Map.of(1, new ArrayList<String>());\nvalues.size();', true],
+      ['List.size', 'import java.util.ArrayList; import java.util.List; import java.util.Map;\nvar values = List.of(Map.of(1, new ArrayList<String>()));\nvalues.size();', true],
+      ['Map.size', 'import java.util.ArrayList; import java.util.List; import java.util.Map;\nvar values = List.of(Map.of(1, new ArrayList<String>()));\nvalues.size();', false],
     ]
-    for (const [symbol, source] of cases) {
+    for (const [symbol, source, explicitGood] of cases) {
       const [owner] = symbol.split('.')
-      const good = symbol !== 'List.size'
+      const good = explicitGood ?? symbol !== 'List.size'
       const h3 = `### \`${symbol}\`：receiver check\n\n\`\`\`java\n${source}\n\`\`\`\n`
       writeFileSync(join(root, article), h3)
       const record = {symbol, frequency: 1, classification: 'direct-searchable', reason: 'Exact lesson', article, heading: symbol}

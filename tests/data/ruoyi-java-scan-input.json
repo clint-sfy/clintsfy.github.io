@@ -908,6 +908,27 @@
       ]
     },
     {
+      "symbol": "?Runtime.getRuntime().freeMemory",
+      "frequency": 1,
+      "files": [
+        "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java"
+      ]
+    },
+    {
+      "symbol": "?Runtime.getRuntime().maxMemory",
+      "frequency": 1,
+      "files": [
+        "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java"
+      ]
+    },
+    {
+      "symbol": "?Runtime.getRuntime().totalMemory",
+      "frequency": 1,
+      "files": [
+        "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java"
+      ]
+    },
+    {
       "symbol": "?SecurityContextHolder.getContext().getAuthentication",
       "frequency": 1,
       "files": [
@@ -2938,6 +2959,34 @@
       "frequency": 2,
       "files": [
         "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java"
+      ]
+    },
+    {
+      "symbol": "Character.isUpperCase",
+      "frequency": 3,
+      "files": [
+        "ruoyi-common/src/main/java/com/ruoyi/common/utils/StringUtils.java"
+      ]
+    },
+    {
+      "symbol": "Character.isWhitespace",
+      "frequency": 1,
+      "files": [
+        "ruoyi-common/src/main/java/com/ruoyi/common/utils/StringUtils.java"
+      ]
+    },
+    {
+      "symbol": "Character.toLowerCase",
+      "frequency": 1,
+      "files": [
+        "ruoyi-common/src/main/java/com/ruoyi/common/utils/StringUtils.java"
+      ]
+    },
+    {
+      "symbol": "Character.toUpperCase",
+      "frequency": 1,
+      "files": [
+        "ruoyi-common/src/main/java/com/ruoyi/common/utils/StringUtils.java"
       ]
     },
     {
@@ -5893,9 +5942,12 @@
     },
     {
       "symbol": "PrintStream.println",
-      "frequency": 1,
+      "frequency": 8,
       "files": [
-        "ruoyi-common/src/main/java/com/ruoyi/common/exception/file/FileUploadException.java"
+        "ruoyi-admin/src/main/java/com/ruoyi/RuoYiApplication.java",
+        "ruoyi-common/src/main/java/com/ruoyi/common/exception/file/FileUploadException.java",
+        "ruoyi-common/src/main/java/com/ruoyi/common/utils/html/EscapeUtil.java",
+        "ruoyi-quartz/src/main/java/com/ruoyi/quartz/task/RyTask.java"
       ]
     },
     {
@@ -6255,6 +6307,13 @@
       "frequency": 1,
       "files": [
         "ruoyi-common/src/main/java/com/ruoyi/common/utils/poi/ExcelUtil.java"
+      ]
+    },
+    {
+      "symbol": "Runtime.getRuntime",
+      "frequency": 3,
+      "files": [
+        "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java"
       ]
     },
     {

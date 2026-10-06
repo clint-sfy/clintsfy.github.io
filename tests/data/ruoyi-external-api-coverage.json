@@ -1033,6 +1033,30 @@
       "heading": "InterceptorRegistry.addInterceptor"
     },
     {
+      "symbol": "?Runtime.getRuntime().freeMemory",
+      "frequency": 1,
+      "classification": "covered-by-concept",
+      "reason": "The Runtime lesson demonstrates these JVM memory counters as part of inspecting the current process.",
+      "article": "docs/courses/java/10-JVM/01-JVM内存与类加载.md",
+      "heading": "Runtime"
+    },
+    {
+      "symbol": "?Runtime.getRuntime().maxMemory",
+      "frequency": 1,
+      "classification": "covered-by-concept",
+      "reason": "The Runtime lesson demonstrates these JVM memory counters as part of inspecting the current process.",
+      "article": "docs/courses/java/10-JVM/01-JVM内存与类加载.md",
+      "heading": "Runtime"
+    },
+    {
+      "symbol": "?Runtime.getRuntime().totalMemory",
+      "frequency": 1,
+      "classification": "covered-by-concept",
+      "reason": "The Runtime lesson demonstrates these JVM memory counters as part of inspecting the current process.",
+      "article": "docs/courses/java/10-JVM/01-JVM内存与类加载.md",
+      "heading": "Runtime"
+    },
+    {
       "symbol": "?SecurityContextHolder.getContext().getAuthentication",
       "frequency": 1,
       "classification": "covered-by-concept",
@@ -2739,6 +2763,38 @@
       "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
       "article": "",
       "heading": ""
+    },
+    {
+      "symbol": "Character.isUpperCase",
+      "frequency": 3,
+      "classification": "covered-by-concept",
+      "reason": "Character predicates and case conversion use the same Unicode-aware character API family demonstrated here.",
+      "article": "docs/courses/java/02-数组与文本/03-常用类与包装类型.md",
+      "heading": "Character.isLetter"
+    },
+    {
+      "symbol": "Character.isWhitespace",
+      "frequency": 1,
+      "classification": "covered-by-concept",
+      "reason": "Character predicates and case conversion use the same Unicode-aware character API family demonstrated here.",
+      "article": "docs/courses/java/02-数组与文本/03-常用类与包装类型.md",
+      "heading": "Character.isLetter"
+    },
+    {
+      "symbol": "Character.toLowerCase",
+      "frequency": 1,
+      "classification": "covered-by-concept",
+      "reason": "Character predicates and case conversion use the same Unicode-aware character API family demonstrated here.",
+      "article": "docs/courses/java/02-数组与文本/03-常用类与包装类型.md",
+      "heading": "Character.isLetter"
+    },
+    {
+      "symbol": "Character.toUpperCase",
+      "frequency": 1,
+      "classification": "covered-by-concept",
+      "reason": "Character predicates and case conversion use the same Unicode-aware character API family demonstrated here.",
+      "article": "docs/courses/java/02-数组与文本/03-常用类与包装类型.md",
+      "heading": "Character.isLetter"
     },
     {
       "symbol": "Charset.decode",
@@ -5862,7 +5918,7 @@
     },
     {
       "symbol": "PrintStream.println",
-      "frequency": 1,
+      "frequency": 8,
       "classification": "covered-by-concept",
       "reason": "Console output is introduced in the first runnable Java example.",
       "article": "docs/courses/java/01-Java基础/01-开发环境与第一个程序.md",
@@ -6271,6 +6327,14 @@
       "reason": "The Row lesson explains this API family; Row.setHeightInPoints is a related member, not a dedicated tutorial.",
       "article": "docs/courses/java/14-后端工程/11-Apache-POI-Excel导入导出.md",
       "heading": "Row.createCell"
+    },
+    {
+      "symbol": "Runtime.getRuntime",
+      "frequency": 3,
+      "classification": "covered-by-concept",
+      "reason": "Runtime.getRuntime is demonstrated in the JVM memory section; its public process-memory methods are contextual uses.",
+      "article": "docs/courses/java/10-JVM/01-JVM内存与类加载.md",
+      "heading": "Runtime"
     },
     {
       "symbol": "RuntimeException",

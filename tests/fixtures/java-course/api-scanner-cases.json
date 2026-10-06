@@ -53,6 +53,12 @@
       "path": "ruoyi-framework/src/main/java/com/ruoyi/Demo.java",
       "source": "import java.lang.annotation.Retention; import java.lang.annotation.RetentionPolicy; import org.springframework.context.ApplicationContext; import org.springframework.util.CollectionUtils; @Retention(RetentionPolicy.RUNTIME) class Demo { void run(ApplicationContext context, java.util.Collection<?> values) { context.getBean(Object.class); CollectionUtils.isEmpty(values); } }",
       "expected": [{"symbol": "@Retention", "frequency": 1}, {"symbol": "ApplicationContext.getBean", "frequency": 1}, {"symbol": "CollectionUtils.isEmpty", "frequency": 1}]
+    },
+    {
+      "name": "Character, Runtime, and System console calls are attributed",
+      "path": "ruoyi-common/src/main/java/com/ruoyi/common/utils/StringUtils.java",
+      "source": "class Demo { void run(String text) { Character.isWhitespace(text.charAt(0)); Character.isUpperCase(text.charAt(0)); Character.toLowerCase(text.charAt(0)); Character.toUpperCase(text.charAt(0)); Runtime.getRuntime().totalMemory(); System.out.println(text); } }",
+      "expected": [{"symbol": "?Runtime.getRuntime().totalMemory", "frequency": 1}, {"symbol": "Character.isUpperCase", "frequency": 1}, {"symbol": "Character.isWhitespace", "frequency": 1}, {"symbol": "Character.toLowerCase", "frequency": 1}, {"symbol": "Character.toUpperCase", "frequency": 1}, {"symbol": "PrintStream.println", "frequency": 1}, {"symbol": "Runtime.getRuntime", "frequency": 1}, {"symbol": "String.charAt", "frequency": 4}]
     }
   ]
 }

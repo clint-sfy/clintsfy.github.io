@@ -1,0 +1,438 @@
+{
+  "records": [
+    {
+      "symbol": "?DruidDataSourceBuilder.create().build",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/DruidConfig.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "?HSSFSheet.getDrawingPatriarch().getChildren",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-common/src/main/java/com/ruoyi/common/utils/poi/ExcelUtil.java",
+      "reason": "Project-specific Excel drawing/image traversal beyond the course workbook import/export baseline."
+    },
+    {
+      "symbol": "?ManagementFactory.getRuntimeMXBean().getInputArguments",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/server/Jvm.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "?ManagementFactory.getRuntimeMXBean().getInputArguments().toString",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/server/Jvm.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "?ManagementFactory.getRuntimeMXBean().getStartTime",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-common/src/main/java/com/ruoyi/common/utils/DateUtils.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "?ManagementFactory.getRuntimeMXBean().getVmName",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/server/Jvm.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "?MetadataReader.getClassMetadata().getClassName",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/MyBatisConfig.java",
+      "reason": "Project-specific mapper package discovery customization beyond the course MyBatis contract."
+    },
+    {
+      "symbol": "?MySqlCreateTableStatement.getTableName().replaceAll",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-generator/src/main/java/com/ruoyi/generator/controller/GenController.java",
+      "reason": "Generator-specific SQL DDL parsing for imported tables, not MySQL server SQL instruction."
+    },
+    {
+      "symbol": "CentralProcessor.getLogicalProcessorCount",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "CentralProcessor.getSystemCpuLoadTicks",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "Config",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/CaptchaConfig.java",
+      "reason": "Application CAPTCHA image/text provider wiring, outside the selected general Java/API curriculum."
+    },
+    {
+      "symbol": "DefaultKaptcha",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/CaptchaConfig.java",
+      "reason": "Application CAPTCHA image/text provider wiring, outside the selected general Java/API curriculum."
+    },
+    {
+      "symbol": "DefaultKaptcha.setConfig",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/CaptchaConfig.java",
+      "reason": "Application CAPTCHA image/text provider wiring, outside the selected general Java/API curriculum."
+    },
+    {
+      "symbol": "DruidDataSource.setConnectTimeout",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/properties/DruidProperties.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "DruidDataSource.setInitialSize",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/properties/DruidProperties.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "DruidDataSource.setMaxActive",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/properties/DruidProperties.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "DruidDataSource.setMaxEvictableIdleTimeMillis",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/properties/DruidProperties.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "DruidDataSource.setMaxWait",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/properties/DruidProperties.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "DruidDataSource.setMinEvictableIdleTimeMillis",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/properties/DruidProperties.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "DruidDataSource.setMinIdle",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/properties/DruidProperties.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "DruidDataSource.setSocketTimeout",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/properties/DruidProperties.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "DruidDataSource.setTestOnBorrow",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/properties/DruidProperties.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "DruidDataSource.setTestOnReturn",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/properties/DruidProperties.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "DruidDataSource.setTestWhileIdle",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/properties/DruidProperties.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "DruidDataSource.setTimeBetweenEvictionRunsMillis",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/properties/DruidProperties.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "DruidDataSource.setValidationQuery",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/properties/DruidProperties.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "DruidDataSourceBuilder.create",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/DruidConfig.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "DruidStatProperties.getStatViewServlet",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/DruidConfig.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    },
+    {
+      "symbol": "FileSystem.getFileStores",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "GlobalMemory.getAvailable",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "GlobalMemory.getTotal",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "HardwareAbstractionLayer.getMemory",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "HardwareAbstractionLayer.getProcessor",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "HttpsURLConnection.connect",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-common/src/main/java/com/ruoyi/common/utils/http/HttpUtils.java",
+      "reason": "Project HTTP/TLS compatibility helper with custom connection policy; excluded from the portable HTTP Client baseline."
+    },
+    {
+      "symbol": "HttpsURLConnection.disconnect",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-common/src/main/java/com/ruoyi/common/utils/http/HttpUtils.java",
+      "reason": "Project HTTP/TLS compatibility helper with custom connection policy; excluded from the portable HTTP Client baseline."
+    },
+    {
+      "symbol": "HttpsURLConnection.getInputStream",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-common/src/main/java/com/ruoyi/common/utils/http/HttpUtils.java",
+      "reason": "Project HTTP/TLS compatibility helper with custom connection policy; excluded from the portable HTTP Client baseline."
+    },
+    {
+      "symbol": "HttpsURLConnection.setDoInput",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-common/src/main/java/com/ruoyi/common/utils/http/HttpUtils.java",
+      "reason": "Project HTTP/TLS compatibility helper with custom connection policy; excluded from the portable HTTP Client baseline."
+    },
+    {
+      "symbol": "HttpsURLConnection.setDoOutput",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-common/src/main/java/com/ruoyi/common/utils/http/HttpUtils.java",
+      "reason": "Project HTTP/TLS compatibility helper with custom connection policy; excluded from the portable HTTP Client baseline."
+    },
+    {
+      "symbol": "HttpsURLConnection.setHostnameVerifier",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-common/src/main/java/com/ruoyi/common/utils/http/HttpUtils.java",
+      "reason": "Project HTTP/TLS compatibility helper with custom connection policy; excluded from the portable HTTP Client baseline."
+    },
+    {
+      "symbol": "HttpsURLConnection.setRequestProperty",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-common/src/main/java/com/ruoyi/common/utils/http/HttpUtils.java",
+      "reason": "Project HTTP/TLS compatibility helper with custom connection policy; excluded from the portable HTTP Client baseline."
+    },
+    {
+      "symbol": "HttpsURLConnection.setSSLSocketFactory",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-common/src/main/java/com/ruoyi/common/utils/http/HttpUtils.java",
+      "reason": "Project HTTP/TLS compatibility helper with custom connection policy; excluded from the portable HTTP Client baseline."
+    },
+    {
+      "symbol": "ManagementFactory.getRuntimeMXBean",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-common/src/main/java/com/ruoyi/common/utils/DateUtils.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "MySqlCreateTableStatement.getTableName",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-generator/src/main/java/com/ruoyi/generator/controller/GenController.java",
+      "reason": "Generator-specific SQL DDL parsing for imported tables, not MySQL server SQL instruction."
+    },
+    {
+      "symbol": "MySqlCreateTableStatement.toString",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-generator/src/main/java/com/ruoyi/generator/controller/GenController.java",
+      "reason": "Generator-specific SQL DDL parsing for imported tables, not MySQL server SQL instruction."
+    },
+    {
+      "symbol": "OperatingSystem.getFileSystem",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "OSFileStore.getMount",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "OSFileStore.getName",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "OSFileStore.getTotalSpace",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "OSFileStore.getType",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "OSFileStore.getUsableSpace",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "Producer.createImage",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-admin/src/main/java/com/ruoyi/web/controller/common/CaptchaController.java",
+      "reason": "Application CAPTCHA image/text provider wiring, outside the selected general Java/API curriculum."
+    },
+    {
+      "symbol": "Producer.createText",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-admin/src/main/java/com/ruoyi/web/controller/common/CaptchaController.java",
+      "reason": "Application CAPTCHA image/text provider wiring, outside the selected general Java/API curriculum."
+    },
+    {
+      "symbol": "SQLUtils.parseStatements",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-generator/src/main/java/com/ruoyi/generator/controller/GenController.java",
+      "reason": "Generator-specific SQL DDL parsing for imported tables, not MySQL server SQL instruction."
+    },
+    {
+      "symbol": "SSLContext.getInstance",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-common/src/main/java/com/ruoyi/common/utils/http/HttpUtils.java",
+      "reason": "Project HTTP/TLS compatibility helper with custom connection policy; excluded from the portable HTTP Client baseline."
+    },
+    {
+      "symbol": "SSLContext.getSocketFactory",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-common/src/main/java/com/ruoyi/common/utils/http/HttpUtils.java",
+      "reason": "Project HTTP/TLS compatibility helper with custom connection policy; excluded from the portable HTTP Client baseline."
+    },
+    {
+      "symbol": "SSLContext.init",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-common/src/main/java/com/ruoyi/common/utils/http/HttpUtils.java",
+      "reason": "Project HTTP/TLS compatibility helper with custom connection policy; excluded from the portable HTTP Client baseline."
+    },
+    {
+      "symbol": "SystemInfo",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "SystemInfo.getHardware",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "SystemInfo.getOperatingSystem",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "UserAgentAnalyzer.parse",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-common/src/main/java/com/ruoyi/common/utils/http/UserAgentUtils.java",
+      "reason": "Application login-log user-agent classification, outside the selected HTTP transport curriculum."
+    },
+    {
+      "symbol": "Util.sleep",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/web/domain/Server.java",
+      "reason": "Application host inventory and JVM diagnostic sampling for its server dashboard, not a common API lesson."
+    },
+    {
+      "symbol": "Utils.readFromResource",
+      "classification": "project-private",
+      "exclusionKind": "project-specific",
+      "evidence": "ruoyi-framework/src/main/java/com/ruoyi/framework/config/DruidConfig.java",
+      "reason": "RuoYi-specific Druid pool and admin-console configuration; the course teaches portable JDBC and HikariCP boundaries."
+    }
+  ]
+}
