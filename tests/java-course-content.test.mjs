@@ -61,6 +61,25 @@ test('backend production topics keep seven searchable API contracts and explicit
   assert.deepEqual(violations, [])
 })
 const JAVA_ROOT = join(REPO_ROOT, 'docs/courses/java')
+test('Redis integration ownership keeps chapter 14 selection guidance without duplicate canonical tutorials', () => {
+  const body = readMarkdown('docs/courses/java/14-后端工程/19-Spring-Cache-Caffeine与Redisson.md').body
+  const sections = getArticleContractH3Subsections(getArticleContractSection(body, '常用用法'))
+  assert.deepEqual(sections.map(({heading}) => getArticleContractOperationHeadingLabel(heading)), ['Caffeine.newBuilder', 'LoadingCache.refresh', 'Cache.asMap'])
+  for (const block of getArticleContractCodeBlocks(body)) {
+    assert.equal(block.language, 'java', 'chapter 14 contains only unique local-cache Java examples')
+    assert.doesNotMatch(lexArticleContractCode(block.code, block.language).executable, /@(?:[\w.]+\.)?(?:Cacheable|CachePut|CacheEvict)\b|\.(?:tryLock|unlock|isHeldByCurrentThread|executeUpdate)\s*\(|\b(?:RLock|PreparedStatement)\b/u)
+  }
+  for (const file of ['11-分布式锁租约与Fencing-Token', '12-Spring-Cache与缓存抽象']) {
+    assert.ok([...body.matchAll(/\]\(([^)]+)\)/gu)].some(([,target]) => target.startsWith(`../15-Redis/${file}#`)), `${file}: precise canonical section link`)
+  }
+  const lock = readMarkdown('docs/courses/java/15-Redis/11-分布式锁租约与Fencing-Token.md').body
+  const cache = readMarkdown('docs/courses/java/15-Redis/12-Spring-Cache与缓存抽象.md').body
+  for (const [article, api] of [[lock, 'RLock.tryLock'], [lock, 'RLock.unlock'], [lock, 'FencingResource.write'], [lock, 'PreparedStatement.executeUpdate'], [cache, '@Cacheable'], [cache, '@CachePut'], [cache, '@CacheEvict']]) {
+    const matches = getArticleContractH3Subsections(getArticleContractSection(article, '常用用法')).filter(({heading}) => getArticleContractOperationHeadingLabel(heading) === api)
+    assert.equal(matches.length, 1, `${api}: unique canonical tutorial`)
+    assert.ok(isArticleContractOperationHeading(matches[0].heading, matches[0].content))
+  }
+})
 test('article contract PEXPIRE requires a native command or executable EVAL call, never a comment', () => {
   assert.equal(isArticleContractOperationHeading('PEXPIRE', '```redis\nPEXPIRE lab:key 5000\n```'), true)
   assert.equal(isArticleContractOperationHeading('PEXPIRE', '```redis\nEVAL "return redis.call(\'PEXPIRE\',KEYS[1],ARGV[1])" 1 lab:key 5000\n```'), true)

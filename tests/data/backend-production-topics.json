@@ -26,8 +26,8 @@
     "boundaries": ["management.endpoints.web.exposure.include", "readiness", "liveness", "Prometheus", "高基数", "优雅停机", "SLO"]
   },
   "19-Spring-Cache-Caffeine与Redisson.md": {
-    "topics": ["两级缓存一致性", "fencing"],
-    "apis": ["@Cacheable", "@CachePut", "@CacheEvict", "Caffeine.newBuilder", "LoadingCache.refresh", "RLock.tryLock", "RLock.unlock"],
+    "topics": ["两级缓存一致性"],
+    "apis": ["Caffeine.newBuilder", "LoadingCache.refresh", "Cache.asMap"],
     "boundaries": ["自调用", "condition", "unless", "sync", "两级缓存", "最终一致性", "watchdog", "租约", "fencing", "数据库约束"]
   }
 }

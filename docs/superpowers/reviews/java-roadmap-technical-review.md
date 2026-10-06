@@ -175,3 +175,9 @@ Task 9 最终证据（2026-10-06，Asia/Shanghai）：JDK20 `--release 20` 编�
 | Pipeline 非原子且断网可能部分成功，INCR 不盲重放 | [Data Redis pipelining](https://github.com/spring-projects/spring-data-redis/blob/3.4.13/src/main/antora/modules/ROOT/pages/redis/pipelining.adoc) | 实际 executePipelined callback 返回 null、结果顺序可编译；异常分类演示显式标为构造异常，未假称真实 Redis 成功 |
 
 验证使用 Boot 3.4.13 BOM、Data Redis 3.4.13、Redisson 3.52.0 与 JDK 20；23/23 Java 块编译，14/14 本地运行并比对确定输出。版本化 3.4 reference URL 当前 404，链接改为官方仓库 3.4.13 tag 文档源，避免偷用当前 4.x API。Docker Desktop Linux engine 管道不存在，Redis CLI/多节点故障/实际数据库 fencing/真实缓存事务不在本次已验证范围。完整测试、构建和 H3 计数见 task-12-report.md。
+
+### Task 12 修订 1：移除第 14 章的重复事实教程
+
+按独立审稿 Important 意见，第 14 章不再保留 Cacheable/CachePut/CacheEvict、RLock 获取/释放和 JDBC fencing 的操作 H3。其独有 Caffeine 容量、refresh 与两级缓存版本修复三个示例完整保留；核心知识点改为方法缓存/provider/协作锁的应用选择指导，并直接链接第 15 章相应 H3。JDBC fencing 的条件 SQL、影响行数断言、fixture 与恢复边界迁到第 15 章 11 的独立 PreparedStatement.executeUpdate 节，未丢失原案例。
+
+严格归属回归要求第 14 章只有三个本地缓存 H3、禁止缓存注解/RLock/PreparedStatement 操作代码，同时要求第 15 章保留唯一且可执行的注解、锁、内存资源 fencing 和 JDBC fencing 教程。backend-production-topics 的 19 页面 API/topic 契约同步为实际拥有的 Caffeine/两级缓存内容，原注解/锁/fencing 契约由第 15 章 gate 和归属测试承担。SQL 仍只编译不假称连接数据库；修订验证和提交见 task-12-report.md 修订 1。

@@ -170,6 +170,29 @@ System.out.println(fresh + "/" + stale + "/" + resource.state());
 
 这是资源端内存模型，未连接数据库。生产数据库应在同一原子条件 UPDATE 中检查 `last_token < token` 并更新 state/last_token，检查影响行数；不能先 SELECT 再无条件 UPDATE。严格递增拒绝同 token 重试，多次操作需额外定义幂等协议。token 分配必须单调且恢复后不回退；Redis INCR 在异步故障转移/备份回退后不能单独证明该条件。Redisson RFencedLock 可提供 token API，但仍必须让受保护资源验证并审计恢复假设。owner 随机值、fencing 顺序号和用户授权分别负责不同问题。[Redisson Fenced Lock](https://redisson.pro/docs/data-and-services/locks-and-synchronizers/#fenced-lock)。
 
+### `PreparedStatement.executeUpdate`：fencing 在资源端拒绝旧持有者
+
+用途：用于把递增 token 放进数据库的原子条件更新，让过期锁持有者无法覆盖新持有者已完成的写入。
+
+```java
+// 初始状态：隔离 MySQL 表 fenced_orders 有 id=7/state=PAID/last_token=40；token 由可靠递增协议分配。
+// 风险：UPDATE 仅限主键 WHERE id=7，额外比较 last_token，必须检查影响行数。
+String sql = "UPDATE fenced_orders SET state=?,last_token=? WHERE id=? AND last_token<?";
+java.sql.Connection connection = testConnection;
+try (java.sql.PreparedStatement update = connection.prepareStatement(sql)) {
+    update.setString(1, "CANCELLED"); update.setLong(2, 42); update.setLong(3, 7); update.setLong(4, 42);
+    int accepted = update.executeUpdate();
+    // 关键变化：新持有者 42 将数据库 last_token 从 40 提升到 42。
+    update.setString(1, "PAID"); update.setLong(2, 41); update.setLong(3, 7); update.setLong(4, 41);
+    int stale = update.executeUpdate();
+    org.junit.jupiter.api.Assertions.assertEquals(1, accepted);
+    org.junit.jupiter.api.Assertions.assertEquals(0, stale);
+    // 结果：42 更新 1 行，暂停后恢复的 41 更新 0 行；需真实数据库 fixture 执行这两个断言。
+}
+```
+
+`testConnection` 由隔离数据库测试提供；初始建表为 `id BIGINT PRIMARY KEY, state VARCHAR(20), last_token BIGINT NOT NULL`，写入一行 `(7,'PAID',40)`。资源端必须把 token 检查与写入原子化，不能先 SELECT 再无条件 UPDATE；事务未提交前也不应宣布完成。普通 RLock 不发这种 fencing token；递增、故障恢复和同 token 重试语义必须独立设计，上例严格递增条件会拒绝同 token 再写。token 不是身份凭证，授权、唯一约束和幂等仍需要执行；可恢复备份必须避免计数器回退重新发出旧 token。此处未执行真实 SQL，不能将编译或本地锁所有权断言当作 fencing 生效。
+
 ## 易混点
 
 安全解锁只保护锁 key；续期只是推迟过期。fencing 拒绝较旧 token 的写入，但不是身份认证，也不能仅在客户端生成或比较。
