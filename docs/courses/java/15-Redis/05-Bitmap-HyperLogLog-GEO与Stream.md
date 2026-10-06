@@ -20,7 +20,7 @@ Bitmap 在 String 上按位保存精确布尔值，适合连续且有上限的 I
 
 实验前提：本机独立 Redis 8 服务在 127.0.0.1:6379 运行；通过终端执行 `redis-cli -h 127.0.0.1 -p 6379` 后在交互提示符输入下面的命令（不是 PowerShell 命令）。有 ACL 时用 `--user lab_user --askpass` 输入密码。示例注释记录返回，不需要把输出复制成输入；不同客户端的数组排版可能不同。
 
-每个 H3 都是独立实验。运行每段前、结束后在数据库 0 执行 `DEL lab:{core}:bits lab:{core}:bits2 lab:{core}:both lab:{core}:hll lab:{core}:hll2 lab:{core}:all lab:{core}:geo lab:{core}:stream`，只清理这些明确的学习 key，不使用通配符、FLUSHDB 或业务库。初始状态：这些 key 均不存在；每段的写入步骤重新创建所需状态。
+每个 H3 都是独立实验。运行每段前、结束后在数据库 0 执行 `DEL lab:{core}:bits lab:{core}:bits2 lab:{core}:both lab:{core}:hll lab:{core}:hll2 lab:{core}:all lab:{core}:period-new lab:{core}:geo lab:{core}:stream`，只清理这些明确的学习 key，不使用通配符、FLUSHDB 或业务库。初始状态：这些 key 均不存在；每段的写入步骤重新创建所需状态。
 
 ## 常用用法
 
@@ -120,13 +120,18 @@ PFCOUNT lab:{core}:hll
 # 初始：本段实验 key 已按上文清理，数据库 0 内不存在。
 PFADD lab:{core}:hll user-1
 PFADD lab:{core}:hll2 user-1 user-2
+PFADD lab:{core}:all previous-user
 PFMERGE lab:{core}:all lab:{core}:hll lab:{core}:hll2
 PFCOUNT lab:{core}:all
-# 关键变化：两个源 hll 保存重叠输入，all 合并寄存器后读取联合估算。
-# 输出：整数 1、整数 1、OK；本小样本通常估算为 2。
+# 关键变化：all 的 previous-user 也参与合并，旧观察没有被清除。
+# 输出：三次 PFADD 通常为整数 1，合并为 OK，all 的小样本估算通常为 3。
+PFMERGE lab:{core}:period-new lab:{core}:hll lab:{core}:hll2
+PFCOUNT lab:{core}:period-new
+# 关键变化：period-new 初始不存在，只合并本期两个源，不带 previous-user。
+# 输出：OK，period-new 的小样本估算通常为 2；两组估算仍允许 HLL 误差。
 ```
 
-联合去重不是简单相加；同槽，多源合并 O(源 key 数)且常数较大。目标会被覆盖。 官方参考：[PFMERGE](https://redis.io/docs/latest/commands/pfmerge/)。
+联合去重不是简单相加；同槽，多源合并 O(源 key 数)且常数较大。现有目标也会作为源参与合并，保留其中已有的观察；复用上期目标会把上期用户带入本期 UV。按统计周期使用新目标，或在受控无并发写入时清理明确目标后重建；不要把并发 DEL 与 PFMERGE 当作一个原子重置。官方参考：[PFMERGE 的 destination 参与语义](https://redis.io/docs/latest/commands/pfmerge/)。
 
 ### `GEOADD`：写入经纬度地点并建立可搜索空间索引
 

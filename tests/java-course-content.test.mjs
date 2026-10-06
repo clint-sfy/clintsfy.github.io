@@ -90,6 +90,49 @@ test('Redis data structures require independent executable command H3s and artic
   }
   assert.deepEqual(violations, [])
 })
+
+test('Redis core deployment and protocol concepts keep searchable sections with observable examples', () => {
+  const body = readMarkdown('docs/courses/java/15-Redis/01-基础连接与数据模型.md').body
+  const sections = getArticleContractH3Subsections(getArticleContractSection(body, '核心知识点'))
+  for (const [concept, command] of [
+    ['Standalone', 'INFO server'], ['Replication', 'INFO replication'],
+    ['Redis Sentinel', 'SENTINEL get-master-addr-by-name lab-master'],
+    ['Redis Cluster', 'CLUSTER INFO'], ['RESP', 'HELLO 3'], ['Event loop', 'INCR lab:{core}:serial'],
+  ]) {
+    const matches = sections.filter(({heading}) => getArticleContractOperationHeadingLabel(heading) === concept)
+    assert.equal(matches.length, 1, `independent concept H3 ${concept}`)
+    assert.match(matches[0].content.trim(), /^用于[^\n]+。/u, `${concept}: purpose`)
+    assert.ok(getArticleContractCodeBlocks(matches[0].content).some(({language,code}) => language === 'redis' && lexArticleContractCode(code,language).executable.includes(command)), `${concept}: native example`)
+    assert.match(matches[0].content, /# 输出：/u, `${concept}: observable result`)
+    assert.match(matches[0].content, /https:\/\/redis\.io\/docs\//u, `${concept}: authority`)
+  }
+  const protocol = sections.find(({heading}) => heading.startsWith('`RESP`')).content
+  assert.match(protocol, /RESP2[\s\S]*RESP3/u)
+  assert.match(protocol, /字节[\s\S]*CRLF/u)
+  for (const [concept, boundary] of [
+    ['Standalone', /不分片[\s\S]*不等于高可用/u],
+    ['Replication', /异步[\s\S]*不自动完成故障转移/u],
+    ['Redis Sentinel', /故障转移[\s\S]*不承担业务数据分片/u],
+    ['Redis Cluster', /16384[\s\S]*MOVED\/ASK[\s\S]*同槽/u],
+  ]) assert.match(sections.find(({heading}) => getArticleContractOperationHeadingLabel(heading) === concept).content, boundary, `${concept}: topology boundary`)
+  const execution = sections.find(({heading}) => heading.startsWith('`Event loop`')).content
+  assert.match(execution, /主线程串行执行/u)
+  assert.match(execution, /I\/O[\s\S]*后台线程/u)
+  assert.match(execution, /慢命令[\s\S]*阻塞/u)
+})
+
+test('Redis data structures PFMERGE includes existing destination and isolates period estimates', () => {
+  const body = readMarkdown('docs/courses/java/15-Redis/05-Bitmap-HyperLogLog-GEO与Stream.md').body
+  const section = getArticleContractH3Subsections(getArticleContractSection(body, '常用用法')).find(({heading}) => getArticleContractOperationHeadingLabel(heading) === 'PFMERGE').content
+  assert.match(section, /现有目标[\s\S]*参与合并/u)
+  assert.doesNotMatch(section, /目标会被覆盖/u)
+  const executable = getArticleContractCodeBlocks(section).filter(({language}) => language === 'redis').map(({code}) => lexArticleContractCode(code,'redis').executable).join('\n')
+  assert.match(executable, /PFADD lab:\{core\}:all previous-user[\s\S]*PFMERGE lab:\{core\}:all[\s\S]*PFCOUNT lab:\{core\}:all/u)
+  assert.match(executable, /PFMERGE lab:\{core\}:period-new lab:\{core\}:hll lab:\{core\}:hll2[\s\S]*PFCOUNT lab:\{core\}:period-new/u)
+  assert.match(section, /# 输出：[^\n]*all[^\n]*通常为 3/u)
+  assert.match(section, /# 输出：[^\n]*period-new[^\n]*通常为 2/u)
+  assert.match(section, /新目标[\s\S]*并发/u)
+})
 const JAVA_GLOB = 'docs/courses/java/**/*.md'
 const JAVA_INDEX_PATH = 'docs/courses/java/index.md'
 
