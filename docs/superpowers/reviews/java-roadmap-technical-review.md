@@ -181,3 +181,16 @@ Task 9 最终证据（2026-10-06，Asia/Shanghai）：JDK20 `--release 20` 编�
 按独立审稿 Important 意见，第 14 章不再保留 Cacheable/CachePut/CacheEvict、RLock 获取/释放和 JDBC fencing 的操作 H3。其独有 Caffeine 容量、refresh 与两级缓存版本修复三个示例完整保留；核心知识点改为方法缓存/provider/协作锁的应用选择指导，并直接链接第 15 章相应 H3。JDBC fencing 的条件 SQL、影响行数断言、fixture 与恢复边界迁到第 15 章 11 的独立 PreparedStatement.executeUpdate 节，未丢失原案例。
 
 严格归属回归要求第 14 章只有三个本地缓存 H3、禁止缓存注解/RLock/PreparedStatement 操作代码，同时要求第 15 章保留唯一且可执行的注解、锁、内存资源 fencing 和 JDBC fencing 教程。backend-production-topics 的 19 页面 API/topic 契约同步为实际拥有的 Caffeine/两级缓存内容，原注解/锁/fencing 契约由第 15 章 gate 和归属测试承担。SQL 仍只编译不假称连接数据库；修订验证和提交见 task-12-report.md 修订 1。
+
+### Task 13：Redis 拓扑、诊断与生产清单（2026-10-06）
+
+本轮为 Redis 8 官方文档对照下的实现者技术自审，不是独立专家签核。新增第 15 章 14–15，分别覆盖主从/Sentinel/Cluster 与诊断/生产检查；不依赖 RuoYi。拓扑地址、槽分配、复制偏移、延迟和内存值都按现场动态观测描述，没有把示例伪装成固定输出，也没有把故障转移描述为无损。
+
+| 主张 | 官方依据 | 自审证据与限制 |
+| --- | --- | --- |
+| 主从复制异步，backlog 只支持可能成功的部分重同步；`WAIT` 以同一连接此前写入为对象、超时有界但不提供强一致或绝对无损 | [Replication](https://redis.io/docs/latest/operate/oss_and_stack/management/replication/)、[`WAIT`](https://redis.io/docs/latest/commands/wait/) | 文章区分复制偏移、持久化与业务承诺，并要求比较 `WAIT` 返回副本数；未承诺任意故障不丢已确认写入 |
+| Sentinel quorum 是客观下线检测门槛，leader 另需多数派授权；`CKQUORUM` 与 `GET-MASTER-ADDR-BY-NAME` 支持健康检查/主节点再发现 | [Sentinel 高可用、API 与命令列表](https://redis.io/docs/latest/operate/oss_and_stack/management/sentinel/) | Sentinel 会话端口和连接条件、客户端保留多个地址并重连；结果地址与故障转移状态动态，重试仍须幂等且不修复未知提交 |
+| Cluster 以 16384 槽及 CRC16/hash tag 路由；`MOVED` 更新槽映射，`ASK` + 同连接一次性 `ASKING` 只影响当前迁移请求；多键需同槽，`READONLY` 副本读可能陈旧 | [Cluster specification](https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/)、[`CLUSTER KEYSLOT`](https://redis.io/docs/latest/commands/cluster-keyslot/)、[`CLUSTER SHARDS`](https://redis.io/docs/latest/commands/cluster-shards/)、[`ASKING`](https://redis.io/docs/latest/commands/asking/)、[`READONLY`](https://redis.io/docs/latest/commands/readonly/) | 章节以查询步骤和动态输出说明拓扑，不固定槽范围/节点地址；明确 hash tag 热点、重分片边界及副本一致性限制 |
+| 慢日志仅度量 Redis 命令执行；延迟监控受阈值控制且历史有界；SCAN 是可重复、非快照的有限采样，MEMORY USAGE 是抽样估算；PURGE 依 jemalloc 且可能较慢；OBJECT FREQ 只代表 LFU 近似计数 | [`SLOWLOG`](https://redis.io/docs/latest/commands/slowlog/)、[`INFO`](https://redis.io/docs/latest/commands/info/)、[Latency monitoring](https://redis.io/docs/latest/operate/oss_and_stack/management/optimization/latency-monitor/)、[`LATENCY HISTORY`](https://redis.io/docs/latest/commands/latency-history/)、[`SCAN`](https://redis.io/docs/latest/commands/scan/)、[`MEMORY USAGE`](https://redis.io/docs/latest/commands/memory-usage/)、[`MEMORY PURGE`](https://redis.io/docs/latest/commands/memory-purge/)、[`OBJECT FREQ`](https://redis.io/docs/latest/commands/object-freq/) | 文章把客户端、网络、CPU/fork、allocator、eviction 与容量/告警基线一起对照；SLOWLOG、SCAN、采样数量和 MONITOR 分别限定；未把 CONFIG 回滚描述成可恢复已淘汰/丢失数据 |
+
+自动契约要求每个拓扑/运维主题具有唯一真实命令 H3、用途说明、初始条件、关键变化、可观察边界及相应风险提示。命令目录的 Sentinel 子命令深链无法由文档访问器打开，因此引用官方 Sentinel API 的命令列表作为可访问的权威语法与语义依据。工作区没有 `redis-cli`，本轮未连接 Redis 或演练多节点故障；命令语法与行为基于官方文本及静态文章契约核对，非运行时验证。完整 red/green、套件与构建结果及兼容页清理记录见 `task-13-report.md`。

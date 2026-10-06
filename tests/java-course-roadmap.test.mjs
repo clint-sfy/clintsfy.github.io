@@ -32,10 +32,12 @@ const EXPECTED_CHAPTER_IDS = [
   '15-Redis',
 ]
 
-test('Redis inventory activates thirteen articles and a valid legacy target', () => {
+test('Redis inventory activates fifteen articles plus index and a valid legacy target', () => {
   const chapter = JAVA_COURSE_CHAPTERS.find(entry => entry.id === '15-Redis')
   const files = ['01-基础连接与数据模型.md', '02-String与计数器.md', '03-Hash与对象字段.md', '04-List-Set与Sorted-Set.md', '05-Bitmap-HyperLogLog-GEO与Stream.md', '06-Key过期扫描与删除.md', '07-事务Watch-Pipeline与Lua.md', '08-持久化内存淘汰与数据安全.md', '09-缓存穿透击穿雪崩与一致性.md', '10-发布订阅与Stream消费组.md', '11-分布式锁租约与Fencing-Token.md', '12-Spring-Cache与缓存抽象.md', '13-RedisTemplate序列化与连接管理.md']
   assert.ok(existsSync('docs/courses/java/15-Redis/index.md'), 'missing Redis index')
+  files.push('14-主从哨兵与Cluster.md', '15-性能诊断监控与生产清单.md')
+  assert.equal(readdirSync('docs/courses/java/15-Redis').filter(file => file.endsWith('.md')).length, 16)
   for (const file of files) assert.ok(existsSync(`docs/courses/java/15-Redis/${file}`), `missing ${file}`)
   assert.deepEqual(getJavaCourseItems([chapter])[0].items.map(item => item.link), files.map(file => `/courses/java/15-Redis/${file.slice(0, -3)}`))
   const legacy = REDIRECTS.find(entry => entry.source.includes('14-Redis'))
@@ -199,7 +201,7 @@ test('Java sidebar uses the migrated canonical inventory', () => {
     ['工程实践', 5, true],
     ['设计与项目', 1, true],
     ['后端工程', 19, true],
-    ['Redis', 13, true],
+    ['Redis', 15, true],
   ]
 
   assert.deepEqual(

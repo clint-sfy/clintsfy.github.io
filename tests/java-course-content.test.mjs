@@ -61,6 +61,62 @@ test('backend production topics keep seven searchable API contracts and explicit
   assert.deepEqual(violations, [])
 })
 const JAVA_ROOT = join(REPO_ROOT, 'docs/courses/java')
+const REDIS_PRODUCTION_TOPICS = {
+  '14-主从哨兵与Cluster.md': {
+    name: 'Redis topology',
+    sections: {
+      'INFO replication': ['异步', '丢失', 'backlog'],
+      'WAIT': ['同一连接', '超时', '不保证强一致性'],
+      'SENTINEL CKQUORUM': ['quorum', '多数', '选举'],
+      'SENTINEL get-master-addr-by-name': ['发现', '重连', '丢失'],
+      'CLUSTER KEYSLOT': ['16384', 'hash tag', '同槽'],
+      'CLUSTER SHARDS': ['MOVED', 'resharding', 'slot map'],
+      'ASKING': ['ASK', '一次', '不更新'],
+      'READONLY': ['副本', '陈旧', '一致性'],
+      'REPLICAOF': ['危险', '隔离', '覆盖'],
+    },
+    requiredTerms: ['异步复制', '已确认写入', '不保证无损', '跨槽'],
+  },
+  '15-性能诊断监控与生产清单.md': {
+    name: 'Redis diagnostics',
+    sections: {
+      'SLOWLOG GET': ['执行', '网络', '10'],
+      'INFO': ['CPU', 'fork', 'evicted_keys', '客户端', '网络', 'allocator', '告警', '容量'],
+      'LATENCY LATEST': ['阈值', '监控'],
+      'LATENCY HISTORY': ['有界', '事件'],
+      'LATENCY DOCTOR': ['采样', '建议'],
+      'SCAN': ['COUNT', '重复', '有界'],
+      'MEMORY USAGE': ['SAMPLES', '大 Key', 'SCAN', '重复'],
+      'MEMORY STATS': ['allocator', 'RSS'],
+      'MEMORY DOCTOR': ['碎片', '建议'],
+      'MEMORY PURGE': ['危险', 'jemalloc', '延迟'],
+      'OBJECT FREQ': ['热 Key', 'LFU', '采样'],
+      'CONFIG GET': ['分阶段', '变更', '回滚', '基线', '验收'],
+      'MONITOR': ['危险', '阻塞', '隔离', '敏感'],
+    },
+    requiredTerms: ['大 Key', '热 Key', '容量基线', '告警阈值', '客户端超时', 'fork', '网络', '回滚验证'],
+  },
+}
+for (const [file, gate] of Object.entries(REDIS_PRODUCTION_TOPICS)) {
+  test(`${gate.name} requires section-local production boundaries`, () => {
+    const path = `docs/courses/java/15-Redis/${file}`
+    assert.ok(existsSync(join(REPO_ROOT, path)), `missing production article: ${file}`)
+    const article = readMarkdown(path)
+    assert.deepEqual(inspectArticleContract(article, {path}), [])
+    const sections = getArticleContractH3Subsections(getArticleContractSection(article.body, '常用用法'))
+    for (const [operation, boundaries] of Object.entries(gate.sections)) {
+      const matches = sections.filter(({heading}) => getArticleContractOperationHeadingLabel(heading) === operation)
+      assert.equal(matches.length, 1, `${file}: independent ${operation}`)
+      assert.ok(isArticleContractOperationHeading(matches[0].heading, matches[0].content))
+      for (const boundary of boundaries) assert.ok(matches[0].content.includes(boundary), `${operation}: local ${boundary}`)
+    }
+    assert.ok(ARTICLE_CONTRACT_PATHS.has(path))
+    assert.match(article.body, /Redis 8/u)
+    assert.match(article.body, /https:\/\/redis\.io\/docs\//u)
+    assert.doesNotMatch(article.body, /RuoYi|若依/iu)
+    for (const term of gate.requiredTerms) assert.ok(article.body.includes(term), `${file}: required production claim ${term}`)
+  })
+}
 test('Redis integration ownership keeps chapter 14 selection guidance without duplicate canonical tutorials', () => {
   const body = readMarkdown('docs/courses/java/14-后端工程/19-Spring-Cache-Caffeine与Redisson.md').body
   const sections = getArticleContractH3Subsections(getArticleContractSection(body, '常用用法'))
@@ -252,7 +308,7 @@ const CHAPTER_NAMES = [
 const QUALITY_CHAPTER_NAMES = CHAPTER_NAMES.slice(0, 10)
 
 const EXPECTED_ARTICLES_BY_CHAPTER = {
-  '15-Redis': [...Object.keys(REDIS_CORE_TOPICS), ...Object.keys(REDIS_RELIABILITY_TOPICS), ...Object.keys(REDIS_INTEGRATION_TOPICS)],
+  '15-Redis': [...Object.keys(REDIS_CORE_TOPICS), ...Object.keys(REDIS_RELIABILITY_TOPICS), ...Object.keys(REDIS_INTEGRATION_TOPICS), ...Object.keys(REDIS_PRODUCTION_TOPICS)],
   '01-Java基础': [
     '01-开发环境与第一个程序.md',
     '02-基础语法与程序结构.md',
@@ -541,6 +597,7 @@ const ARTICLE_CONTRACT_MANIFEST = {
     ...Object.keys(REDIS_RELIABILITY_TOPICS).map(name => ({path: `docs/courses/java/15-Redis/${name}`, source: 'new'})),
     ...Object.keys(REDIS_CORE_TOPICS).map(name => ({path: `docs/courses/java/15-Redis/${name}`, source: 'new'})),
     ...Object.keys(REDIS_INTEGRATION_TOPICS).map(name => ({path: `docs/courses/java/15-Redis/${name}`, source: 'new'})),
+    ...Object.keys(REDIS_PRODUCTION_TOPICS).map(name => ({path: `docs/courses/java/15-Redis/${name}`, source: 'new'})),
     ...Object.keys(BACKEND_PRODUCTION_TOPICS).map((name) => ({ path: `docs/courses/java/14-后端工程/${name}`, source: 'new' })),
     ...['01-环境连接与数据库对象', '02-表设计与DDL', '03-数据类型字符集与时区', '04-数据写入更新与删除'].map((name) => ({ path: `docs/courses/java/11-MySQL-8/${name}.md`, source: 'new' })),
     ...['05-查询过滤排序与分页', '06-连接子查询与集合查询', '07-聚合CTE窗口函数与JSON', '08-约束与索引设计', '09-事务MVCC隔离级别与锁', '10-EXPLAIN慢SQL与性能优化'].map((name) => ({ path: `docs/courses/java/11-MySQL-8/${name}.md`, source: 'new' })),
@@ -2347,7 +2404,7 @@ function isArticleContractOperationHeading(heading, content = '') {
     return getArticleContractCodeBlocks(content).some(({ language, code }) =>
       ['shell', 'bash', 'sh'].includes(language) && /\bredis-cli\b[^\n]*--pipe\b/u.test(lexArticleContractCode(code, language).executable))
   }
-  const nativeWorkflow = redisWorkflowLabel.match(/^(MULTI|DISCARD|EXEC|WATCH|UNWATCH|BGSAVE|BGREWRITEAOF|SUBSCRIBE|PUBLISH|XGROUP|XREADGROUP|XACK|XPENDING|XAUTOCLAIM|XTRIM|BF\.(?:RESERVE|ADD|EXISTS))\b/u)
+  const nativeWorkflow = redisWorkflowLabel.match(/^(MULTI|DISCARD|EXEC|WATCH|UNWATCH|WAIT|BGSAVE|BGREWRITEAOF|SUBSCRIBE|PUBLISH|XGROUP|XREADGROUP|XACK|XPENDING|XAUTOCLAIM|XTRIM|ASKING|SENTINEL|CLUSTER|READONLY|OBJECT|BF\.(?:RESERVE|ADD|EXISTS))\b/u)
   if (nativeWorkflow) {
     const operation = nativeWorkflow[1].replace('.', '\\.')
     return getArticleContractCodeBlocks(content).some(({ language, code }) =>
@@ -4830,13 +4887,13 @@ test('Java course keeps the expected Markdown files, article counts, chapters, a
 
   assert.equal(
     markdownPaths.length,
-    129,
-    'rule java-markdown-count: expected 129 Markdown files',
+    131,
+    'rule java-markdown-count: expected 131 Markdown files',
   )
   assert.equal(
     markdownPaths.filter((file) => !file.endsWith('/index.md')).length,
-    126,
-    'rule java-article-count: expected 126 course articles',
+    128,
+    'rule java-article-count: expected 128 course articles',
   )
   assert.equal(
     chapterDirectories.length,
@@ -5344,7 +5401,7 @@ int first = numbers.get(0);
   )
 })
 
-test('all 126 Java articles put API purpose prose before examples and retain observable results', () => {
+test('all 128 Java articles put API purpose prose before examples and retain observable results', () => {
   const violations = []
   for (const relativePath of ARTICLE_PATHS) {
     const { body } = readMarkdown(relativePath)
