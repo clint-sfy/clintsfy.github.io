@@ -1,0 +1,58 @@
+{
+  "cases": [
+    {
+      "name": "handwritten generator source is scanned",
+      "path": "ruoyi-generator/src/main/java/com/ruoyi/generator/VelocityHelper.java",
+      "source": "import java.util.Properties; import java.io.StringWriter; import org.apache.velocity.Template; import org.apache.velocity.VelocityContext; import org.apache.velocity.app.Velocity; class VelocityHelper { void run(VelocityContext context) { Properties properties = new Properties(); properties.setProperty(\"resource.loader.file.class\", \"loader\"); Velocity.init(properties); Template template = Velocity.getTemplate(\"demo.vm\"); template.merge(context, new StringWriter()); context.put(\"key\", 1); } }",
+      "expected": [{"symbol": "Properties", "frequency": 1}, {"symbol": "Properties.setProperty", "frequency": 1}, {"symbol": "StringWriter", "frequency": 1}, {"symbol": "Template.merge", "frequency": 1}, {"symbol": "Velocity.getTemplate", "frequency": 1}, {"symbol": "Velocity.init", "frequency": 1}, {"symbol": "VelocityContext.put", "frequency": 1}]
+    },
+    {
+      "name": "implicit java.lang wrapper calls",
+      "path": "ruoyi-common/src/main/java/com/ruoyi/Demo.java",
+      "source": "class Demo { void run() { Byte.parseByte(\"1\"); Short.parseShort(\"2\"); Float.parseFloat(\"3\"); Double.parseDouble(\"4\"); } }",
+      "expected": [{"symbol": "Byte.parseByte", "frequency": 1}, {"symbol": "Double.parseDouble", "frequency": 1}, {"symbol": "Float.parseFloat", "frequency": 1}, {"symbol": "Short.parseShort", "frequency": 1}]
+    },
+    {
+      "name": "balanced generic declaration uses the outer receiver",
+      "path": "ruoyi-common/src/main/java/com/ruoyi/Demo.java",
+      "source": "import java.util.Set; import jakarta.validation.ConstraintViolation; class Demo { void run(Set<ConstraintViolation<Object>> violations) { violations.isEmpty(); } }",
+      "expected": [{"symbol": "Set.isEmpty", "frequency": 1}]
+    },
+    {
+      "name": "method parameter shadow ends after its method",
+      "path": "ruoyi-common/src/main/java/com/ruoyi/Demo.java",
+      "source": "import java.util.List; import com.ruoyi.domain.LocalList; class Demo { List<String> rows; void one(LocalList rows) { rows.size(); } void two() { rows.size(); } }",
+      "expected": [{"symbol": "List.size", "frequency": 1}]
+    },
+    {
+      "name": "nested invocation chain is retained",
+      "path": "ruoyi-common/src/main/java/com/ruoyi/Demo.java",
+      "source": "import java.util.List; class Demo { void run() { List.of(1).stream().map(x -> x); } }",
+      "expected": [{"symbol": "?List.of().stream", "frequency": 1}, {"symbol": "?List.of().stream().map", "frequency": 1}, {"symbol": "List.of", "frequency": 1}]
+    },
+    {
+      "name": "static imported factory keeps every following chain call",
+      "path": "ruoyi-common/src/main/java/com/ruoyi/Demo.java",
+      "source": "import static java.util.Objects.requireNonNull; class Demo { boolean run(String value) { return requireNonNull(value).trim().isEmpty(); } }",
+      "expected": [{"symbol": "?Objects.requireNonNull().trim", "frequency": 1}, {"symbol": "?Objects.requireNonNull().trim().isEmpty", "frequency": 1}, {"symbol": "Objects.requireNonNull", "frequency": 1}]
+    },
+    {
+      "name": "constructor call retains its first fluent operation",
+      "path": "ruoyi-common/src/main/java/com/ruoyi/Demo.java",
+      "source": "import java.math.BigDecimal; class Demo { BigDecimal run() { return new BigDecimal(\"10\").divide(new BigDecimal(\"2\")).stripTrailingZeros(); } }",
+      "expected": [{"symbol": "?BigDecimal.divide().stripTrailingZeros", "frequency": 1}, {"symbol": "BigDecimal", "frequency": 2}, {"symbol": "BigDecimal.divide", "frequency": 1}]
+    },
+    {
+      "name": "commons text builder retains repeated fluent appends",
+      "path": "ruoyi-common/src/main/java/com/ruoyi/Demo.java",
+      "source": "import org.apache.commons.lang3.builder.ToStringBuilder; class Demo { String describe() { return new ToStringBuilder(this).append(\"id\", 1).append(\"name\", \"Ada\").toString(); } }",
+      "expected": [{"symbol": "?ToStringBuilder.append().append", "frequency": 1}, {"symbol": "?ToStringBuilder.append().append().toString", "frequency": 1}, {"symbol": "ToStringBuilder", "frequency": 1}, {"symbol": "ToStringBuilder.append", "frequency": 1}]
+    },
+    {
+      "name": "runtime and Spring utility APIs remain included",
+      "path": "ruoyi-framework/src/main/java/com/ruoyi/Demo.java",
+      "source": "import java.lang.annotation.Retention; import java.lang.annotation.RetentionPolicy; import org.springframework.context.ApplicationContext; import org.springframework.util.CollectionUtils; @Retention(RetentionPolicy.RUNTIME) class Demo { void run(ApplicationContext context, java.util.Collection<?> values) { context.getBean(Object.class); CollectionUtils.isEmpty(values); } }",
+      "expected": [{"symbol": "@Retention", "frequency": 1}, {"symbol": "ApplicationContext.getBean", "frequency": 1}, {"symbol": "CollectionUtils.isEmpty", "frequency": 1}]
+    }
+  ]
+}

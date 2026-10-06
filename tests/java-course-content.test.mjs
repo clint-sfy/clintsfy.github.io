@@ -10,11 +10,11 @@ import matter from 'gray-matter'
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const BACKEND_PRODUCTION_TOPICS = JSON.parse(readFileSync(join(REPO_ROOT, 'tests/data/backend-production-topics.json'), 'utf8'))
 
-test('RuoYi attribution scanner normalizes imported calls and excludes private/generated source', async () => {
+test('RuoYi attribution scanner normalizes imported calls and includes hand-written generator source', async () => {
   const { scanJavaSource } = await import('../scripts/audit-ruoyi-java-apis.mjs')
   const java = 'import java.util.List; import com.ruoyi.system.Util; class Demo { void run(List<String> rows) { rows.size(); Util.skip(); } }'
   assert.deepEqual(scanJavaSource(java, 'ruoyi-system/src/main/java/Demo.java'), [{symbol: 'List.size', frequency: 1}])
-  assert.deepEqual(scanJavaSource(java, 'ruoyi-generator/src/main/java/Demo.java'), [])
+  assert.deepEqual(scanJavaSource(java, 'ruoyi-generator/src/main/java/Demo.java'), [{symbol: 'List.size', frequency: 1}])
 })
 
 test('RuoYi attribution scanner handles known wildcard annotations and rejects unknown wildcard imports', async () => {
@@ -46,6 +46,101 @@ test('RuoYi attribution scanner respects a private parameter shadowing an extern
   assert.deepEqual(scanJavaSource(java, 'ruoyi-system/src/main/java/Demo.java'), [])
 })
 
+test('RuoYi attribution scanner matches independent call-site fixtures', async () => {
+  const { scanJavaSource } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const fixtures = JSON.parse(readFileSync(join(REPO_ROOT, 'tests/fixtures/java-course/api-scanner-cases.json'), 'utf8'))
+  for (const sample of fixtures.cases) assert.deepEqual(scanJavaSource(sample.source, sample.path), sample.expected, sample.name)
+})
+
+test('RuoYi attribution manifest keeps recovered public and handwritten-generator APIs visible', () => {
+  const records = JSON.parse(readFileSync(join(REPO_ROOT, 'tests/data/ruoyi-external-api-coverage.json'), 'utf8')).records
+  const bySymbol = new Map(records.map(record => [record.symbol, record]))
+  for (const symbol of ['Velocity.getTemplate', 'Velocity.init', 'VelocityContext.put', 'Template.merge', 'ToStringBuilder.append', '?ToStringBuilder.append().append']) {
+    assert.ok(bySymbol.has(symbol), `${symbol} must stay in the fresh denominator`)
+    assert.notEqual(bySymbol.get(symbol).classification, 'project-private', `${symbol} is a public API, not a private exclusion`)
+  }
+  for (const symbol of ['@Retention', 'ApplicationContext.getBean', 'CollectionUtils.isEmpty', 'Byte.parseByte', 'Short.parseShort', 'Float.parseFloat', 'Double.valueOf']) {
+    assert.ok(bySymbol.has(symbol), `${symbol} must be attributed`)
+    assert.notEqual(bySymbol.get(symbol).classification, 'project-private', `${symbol} is a public API, not a private exclusion`)
+  }
+  assert.ok(records.every(record => record.classification !== 'unresolved' && !/\bunresolved\b/iu.test(record.reason)))
+})
+
+test('RuoYi attribution uses a committed scan snapshot when source checkout is absent', async () => {
+  const { loadScanInput } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const previous = process.env.RUOYI_SOURCE_ROOT
+  delete process.env.RUOYI_SOURCE_ROOT
+  try {
+    const snapshot = loadScanInput({repoRoot: REPO_ROOT, sourceRoot: join(REPO_ROOT, 'missing-ruoyi-source')})
+    assert.equal(snapshot.mode, 'committed-snapshot')
+    assert.ok(snapshot.records.length > 159)
+    assert.match(snapshot.sourceCommit, /^[0-9a-f]{40}$/u)
+  } finally {
+    if (previous !== undefined) process.env.RUOYI_SOURCE_ROOT = previous
+  }
+})
+
+test('the complete audit is reproducible from the committed snapshot without a source checkout', async () => {
+  const { auditCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const previous = process.env.RUOYI_SOURCE_ROOT
+  delete process.env.RUOYI_SOURCE_ROOT
+  try {
+    const result = auditCoverage({repoRoot: REPO_ROOT, sourceRoot: join(REPO_ROOT, 'missing-ruoyi-source')})
+    assert.equal(result.scanMode, 'committed-snapshot')
+    assert.deepEqual(result.issues, [])
+    assert.equal(result.ruoyi.attributed, result.ruoyi.total)
+  } finally {
+    if (previous !== undefined) process.env.RUOYI_SOURCE_ROOT = previous
+  }
+})
+
+test('RuoYi attribution rejects a stale committed snapshot when an overridden source tree differs', async () => {
+  const { loadScanInput } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const root = mkdtempSync(join(tmpdir(), 'java-api-snapshot-'))
+  const source = join(root, 'source')
+  mkdirSync(join(root, 'tests/data'), {recursive: true})
+  mkdirSync(source)
+  writeFileSync(join(source, 'Demo.java'), 'class Demo { void run() {} }\n')
+  writeFileSync(join(root, 'tests/data/ruoyi-java-scan-input.json'), JSON.stringify({
+    sourceCommit: '13db1fcef36bee9ce45d2d636a1d4e8f5ed5bbc3',
+    sourceDigest: '0'.repeat(64),
+    records: [],
+  }))
+  try {
+    assert.throws(() => loadScanInput({repoRoot: root, sourceRoot: source}), /stale committed RuoYi scan snapshot/u)
+  } finally { rmSync(root, {recursive: true, force: true}) }
+})
+
+test('RuoYi attribution keeps a pinned source snapshot stable across Windows line endings', async () => {
+  const { loadScanInput } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const root = mkdtempSync(join(tmpdir(), 'java-api-crlf-'))
+  const source = join(root, 'source')
+  mkdirSync(join(root, 'tests/data'), {recursive: true})
+  mkdirSync(source)
+  const lf = 'import java.util.List;\nclass Demo { void run(List<?> values) { values.size(); } }\n'
+  writeFileSync(join(source, 'Demo.java'), lf.replaceAll('\n', '\r\n'))
+  writeFileSync(join(root, 'tests/data/ruoyi-java-scan-input.json'), JSON.stringify({
+    sourceCommit: '13db1fcef36bee9ce45d2d636a1d4e8f5ed5bbc3',
+    sourceDigest: 'b902b31425c6fb7da026215468aa27b3d765985cd225b926b32e97b34844b08b',
+    records: [{symbol: 'List.size', frequency: 1, files: ['Demo.java']}],
+  }))
+  try {
+    assert.equal(loadScanInput({repoRoot: root, sourceRoot: source}).mode, 'fresh-source')
+  } finally { rmSync(root, {recursive: true, force: true}) }
+})
+
+test('an explicitly missing RuoYi source override fails instead of using the snapshot', async () => {
+  const { loadScanInput } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const previous = process.env.RUOYI_SOURCE_ROOT
+  process.env.RUOYI_SOURCE_ROOT = join(REPO_ROOT, 'missing-explicit-source')
+  try {
+    assert.throws(() => loadScanInput({repoRoot: REPO_ROOT, sourceRoot: process.env.RUOYI_SOURCE_ROOT}), /explicit RuoYi source root missing/u)
+  } finally {
+    if (previous === undefined) delete process.env.RUOYI_SOURCE_ROOT
+    else process.env.RUOYI_SOURCE_ROOT = previous
+  }
+})
+
 test('RuoYi attribution manifest matches a fresh external-call scan and validates headings', async () => {
   const { auditCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
   const result = auditCoverage({ repoRoot: REPO_ROOT })
@@ -71,6 +166,15 @@ test('RuoYi attribution rejects merged denominators and missing heading fixtures
   }
 })
 
+test('RuoYi attribution rejects blanket private classification of public calls', async () => {
+  const { validateCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const evidence = 'ruoyi-common/src/main/java/Demo.java'
+  const scanned = [{symbol: 'List.size', frequency: 1, files: [evidence]}]
+  const record = {symbol: 'List.size', frequency: 1, classification: 'project-private', exclusionKind: 'project-specific', evidence, reason: 'unresolved', article: '', heading: ''}
+  const issues = validateCoverage({ruoyi: {records: [record]}, official: {records: []}}, {repoRoot: REPO_ROOT, scanned})
+  assert.ok(issues.some(issue => issue.includes('unsupported private exclusion')))
+})
+
 test('official common coverage counts a missing official heading as uncovered', async () => {
   const { auditCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
   const official = {records: [{ecosystem: 'JDK 20', capability: 'List.size', source: 'https://docs.oracle.com/', article: 'docs/courses/java/05-泛型与集合/04-List常用API.md', heading: 'Missing.heading', reviewedAt: '2026-10-06'}]}
@@ -91,6 +195,16 @@ test('official common coverage rejects an empty baseline', async () => {
   assert.ok(issues.some(issue => issue.includes('official denominator')))
 })
 
+test('official common coverage rejects impossible and future review dates', async () => {
+  const { validateCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const base = {ecosystem: 'JDK 20', capability: 'List.size', source: 'https://docs.oracle.com/en/java/javase/20/docs/api/java.base/java/util/List.html', article: 'docs/courses/java/05-泛型与集合/04-List常用API.md', heading: 'List.size'}
+  const impossible = validateCoverage({ruoyi: {records: []}, official: {records: [{...base, reviewedAt: '2026-02-30'}]}}, {repoRoot: REPO_ROOT, scanned: []})
+  assert.ok(impossible.some(issue => issue.includes('reviewedAt must be a real calendar date')))
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
+  const future = validateCoverage({ruoyi: {records: []}, official: {records: [{...base, reviewedAt: tomorrow}]}}, {repoRoot: REPO_ROOT, scanned: []})
+  assert.ok(future.some(issue => issue.includes('reviewedAt cannot be in the future')))
+})
+
 test('RuoYi direct attribution rejects an unrelated code example under the right H3', async () => {
   const { validateCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
   const root = mkdtempSync(join(tmpdir(), 'java-api-coverage-'))
@@ -103,6 +217,53 @@ test('RuoYi direct attribution rejects an unrelated code example under the right
     const record = {symbol: 'List.size', frequency: 1, classification: 'direct-searchable', reason: 'Exact lesson', article, heading: 'List.size'}
     const issues = validateCoverage({ruoyi: {records: [record]}, official: {records: []}}, {repoRoot: root, scanned: [{symbol: 'List.size', frequency: 1}]})
     assert.ok(issues.some(issue => issue.includes('example must use List.size')))
+  } finally { rmSync(root, {recursive: true, force: true}) }
+})
+
+test('RuoYi direct attribution requires the declared receiver and stops at the next H2', async () => {
+  const { validateCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const root = mkdtempSync(join(tmpdir(), 'java-api-heading-'))
+  try {
+    const article = 'docs/courses/java/demo/List.md'
+    mkdirSync(join(root, 'docs/.vitepress/config'), {recursive: true})
+    mkdirSync(join(root, 'docs/courses/java/demo'), {recursive: true})
+    writeFileSync(join(root, 'docs/.vitepress/config/java-course.ts'), "createChapter('demo', 'Demo', [\n  article('List.md', 'List'),\n])")
+    const record = {symbol: 'List.size', frequency: 1, classification: 'direct-searchable', reason: 'Exact lesson', article, heading: 'List.size'}
+    const data = {ruoyi: {records: [record]}, official: {records: []}}
+    const scanned = [{symbol: 'List.size', frequency: 1}]
+    writeFileSync(join(root, article), '### `List.size`：wrong receiver\n\n```java\nimport java.util.Map;\nMap<String,String> values = Map.of();\nvalues.size();\n```\n')
+    assert.ok(validateCoverage(data, {repoRoot: root, scanned}).some(issue => issue.includes('example must use List.size')))
+    writeFileSync(join(root, article), '### `List.size`：empty\n\n## Next section\n\n```java\nList<String> values = List.of();\nvalues.size();\n```\n')
+    assert.ok(validateCoverage(data, {repoRoot: root, scanned}).some(issue => issue.includes('lacks executable example')))
+  } finally { rmSync(root, {recursive: true, force: true}) }
+})
+
+test('RuoYi direct examples resolve concrete and fluent receiver types', async () => {
+  const { validateCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const root = mkdtempSync(join(tmpdir(), 'java-api-receiver-'))
+  try {
+    const article = 'docs/courses/java/demo/Receivers.md'
+    mkdirSync(join(root, 'docs/.vitepress/config'), {recursive: true})
+    mkdirSync(join(root, 'docs/courses/java/demo'), {recursive: true})
+    writeFileSync(join(root, 'docs/.vitepress/config/java-course.ts'), "createChapter('demo', 'Demo', [\n  article('Receivers.md', 'Receivers'),\n])")
+    const cases = [
+      ['ArrayList.add', 'import java.util.ArrayList;\nvar names = new ArrayList<String>();\nnames.add("Ada");'],
+      ['BigDecimal.divide', 'import java.math.BigDecimal;\nnew BigDecimal("10").divide(new BigDecimal("2"));'],
+      ['Matcher.matches', 'import java.util.regex.Pattern;\nvar matcher = Pattern.compile("\\\\d+").matcher("7");\nmatcher.matches();'],
+      ['Matcher.matches', 'import java.util.regex.Pattern;\nPattern date = Pattern.compile("\\\\d+");\ndate.matcher("7").matches();'],
+      ['Logger.error', 'log.error("task failed", exception);'],
+      ['StringWriter.toString', 'import java.io.*;\nStringWriter writer = new StringWriter();\nwriter.toString();'],
+      ['List.size', 'import java.util.Map;\nMap<String, String> values = Map.of();\nvalues.size();'],
+    ]
+    for (const [symbol, source] of cases) {
+      const [owner] = symbol.split('.')
+      const good = symbol !== 'List.size'
+      const h3 = `### \`${symbol}\`：receiver check\n\n\`\`\`java\n${source}\n\`\`\`\n`
+      writeFileSync(join(root, article), h3)
+      const record = {symbol, frequency: 1, classification: 'direct-searchable', reason: 'Exact lesson', article, heading: symbol}
+      const issues = validateCoverage({ruoyi: {records: [record]}, official: {records: []}}, {repoRoot: root, scanned: [{symbol, frequency: 1}]})
+      assert.equal(issues.some(issue => issue.includes(`example must use ${symbol}`)), !good, `${owner}: ${source}`)
+    }
   } finally { rmSync(root, {recursive: true, force: true}) }
 })
 
