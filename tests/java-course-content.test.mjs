@@ -61,6 +61,25 @@ test('backend production topics keep seven searchable API contracts and explicit
   assert.deepEqual(violations, [])
 })
 const JAVA_ROOT = join(REPO_ROOT, 'docs/courses/java')
+test('Redis cache rebuild winner visibly rechecks before simulated database read and backfill', () => {
+  const body = readMarkdown('docs/courses/java/15-Redis/09-缓存穿透击穿雪崩与一致性.md').body
+  const section = getArticleContractH3Subsections(getArticleContractSection(body, '常用用法'))
+    .find(({ heading }) => heading.includes('互斥重建'))
+  assert.ok(section, 'mutex rebuild section must exist')
+  const blocks = [...section.content.matchAll(/```redis\r?\n([\s\S]*?)```/gu)]
+  const commands = blocks.flatMap(block => block[1].split(/\r?\n/u)
+    .map(line => line.trim()).filter(line => line && !line.startsWith('#')))
+  const winner = commands.indexOf('SET lab:{reliability}:rebuild-lock owner-A NX PX 5000')
+  const backfill = commands.indexOf('SET lab:{reliability}:hot "db-version-7" EX 60')
+  assert.ok(winner >= 0 && backfill > winner, 'winner acquires lease before backfill')
+  assert.ok(commands.slice(winner + 1, backfill).includes('GET lab:{reliability}:hot'), 'winner must visibly recheck cache before backfill')
+  assert.ok(commands.slice(0, winner).includes('GET lab:{reliability}:hot'), 'initial cache miss must be observable')
+  assert.equal(blocks.length, 2, 'separate Redis lock/recheck from the backfill commands')
+  const databaseStage = section.content.slice(blocks[0].index + blocks[0][0].length, blocks[1].index)
+  assert.match(databaseStage, /模拟数据库读取/u, 'database read must be labelled as simulation outside Redis code')
+  assert.match(databaseStage, /nil[\s\S]*db-version-7[\s\S]*回填/u, 'only the repeated miss proceeds through simulated database value to backfill')
+  assert.match(databaseStage, /命中[\s\S]*跳过[\s\S]*数据库[\s\S]*回填/u, 'cache hit must skip database read and backfill')
+})
 test('Redis workflow heading recognition requires executable native operations', () => {
   for (const operation of ['MULTI', 'EXEC', 'WATCH', 'UNWATCH', 'BGSAVE', 'BGREWRITEAOF', 'SUBSCRIBE', 'PUBLISH', 'XGROUP', 'XREADGROUP', 'XACK', 'XPENDING', 'XAUTOCLAIM', 'XTRIM', 'BF.RESERVE']) {
     assert.equal(isArticleContractOperationHeading(operation, `\`\`\`redis\n${operation} lab:key\n\`\`\``), true)
