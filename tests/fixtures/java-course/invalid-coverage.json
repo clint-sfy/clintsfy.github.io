@@ -1,0 +1,16 @@
+{
+  "cases": [
+    {
+      "name": "merged denominators",
+      "ruoyi": {"records": [{"symbol": "List.size", "frequency": 1, "classification": "direct-searchable", "reason": "Exact API lesson", "article": "docs/courses/java/05-泛型与集合/04-List常用API.md", "heading": "List.size"}]},
+      "official": {"records": [], "total": 1},
+      "expectedIssue": "denominator"
+    },
+    {
+      "name": "missing heading",
+      "ruoyi": {"records": [{"symbol": "List.size", "frequency": 1, "classification": "direct-searchable", "reason": "Exact API lesson", "article": "docs/courses/java/05-泛型与集合/04-List常用API.md", "heading": "DefinitelyMissing.heading"}]},
+      "official": {"records": []},
+      "expectedIssue": "heading"
+    }
+  ]
+}

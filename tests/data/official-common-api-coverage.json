@@ -1,0 +1,84 @@
+{
+  "records": [
+    {
+      "ecosystem": "JDK 20",
+      "capability": "List.size",
+      "source": "https://docs.oracle.com/en/java/javase/20/docs/api/java.base/java/util/List.html#size()",
+      "article": "docs/courses/java/05-泛型与集合/04-List常用API.md",
+      "heading": "List.size",
+      "reviewedAt": "2026-10-06"
+    },
+    {
+      "ecosystem": "JDK 20",
+      "capability": "Map.computeIfAbsent",
+      "source": "https://docs.oracle.com/en/java/javase/20/docs/api/java.base/java/util/Map.html#computeIfAbsent(K,java.util.function.Function)",
+      "article": "docs/courses/java/05-泛型与集合/03-Map与集合选择.md",
+      "heading": "Map.computeIfAbsent",
+      "reviewedAt": "2026-10-06"
+    },
+    {
+      "ecosystem": "MySQL 8.0",
+      "capability": "EXPLAIN",
+      "source": "https://dev.mysql.com/doc/refman/8.0/en/explain.html",
+      "article": "docs/courses/java/11-MySQL-8/10-EXPLAIN慢SQL与性能优化.md",
+      "heading": "EXPLAIN",
+      "reviewedAt": "2026-10-06"
+    },
+    {
+      "ecosystem": "MySQL 8.0",
+      "capability": "START TRANSACTION",
+      "source": "https://dev.mysql.com/doc/refman/8.0/en/commit.html",
+      "article": "docs/courses/java/11-MySQL-8/09-事务MVCC隔离级别与锁.md",
+      "heading": "START TRANSACTION",
+      "reviewedAt": "2026-10-06"
+    },
+    {
+      "ecosystem": "Redis stable",
+      "capability": "SET",
+      "source": "https://redis.io/docs/latest/commands/set/",
+      "article": "docs/courses/java/15-Redis/02-String与计数器.md",
+      "heading": "SET",
+      "reviewedAt": "2026-10-06"
+    },
+    {
+      "ecosystem": "Redis stable",
+      "capability": "XREADGROUP",
+      "source": "https://redis.io/docs/latest/commands/xreadgroup/",
+      "article": "docs/courses/java/15-Redis/10-发布订阅与Stream消费组.md",
+      "heading": "XREADGROUP",
+      "reviewedAt": "2026-10-06"
+    },
+    {
+      "ecosystem": "Spring Framework",
+      "capability": "@Transactional",
+      "source": "https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html",
+      "article": "docs/courses/java/14-后端工程/03-Spring-AOP与声明式事务.md",
+      "heading": "@Transactional",
+      "reviewedAt": "2026-10-06"
+    },
+    {
+      "ecosystem": "Spring Framework",
+      "capability": "@RequestMapping",
+      "source": "https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-requestmapping.html",
+      "article": "docs/courses/java/14-后端工程/04-Spring-MVC与Servlet边界.md",
+      "heading": "@RequestMapping",
+      "reviewedAt": "2026-10-06"
+    },
+    {
+      "ecosystem": "MyBatis-Plus",
+      "capability": "BaseMapper",
+      "source": "https://baomidou.com/en/guides/data-interface/",
+      "article": "docs/courses/java/14-后端工程/06-MyBatis核心与MyBatis-Plus重点.md",
+      "heading": "BaseMapper",
+      "reviewedAt": "2026-10-06"
+    },
+    {
+      "ecosystem": "MyBatis-Plus",
+      "capability": "LambdaQueryWrapper",
+      "source": "https://baomidou.com/en/guides/wrapper/",
+      "article": "docs/courses/java/14-后端工程/06-MyBatis核心与MyBatis-Plus重点.md",
+      "heading": "LambdaQueryWrapper",
+      "reviewedAt": "2026-10-06"
+    }
+  ]
+}

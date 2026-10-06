@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
-import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
+import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
 import fg from 'fast-glob'
@@ -8,6 +9,117 @@ import matter from 'gray-matter'
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const BACKEND_PRODUCTION_TOPICS = JSON.parse(readFileSync(join(REPO_ROOT, 'tests/data/backend-production-topics.json'), 'utf8'))
+
+test('RuoYi attribution scanner normalizes imported calls and excludes private/generated source', async () => {
+  const { scanJavaSource } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const java = 'import java.util.List; import com.ruoyi.system.Util; class Demo { void run(List<String> rows) { rows.size(); Util.skip(); } }'
+  assert.deepEqual(scanJavaSource(java, 'ruoyi-system/src/main/java/Demo.java'), [{symbol: 'List.size', frequency: 1}])
+  assert.deepEqual(scanJavaSource(java, 'ruoyi-generator/src/main/java/Demo.java'), [])
+})
+
+test('RuoYi attribution scanner handles known wildcard annotations and rejects unknown wildcard imports', async () => {
+  const { scanJavaSource } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const java = 'import jakarta.validation.constraints.*; class Demo { @Size(max=10) String name; }'
+  assert.deepEqual(scanJavaSource(java, 'ruoyi-system/src/main/java/Demo.java'), [{symbol: '@Size', frequency: 1}])
+  assert.throws(() => scanJavaSource('import org.example.*; class Demo {}', 'ruoyi-system/src/main/java/Demo.java'), /unsupported wildcard import/u)
+  assert.deepEqual(scanJavaSource('import com.ruoyi.*; class Demo {}', 'ruoyi-system/src/main/java/Demo.java'), [])
+})
+
+test('RuoYi attribution scanner ignores commented imports and calls', async () => {
+  const { scanJavaSource } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const java = '// import java.util.List;\nclass List { static int size() { return 1; } } class Demo { void run() { String text = "List.size()"; /* List.size(); */ List.size(); } }'
+  assert.deepEqual(scanJavaSource(java, 'ruoyi-system/src/main/java/Demo.java'), [])
+})
+
+test('RuoYi attribution scanner retains ambiguous chained external calls', async () => {
+  const { scanJavaSource } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const java = 'import org.springframework.security.core.context.SecurityContextHolder; class Demo { void run() { SecurityContextHolder.getContext().getAuthentication(); } }'
+  assert.deepEqual(scanJavaSource(java, 'ruoyi-system/src/main/java/Demo.java'), [
+    {symbol: '?SecurityContextHolder.getContext().getAuthentication', frequency: 1},
+    {symbol: 'SecurityContextHolder.getContext', frequency: 1},
+  ])
+})
+
+test('RuoYi attribution scanner respects a private parameter shadowing an external field', async () => {
+  const { scanJavaSource } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const java = 'import org.slf4j.Logger; import com.ruoyi.Log; class Demo { Logger log; void run(Log log) { log.businessType(); } }'
+  assert.deepEqual(scanJavaSource(java, 'ruoyi-system/src/main/java/Demo.java'), [])
+})
+
+test('RuoYi attribution manifest matches a fresh external-call scan and validates headings', async () => {
+  const { auditCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const result = auditCoverage({ repoRoot: REPO_ROOT })
+  assert.deepEqual(result.issues, [])
+  assert.equal(result.ruoyi.attributed, result.ruoyi.total)
+  assert.ok(result.ruoyi.total > 152, 'fresh scan denominator exceeds the retained heading subset')
+})
+
+test('official common coverage has its own denominator and exact article H3 examples', async () => {
+  const { auditCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const result = auditCoverage({ repoRoot: REPO_ROOT })
+  assert.deepEqual(result.issues, [])
+  assert.ok(result.official.total >= 5)
+  assert.equal(result.official.uncovered, 0)
+  assert.notEqual(result.official.total, result.ruoyi.total)
+})
+
+test('RuoYi attribution rejects merged denominators and missing heading fixtures', async () => {
+  const { validateCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const fixture = JSON.parse(readFileSync(join(REPO_ROOT, 'tests/fixtures/java-course/invalid-coverage.json'), 'utf8'))
+  for (const sample of fixture.cases) {
+    assert.ok(validateCoverage(sample, { repoRoot: REPO_ROOT, scanned: [{symbol: 'List.size', frequency: 1}] }).some(issue => issue.includes(sample.expectedIssue)), sample.name)
+  }
+})
+
+test('official common coverage counts a missing official heading as uncovered', async () => {
+  const { auditCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const official = {records: [{ecosystem: 'JDK 20', capability: 'List.size', source: 'https://docs.oracle.com/', article: 'docs/courses/java/05-泛型与集合/04-List常用API.md', heading: 'Missing.heading', reviewedAt: '2026-10-06'}]}
+  const result = auditCoverage({repoRoot: REPO_ROOT, officialOverride: official})
+  assert.equal(result.official.uncovered, 1)
+})
+
+test('official common coverage rejects an unrelated authority', async () => {
+  const { validateCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const official = {records: [{ecosystem: 'JDK 20', capability: 'List.size', source: 'https://example.com/list', article: 'docs/courses/java/05-泛型与集合/04-List常用API.md', heading: 'List.size', reviewedAt: '2026-10-06'}]}
+  const issues = validateCoverage({ruoyi: {records: []}, official}, {repoRoot: REPO_ROOT, scanned: []})
+  assert.ok(issues.some(issue => issue.includes('authoritative source')))
+})
+
+test('official common coverage rejects an empty baseline', async () => {
+  const { validateCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const issues = validateCoverage({ruoyi: {records: []}, official: {records: []}}, {repoRoot: REPO_ROOT, scanned: []})
+  assert.ok(issues.some(issue => issue.includes('official denominator')))
+})
+
+test('RuoYi direct attribution rejects an unrelated code example under the right H3', async () => {
+  const { validateCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const root = mkdtempSync(join(tmpdir(), 'java-api-coverage-'))
+  try {
+    const article = 'docs/courses/java/demo/List.md'
+    mkdirSync(join(root, 'docs/.vitepress/config'), {recursive: true})
+    mkdirSync(join(root, 'docs/courses/java/demo'), {recursive: true})
+    writeFileSync(join(root, 'docs/.vitepress/config/java-course.ts'), "createChapter('demo', 'Demo', [\n  article('List.md', 'List'),\n])")
+    writeFileSync(join(root, article), '### `List.size`：wrong example\n\n```java\nSystem.out.println("hello");\n```\n')
+    const record = {symbol: 'List.size', frequency: 1, classification: 'direct-searchable', reason: 'Exact lesson', article, heading: 'List.size'}
+    const issues = validateCoverage({ruoyi: {records: [record]}, official: {records: []}}, {repoRoot: root, scanned: [{symbol: 'List.size', frequency: 1}]})
+    assert.ok(issues.some(issue => issue.includes('example must use List.size')))
+  } finally { rmSync(root, {recursive: true, force: true}) }
+})
+
+test('official common coverage rejects a heading whose example omits the capability', async () => {
+  const { validateCoverage } = await import('../scripts/audit-ruoyi-java-apis.mjs')
+  const root = mkdtempSync(join(tmpdir(), 'java-official-coverage-'))
+  try {
+    const article = 'docs/courses/java/demo/List.md'
+    mkdirSync(join(root, 'docs/.vitepress/config'), {recursive: true})
+    mkdirSync(join(root, 'docs/courses/java/demo'), {recursive: true})
+    writeFileSync(join(root, 'docs/.vitepress/config/java-course.ts'), "createChapter('demo', 'Demo', [\n  article('List.md', 'List'),\n])")
+    writeFileSync(join(root, article), '### `List.size`：wrong example\n\n```java\nSystem.out.println("hello");\n```\n')
+    const record = {ecosystem: 'JDK 20', capability: 'List.size', source: 'https://docs.oracle.com/en/java/javase/20/docs/api/java.base/java/util/List.html', article, heading: 'List.size', reviewedAt: '2026-10-06'}
+    const issues = validateCoverage({ruoyi: {records: []}, official: {records: [record]}}, {repoRoot: root, scanned: []})
+    assert.ok(issues.some(issue => issue.includes('example must use List.size')))
+  } finally { rmSync(root, {recursive: true, force: true}) }
+})
 
 test('article contract recognizes executable qualified API names without accepting strings or unrelated receivers', () => {
   assert.equal(isArticleContractOperationHeading('@Valid', '```java\n@jakarta.validation.Valid String name;\n```'), true)
@@ -468,12 +580,12 @@ const JAVA_COMMENT_CONTRACT_FORBIDDEN = /当前对象|具体参数|具体实参|
 // every manifest entry with status=body, every missing entry with frequency >= 3,
 // plus the three review batches' explicit P0/P1 items must remain searchable in H3 titles.
 const REQUIRED_EXTERNAL_API_HEADINGS = {
-  'docs/courses/java/02-数组与文本/02-String与文本处理.md': ['String.substring'],
+  'docs/courses/java/02-数组与文本/02-String与文本处理.md': ['String.substring', 'StringBuilder.append'],
   'docs/courses/java/02-数组与文本/03-常用类与包装类型.md': [
     'IOUtils.close', 'ArrayUtils.contains', 'RegExUtils.replaceAll', 'Validate.notBlank',
   ],
   'docs/courses/java/02-数组与文本/04-正则表达式与文本匹配.md': [
-    'Matcher.appendReplacement', 'Matcher.appendTail', 'Matcher.quoteReplacement', 'Pattern.matcher',
+    'Matcher.appendReplacement', 'Matcher.appendTail', 'Matcher.quoteReplacement', 'Pattern.matcher', 'Pattern.compile', 'Matcher.group',
   ],
   'docs/courses/java/03-面向对象/06-Object方法与对象相等.md': ['ToStringBuilder'],
   'docs/courses/java/05-泛型与集合/04-List常用API.md': [
@@ -520,7 +632,7 @@ const REQUIRED_EXTERNAL_API_HEADINGS = {
   ],
   'docs/courses/java/14-后端工程/01-Spring-Boot启动与配置.md': ['@Configuration'],
   'docs/courses/java/14-后端工程/02-Spring-IoC与Bean生命周期.md': [
-    '@Autowired', '@Value', '@ConditionalOnProperty', 'SpringApplication.run',
+    '@Autowired', '@Value', '@ConditionalOnProperty', '@Bean', 'SpringApplication.run',
     'FilterRegistrationBean', 'FilterRegistrationBean.addUrlPatterns',
   ],
   'docs/courses/java/14-后端工程/03-Spring-AOP与声明式事务.md': [
@@ -529,7 +641,7 @@ const REQUIRED_EXTERNAL_API_HEADINGS = {
   'docs/courses/java/14-后端工程/04-Spring-MVC与Servlet边界.md': [
     '@DeleteMapping', '@ExceptionHandler', '@GetMapping', '@PathVariable', '@PostMapping',
     '@PutMapping', '@RequestMapping', '@RequestParam', '@ResponseBody', '@RestController',
-    '@RestControllerAdvice', 'FilterChain.doFilter', 'HttpServletResponse.addHeader',
+    '@RestControllerAdvice', '@RequestBody', 'FilterChain.doFilter', 'HttpServletResponse.addHeader',
   ],
   'docs/courses/java/14-后端工程/05-Spring-Security与JWT.md': [
     '@EnableMethodSecurity', '@PreAuthorize', 'Claims.get', 'Jwts.parser', 'BCryptPasswordEncoder',
@@ -543,9 +655,9 @@ const REQUIRED_EXTERNAL_API_HEADINGS = {
     '@JsonProperty', '@JsonIgnore', '@JacksonAnnotationsInside', 'Jwts.builder', 'Claims.put',
   ],
   'docs/courses/java/14-后端工程/08-Bean-Validation参数校验.md': [
-    '@Constraint', '@Email', '@NotNull', '@Pattern',
+    '@Constraint', '@Email', '@NotNull', '@Pattern', '@Size',
   ],
-  'docs/courses/java/14-后端工程/09-SLF4J与Logback日志.md': ['Logger.debug', 'Logger.warn'],
+  'docs/courses/java/14-后端工程/09-SLF4J与Logback日志.md': ['Logger.debug', 'Logger.warn', 'Logger.error'],
   'docs/courses/java/14-后端工程/11-Apache-POI-Excel导入导出.md': [
     'Row.createCell', 'Sheet.addMergedRegion', 'Sheet.createRow',
     'Workbook.createCellStyle', 'Workbook.createDataFormat', 'Workbook.createFont',
@@ -5568,7 +5680,7 @@ test('RuoYi common external calls remain directly searchable in API H3 headings'
     }
   }
 
-  assert.equal(requiredCount, 152, 'rule java-external-api-heading-count: audit snapshot changed')
+  assert.equal(requiredCount, 159, 'rule java-external-api-heading-count: audit snapshot changed')
   assert.deepEqual(violations, [], `rule java-external-api-headings${formatViolations(violations)}`)
 })
 
