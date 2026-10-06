@@ -61,6 +61,34 @@ test('backend production topics keep seven searchable API contracts and explicit
   assert.deepEqual(violations, [])
 })
 const JAVA_ROOT = join(REPO_ROOT, 'docs/courses/java')
+test('article contract PEXPIRE requires a native command or executable EVAL call, never a comment', () => {
+  assert.equal(isArticleContractOperationHeading('PEXPIRE', '```redis\nPEXPIRE lab:key 5000\n```'), true)
+  assert.equal(isArticleContractOperationHeading('PEXPIRE', '```redis\nEVAL "return redis.call(\'PEXPIRE\',KEYS[1],ARGV[1])" 1 lab:key 5000\n```'), true)
+  assert.equal(isArticleContractOperationHeading('PEXPIRE', '```redis\n# PEXPIRE lab:key 5000\nGET lab:key\n```'), false)
+})
+const REDIS_INTEGRATION_TOPICS = {
+  '11-分布式锁租约与Fencing-Token.md': { name: 'Redis lock', apis: ['SET NX PX', 'UUID.randomUUID', 'EVAL', 'PEXPIRE', 'RLock.tryLock', 'RLock.unlock', 'FencingResource.write'], boundaries: { 'EVAL': /比较[\s\S]*删除/u, 'PEXPIRE': /续期[\s\S]*截止/u, 'FencingResource.write': /资源端[\s\S]*原子[\s\S]*拒绝/u } },
+  '12-Spring-Cache与缓存抽象.md': { name: 'Spring Cache', apis: ['@EnableCaching', '@Cacheable', '@CachePut', '@CacheEvict', 'SimpleKeyGenerator', 'RedisCacheConfiguration.entryTtl', 'RedisCacheManager.builder', 'Cache.get', 'RedisCacheManagerBuilder.transactionAware'], boundaries: { '@Cacheable': /condition[\s\S]*unless[\s\S]*自调用/u, 'RedisCacheConfiguration.entryTtl': /默认[\s\S]*TTL[\s\S]*null/u, 'RedisCacheManagerBuilder.transactionAware': /提交[\s\S]*不[\s\S]*原子/u } },
+  '13-RedisTemplate序列化与连接管理.md': { name: 'RedisTemplate', apis: ['StringRedisTemplate', 'RedisTemplate', 'StringRedisSerializer', 'Jackson2JsonRedisSerializer', 'JdkSerializationRedisSerializer', 'LettuceConnectionFactory', 'LettucePoolingClientConfiguration', 'ClientResources', 'RedisTemplate.executePipelined', 'RedisSystemException'], boundaries: { 'Jackson2JsonRedisSerializer': /迁移[\s\S]*白名单/u, 'LettuceConnectionFactory': /线程[\s\S]*共享[\s\S]*timeout/u, 'RedisTemplate.executePipelined': /非原子[\s\S]*重试/u, 'RedisSystemException': /超时[\s\S]*不确定/u } },
+}
+for (const [file, gate] of Object.entries(REDIS_INTEGRATION_TOPICS)) {
+  test(`${gate.name} preserves independent H3 API contracts and local safety boundaries`, () => {
+    const path = `docs/courses/java/15-Redis/${file}`
+    assert.ok(existsSync(join(REPO_ROOT, path)), `missing integration article: ${file}`)
+    const article = readMarkdown(path)
+    assert.deepEqual(inspectArticleContract(article, { path }), [])
+    const sections = getArticleContractH3Subsections(getArticleContractSection(article.body, '常用用法'))
+    for (const api of gate.apis) {
+      const matches = sections.filter(({heading}) => getArticleContractOperationHeadingLabel(heading) === api)
+      assert.equal(matches.length, 1, `${file}: independent H3 ${api}`)
+      assert.ok(isArticleContractOperationHeading(matches[0].heading, matches[0].content), `${api}: executable API example`)
+      if (gate.boundaries[api]) assert.match(matches[0].content, gate.boundaries[api], `${api}: local boundary`)
+    }
+    assert.ok(ARTICLE_CONTRACT_PATHS.has(path), `${file}: strict manifest`)
+    assert.match(article.body, /JDK 20/u)
+    assert.doesNotMatch(article.body, /RuoYi|若依/iu)
+  })
+}
 test('Redis cache rebuild winner visibly rechecks before simulated database read and backfill', () => {
   const body = readMarkdown('docs/courses/java/15-Redis/09-缓存穿透击穿雪崩与一致性.md').body
   const section = getArticleContractH3Subsections(getArticleContractSection(body, '常用用法'))
@@ -205,7 +233,7 @@ const CHAPTER_NAMES = [
 const QUALITY_CHAPTER_NAMES = CHAPTER_NAMES.slice(0, 10)
 
 const EXPECTED_ARTICLES_BY_CHAPTER = {
-  '15-Redis': [...Object.keys(REDIS_CORE_TOPICS), ...Object.keys(REDIS_RELIABILITY_TOPICS)],
+  '15-Redis': [...Object.keys(REDIS_CORE_TOPICS), ...Object.keys(REDIS_RELIABILITY_TOPICS), ...Object.keys(REDIS_INTEGRATION_TOPICS)],
   '01-Java基础': [
     '01-开发环境与第一个程序.md',
     '02-基础语法与程序结构.md',
@@ -493,6 +521,7 @@ const ARTICLE_CONTRACT_MANIFEST = {
   entries: [
     ...Object.keys(REDIS_RELIABILITY_TOPICS).map(name => ({path: `docs/courses/java/15-Redis/${name}`, source: 'new'})),
     ...Object.keys(REDIS_CORE_TOPICS).map(name => ({path: `docs/courses/java/15-Redis/${name}`, source: 'new'})),
+    ...Object.keys(REDIS_INTEGRATION_TOPICS).map(name => ({path: `docs/courses/java/15-Redis/${name}`, source: 'new'})),
     ...Object.keys(BACKEND_PRODUCTION_TOPICS).map((name) => ({ path: `docs/courses/java/14-后端工程/${name}`, source: 'new' })),
     ...['01-环境连接与数据库对象', '02-表设计与DDL', '03-数据类型字符集与时区', '04-数据写入更新与删除'].map((name) => ({ path: `docs/courses/java/11-MySQL-8/${name}.md`, source: 'new' })),
     ...['05-查询过滤排序与分页', '06-连接子查询与集合查询', '07-聚合CTE窗口函数与JSON', '08-约束与索引设计', '09-事务MVCC隔离级别与锁', '10-EXPLAIN慢SQL与性能优化'].map((name) => ({ path: `docs/courses/java/11-MySQL-8/${name}.md`, source: 'new' })),
@@ -2306,6 +2335,12 @@ function isArticleContractOperationHeading(heading, content = '') {
       language === 'redis' && new RegExp(`^\\s*${operation}\\b`, 'mu').test(lexArticleContractCode(code, language).executable))
   }
   const label = getArticleContractOperationHeadingLabel(heading)
+  if (label === 'PEXPIRE') {
+    return getArticleContractCodeBlocks(content).some(({language, code}) => language === 'redis' &&
+      (/^\s*PEXPIRE\s+\S+\s+\d+/imu.test(lexArticleContractCode(code, language).executable) ||
+       /^\s*EVAL\s+"[^\n]*redis\.call\('PEXPIRE',KEYS\[1\],ARGV\[2\]\)[^\n]*"\s+1\s+\S+/imu.test(code.replace(/^\s*#.*$/gmu, '')) ||
+       /^\s*EVAL\s+"return redis\.call\('PEXPIRE',KEYS\[1\],ARGV\[1\]\)"\s+1\s+\S+/imu.test(code.replace(/^\s*#.*$/gmu, ''))))
+  }
   if (Object.values(REDIS_CORE_TOPICS).flat().includes(label) && getArticleContractCodeBlocks(content).some(({language}) => language === 'redis')) {
     const command = label.split(' ')[0]
     return getArticleContractCodeBlocks(content).some(({language, code}) => language === 'redis' &&
@@ -4776,13 +4811,13 @@ test('Java course keeps the expected Markdown files, article counts, chapters, a
 
   assert.equal(
     markdownPaths.length,
-    126,
-    'rule java-markdown-count: expected 126 Markdown files',
+    129,
+    'rule java-markdown-count: expected 129 Markdown files',
   )
   assert.equal(
     markdownPaths.filter((file) => !file.endsWith('/index.md')).length,
-    123,
-    'rule java-article-count: expected 123 course articles',
+    126,
+    'rule java-article-count: expected 126 course articles',
   )
   assert.equal(
     chapterDirectories.length,
@@ -5290,7 +5325,7 @@ int first = numbers.get(0);
   )
 })
 
-test('all 113 Java articles put API purpose prose before examples and retain observable results', () => {
+test('all 126 Java articles put API purpose prose before examples and retain observable results', () => {
   const violations = []
   for (const relativePath of ARTICLE_PATHS) {
     const { body } = readMarkdown(relativePath)

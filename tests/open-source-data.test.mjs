@@ -15,7 +15,7 @@ import openSourceLoader, {
 import { getJavaCourseItems } from '../docs/.vitepress/config/java-course.ts'
 
 const EXPECTED_JAVA_ARTICLES_BY_CHAPTER = {
-  '15-Redis': ['index.md', '01-基础连接与数据模型.md', '02-String与计数器.md', '03-Hash与对象字段.md', '04-List-Set与Sorted-Set.md', '05-Bitmap-HyperLogLog-GEO与Stream.md', '06-Key过期扫描与删除.md', '07-事务Watch-Pipeline与Lua.md', '08-持久化内存淘汰与数据安全.md', '09-缓存穿透击穿雪崩与一致性.md', '10-发布订阅与Stream消费组.md'],
+  '15-Redis': ['index.md', '01-基础连接与数据模型.md', '02-String与计数器.md', '03-Hash与对象字段.md', '04-List-Set与Sorted-Set.md', '05-Bitmap-HyperLogLog-GEO与Stream.md', '06-Key过期扫描与删除.md', '07-事务Watch-Pipeline与Lua.md', '08-持久化内存淘汰与数据安全.md', '09-缓存穿透击穿雪崩与一致性.md', '10-发布订阅与Stream消费组.md', '11-分布式锁租约与Fencing-Token.md', '12-Spring-Cache与缓存抽象.md', '13-RedisTemplate序列化与连接管理.md'],
   '01-Java基础': [
     '01-开发环境与第一个程序.md',
     '02-基础语法与程序结构.md',
@@ -151,7 +151,7 @@ const EXPECTED_JAVA_PATHS = [
   ),
 ].sort()
 
-const EXPECTED_JAVA_CHAPTER_COUNTS = [7, 6, 7, 6, 8, 8, 7, 7, 15, 5, 13, 5, 1, 19, 11]
+const EXPECTED_JAVA_CHAPTER_COUNTS = [7, 6, 7, 6, 8, 8, 7, 7, 15, 5, 13, 5, 1, 19, 14]
 const EXPECTED_JAVA_ROADMAP_PATHS = [
   'docs/courses/java/12-工程实践/01-Maven与测试工程.md',
   'docs/courses/java/12-工程实践/02-JDBC与事务.md',
@@ -492,11 +492,11 @@ test('Java learning path follows Python and uses the explicit roadmap sidebar', 
     'Java should appear immediately after Python in the learning navigation',
   )
   assert.match(sidebar, /'\/courses\/java\/':\s*getJavaCourseItems\(\)/)
-  assert.equal(javaFiles.length, 126, 'the Java path should contain 126 Markdown files including indexes')
+  assert.equal(javaFiles.length, 129, 'the Java path should contain 129 Markdown files including indexes')
   assert.equal(
     getJavaCourseItems().flatMap((chapter) => chapter.items ?? []).length,
-    123,
-    'the published sidebar should expose the 123 existing canonical articles',
+    126,
+    'the published sidebar should expose the 126 existing canonical articles',
   )
 
   const javaContent = javaFiles
@@ -529,11 +529,11 @@ test('Java course keeps the exact migrated path set and 01-10 quality range', ()
   )
 
   assert.deepEqual(javaPaths, EXPECTED_JAVA_PATHS, 'the Java path set must stay exact')
-  assert.equal(javaPaths.length, 126, 'the Java path should contain 126 Markdown files')
+  assert.equal(javaPaths.length, 129, 'the Java path should contain 129 Markdown files')
   assert.equal(
     javaPaths.filter((file) => !file.endsWith('/index.md')).length,
-    123,
-    'the Java path should contain 123 article pages',
+    126,
+    'the Java path should contain 126 article pages',
   )
   assert.deepEqual(actualChapterPaths, chapterPaths, 'the Java chapter directory range must stay exact')
   assert.deepEqual(actualChapterCounts, EXPECTED_JAVA_CHAPTER_COUNTS, 'the Java chapter counts must stay exact')

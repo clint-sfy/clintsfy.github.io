@@ -159,3 +159,19 @@ Task 9 最终证据（2026-10-06，Asia/Shanghai）：JDK20 `--release 20` 编�
 本轮坚持稀疏的状态/关键变化/结果注释。Prometheus 示例执行时确认 `_created` 后缀规范化会影响指标名称，改用无歧义的 `orders.accepted` 并按真实抓取文本断言。集成执行限制与原批次保持一致，详细红绿、命令、结果及提交记录在 task-09-report.md 的修订 1 节。
 
 修订验证：63/63 Java 示例编译，36/36 本地运行断言通过；聚焦 8/8、全量 101/101；构建退出 0（106.65 秒），三篇修改后的构建页面包含新增主题；精确清理 18 个生成兼容页，`git diff --check` 无错误。
+
+### Task 12：Redis 锁与 Spring 集成事实复核（2026-10-06）
+
+本轮是实现者技术自审，尚不是独立专家签核。第 15 章新增 11–13，分别承担服务端锁协议、Spring Cache provider 和 RedisTemplate/连接事实；第 14 章保留 Caffeine/Redisson 选型及两级一致性案例，并改为真实链接，避免复制锁命令算法。
+
+| 主张 | 官方依据 | 可复核证据与边界 |
+| --- | --- | --- |
+| owner 随机值只校验所有权；原子 compare-delete/renew 不阻止暂停后的旧写 | [Redis distributed locks](https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/)、[Redisson locks](https://redisson.pro/docs/data-and-services/locks-and-synchronizers/) | SET NX PX、Lua GET/DEL/PEXPIRE 独立 H3；资源 synchronized write 42 成功、41 被拒，输出 true/false/CANCELLED；内存资源模型不冒充数据库/故障转移实验 |
+| fencing 必须由资源端原子比较与写入；计数器恢复不能回退 | [Redisson Fenced Lock](https://redisson.pro/docs/data-and-services/locks-and-synchronizers/#fenced-lock) | 资源端 lastToken 与 state 同临界区；普通 RLock 不承诺 fencing，Redis INCR 异步复制/备份回退不足以证明单调 |
+| Cache 注解不定义 TTL，默认代理自调用绕过；Redis TTL 与区域配置属 provider | [Framework annotations](https://docs.spring.io/spring-framework/reference/integration/cache/annotations.html)、[Data Redis 3.4.13 cache source](https://github.com/spring-projects/spring-data-redis/blob/3.4.13/src/main/antora/modules/ROOT/pages/redis/redis-cache.adoc) | 真实 Spring 上下文两次代理读取加载次数 1；配置 TTL=60/null=false，missing 区域 5 秒；未执行 Redis PTTL、分布式 stampede 与真实事务 |
+| transactionAware 延迟常规缓存变更，不提供 DB+Redis 原子提交 | [TransactionAwareCacheDecorator](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/cache/transaction/TransactionAwareCacheDecorator.html) | 独立 H3 明确提交后失败、即时 putIfAbsent/evictIfPresent 边界，要求可靠事件/修复；配置运行 true 不等价于真实事务证明 |
+| 模板泛型不选择 serializer；固定 JSON/schema 版本迁移，禁止任意多态/不可信 JDK 字节 | [Data Redis 3.4.13 template source](https://github.com/spring-projects/spring-data-redis/blob/3.4.13/src/main/antora/modules/ROOT/pages/redis/template.adoc) | String/JSON/JDK serializer 真实往返输出，四类 serializer 显式配置；v2 键迁移与白名单在对应 H3 中 |
+| 原生 Lettuce 可共享不代表 RedisConnection 包装线程安全；池、超时与资源有不同所有者 | [Data Redis drivers](https://github.com/spring-projects/spring-data-redis/blob/3.4.13/src/main/antora/modules/ROOT/pages/redis/drivers.adoc)、[Lettuce pooling](https://github.com/redis/lettuce/wiki/Connection-Pooling) | connect=1s、command=2s、pool wait=200ms/max=8 构造可编译运行；ClientResources 真实关闭，未测试网络/池耗尽 |
+| Pipeline 非原子且断网可能部分成功，INCR 不盲重放 | [Data Redis pipelining](https://github.com/spring-projects/spring-data-redis/blob/3.4.13/src/main/antora/modules/ROOT/pages/redis/pipelining.adoc) | 实际 executePipelined callback 返回 null、结果顺序可编译；异常分类演示显式标为构造异常，未假称真实 Redis 成功 |
+
+验证使用 Boot 3.4.13 BOM、Data Redis 3.4.13、Redisson 3.52.0 与 JDK 20；23/23 Java 块编译，14/14 本地运行并比对确定输出。版本化 3.4 reference URL 当前 404，链接改为官方仓库 3.4.13 tag 文档源，避免偷用当前 4.x API。Docker Desktop Linux engine 管道不存在，Redis CLI/多节点故障/实际数据库 fencing/真实缓存事务不在本次已验证范围。完整测试、构建和 H3 计数见 task-12-report.md。

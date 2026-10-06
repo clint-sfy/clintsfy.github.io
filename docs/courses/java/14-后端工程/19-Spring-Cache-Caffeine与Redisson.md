@@ -18,7 +18,7 @@ description: 区分缓存抽象、本地缓存与分布式协调，明确两级�
 
 Spring Cache 是方法调用缓存的抽象，不规定存储、TTL 或一致性。Caffeine 是进程内缓存，读取快但各实例独立。Redisson 提供 Redis 客户端与分布式对象，锁可以协调参与者，却不替代数据库约束或事务。两级缓存通常为 L1 Caffeine/L2 Redis；数据库仍是事实源，缓存允许的陈旧时间必须业务明确。
 
-本文采用 JDK 20、Spring Boot 3.4 / Framework 6.2、Caffeine 3.x、Redisson 3.x。依赖 cache starter、`com.github.ben-manes.caffeine:caffeine`；Redisson 为可选依赖，Spring 集成模块要匹配 Framework/Spring Data 版本，不能只看 Redisson 主版本。参考 [Spring 缓存注解](https://docs.spring.io/spring-framework/reference/integration/cache/annotations.html)、[Caffeine eviction](https://github.com/ben-manes/caffeine/wiki/Eviction)、[refresh](https://github.com/ben-manes/caffeine/wiki/Refresh)、[Redisson 锁](https://redisson.pro/docs/data-and-services/locks-and-synchronizers/)。Redis 命令和锁算法详解安排在第 15 章《缓存穿透、击穿、雪崩与一致性》和《分布式锁、租约与 Fencing Token》，规范路径为 `/courses/java/15-Redis/09-缓存穿透击穿雪崩与一致性`、`/courses/java/15-Redis/11-分布式锁租约与Fencing-Token`；后续章节上线后再提供可点击入口。这里先定义必要边界，不要求先学后置章。
+本文采用 JDK 20、Spring Boot 3.4 / Framework 6.2、Caffeine 3.x、Redisson 3.x。依赖 cache starter、`com.github.ben-manes.caffeine:caffeine`；Redisson 为可选依赖，Spring 集成模块要匹配 Framework/Spring Data 版本，不能只看 Redisson 主版本。参考 [Spring 缓存注解](https://docs.spring.io/spring-framework/reference/integration/cache/annotations.html)、[Caffeine eviction](https://github.com/ben-manes/caffeine/wiki/Eviction)、[refresh](https://github.com/ben-manes/caffeine/wiki/Refresh)、[Redisson 锁](https://redisson.pro/docs/data-and-services/locks-and-synchronizers/)。本篇负责框架选型与两级缓存的工程取舍：单实例短期热点优先 Caffeine，多实例共享值选择 Redis provider，协作互斥另选 Redisson。命令与算法事实统一查[缓存故障与一致性](../15-Redis/09-缓存穿透击穿雪崩与一致性)、[锁租约与 fencing](../15-Redis/11-分布式锁租约与Fencing-Token)；注解/provider 细节统一查[Spring Cache](../15-Redis/12-Spring-Cache与缓存抽象)、[RedisTemplate 与连接](../15-Redis/13-RedisTemplate序列化与连接管理)。
 
 缓存键应包含租户、业务标识、数据版本等隔离维度，不能只用 id。更新一般先提交数据库，再使缓存失效；“数据库+Redis+每个 L1”不是一个原子事务，消息丢失或并发读回填仍可能旧值复活。用 TTL 限制陈旧窗口、版本比较/事件重试和修复任务达成最终一致性；要求强一致的数据直接读事实数据库。两次删除、普通 Pub/Sub 或锁都不能单独证明无陈旧。
 
@@ -39,7 +39,7 @@ class OrderReads {
 // 结果：通过代理首次读加载 PAID，再次读命中；需要用真实缓存和加载计数断言。
 ```
 
-这里类必须注册为 Spring Bean，`@EnableCaching` 开启代理，CacheManager 创建 orders 区域。`condition` 调用前判断、`unless` 获得结果后否决；null 不缓存可能持续穿透，是否短期缓存空值需另外设计。`sync=true` 提示 provider 对同键加载同步，通常不支持与 unless 组合，具体行为受 provider 限制；不是跨实例分布式锁。自调用 `this.find(...)` 不经过代理，会绕过缓存。
+这里类必须注册为 Spring Bean，`@EnableCaching` 开启代理，CacheManager 创建 orders 区域。`condition` 调用前判断、`unless` 获得结果后否决；自调用 `this.find(...)` 不经过代理。选型时确认 null、`sync=true` 与 TTL 的 provider 行为；跨实例重建不是本地同步能保证的，完整注解与 Redis TTL 配置见第 15 章 Spring Cache。
 
 ### `@CachePut`：执行方法并更新缓存
 

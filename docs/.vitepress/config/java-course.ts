@@ -196,7 +196,7 @@ export const JAVA_COURSE_CHAPTERS: readonly JavaCourseChapter[] = [
     article('18-Actuator-Micrometer与可观测性.md', 'Actuator、Micrometer 与可观测性'),
     article('19-Spring-Cache-Caffeine与Redisson.md', 'Spring Cache、Caffeine 与 Redisson'),
   ]),
-  // Redis Core facts are published in articles 01-05; later entries activate when authored.
+  // Redis Core, reliability and Spring integration are published in articles 01-13.
   createChapter('15-Redis', 'Redis', [
     article('01-基础连接与数据模型.md', '基础连接与数据模型'),
     article('02-String与计数器.md', 'String 与计数器'),
