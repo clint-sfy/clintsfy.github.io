@@ -61,6 +61,35 @@ test('backend production topics keep seven searchable API contracts and explicit
   assert.deepEqual(violations, [])
 })
 const JAVA_ROOT = join(REPO_ROOT, 'docs/courses/java')
+const REDIS_CORE_TOPICS = {
+  '01-基础连接与数据模型.md': ['PING', 'AUTH', 'SELECT', 'TYPE', 'EXISTS'],
+  '02-String与计数器.md': ['SET', 'SET NX', 'SET XX', 'GET', 'INCR', 'DECR', 'MGET', 'MSET', 'GETRANGE', 'SETRANGE', 'STRLEN'],
+  '03-Hash与对象字段.md': ['HSET', 'HGET', 'HMGET', 'HGETALL', 'HSCAN', 'HDEL', 'HEXISTS', 'HLEN', 'HINCRBY'],
+  '04-List-Set与Sorted-Set.md': ['LPUSH', 'RPUSH', 'LPOP', 'RPOP', 'LRANGE', 'LLEN', 'BLPOP', 'LMOVE', 'SADD', 'SISMEMBER', 'SMEMBERS', 'SCARD', 'SREM', 'SINTER', 'SUNION', 'SDIFF', 'ZADD', 'ZRANGE', 'ZSCORE', 'ZRANK', 'ZINCRBY', 'ZREM'],
+  '05-Bitmap-HyperLogLog-GEO与Stream.md': ['SETBIT', 'GETBIT', 'BITCOUNT', 'BITOP', 'PFADD', 'PFCOUNT', 'PFMERGE', 'GEOADD', 'GEOPOS', 'GEODIST', 'GEOSEARCH', 'XADD', 'XRANGE', 'XREAD', 'XLEN', 'XTRIM'],
+}
+
+test('Redis data structures require independent executable command H3s and article contracts', () => {
+  const violations = []
+  for (const [file, commands] of Object.entries(REDIS_CORE_TOPICS)) {
+    const path = `docs/courses/java/15-Redis/${file}`
+    assert.ok(existsSync(join(REPO_ROOT, path)), `missing Redis article: ${file}`)
+    assert.ok(ARTICLE_CONTRACT_PATHS.has(path), `${file}: strict manifest`)
+    const article = readMarkdown(path)
+    const sections = getArticleContractH3Subsections(getArticleContractSection(article.body, '常用用法'))
+    for (const command of commands) {
+      const matches = sections.filter(({heading}) => getArticleContractOperationHeadingLabel(heading) === command)
+      assert.equal(matches.length, 1, `${file}: independent H3 ${command}`)
+      assert.ok(isArticleContractOperationHeading(matches[0].heading, matches[0].content), `${command}: executable example`)
+    }
+    assert.match(article.body, /Redis 8/u)
+    assert.match(article.body, /2026-10-06/u)
+    assert.match(article.body, /https:\/\/redis\.io\/docs\//u)
+    assert.match(article.body, /清理/u)
+    violations.push(...inspectArticleContract(article, {path}))
+  }
+  assert.deepEqual(violations, [])
+})
 const JAVA_GLOB = 'docs/courses/java/**/*.md'
 const JAVA_INDEX_PATH = 'docs/courses/java/index.md'
 
@@ -79,11 +108,13 @@ const CHAPTER_NAMES = [
   '12-工程实践',
   '13-设计与项目',
   '14-后端工程',
+  '15-Redis',
 ]
 
 const QUALITY_CHAPTER_NAMES = CHAPTER_NAMES.slice(0, 10)
 
 const EXPECTED_ARTICLES_BY_CHAPTER = {
+  '15-Redis': Object.keys(REDIS_CORE_TOPICS),
   '01-Java基础': [
     '01-开发环境与第一个程序.md',
     '02-基础语法与程序结构.md',
@@ -215,6 +246,7 @@ const EXPECTED_ARTICLES_BY_CHAPTER = {
 const EXPECTED_JAVA_PATHS = [
   JAVA_INDEX_PATH,
   'docs/courses/java/11-MySQL-8/index.md',
+  'docs/courses/java/15-Redis/index.md',
   ...CHAPTER_NAMES.flatMap((chapter) =>
     EXPECTED_ARTICLES_BY_CHAPTER[chapter].map(
       (article) => `docs/courses/java/${chapter}/${article}`,
@@ -368,6 +400,7 @@ const ARTICLE_CONTRACT_MANIFEST = {
     '快速回顾',
   ],
   entries: [
+    ...Object.keys(REDIS_CORE_TOPICS).map(name => ({path: `docs/courses/java/15-Redis/${name}`, source: 'new'})),
     ...Object.keys(BACKEND_PRODUCTION_TOPICS).map((name) => ({ path: `docs/courses/java/14-后端工程/${name}`, source: 'new' })),
     ...['01-环境连接与数据库对象', '02-表设计与DDL', '03-数据类型字符集与时区', '04-数据写入更新与删除'].map((name) => ({ path: `docs/courses/java/11-MySQL-8/${name}.md`, source: 'new' })),
     ...['05-查询过滤排序与分页', '06-连接子查询与集合查询', '07-聚合CTE窗口函数与JSON', '08-约束与索引设计', '09-事务MVCC隔离级别与锁', '10-EXPLAIN慢SQL与性能优化'].map((name) => ({ path: `docs/courses/java/11-MySQL-8/${name}.md`, source: 'new' })),
@@ -1003,9 +1036,9 @@ function inspectApiHeadingFormat(body) {
       continue
     }
 
-    const fence = lines.findIndex((line, index) => index > first && /^```(?:java|sql|xml|shell)\s*$/u.test(line.trim()))
+    const fence = lines.findIndex((line, index) => index > first && /^```(?:java|sql|xml|shell|redis)\s*$/u.test(line.trim()))
     if (fence < 0) {
-      violations.push(`${prefix} purpose sentence must be followed by a java/sql/xml fence`)
+      violations.push(`${prefix} purpose sentence must be followed by a java/sql/xml/shell/redis fence`)
       continue
     }
     const explanationLines = lines.slice(first, fence).filter((line) => line.trim() !== '')
@@ -1027,14 +1060,14 @@ function inspectApiHeadingFormat(body) {
       if (!trimmed) return false
       if (language === 'java') return !/^(?:\/\/|\/\*|\*|\*\/)/u.test(trimmed)
       if (language === 'sql') return !/^--/u.test(trimmed)
-      if (language === 'shell') return !/^#/u.test(trimmed)
+      if (language === 'shell' || language === 'redis') return !/^#/u.test(trimmed)
       return !/^(?:<!--|-->|--)/u.test(trimmed)
     })
     if (!realCode) violations.push(`${prefix} example needs real non-comment code`)
 
     const standaloneResult = language === 'java'
       ? codeLines.some((line) => /^\s*\/\/\s*(?:输出|结果|效果)：\s*\S/u.test(line))
-      : language === 'shell'
+      : language === 'shell' || language === 'redis'
         ? codeLines.some((line) => /^\s*#\s*(?:输出|结果|效果)：\s*\S/u.test(line))
       : language === 'xml'
         ? getLanguageComments('xml', codeLines.join('\n')).some(comment => /^(?:输出|结果|效果)：\s*\S/u.test(comment))
@@ -2170,6 +2203,12 @@ function getArticleContractJavaExecutable(content) {
 
 function isArticleContractOperationHeading(heading, content = '') {
   const label = getArticleContractOperationHeadingLabel(heading)
+  if (Object.values(REDIS_CORE_TOPICS).flat().includes(label) && getArticleContractCodeBlocks(content).some(({language}) => language === 'redis')) {
+    const command = label.split(' ')[0]
+    return getArticleContractCodeBlocks(content).some(({language, code}) => language === 'redis' &&
+      new RegExp(`^\\s*${command}\\b`, 'imu').test(lexArticleContractCode(code, language).executable) &&
+      (!label.includes(' ') || new RegExp(`^\\s*SET\\s+[^\\n]*\\s${label.split(' ')[1]}(?:\\s|$)`, 'imu').test(lexArticleContractCode(code, language).executable)))
+  }
   if (/^(?:resultMap|association|collection|discriminator|choose|where|trim|set|foreach|selectKey)$/u.test(label)) {
     return getArticleContractCodeBlocks(content).some(({code, language}) => language === 'xml' &&
       new RegExp(`<${label}(?=\\s|>)`, 'u').test(lexArticleContractCode(code, language).executable))
@@ -4634,18 +4673,18 @@ test('Java course keeps the expected Markdown files, article counts, chapters, a
 
   assert.equal(
     markdownPaths.length,
-    115,
-    'rule java-markdown-count: expected 115 Markdown files',
+    121,
+    'rule java-markdown-count: expected 121 Markdown files',
   )
   assert.equal(
     markdownPaths.filter((file) => !file.endsWith('/index.md')).length,
-    113,
-    'rule java-article-count: expected 113 course articles',
+    118,
+    'rule java-article-count: expected 118 course articles',
   )
   assert.equal(
     chapterDirectories.length,
-    14,
-    'rule java-chapter-count: expected 14 chapter directories',
+    15,
+    'rule java-chapter-count: expected 15 chapter directories',
   )
   assert.deepEqual(
     chapterDirectories,
@@ -4703,7 +4742,7 @@ int first = 1;
     [valid + '\n## 常用用法\n', 'expected exactly one exact "## 常用用法" heading, found 2'],
     [valid.replace('需要读取第一个结果时使用这个入口。', '- 先看列表'), 'first non-empty block must be a purpose sentence'],
     [valid.replace('需要读取第一个结果时使用这个入口。', '太短。'), 'purpose must be one complete sentence of at least 10 characters'],
-    [valid.replace('```java', '```text'), 'purpose sentence must be followed by a java/sql/xml fence'],
+    [valid.replace('```java', '```text'), 'purpose sentence must be followed by a java/sql/xml/shell/redis fence'],
     [valid.replace('int first = 1;', '// 只有注释'), 'example needs real non-comment code'],
     [valid.replace('// 输出：1', '// 普通注释'), 'example needs a standalone output/result line'],
     [valid.replace('`first`：读取第一个值', '`first`/`second`：两个独立入口'), 'combined API heading is not in the atomic-operation allowlist'],
@@ -4740,7 +4779,7 @@ test('List iterator and remove examples show calls, state, and output', () => {
   assert.match(removeExample, /\/\/ numbers：\[10, 20, 30\][\s\S]*remove\(1\)[\s\S]*remove\(Integer\.valueOf\(30\)\)[\s\S]*\/\/ 输出：\[10\]/u)
 })
 
-test('all 113 Java articles keep the unified API heading format', () => {
+test('all 118 Java articles keep the unified API heading format', () => {
   const violations = []
   for (const relativePath of ARTICLE_PATHS) {
     const { body } = readMarkdown(relativePath)

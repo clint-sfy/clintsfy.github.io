@@ -32,6 +32,16 @@ const EXPECTED_CHAPTER_IDS = [
   '15-Redis',
 ]
 
+test('Redis core inventory activates five articles and a valid legacy target', () => {
+  const chapter = JAVA_COURSE_CHAPTERS.find(entry => entry.id === '15-Redis')
+  const files = ['01-基础连接与数据模型.md', '02-String与计数器.md', '03-Hash与对象字段.md', '04-List-Set与Sorted-Set.md', '05-Bitmap-HyperLogLog-GEO与Stream.md']
+  assert.ok(existsSync('docs/courses/java/15-Redis/index.md'), 'missing Redis index')
+  for (const file of files) assert.ok(existsSync(`docs/courses/java/15-Redis/${file}`), `missing ${file}`)
+  assert.deepEqual(getJavaCourseItems([chapter])[0].items.map(item => item.link), files.map(file => `/courses/java/15-Redis/${file.slice(0, -3)}`))
+  const legacy = REDIRECTS.find(entry => entry.source.includes('14-Redis'))
+  assert.equal(legacy.target, '/courses/java/15-Redis/01-基础连接与数据模型')
+})
+
 test('MySQL foundation inventory exposes the index and four canonical articles', () => {
   const chapter = JAVA_COURSE_CHAPTERS.find((entry) => entry.id === '11-MySQL-8')
   const names = ['01-环境连接与数据库对象', '02-表设计与DDL', '03-数据类型字符集与时区', '04-数据写入更新与删除']
@@ -189,7 +199,7 @@ test('Java sidebar uses the migrated canonical inventory', () => {
     ['工程实践', 5, true],
     ['设计与项目', 1, true],
     ['后端工程', 19, true],
-    ['Redis', 0, true],
+    ['Redis', 5, true],
   ]
 
   assert.deepEqual(
