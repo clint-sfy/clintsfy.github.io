@@ -260,7 +260,7 @@ XRANGE lab:{core}:stream - +
 # 输出：两个 ID、整数 1；仅剩 2-0/kind/paid。
 ```
 
-修剪删除历史数据，确认重放与消费进度后才用于生产；= 精确裁剪，~ 近似裁剪可能保留更多。O(移除条数)，消费组 pending 引用和载荷保留另有边界。 官方参考：[XTRIM](https://redis.io/docs/latest/commands/xtrim/)。
+修剪删除历史数据，确认重放与消费进度后才用于生产；= 精确裁剪，~ 近似裁剪可能保留更多。O(移除条数)。有消费组时，默认 KEEPREF 可删除载荷而留下 PEL 中的 pending 引用，不能靠引用恢复载荷；引用策略只在[消费组 XTRIM 章节](./10-发布订阅与Stream消费组#xtrim-keepref-裁剪载荷与保留-pel-的区别)讲解。官方参考：[XTRIM](https://redis.io/docs/latest/commands/xtrim/)。
 
 ## 易混点
 

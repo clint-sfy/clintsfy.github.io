@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import type { DefaultTheme } from 'vitepress';
 
 export interface JavaCourseArticle {
@@ -50,9 +49,8 @@ const article = (
 /**
  * The sole source of order for the Java learning route.
  *
- * Entries for chapters that are being written in later tasks intentionally live
- * here from the beginning. The sidebar includes an article only after its
- * canonical Markdown file exists.
+ * Every entry has a published canonical Markdown file. Inventory tests keep
+ * the manifest, files and sidebar synchronized.
  */
 export const JAVA_COURSE_CHAPTERS: readonly JavaCourseChapter[] = [
   createChapter('01-Java基础', 'Java基础', [
@@ -229,32 +227,23 @@ function addOrderNumber(groups: DefaultTheme.SidebarItem[]): void {
   }
 }
 
-export interface JavaCourseSidebarOptions {
-  /** Injectable for tests and migration fixtures; defaults to the real file system. */
-  readonly fileExists?: (file: string) => boolean;
-}
-
 /**
  * Build the Java sidebar in manifest order.
  *
  * The optional argument is useful for callers that provide a selected copy of
  * the manifest. Its values are treated as a set of chapter IDs; the canonical
  * manifest still supplies both ordering and article metadata, so shuffling the
- * copy cannot change navigation order. Planned entries appear once their
- * canonical Markdown files are created.
+ * copy cannot change navigation order.
  */
 export function getJavaCourseItems(
   selectedChapters: readonly JavaCourseChapter[] = JAVA_COURSE_CHAPTERS,
-  options: JavaCourseSidebarOptions = {},
 ): DefaultTheme.SidebarItem[] {
   const selectedIds = new Set(selectedChapters.map((chapter) => chapter.id));
   const chapters = JAVA_COURSE_CHAPTERS.filter((chapter) => selectedIds.has(chapter.id));
-  const fileExists = options.fileExists ?? existsSync;
   let total = 0;
 
   const groups = chapters.map((chapter) => {
     const items = chapter.articles
-      .filter((article) => fileExists(article.file))
       .map((article) => ({ text: article.title, link: article.route }));
     total += items.length;
 

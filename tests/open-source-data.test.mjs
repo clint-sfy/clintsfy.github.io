@@ -12,7 +12,7 @@ import openSourceLoader, {
   createOpenSourceDataLoader,
   resolveOpenSourceDocsRoot,
 } from '../docs/.vitepress/theme/data/open-source.data.ts'
-import { getJavaCourseItems } from '../docs/.vitepress/config/java-course.ts'
+import { JAVA_COURSE_CHAPTERS, getJavaCourseItems } from '../docs/.vitepress/config/java-course.ts'
 
 const EXPECTED_JAVA_ARTICLES_BY_CHAPTER = {
   '15-Redis': ['index.md', '01-基础连接与数据模型.md', '02-String与计数器.md', '03-Hash与对象字段.md', '04-List-Set与Sorted-Set.md', '05-Bitmap-HyperLogLog-GEO与Stream.md', '06-Key过期扫描与删除.md', '07-事务Watch-Pipeline与Lua.md', '08-持久化内存淘汰与数据安全.md', '09-缓存穿透击穿雪崩与一致性.md', '10-发布订阅与Stream消费组.md', '11-分布式锁租约与Fencing-Token.md', '12-Spring-Cache与缓存抽象.md', '13-RedisTemplate序列化与连接管理.md', '14-主从哨兵与Cluster.md', '15-性能诊断监控与生产清单.md'],
@@ -537,6 +537,11 @@ test('Java course keeps the exact migrated path set and 01-10 quality range', ()
   )
   assert.deepEqual(actualChapterPaths, chapterPaths, 'the Java chapter directory range must stay exact')
   assert.deepEqual(actualChapterCounts, EXPECTED_JAVA_CHAPTER_COUNTS, 'the Java chapter counts must stay exact')
+  assert.deepEqual(
+    JAVA_COURSE_CHAPTERS.map(chapter => chapter.id),
+    Object.keys(EXPECTED_JAVA_ARTICLES_BY_CHAPTER).sort(),
+    'published chapters must follow 01-15 manifest order',
+  )
 
   const qualityPaths = javaPaths.filter((file) =>
     /^docs\/courses\/java\/(?:0[1-9]-|10-)/u.test(file) && file !== 'docs/courses/java/index.md',

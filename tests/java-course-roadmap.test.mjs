@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { test } from 'node:test'
 
@@ -168,6 +168,63 @@ test('Java roadmap manifest keeps the exact 01-15 chapter order', () => {
     assert.match(article.file, /^docs\/courses\/java\//u)
     assert.ok(article.title, `article ${article.file} should have a title`)
   }
+})
+
+test('completed Java inventory, sidebar and local links resolve in manifest order', () => {
+  const chaptersOnDisk = readdirSync('docs/courses/java', { withFileTypes: true })
+    .filter(entry => entry.isDirectory()).map(entry => entry.name)
+  assert.deepEqual(chaptersOnDisk.sort(), [...EXPECTED_CHAPTER_IDS].sort())
+  const sidebar = getJavaCourseItems()
+  const allArticles = JAVA_COURSE_CHAPTERS.flatMap(chapter => chapter.articles)
+  assert.equal(JAVA_COURSE_CHAPTERS.find(chapter => chapter.id === '11-MySQL-8').articles.length, 12)
+  assert.equal(JAVA_COURSE_CHAPTERS.find(chapter => chapter.id === '15-Redis').articles.length, 15)
+  assert.equal(new Set(allArticles.map(article => article.title)).size, allArticles.length)
+  assert.equal(new Set(allArticles.map(article => article.route)).size, allArticles.length)
+  assert.deepEqual(
+    sidebar.flatMap(group => group.items.map(item => item.link)),
+    allArticles.map(article => article.route),
+  )
+  for (const chapter of JAVA_COURSE_CHAPTERS) {
+    const markdown = readdirSync(`docs/courses/java/${chapter.id}`)
+      .filter(file => file.endsWith('.md') && file !== 'index.md')
+      .map(file => `docs/courses/java/${chapter.id}/${file}`)
+    assert.deepEqual(markdown.sort(), chapter.articles.map(article => article.file).sort(), `${chapter.id} orphan or missing article`)
+  }
+  assert.equal(existsSync('docs/courses/java/14-后端工程/13-MySQL-8.0.md'), false)
+  assert.equal(existsSync('docs/courses/java/14-后端工程/14-Redis.md'), false)
+  const files = ['docs/courses/java/index.md', ...JAVA_COURSE_CHAPTERS.map(chapter => `docs/courses/java/${chapter.id}/index.md`), ...allArticles.map(article => article.file)]
+    .filter(file => existsSync(file))
+  for (const file of files) {
+    const markdown = readFileSync(file, 'utf8')
+    for (const [, target] of markdown.matchAll(/\]\(([^\s)]+)(?:\s+[^)]*)?\)/gu)) {
+      if (/^(?:https?:|mailto:|#)/u.test(target)) continue
+      const pathname = decodeURIComponent(target.split('#')[0].split('?')[0])
+      const path = pathname.startsWith('/courses/java/')
+        ? `docs${pathname}`
+        : resolve(dirname(file), pathname)
+      assert.ok(existsSync(path) || existsSync(`${path}.md`), `${file} links to missing ${target}`)
+    }
+  }
+  for (const entry of REDIRECTS) {
+    assert.ok(allArticles.some(article => article.route === entry.target && existsSync(article.file)), `${entry.source} redirects to missing ${entry.target}`)
+  }
+  const order = allArticles.map(article => article.route)
+  assert.ok(order.indexOf('/courses/java/11-MySQL-8/12-Java-JDBC与MyBatis衔接') < order.indexOf('/courses/java/12-工程实践/02-JDBC与事务'))
+  assert.ok(order.indexOf('/courses/java/11-MySQL-8/12-Java-JDBC与MyBatis衔接') < order.indexOf('/courses/java/14-后端工程/03-Spring-AOP与声明式事务'))
+  assert.ok(order.indexOf('/courses/java/14-后端工程/19-Spring-Cache-Caffeine与Redisson') < order.indexOf('/courses/java/15-Redis/01-基础连接与数据模型'))
+})
+
+test('Java entry presents completed MySQL and Redis chapters and core workflow boundaries', () => {
+  const entry = readFileSync('docs/courses/java/index.md', 'utf8')
+  assert.match(entry, /\[MySQL 8\]\(\/courses\/java\/11-MySQL-8\/\)/u)
+  assert.match(entry, /\[Redis\]\(\/courses\/java\/15-Redis\/\)/u)
+  assert.doesNotMatch(entry, /整理中|规划中|内容补齐后/u)
+  const trim = readFileSync('docs/courses/java/15-Redis/05-Bitmap-HyperLogLog-GEO与Stream.md', 'utf8')
+  assert.match(trim, /默认 KEEPREF[^\n]*载荷[^\n]*PEL/u)
+  const diagnostics = readFileSync('docs/courses/java/15-Redis/15-性能诊断监控与生产清单.md', 'utf8')
+  assert.match(diagnostics, /slowlog_commands_[^\n]*8\.8/u)
+  assert.match(diagnostics, /maxmemory_policy[^\n]*maxmemory-policy/u)
+  assert.match(diagnostics, /LATENCY DOCTOR[^\n]*人类可读/u)
 })
 
 test('Java sidebar follows canonical order even when a copied manifest is shuffled', () => {

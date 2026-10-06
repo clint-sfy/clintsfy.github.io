@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
 import fg from 'fast-glob'
 import matter from 'gray-matter'
+import { JAVA_COURSE_CHAPTERS } from '../docs/.vitepress/config/java-course.ts'
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const BACKEND_PRODUCTION_TOPICS = JSON.parse(readFileSync(join(REPO_ROOT, 'tests/data/backend-production-topics.json'), 'utf8'))
@@ -521,6 +522,13 @@ const REDIS_RELIABILITY_TOPICS = {
   '09-缓存穿透击穿雪崩与一致性.md': { name: 'Redis cache failure', topics: ['空值缓存', 'Bloom', 'BF.ADD', 'BF.EXISTS', '互斥重建', 'jitter', '双删'], boundaries: ['误判', '幂等', '租约', '不保证强一致性', '数据库'] },
   '10-发布订阅与Stream消费组.md': { name: 'Redis messaging', topics: ['Pub/Sub', 'XGROUP', 'XREADGROUP', 'XACK', 'XPENDING', 'XAUTOCLAIM', '幂等', 'XTRIM KEEPREF'], boundaries: ['at-most-once', 'PEL', '重试', '8.2', '载荷', 'ACKED'] },
 }
+const REDIS_LOCAL_BOUNDARIES = {
+  '06-Key过期扫描与删除.md': [['`SCAN`', ['重复', 'COUNT']], ['`UNLINK`', ['异步']], ['`FLUSHDB`', ['危险']]],
+  '07-事务Watch-Pipeline与Lua.md': [['`EXEC`', ['不回滚']], ['`Pipeline`', ['非原子']], ['`EVAL`', ['同槽']]],
+  '08-持久化内存淘汰与数据安全.md': [['`BGSAVE`', ['fork']], ['AOF 的 fsync', ['everysec']], ['maxmemory 与淘汰', ['noeviction', '回滚']]],
+  '09-缓存穿透击穿雪崩与一致性.md': [['`BF.EXISTS`', ['权威数据库']], ['`SET NX`', ['租约']], ['`DEL`', ['不保证强一致性']]],
+  '10-发布订阅与Stream消费组.md': [['`SUBSCRIBE`', ['at-most-once']], ['`XREADGROUP`', ['PEL']], ['`XTRIM KEEPREF`', ['8.2', '载荷', 'ACKED']]],
+}
 for (const [file, gate] of Object.entries(REDIS_RELIABILITY_TOPICS)) {
   test(`${gate.name} keeps searchable workflows and safety contracts`, () => {
     const path = `docs/courses/java/15-Redis/${file}`
@@ -530,6 +538,12 @@ for (const [file, gate] of Object.entries(REDIS_RELIABILITY_TOPICS)) {
     const headings = getArticleContractHeadings(article.body, 3).map(({ heading }) => heading)
     for (const topic of gate.topics) assert.ok(headings.some(heading => heading.includes(topic)), `${file}: searchable H3 ${topic}`)
     for (const boundary of gate.boundaries) assert.ok(article.body.includes(boundary), `${file}: ${boundary}`)
+    const sections = getArticleContractH3Subsections(getArticleContractSection(article.body, '常用用法'))
+    for (const [headingPart, terms] of REDIS_LOCAL_BOUNDARIES[file]) {
+      const matches = sections.filter(section => section.heading.includes(headingPart))
+      assert.equal(matches.length, 1, `${file}: one local ${headingPart} workflow`)
+      for (const term of terms) assert.ok(matches[0].content.includes(term), `${file}: ${headingPart} local ${term}`)
+    }
     assert.match(article.body, /Redis 8/u)
     assert.match(article.body, /https:\/\/redis\.io\/docs\//u)
     assert.doesNotMatch(article.body, /RuoYi|若依/iu)
@@ -6033,7 +6047,10 @@ test('01-10 Java articles provide two answered review questions and no deprecate
 })
 
 test('All expected Java pages keep Java cross-links free of dead routes', () => {
-  const articleRoutes = new Set(ARTICLE_PATHS.map(relativeRoute))
+  const articleRoutes = new Set([
+    ...ARTICLE_PATHS.map(relativeRoute),
+    ...JAVA_COURSE_CHAPTERS.map(chapter => `/courses/java/${chapter.id}/`),
+  ])
   const brokenLinks = []
   let linkCount = 0
 
