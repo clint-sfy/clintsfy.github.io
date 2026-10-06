@@ -119,3 +119,28 @@ JDK20编译器`javac --release 20`成功编译JDBC的12个Java方法体片段及
 | JDBC networkTimeout复位 | 原 timeout getter 位于保护范围；即使 getter 失败也关闭示例 Executor；复位异常附加到原 SQLException，不替代原失败 | [JDK20 Connection](https://docs.oracle.com/en/java/javase/20/docs/api/java.sql/java/sql/Connection.html)；代码路径静态复核通过，当前环境仅有 `javac 1.8.0_221`，未能执行 `--release 20` 编译 |
 
 红测先以缺少 Flyway 页面失败；新增文章、H3/API 格式和严格文章合同测试转绿。全量 `pnpm test` 为 96/96 通过，VitePress build 成功（约 58 秒；存在既有 chunk-size 和语法高亮语言提示）。构建生成的 18 个 `docs/public/courses/java` 兼容页已删除。JDK20 编译与数据库集成执行仍未验证；本机只有 JDK8，未安装或启动数据库。独立审稿应检查迁移命令在锁定 Flyway 版本的参数兼容性、池指标的 Actuator 实际绑定及事务拦截器具体顺序。
+
+### Task 9：Spring 后端生产扩展自审
+
+第 14 章新增 13–19 七篇，操作 H3 数依次为 6、9、6、19、8、6、7，共 61；51 个 Java 片段与 10 个原生 MyBatis XML 片段。结构/API 标题覆盖由测试验证，专业准确性按以下矩阵单独审阅；自审不是独立审稿，也不等同生产集成测试。
+
+| 文章/主题 | 可独立复核的主张 | 官方依据 | 自审证据与限制 |
+| --- | --- | --- | --- |
+| 13 OpenAPI | 文档注解不执行响应映射，Boot 3/4 的 springdoc 主版本须匹配 | [springdoc 配置与兼容矩阵](https://springdoc.org/) | 分组与定制器用独立对象断言；未启动文档端点 |
+| 13 错误契约 | ProblemDetail.status 决定状态，扩展 code 与 correlationId 不替代 HTTP 状态；公开 detail 脱敏 | [Spring 错误响应](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-ann-rest-exceptions.html) | 409/code 本地断言；404 advice 用 stand-alone MockMvc 验证，未加载完整安全链 |
+| 14 测试边界 | Jupiter 生命周期隔离可变数据；严格 stub/verify 保护业务边界，时间用 Clock | [JUnit 5 指南](https://docs.junit.org/5.13.4/user-guide/)、[Mockito API](https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html) | 金额、发送次数、失败与时间规则有独立断言；JUnit 声明类只编译，未运行完整 Jupiter discovery |
+| 14 回滚 | RANDOM_PORT 服务器线程、异步、REQUIRES_NEW、外部 Redis 不受测试线程事务回滚统一清理 | [Boot 测试应用](https://docs.spring.io/spring-boot/3.4/reference/testing/spring-boot-applications.html) | 文章明确线程与资源边界；完整 Boot/数据库事务场景未执行 |
+| 15 容器 | static 容器类内共享但不保证数据隔离；动态地址先于上下文，端口就绪不等于业务就绪 | [Jupiter 生命周期](https://java.testcontainers.org/test_framework_integration/junit_5/)、[Boot Testcontainers](https://docs.spring.io/spring-boot/reference/testing/testcontainers.html) | 生命周期、MySQL/Redis、属性、service connection 与 wait 示例编译；Docker engine 不可用，全部容器运行未执行 |
+| 16 映射 | 每层 id 定义身份，Map collection 需明确 javaType；discriminator 分支不自动继承关联 | [Mapper XML](https://mybatis.org/mybatis-3/sqlmap-xml.html) | 真实 MyBatis 解析发现 collection 缺 javaType 并修正；结果行合并与数据库查询尚未执行 |
+| 16 动态 SQL | choose/where/trim/set/foreach 不提供授权；空集合范围显式定义；参数与排序白名单分开 | [Dynamic SQL](https://mybatis.org/mybatis-3/dynamic-sql.html) | BoundSql 固定 PAID/[7,8]，检查三个参数与没有值拼接；XML 风险提示和注释假标签有负例 |
+| 16 批次/缓存/插件 | flush 不等于 commit；clearCache 不更新快照；L2 namespace 外写可能陈旧，分页行不等于分页根对象 | [Java API](https://mybatis.org/mybatis-3/java-api.html)、[MP 分页](https://baomidou.com/en/plugins/pagination/)、[乐观锁](https://baomidou.com/en/plugins/optimistic-locker/) | 插件、Wrapper、TypeHandler 本地验证；BATCH、缓存失效、N+1、生成键和乐观冲突需要真实 MySQL |
+| 17 HTTP | 连接/池等待/响应/整体预算分开；取消不证明远端回滚，非幂等写不能盲重试 | [Spring REST 客户端](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html)、[Reactor Netty](https://projectreactor.io/docs/netty/release/reference/http-client.html) | 客户端与池构造检查；网络状态/过大响应/取消测试未执行，教学地址没有假称成功 |
+| 17 韧性 | Reactor 重试次数与 Resilience4j attempts 含义不同；熔断、并发隔离与速率许可职责不同 | [Retry](https://resilience4j.readme.io/docs/retry)、[CircuitBreaker](https://resilience4j.readme.io/docs/circuitbreaker)、[Bulkhead](https://resilience4j.readme.io/docs/bulkhead)、[RateLimiter](https://resilience4j.readme.io/docs/ratelimiter) | 两次尝试与三类装饰器成功路径本地验证；饱和/半开恢复/多实例配额未执行 |
+| 18 观测 | 暴露不是鉴权，liveness 不应跟随共享依赖失败；标签有限，分位数不能跨实例平均 | [Actuator endpoints](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html)、[Metrics](https://docs.spring.io/spring-boot/3.4/reference/actuator/metrics.html) | Counter/Timer/Gauge 确定性输入验证；Prometheus/探针/优雅停机/告警未实测 |
+| 18 关联 | Observation 需 handler/exporter；跨线程上下文不自动传播，MDC 恢复外层值 | [Observation](https://docs.micrometer.io/micrometer/reference/observation.html) | observe 结果与支持 MDC 的 provider 本地断言；跨服务追踪未执行 |
+| 19 缓存 | condition/unless/sync、自调用及提交时序有边界；refresh 允许旧值并不保证周期最新 | [Cache annotations](https://docs.spring.io/spring-framework/reference/integration/cache/annotations.html)、[Caffeine Refresh](https://github.com/ben-manes/caffeine/wiki/Refresh) | Caffeine 容量/统计和显式 refresh 本地验证；Spring 代理/事务与两级失效未集成执行 |
+| 19 锁 | lease/watchdog 不能保证暂停后写入安全，资源端 fencing 与数据库约束仍必需 | [Redisson 锁](https://redisson.pro/docs/data-and-services/locks-and-synchronizers/) | 两种租约路径/所有权释放可编译；真实 Redis、多实例和故障分区未执行 |
+
+Redis 的三处前向引用当前保留明确文章名称和规划路径，不生成指向尚不存在页面的链接；对应 Redis 文章上线时应转为真实链接。章节 manifest 已预留七篇 metadata，本批无需另改顺序或标签。验证工具使用独立的 `.superpowers/sdd/2026-10-05-java-learning-roadmap/task09-compile`，不增加站点生产依赖；JDK 20 位于 `C:/MySoftware/Java/jdk-20.0.2`，PATH 的 JDK 8 不代表机器没有 JDK 20。
+
+Task 9 最终证据（2026-10-06，Asia/Shanghai）：JDK20 `--release 20` 编译 51/51，真实依赖下独立运行断言 28/28（含 MyBatis 解析与 BoundSql）；全量 `pnpm test` 101/101，`pnpm build` 退出 0（122.15 秒），`git diff --check` 无错误。七篇构建 HTML 均有学习目标/常用用法标题。旧路径目标目前 17/18 已构建，原 Redis 跳转目标 `/courses/java/15-Redis/01-基础连接与数据模型` 属于 Task 10 尚未创建，不能将其报告为可达；生成的 18 个兼容页按重定向表精确清理，可由构建重新生成。Node loader、chunk-size 与既有高亮语言提示仍存在。数据库/容器/网络服务/多实例故障测试未执行，独立专业审稿和最终发布检查留给后续任务。

@@ -1,0 +1,30 @@
+{
+  "13-OpenAPI与统一错误契约.md": {
+    "apis": ["GroupedOpenApi", "@Operation", "OpenApiCustomizer", "ProblemDetail.forStatusAndDetail", "@RestControllerAdvice", "@Valid"],
+    "boundaries": ["分页", "排序", "幂等", "错误码", "correlation", "脱敏"]
+  },
+  "14-JUnit5-Mockito与MockMvc.md": {
+    "apis": ["@BeforeEach", "Assertions.assertThrows", "@ParameterizedTest", "Mockito.when", "Mockito.verify", "@WebMvcTest", "MockMvc.perform", "@SpringBootTest", "Clock.fixed"],
+    "boundaries": ["STRICT_STUBS", "测试金字塔", "回滚", "独立线程"]
+  },
+  "15-Testcontainers集成测试.md": {
+    "apis": ["@Testcontainers", "MySQLContainer", "GenericContainer", "@DynamicPropertySource", "@ServiceConnection", "Wait.forListeningPort"],
+    "boundaries": ["Flyway", "清理", "Docker", "CI", "复用", "未执行"]
+  },
+  "16-MyBatis生产边界.md": {
+    "apis": ["resultMap", "association", "collection", "discriminator", "choose", "where", "trim", "set", "foreach", "selectKey", "XMLMapperBuilder.parse", "SqlSession.flushStatements", "SqlSession.clearCache", "PaginationInnerInterceptor", "LambdaQueryWrapper", "OptimisticLockerInnerInterceptor", "BaseTypeHandler", "@Intercepts"],
+    "boundaries": ["association", "collection", "discriminator", "choose", "trim", "where", "set", "foreach", "selectKey", "#{", "${", "一级缓存", "二级缓存", "N+1", "白名单", "脱敏"]
+  },
+  "17-RestClient-WebClient与HTTP韧性.md": {
+    "apis": ["RestClient", "HttpClient.newBuilder", "ConnectionProvider.builder", "WebClient", "Retry.backoff", "CircuitBreaker.ofDefaults", "Bulkhead.ofDefaults", "RateLimiter.ofDefaults"],
+    "boundaries": ["URI", "连接复用", "超时", "取消", "幂等键", "抖动", "非幂等", "响应体"]
+  },
+  "18-Actuator-Micrometer与可观测性.md": {
+    "apis": ["Health.up", "Counter.builder", "Timer.builder", "Gauge.builder", "Observation.createNotStarted", "MDC.put"],
+    "boundaries": ["management.endpoints.web.exposure.include", "readiness", "liveness", "Prometheus", "高基数", "优雅停机", "SLO"]
+  },
+  "19-Spring-Cache-Caffeine与Redisson.md": {
+    "apis": ["@Cacheable", "@CachePut", "@CacheEvict", "Caffeine.newBuilder", "LoadingCache.refresh", "RLock.tryLock", "RLock.unlock"],
+    "boundaries": ["自调用", "condition", "unless", "sync", "两级缓存", "最终一致性", "watchdog", "租约", "fencing", "数据库约束"]
+  }
+}

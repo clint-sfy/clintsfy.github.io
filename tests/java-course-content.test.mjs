@@ -7,6 +7,53 @@ import fg from 'fast-glob'
 import matter from 'gray-matter'
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const BACKEND_PRODUCTION_TOPICS = JSON.parse(readFileSync(join(REPO_ROOT, 'tests/data/backend-production-topics.json'), 'utf8'))
+
+test('article contract recognizes executable qualified API names without accepting strings or unrelated receivers', () => {
+  assert.equal(isArticleContractOperationHeading('@Valid', '```java\n@jakarta.validation.Valid String name;\n```'), true)
+  assert.equal(isArticleContractOperationHeading('@Valid', '```java\nString name = "@jakarta.validation.Valid";\n```'), false)
+  assert.equal(isArticleContractOperationHeading('OpenApiCustomizer', '```java\norg.springdoc.core.customizers.OpenApiCustomizer customizer = api -> {};\ncustomizer.customise(document);\n```'), true)
+  assert.equal(isArticleContractOperationHeading('OpenApiCustomizer', '```java\nString customizer = "OpenApiCustomizer";\nother.customise(document);\n```'), false)
+  assert.equal(isArticleContractOperationHeading('BaseTypeHandler', '```java\nclass StateHandler extends org.apache.ibatis.type.BaseTypeHandler<State> {}\n```'), true)
+  assert.equal(isArticleContractOperationHeading('BaseTypeHandler', '```java\nString source = "extends BaseTypeHandler<State>";\n```'), false)
+  assert.equal(isArticleContractOperationHeading('Configuration.getMappedStatement', '```java\norg.apache.ibatis.session.Configuration configuration = new org.apache.ibatis.session.Configuration();\nconfiguration.getMappedStatement("find");\n```'), true)
+  assert.equal(isArticleContractOperationHeading('OptimisticLockerInnerInterceptor', '```java\nvar plugin = new com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor();\n```'), true)
+})
+
+test('article contract recognizes native MyBatis XML operations only in actual element markup', () => {
+  assert.equal(isArticleContractOperationHeading('resultMap', '```xml\n<resultMap id="order" type="map"><id property="id" column="id"/></resultMap>\n```'), true)
+  assert.equal(isArticleContractOperationHeading('resultMap', '```xml\n<!-- <resultMap id="order"/> -->\n<mapper namespace="lesson"/>\n```'), false)
+  assert.equal(isArticleContractOperationHeading('resultMap', '```xml\n<mapper namespace="resultMap"/>\n```'), false)
+  assert.equal(isArticleContractOperationHeading('resultMap', '```xml\n<![CDATA[<resultMap id="order"/>]]>\n```'), false)
+  const example = '## 常用用法\n\n### `resultMap`：映射订单\n\n用于将订单主键和状态映射为明确的属性。\n\n```xml\n<resultMap id="order" type="map"><id property="id" column="id"/></resultMap>\n<!-- 结果：id=7 映射为订单主键。 -->\n```'
+  assert.deepEqual(inspectApiHeadingFormat(example), [])
+  assert.ok(inspectApiHeadingFormat(example.replace('结果：id=7', '普通说明：id=7')).some(issue => issue.includes('standalone output/result')))
+})
+
+test('article contract checks MyBatis XML write risk at the executable SQL line', () => {
+  const code = '<update id="change">\nUPDATE orders\n<set>state=#{state}</set>\nWHERE id=#{id}\n</update>'
+  assert.deepEqual(getDangerousArticleContractOperations(code, 'xml').map(({operation}) => operation), ['UPDATE'])
+  assert.deepEqual(getDangerousArticleContractOperations('<!-- UPDATE orders SET state=1; -->\n<mapper namespace="lesson"/>', 'xml'), [])
+  assert.deepEqual(getDangerousArticleContractOperations('<update id="change"><![CDATA[\nUPDATE orders SET state=1\n]]></update>', 'xml').map(({operation}) => operation), ['UPDATE'])
+  assert.deepEqual(getDangerousArticleContractOperations('<select id="find">SELECT \'UPDATE orders\'</select>', 'xml'), [])
+})
+
+test('backend production topics keep seven searchable API contracts and explicit failure boundaries', () => {
+  const violations = []
+  for (const [file, gate] of Object.entries(BACKEND_PRODUCTION_TOPICS)) {
+    const path = `docs/courses/java/14-后端工程/${file}`
+    assert.ok(ARTICLE_CONTRACT_PATHS.has(path), `${file}: must remain in the strict article manifest`)
+    assert.ok(existsSync(join(REPO_ROOT, path)), `missing backend production article: ${file}`)
+    const article = readMarkdown(path)
+    violations.push(...inspectArticleContract(article, { path }))
+    const headings = getArticleContractHeadings(article.body, 3).map(({ heading }) => heading)
+    for (const api of gate.apis) assert.ok(headings.some((heading) => heading.startsWith(`\`${api}\``)), `${file}: searchable H3 ${api}`)
+    for (const boundary of gate.boundaries) assert.ok(article.body.includes(boundary), `${file}: boundary ${boundary}`)
+    assert.ok(article.body.includes('JDK 20'), `${file}: JDK baseline`)
+    assert.match(article.body, /https:\/\/(?:docs\.spring\.io|springdoc\.org|docs\.junit\.org|java\.testcontainers\.org|mybatis\.org|github\.com|redisson\.pro)/u)
+  }
+  assert.deepEqual(violations, [])
+})
 const JAVA_ROOT = join(REPO_ROOT, 'docs/courses/java')
 const JAVA_GLOB = 'docs/courses/java/**/*.md'
 const JAVA_INDEX_PATH = 'docs/courses/java/index.md'
@@ -149,6 +196,13 @@ const EXPECTED_ARTICLES_BY_CHAPTER = {
     '10-文件上传下载与资源安全.md',
     '11-Apache-POI-Excel导入导出.md',
     '12-Quartz定时任务.md',
+    '13-OpenAPI与统一错误契约.md',
+    '14-JUnit5-Mockito与MockMvc.md',
+    '15-Testcontainers集成测试.md',
+    '16-MyBatis生产边界.md',
+    '17-RestClient-WebClient与HTTP韧性.md',
+    '18-Actuator-Micrometer与可观测性.md',
+    '19-Spring-Cache-Caffeine与Redisson.md',
   ],
 }
 
@@ -308,6 +362,7 @@ const ARTICLE_CONTRACT_MANIFEST = {
     '快速回顾',
   ],
   entries: [
+    ...Object.keys(BACKEND_PRODUCTION_TOPICS).map((name) => ({ path: `docs/courses/java/14-后端工程/${name}`, source: 'new' })),
     ...['01-环境连接与数据库对象', '02-表设计与DDL', '03-数据类型字符集与时区', '04-数据写入更新与删除'].map((name) => ({ path: `docs/courses/java/11-MySQL-8/${name}.md`, source: 'new' })),
     ...['05-查询过滤排序与分页', '06-连接子查询与集合查询', '07-聚合CTE窗口函数与JSON', '08-约束与索引设计', '09-事务MVCC隔离级别与锁', '10-EXPLAIN慢SQL与性能优化'].map((name) => ({ path: `docs/courses/java/11-MySQL-8/${name}.md`, source: 'new' })),
     ...['11-用户权限备份与恢复', '12-Java-JDBC与MyBatis衔接'].map((name) => ({ path: `docs/courses/java/11-MySQL-8/${name}.md`, source: 'new' })),
@@ -975,6 +1030,8 @@ function inspectApiHeadingFormat(body) {
       ? codeLines.some((line) => /^\s*\/\/\s*(?:输出|结果|效果)：\s*\S/u.test(line))
       : language === 'shell'
         ? codeLines.some((line) => /^\s*#\s*(?:输出|结果|效果)：\s*\S/u.test(line))
+      : language === 'xml'
+        ? getLanguageComments('xml', codeLines.join('\n')).some(comment => /^(?:输出|结果|效果)：\s*\S/u.test(comment))
       : codeLines.some((line) => /^\s*--\s*(?:输出|结果|效果)：\s*\S/u.test(line))
         || lines.slice(close + 1).some((line) => /^\s*(?:输出|结果|效果)：\s*\S/u.test(line))
     if (!standaloneResult) violations.push(`${prefix} example needs a standalone output/result line`)
@@ -1813,6 +1870,14 @@ function stripArticleContractComments(code, language) {
 }
 
 function lexArticleContractCode(code, language) {
+  if (language === 'xml') {
+    const comments = [...code.matchAll(/<!--[\s\S]*?-->/gu)].map((match) => ({
+      value: match[0].slice(4, -3).trim(), start: match.index,
+      line: code.slice(0, match.index).split(/\r?\n/u).length - 1,
+    }))
+    const executable = code.replace(/<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>/gu, '').replace(/"[^"]*"|'[^']*'/gu, '""')
+    return { executable, semantic: executable, stringLiterals: [], comments }
+  }
   const lineCommentMarkers = language === 'java'
     ? ['//']
     : language === 'sql'
@@ -2099,6 +2164,10 @@ function getArticleContractJavaExecutable(content) {
 
 function isArticleContractOperationHeading(heading, content = '') {
   const label = getArticleContractOperationHeadingLabel(heading)
+  if (/^(?:resultMap|association|collection|discriminator|choose|where|trim|set|foreach|selectKey)$/u.test(label)) {
+    return getArticleContractCodeBlocks(content).some(({code, language}) => language === 'xml' &&
+      new RegExp(`<${label}(?=\\s|>)`, 'u').test(lexArticleContractCode(code, language).executable))
+  }
   const flywayOperation = label.match(/^flyway\.(info|migrate|validate|repair|baseline|clean)(?:\(\))?$/iu)
   if (flywayOperation) {
     const command = flywayOperation[1].toLowerCase()
@@ -2146,7 +2215,7 @@ function isArticleContractOperationHeading(heading, content = '') {
       language === 'sql' && new RegExp(`(?:^|[;\\n])\\s*${label}\\b`, 'imu').test(lexArticleContractCode(code, language).executable),
     )
   }
-  const sqlOrRedis = label.match(/^(SELECT|INSERT|UPDATE|DELETE|SET|GET|MGET|MSET|INCR|DECR|HSET|HGET|HMGET|HGETALL|HSCAN|LPUSH|RPUSH|LPOP|RPOP|SADD|SMEMBERS|ZADD|ZRANGE|EXISTS|EXPIRE|TTL|SCAN|FLUSHALL|FLUSHDB|KEYS|DEL|UNLINK|TRUNCATE|DROP|CREATE|ALTER|LOCK|UNLOCK|EXPLAIN|WITH|SHOW|DESCRIBE|MYSQLDUMP|BACKUP|RESTORE|EVAL|EVALSHA|SCRIPT|MONITOR|DEBUG|REPLICAOF|SLAVEOF|MIGRATE|SLOWLOG|INFO|LATENCY|MEMORY|CONFIG)(?:\s+(TABLE|DATABASE|INSTANCE|TABLES|INTO))?/iu)
+  const sqlOrRedis = label.match(/^(SELECT|INSERT|UPDATE|DELETE|SET|GET|MGET|MSET|INCR|DECR|HSET|HGET|HMGET|HGETALL|HSCAN|LPUSH|RPUSH|LPOP|RPOP|SADD|SMEMBERS|ZADD|ZRANGE|EXISTS|EXPIRE|TTL|SCAN|FLUSHALL|FLUSHDB|KEYS|DEL|UNLINK|TRUNCATE|DROP|CREATE|ALTER|LOCK|UNLOCK|EXPLAIN|WITH|SHOW|DESCRIBE|MYSQLDUMP|BACKUP|RESTORE|EVAL|EVALSHA|SCRIPT|MONITOR|DEBUG|REPLICAOF|SLAVEOF|MIGRATE|SLOWLOG|INFO|LATENCY|MEMORY|CONFIG)\b(?:\s+(TABLE|DATABASE|INSTANCE|TABLES|INTO))?/iu)
   if (sqlOrRedis) {
     const operationPattern = sqlOrRedis[1].replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
     const sources = getArticleContractCodeBlocks(content)
@@ -2177,7 +2246,7 @@ function isArticleContractOperationHeading(heading, content = '') {
   const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
 
   if (normalized.startsWith('@')) {
-    return new RegExp(`${escaped}\\b`, 'u').test(executable)
+    return new RegExp(`@(?:[A-Za-z_$][\\w$]*\\.)*${escaped.slice(1)}\\b`, 'u').test(executable)
   }
 
   const segments = normalized.split('.')
@@ -2214,7 +2283,10 @@ function isArticleContractOperationHeading(heading, content = '') {
     'Path', 'File', 'URI', 'URL', 'Optional', 'Stream', 'LocalDate', 'LocalTime',
     'LocalDateTime', 'Instant', 'Duration', 'Period', 'Pattern', 'Matcher', 'Class',
   ])
-  return new RegExp(`\\bnew\\s+${escaped}(?:\\s*<[^>]*>)?\\s*\\(`, 'u').test(executable) ||
+  const declared = executable.match(new RegExp(`\\b${escaped}(?:<[^;=]+>)?\\s+([A-Za-z_$][\\w$]*)\\s*=`, 'u'))?.[1]
+  if (declared && new RegExp(`\\b${declared}\\s*\\.\\s*[A-Za-z_$][\\w$]*\\s*\\(`, 'u').test(executable)) return true
+  if (new RegExp(`\\bextends\\s+(?:[A-Za-z_$][\\w$]*\\.)*${escaped}(?:\\s*<|\\s*\\{)`, 'u').test(executable)) return true
+  return new RegExp(`\\bnew\\s+(?:[A-Za-z_$][\\w$]*\\.)*${escaped}(?:\\s*<[^>]*>)?\\s*\\(`, 'u').test(executable) ||
     new RegExp(`\\b${escaped}\\s*\\.\\s*[A-Za-z_$][\\w$]*\\s*\\(`, 'u').test(executable) ||
     (builtInType.has(normalized) && new RegExp(`\\b${escaped}\\s+[A-Za-z_$][\\w$]*\\s*=`, 'u').test(executable))
 }
@@ -2515,6 +2587,19 @@ function getDangerousJavaArticleContractOperations(code) {
 }
 
 function getHardenedDangerousArticleContractOperations(code, language) {
+  if (language === 'xml') {
+    const sql = code.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gu, (_match, body) => `         ${body}   `)
+      .replace(/<!--[\s\S]*?-->|<[^>]+>/gu,
+      (markup) => markup.replace(/[^\n]/gu, ' '))
+    const occurrences = getArticleContractDirectDangerousOccurrences(sql, 'sql')
+    for (const match of lexArticleContractCode(sql, 'sql').executable.matchAll(/^\s*(UPDATE|DELETE)\b/gimu)) {
+      const lineIndex = getArticleContractLineIndex(sql, match.index + match[0].indexOf(match[1]))
+      if (!occurrences.some((entry) => entry.operation === match[1].toUpperCase() && entry.lineIndex === lineIndex)) {
+        occurrences.push({operation: match[1].toUpperCase(), lineIndex, source: 'xml-write'})
+      }
+    }
+    return occurrences
+  }
   if (!['sql', 'redis', 'shell', 'bash', 'sh', 'java'].includes(language)) return []
   if (language === 'java') return getDangerousJavaArticleContractOperations(code)
   return getArticleContractDirectDangerousOccurrences(code, language)
@@ -2615,10 +2700,10 @@ function inspectArticleContract(article, { path = 'article.md' } = {}) {
 
     const blocks = getArticleContractCodeBlocks(content)
     const supportedBlocks = blocks.filter(({ language }) =>
-      ['java', 'sql', 'redis', 'shell', 'bash', 'sh'].includes(language),
+      ['java', 'sql', 'redis', 'shell', 'bash', 'sh', 'xml'].includes(language),
     )
     if (supportedBlocks.length === 0) {
-      violations.push(`[example:code] ${prefix} needs java, SQL, or Redis CLI code`)
+      violations.push(`[example:code] ${prefix} needs Java, SQL, Redis CLI, shell, or native MyBatis XML code`)
       continue
     }
 
@@ -4543,13 +4628,13 @@ test('Java course keeps the expected Markdown files, article counts, chapters, a
 
   assert.equal(
     markdownPaths.length,
-    108,
-    'rule java-markdown-count: expected 108 Markdown files',
+    115,
+    'rule java-markdown-count: expected 115 Markdown files',
   )
   assert.equal(
     markdownPaths.filter((file) => !file.endsWith('/index.md')).length,
-    106,
-    'rule java-article-count: expected 106 course articles',
+    113,
+    'rule java-article-count: expected 113 course articles',
   )
   assert.equal(
     chapterDirectories.length,
@@ -4649,7 +4734,7 @@ test('List iterator and remove examples show calls, state, and output', () => {
   assert.match(removeExample, /\/\/ numbers：\[10, 20, 30\][\s\S]*remove\(1\)[\s\S]*remove\(Integer\.valueOf\(30\)\)[\s\S]*\/\/ 输出：\[10\]/u)
 })
 
-test('all 106 Java articles keep the unified API heading format', () => {
+test('all 113 Java articles keep the unified API heading format', () => {
   const violations = []
   for (const relativePath of ARTICLE_PATHS) {
     const { body } = readMarkdown(relativePath)
@@ -5057,7 +5142,7 @@ int first = numbers.get(0);
   )
 })
 
-test('all 106 Java articles put API purpose prose before examples and retain observable results', () => {
+test('all 113 Java articles put API purpose prose before examples and retain observable results', () => {
   const violations = []
   for (const relativePath of ARTICLE_PATHS) {
     const { body } = readMarkdown(relativePath)
