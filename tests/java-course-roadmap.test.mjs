@@ -77,6 +77,24 @@ function stripMarkup(value) {
   return value.replace(/<[^>]+>/g, '')
 }
 
+function assertJavaEntryStageOrder(markdown) {
+  const lines = markdown.split(/\r?\n/u)
+  const start = lines.findIndex(line => line === '## 阶段路线')
+  assert.ok(start >= 0, 'Java entry needs a stage table')
+  const end = lines.findIndex((line, index) => index > start && line.startsWith('## '))
+  const stageLines = lines.slice(start + 1, end < 0 ? undefined : end)
+  const stageRows = stageLines.filter(line => /^\|\s*\d+\.\s/u.test(line))
+  const chapterIds = stageRows.flatMap(row =>
+    [...row.matchAll(/\]\(\/courses\/java\/([^/]+)\//gu)].map(match => match[1]),
+  )
+  const manifestIds = JAVA_COURSE_CHAPTERS.map(chapter => chapter.id)
+  const sidebarIds = getJavaCourseItems().map(group =>
+    group.items[0]?.link.match(/^\/courses\/java\/([^/]+)\//u)?.[1],
+  )
+  assert.deepEqual(chapterIds, manifestIds, 'stage-table chapter order must equal manifest order')
+  assert.deepEqual(chapterIds, sidebarIds, 'stage-table chapter order must equal sidebar order')
+}
+
 function collectLinks(items, result = []) {
   for (const item of items ?? []) {
     if (item.link) result.push(item)
@@ -225,6 +243,25 @@ test('Java entry presents completed MySQL and Redis chapters and core workflow b
   assert.match(diagnostics, /slowlog_commands_[^\n]*8\.8/u)
   assert.match(diagnostics, /maxmemory_policy[^\n]*maxmemory-policy/u)
   assert.match(diagnostics, /LATENCY DOCTOR[^\n]*人类可读/u)
+})
+
+test('Java entry stage table keeps the exact manifest and sidebar chapter sequence', () => {
+  const entry = readFileSync('docs/courses/java/index.md', 'utf8')
+  assertJavaEntryStageOrder(entry)
+
+  const reordered = entry.replace(
+    /(\| 7\. 工程实践 \| )([^\r\n]+)( \| Maven、JDBC)/u,
+    (_row, start, links, end) => `${start}${links
+      .replace('12-工程实践', 'TEMP-工程实践')
+      .replace('13-设计与项目', '12-工程实践')
+      .replace('TEMP-工程实践', '13-设计与项目')}${end}`,
+  )
+  assert.notEqual(reordered, entry, 'reorder fixture must change the stage table')
+  assert.throws(() => assertJavaEntryStageOrder(reordered), /stage-table chapter order/u)
+
+  const missing = entry.replace(/^\| 9\. Redis \|[^\r\n]*\r?\n/mu, '')
+  assert.notEqual(missing, entry, 'missing-row fixture must change the stage table')
+  assert.throws(() => assertJavaEntryStageOrder(missing), /stage-table chapter order/u)
 })
 
 test('Java sidebar follows canonical order even when a copied manifest is shuffled', () => {
