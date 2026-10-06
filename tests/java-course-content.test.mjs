@@ -61,6 +61,35 @@ test('backend production topics keep seven searchable API contracts and explicit
   assert.deepEqual(violations, [])
 })
 const JAVA_ROOT = join(REPO_ROOT, 'docs/courses/java')
+test('Redis workflow heading recognition requires executable native operations', () => {
+  for (const operation of ['MULTI', 'EXEC', 'WATCH', 'UNWATCH', 'BGSAVE', 'BGREWRITEAOF', 'SUBSCRIBE', 'PUBLISH', 'XGROUP', 'XREADGROUP', 'XACK', 'XPENDING', 'XAUTOCLAIM', 'XTRIM', 'BF.RESERVE']) {
+    assert.equal(isArticleContractOperationHeading(operation, `\`\`\`redis\n${operation} lab:key\n\`\`\``), true)
+    assert.equal(isArticleContractOperationHeading(operation, `\`\`\`redis\n# ${operation} lab:key\nGET lab:key\n\`\`\``), false)
+  }
+  assert.equal(isArticleContractOperationHeading('Pipeline', '```shell\nprintf input | redis-cli --pipe\n```'), true)
+  assert.equal(isArticleContractOperationHeading('Pipeline', '```shell\n# redis-cli --pipe\nredis-cli GET lab:key\n```'), false)
+})
+const REDIS_RELIABILITY_TOPICS = {
+  '06-Key过期扫描与删除.md': { name: 'Redis key', topics: ['EXPIRE', 'TTL', 'SCAN', 'UNLINK', '大 Key', 'KEYS', 'DEL', 'FLUSHDB'], boundaries: ['采样', '重复', 'COUNT', '异步', '危险'] },
+  '07-事务Watch-Pipeline与Lua.md': { name: 'Redis atomic', topics: ['MULTI', 'EXEC', 'WATCH', 'Pipeline', 'EVAL', 'EVALSHA', 'DISCARD', 'SCRIPT LOAD'], boundaries: ['null', '不回滚', '非原子', '阻塞', 'KEYS', '同槽'] },
+  '08-持久化内存淘汰与数据安全.md': { name: 'Redis persistence', topics: ['RDB', 'AOF', '混合持久化', 'maxmemory', '恢复'], boundaries: ['fork', 'fsync', 'everysec', 'noeviction', '回滚', '危险'] },
+  '09-缓存穿透击穿雪崩与一致性.md': { name: 'Redis cache failure', topics: ['空值缓存', 'Bloom', 'BF.ADD', 'BF.EXISTS', '互斥重建', 'jitter', '双删'], boundaries: ['误判', '幂等', '租约', '不保证强一致性', '数据库'] },
+  '10-发布订阅与Stream消费组.md': { name: 'Redis messaging', topics: ['Pub/Sub', 'XGROUP', 'XREADGROUP', 'XACK', 'XPENDING', 'XAUTOCLAIM', '幂等', 'XTRIM KEEPREF'], boundaries: ['at-most-once', 'PEL', '重试', '8.2', '载荷', 'ACKED'] },
+}
+for (const [file, gate] of Object.entries(REDIS_RELIABILITY_TOPICS)) {
+  test(`${gate.name} keeps searchable workflows and safety contracts`, () => {
+    const path = `docs/courses/java/15-Redis/${file}`
+    assert.ok(existsSync(join(REPO_ROOT, path)), `missing Redis article: ${file}`)
+    const article = readMarkdown(path)
+    assert.deepEqual(inspectArticleContract(article, { path }), [])
+    const headings = getArticleContractHeadings(article.body, 3).map(({ heading }) => heading)
+    for (const topic of gate.topics) assert.ok(headings.some(heading => heading.includes(topic)), `${file}: searchable H3 ${topic}`)
+    for (const boundary of gate.boundaries) assert.ok(article.body.includes(boundary), `${file}: ${boundary}`)
+    assert.match(article.body, /Redis 8/u)
+    assert.match(article.body, /https:\/\/redis\.io\/docs\//u)
+    assert.doesNotMatch(article.body, /RuoYi|若依/iu)
+  })
+}
 const REDIS_CORE_TOPICS = {
   '01-基础连接与数据模型.md': ['PING', 'AUTH', 'SELECT', 'TYPE', 'EXISTS'],
   '02-String与计数器.md': ['SET', 'SET NX', 'SET XX', 'GET', 'INCR', 'DECR', 'MGET', 'MSET', 'GETRANGE', 'SETRANGE', 'STRLEN'],
@@ -157,7 +186,7 @@ const CHAPTER_NAMES = [
 const QUALITY_CHAPTER_NAMES = CHAPTER_NAMES.slice(0, 10)
 
 const EXPECTED_ARTICLES_BY_CHAPTER = {
-  '15-Redis': Object.keys(REDIS_CORE_TOPICS),
+  '15-Redis': [...Object.keys(REDIS_CORE_TOPICS), ...Object.keys(REDIS_RELIABILITY_TOPICS)],
   '01-Java基础': [
     '01-开发环境与第一个程序.md',
     '02-基础语法与程序结构.md',
@@ -443,6 +472,7 @@ const ARTICLE_CONTRACT_MANIFEST = {
     '快速回顾',
   ],
   entries: [
+    ...Object.keys(REDIS_RELIABILITY_TOPICS).map(name => ({path: `docs/courses/java/15-Redis/${name}`, source: 'new'})),
     ...Object.keys(REDIS_CORE_TOPICS).map(name => ({path: `docs/courses/java/15-Redis/${name}`, source: 'new'})),
     ...Object.keys(BACKEND_PRODUCTION_TOPICS).map((name) => ({ path: `docs/courses/java/14-后端工程/${name}`, source: 'new' })),
     ...['01-环境连接与数据库对象', '02-表设计与DDL', '03-数据类型字符集与时区', '04-数据写入更新与删除'].map((name) => ({ path: `docs/courses/java/11-MySQL-8/${name}.md`, source: 'new' })),
@@ -2245,6 +2275,17 @@ function getArticleContractJavaExecutable(content) {
 }
 
 function isArticleContractOperationHeading(heading, content = '') {
+  const redisWorkflowLabel = getArticleContractOperationHeadingLabel(heading)
+  if (redisWorkflowLabel === 'Pipeline') {
+    return getArticleContractCodeBlocks(content).some(({ language, code }) =>
+      ['shell', 'bash', 'sh'].includes(language) && /\bredis-cli\b[^\n]*--pipe\b/u.test(lexArticleContractCode(code, language).executable))
+  }
+  const nativeWorkflow = redisWorkflowLabel.match(/^(MULTI|DISCARD|EXEC|WATCH|UNWATCH|BGSAVE|BGREWRITEAOF|SUBSCRIBE|PUBLISH|XGROUP|XREADGROUP|XACK|XPENDING|XAUTOCLAIM|XTRIM|BF\.(?:RESERVE|ADD|EXISTS))\b/u)
+  if (nativeWorkflow) {
+    const operation = nativeWorkflow[1].replace('.', '\\.')
+    return getArticleContractCodeBlocks(content).some(({ language, code }) =>
+      language === 'redis' && new RegExp(`^\\s*${operation}\\b`, 'mu').test(lexArticleContractCode(code, language).executable))
+  }
   const label = getArticleContractOperationHeadingLabel(heading)
   if (Object.values(REDIS_CORE_TOPICS).flat().includes(label) && getArticleContractCodeBlocks(content).some(({language}) => language === 'redis')) {
     const command = label.split(' ')[0]
@@ -4716,13 +4757,13 @@ test('Java course keeps the expected Markdown files, article counts, chapters, a
 
   assert.equal(
     markdownPaths.length,
-    121,
-    'rule java-markdown-count: expected 121 Markdown files',
+    126,
+    'rule java-markdown-count: expected 126 Markdown files',
   )
   assert.equal(
     markdownPaths.filter((file) => !file.endsWith('/index.md')).length,
-    118,
-    'rule java-article-count: expected 118 course articles',
+    123,
+    'rule java-article-count: expected 123 course articles',
   )
   assert.equal(
     chapterDirectories.length,
@@ -4822,7 +4863,7 @@ test('List iterator and remove examples show calls, state, and output', () => {
   assert.match(removeExample, /\/\/ numbers：\[10, 20, 30\][\s\S]*remove\(1\)[\s\S]*remove\(Integer\.valueOf\(30\)\)[\s\S]*\/\/ 输出：\[10\]/u)
 })
 
-test('all 118 Java articles keep the unified API heading format', () => {
+test('all 123 Java articles keep the unified API heading format', () => {
   const violations = []
   for (const relativePath of ARTICLE_PATHS) {
     const { body } = readMarkdown(relativePath)

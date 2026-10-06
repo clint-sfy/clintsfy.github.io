@@ -204,7 +204,7 @@ export const JAVA_COURSE_CHAPTERS: readonly JavaCourseChapter[] = [
     article('04-List-Set与Sorted-Set.md', 'List、Set 与 Sorted Set'),
     article('05-Bitmap-HyperLogLog-GEO与Stream.md', 'Bitmap、HyperLogLog、GEO 与 Stream'),
     article('06-Key过期扫描与删除.md', 'Key 过期、扫描与删除'),
-    article('07-事务Watch-Pipeline与Lua.md', '事务、Watch、Pipeline 与 Lua'),
+    article('07-事务Watch-Pipeline与Lua.md', '事务、WATCH、Pipeline 与 Lua'),
     article('08-持久化内存淘汰与数据安全.md', '持久化、内存淘汰与数据安全'),
     article('09-缓存穿透击穿雪崩与一致性.md', '缓存穿透、击穿、雪崩与一致性'),
     article('10-发布订阅与Stream消费组.md', '发布订阅与 Stream 消费组'),
