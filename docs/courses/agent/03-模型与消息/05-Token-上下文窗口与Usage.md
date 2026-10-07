@@ -186,38 +186,56 @@ print(f"${cost:.4f}")
 
 ### `select_messages`：保留规则和最近上下文
 
-用途：用消息结构而非字符串切片实现一个可解释的最小裁剪策略。
+用途：按完整 turn 和工具关联组裁剪上下文，避免把一个 assistant 回合或工具结果拆成孤立消息。
 
 ```python
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass(frozen=True)
 class Message:
     role: str
     content: str
+    turn_id: Optional[str] = None
+    tool_call_id: Optional[str] = None
 
 
-def select_messages(history: tuple[Message, ...], recent_count: int) -> tuple[Message, ...]:
-    if recent_count < 1:
-        raise ValueError("recent_count must be positive")
-    system = tuple(message for message in history if message.role == "system")[:1]
-    recent = history[-recent_count:]
-    # 关键状态变化：system 规则优先保留，最近消息按原顺序追加且去重。
-    return system + tuple(message for message in recent if message not in system)
+def select_messages(history: tuple[Message, ...], turn_count: int) -> tuple[Message, ...]:
+    if turn_count < 1:
+        raise ValueError("turn_count must be positive")
+    system = tuple(message for message in history if message.role == "system")
+    groups: list[tuple[str, list[Message]]] = []
+    for message in (item for item in history if item.role != "system"):
+        if message.turn_id is None:
+            raise ValueError("non-system message needs a turn_id")
+        if not groups or groups[-1][0] != message.turn_id:
+            groups.append((message.turn_id, []))
+        groups[-1][1].append(message)
+    for turn_id, group in groups:
+        calls = {item.tool_call_id for item in group if item.role == "assistant" and item.tool_call_id}
+        results = {item.tool_call_id for item in group if item.role == "tool" and item.tool_call_id}
+        if calls != results:
+            raise ValueError(f"incomplete tool association in {turn_id}")
+    selected = groups[-turn_count:]
+    # 关键状态变化：系统消息始终保留，最近完整 turn 按原顺序整体加入。
+    return system + tuple(item for _, group in selected for item in group)
 
 
 history = (
     Message("system", "遵守输出格式"),
-    Message("user", "旧问题"),
-    Message("assistant", "旧答案"),
-    Message("user", "新问题"),
+    Message("user", "旧问题", "turn-1"),
+    Message("assistant", "旧答案", "turn-1"),
+    Message("user", "查天气", "turn-2"),
+    Message("assistant", "查询中", "turn-2", "call-1"),
+    Message("tool", "晴天", "turn-2", "call-1"),
+    Message("assistant", "今天晴天", "turn-2"),
 )
-print([(item.role, item.content) for item in select_messages(history, 2)])
-# 输出：[('system', '遵守输出格式'), ('assistant', '旧答案'), ('user', '新问题')]
+print([(item.role, item.content) for item in select_messages(history, 1)])
+# 输出：[('system', '遵守输出格式'), ('user', '查天气'), ('assistant', '查询中'), ('tool', '晴天'), ('assistant', '今天晴天')]
 ```
 
-真正的策略要考虑“assistant 与 tool 结果必须成组”“用户目标不能被截掉”“某些消息可摘要”“多模态块需要按媒体预算裁剪”等约束。仅按最近 N 条是教学起点，不是通用生产算法。
+这里用 turn_id 表示完整回合，并要求 assistant 的 tool_call_id 与 tool 结果在同一组且成对出现；真实协议可能把调用 ID 放在 content block 中，Adapter 应先归一化再分组。函数只裁剪消息，不执行工具，也不修复缺失结果；发现孤立 assistant/tool 就拒绝输入。生产策略还要考虑摘要、用户目标优先级、多模态块和 Token 预算。
 
 ### 截断、摘要与显式状态
 
