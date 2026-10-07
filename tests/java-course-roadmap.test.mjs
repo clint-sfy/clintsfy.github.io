@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node
 import { dirname, join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { test } from 'node:test'
+import { createMarkdownRenderer } from 'vitepress'
 
 import {
   JAVA_COURSE_CHAPTERS,
@@ -93,6 +94,44 @@ function assertJavaEntryStageOrder(markdown) {
   )
   assert.deepEqual(chapterIds, manifestIds, 'stage-table chapter order must equal manifest order')
   assert.deepEqual(chapterIds, sidebarIds, 'stage-table chapter order must equal sidebar order')
+}
+
+async function inspectJavaFragments(files, overrides = new Map()) {
+  const markdown = await createMarkdownRenderer(resolve('docs'))
+  const headingIds = new Map()
+  const broken = []
+  let checked = 0
+  for (const file of files) {
+    const source = overrides.get(file) ?? readFileSync(file, 'utf8')
+    for (const [, target] of source.matchAll(/\]\(([^\s)]+)(?:\s+[^)]*)?\)/gu)) {
+      if (/^(?:https?:|mailto:)/u.test(target) || !target.includes('#')) continue
+      const [pathname, fragment] = target.split('#', 2)
+      if (!fragment) continue
+      checked += 1
+      const localPath = pathname
+        ? pathname.startsWith('/')
+          ? `docs${decodeURIComponent(pathname)}`
+          : resolve(dirname(file), decodeURIComponent(pathname))
+        : file
+      const targetFile = [localPath, `${localPath}.md`, join(localPath, 'index.md')]
+        .find(candidate => candidate.endsWith('.md') && existsSync(candidate))
+      if (!targetFile) {
+        broken.push(`${file} -> ${target}`)
+        continue
+      }
+      if (!headingIds.has(targetFile)) {
+        const targetMarkdown = overrides.get(targetFile) ?? readFileSync(targetFile, 'utf8')
+        const ids = markdown.parse(targetMarkdown, {})
+          .filter(token => token.type === 'heading_open')
+          .map(token => token.attrGet('id'))
+        headingIds.set(targetFile, new Set(ids))
+      }
+      if (!headingIds.get(targetFile).has(decodeURIComponent(fragment))) {
+        broken.push(`${file} -> ${target}`)
+      }
+    }
+  }
+  return { checked, broken }
 }
 
 function collectLinks(items, result = []) {
@@ -243,6 +282,32 @@ test('Java entry presents completed MySQL and Redis chapters and core workflow b
   assert.match(diagnostics, /slowlog_commands_[^\n]*8\.8/u)
   assert.match(diagnostics, /maxmemory_policy[^\n]*maxmemory-policy/u)
   assert.match(diagnostics, /LATENCY DOCTOR[^\n]*人类可读/u)
+})
+
+test('Java entry lists all backend routes in manifest order', () => {
+  const entry = readFileSync('docs/courses/java/index.md', 'utf8')
+  const backendSection = entry.split('## 后端工程路由')[1]?.split(/^## /mu)[0]
+  assert.ok(backendSection, 'backend route section must exist')
+  const links = [...backendSection.matchAll(/\]\((\/courses\/java\/14-后端工程\/[^)]+)\)/gu)].map(match => match[1])
+  const backend = JAVA_COURSE_CHAPTERS.find(chapter => chapter.id === '14-后端工程')
+  assert.deepEqual(links, backend.articles.map(article => article.route))
+})
+
+test('Java local fragment links resolve using rendered heading IDs', async () => {
+  const articles = JAVA_COURSE_CHAPTERS.flatMap(chapter => chapter.articles.map(article => article.file))
+  const indexes = JAVA_COURSE_CHAPTERS.map(chapter => `docs/courses/java/${chapter.id}/index.md`)
+    .filter(file => existsSync(file))
+  const files = ['docs/courses/java/index.md', ...indexes, ...articles]
+  const results = await inspectJavaFragments(files)
+  assert.ok(results.checked >= 12, 'existing Java fragment links must be checked')
+  assert.deepEqual(results.broken, [])
+
+  const fixtureFile = 'docs/courses/java/15-Redis/05-Bitmap-HyperLogLog-GEO与Stream.md'
+  const original = readFileSync(fixtureFile, 'utf8')
+  const fixture = `${original}\n[valid same-page](#xtrim-按精确最大条数修剪实验日志并观察残留事件)\n[missing same-page](#anchor-does-not-exist)\n`
+  const broken = await inspectJavaFragments([fixtureFile], new Map([[fixtureFile, fixture]]))
+  assert.equal(broken.checked, 3)
+  assert.deepEqual(broken.broken, [`${fixtureFile} -> #anchor-does-not-exist`])
 })
 
 test('Java entry stage table keeps the exact manifest and sidebar chapter sequence', () => {

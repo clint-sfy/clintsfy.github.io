@@ -53,6 +53,13 @@ showComment: false
 - [文件上传下载与资源安全](/courses/java/14-后端工程/10-文件上传下载与资源安全)
 - [Apache POI Excel 导入导出](/courses/java/14-后端工程/11-Apache-POI-Excel导入导出)
 - [Quartz 定时任务](/courses/java/14-后端工程/12-Quartz定时任务)
+- [OpenAPI 与统一错误契约](/courses/java/14-后端工程/13-OpenAPI与统一错误契约)
+- [JUnit 5、Mockito 与 MockMvc](/courses/java/14-后端工程/14-JUnit5-Mockito与MockMvc)
+- [Testcontainers 集成测试](/courses/java/14-后端工程/15-Testcontainers集成测试)
+- [MyBatis 生产边界](/courses/java/14-后端工程/16-MyBatis生产边界)
+- [HTTP 客户端与韧性](/courses/java/14-后端工程/17-RestClient-WebClient与HTTP韧性)
+- [Actuator、Micrometer 与可观测性](/courses/java/14-后端工程/18-Actuator-Micrometer与可观测性)
+- [Spring Cache、Caffeine 与 Redisson](/courses/java/14-后端工程/19-Spring-Cache-Caffeine与Redisson)
 
 ## 学习建议
 

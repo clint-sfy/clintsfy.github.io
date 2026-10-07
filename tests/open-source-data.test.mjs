@@ -648,6 +648,50 @@ test('GitHub Pages workflow pins a Node-compatible pnpm toolchain', () => {
   assert.equal(packageJson.engines.node, '>=22.13.0')
 })
 
+test('GitHub Pages validates PRs and gates publishing on audited main builds', () => {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const workflow = readFileSync(join(repoRoot, '.github/workflows/deploy.yml'), 'utf8')
+  const validateStart = workflow.indexOf('\n  validate:')
+  const deployStart = workflow.indexOf('\n  deploy-github-pages:')
+  assert.ok(validateStart > 0 && deployStart > validateStart, 'validation must precede a separate deploy job')
+  const validate = workflow.slice(validateStart, deployStart)
+  const deploy = workflow.slice(deployStart)
+  assert.match(workflow, /push:\s*\r?\n\s+branches: \[main\]/u)
+  assert.match(workflow, /pull_request:\s*\r?\n\s+branches: \[main\]/u)
+  assert.match(workflow, /^permissions:\r?\n  contents: read$/mu)
+  assert.match(validate, /permissions:\s*\r?\n\s+contents: read/u)
+  const gates = [
+    /^        run: pnpm install --frozen-lockfile$/mu,
+    /^        run: pnpm test$/mu,
+    /^        run: pnpm audit:java-apis$/mu,
+    /^        run: pnpm build$/mu,
+    /^        uses: actions\/upload-artifact@v4$/mu,
+  ]
+  let previous = -1
+  for (const gate of gates) {
+    const index = validate.search(gate)
+    assert.ok(index > previous, `${gate} must run in the validation job after the previous gate`)
+    previous = index
+  }
+  assert.match(validate, /^          name: validated-site$/mu)
+  assert.match(validate, /path:\s*docs\/\.vitepress\/dist/u)
+  assert.match(deploy, /^    needs: validate$/mu)
+  assert.match(deploy, /permissions:\s*\r?\n\s+contents: write/u)
+  const guard = deploy.match(/^    if: >-\r?\n((?:^      .*\r?\n)+)/mu)?.[1]
+    ?.replace(/\s+/gu, ' ').trim()
+  assert.equal(
+    guard,
+    "(github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')",
+    'only a main push or main manual dispatch may publish',
+  )
+  assert.match(deploy, /^        uses: actions\/download-artifact@v4$/mu)
+  assert.match(deploy, /^          name: validated-site$/mu)
+  assert.match(deploy, /^        uses: JamesIves\/github-pages-deploy-action@v4$/mu)
+  assert.ok(deploy.indexOf('actions/download-artifact@v4') < deploy.indexOf('JamesIves/github-pages-deploy-action@v4'))
+  assert.match(deploy, /FOLDER: docs\/\.vitepress\/dist/u)
+  assert.doesNotMatch(validate, /JamesIves\/github-pages-deploy-action/u)
+})
+
 test('Vercel uses the same pinned toolchain and VitePress output directory', () => {
   const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
   const vercel = JSON.parse(readFileSync(join(repoRoot, 'vercel.json'), 'utf8'))
