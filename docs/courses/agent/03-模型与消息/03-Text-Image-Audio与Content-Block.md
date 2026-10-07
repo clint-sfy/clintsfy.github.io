@@ -21,12 +21,21 @@ chapter: 03
 
 上一节的 `Message` 描述“谁在什么时候说了什么”；本节把“说了什么”从单一文本扩展为有序 `Content-Block`。一条消息可以包含文本说明、图片引用和音频片段，顺序本身可能影响模型理解。不同模型的多模态能力并不相同，Adapter 必须在请求发送前做能力和格式检查。
 
-```text
-Message(role="user")
-    └── content: [TextBlock, ImageBlock, TextBlock]
-                             │
-                             └─ 外部媒体：来源、MIME、大小、权限
+```mermaid
+flowchart TD
+    Message["Message / role=user"] --> Blocks["有序 Content-Block"]
+    Blocks --> Kinds["Text / Image / Audio"]
+    Kinds --> Validate["来源、MIME、大小校验"]
+    Validate --> Capability["Model 能力检查"]
+    Capability --> Adapter["Adapter 映射"]
+    Adapter --> Payload["供应商请求"]
+    Validate -->|不通过| Reject["拒绝或降级并记录"]
+
+    classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
+    class Message,Blocks,Kinds,Validate,Capability,Adapter,Payload,Reject core;
 ```
+
+阅读提示：`Content-Block` 保留文本、图片和音频的顺序；媒体先过来源/格式/大小与模型能力检查，再由 Adapter 转换，不能把媒体中的文字直接当指令。
 
 这里的内容块是消息数据，不是 Tool Calling 的参数，也不是应用直接执行的命令。图片 OCR、音频转写和内容安全筛查可能由模型或独立服务完成，返回结果仍要经过正常的消息与校验边界。
 

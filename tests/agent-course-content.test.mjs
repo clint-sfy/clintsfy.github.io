@@ -128,6 +128,22 @@ test('chapters 02 and 03 are complete正文 rather than outline skeletons', () =
   }
 })
 
+test('chapters 02 and 03 keep one readable Mermaid diagram per article', () => {
+  const roadmap = readRoadmap()
+  for (const chapter of roadmap.chapters.filter(({ id }) => ['02', '03'].includes(id))) {
+    for (const article of chapter.articles) {
+      const source = readArticle(article.path)
+      const diagrams = source.match(/```mermaid\s*\r?\n[\s\S]*?\r?\n```/g) ?? []
+
+      assert.equal(diagrams.length, 1, `${article.path} should contain exactly one Mermaid diagram`)
+      assert.equal((source.match(/阅读提示：/g) ?? []).length, 1,
+        `${article.path} should explain how to read its diagram`)
+      assert.doesNotMatch(diagrams[0], /fill\s*:\s*#[0-9a-f]{3,8}/i,
+        `${article.path} should not hard-code a light/dark-dependent fill color`)
+    }
+  }
+})
+
 test('every resource record has required learning metadata', () => {
   const roadmap = readRoadmap()
   const required = [

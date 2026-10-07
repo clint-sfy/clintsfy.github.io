@@ -23,11 +23,21 @@ chapter: 03
 
 一次调用可以画成预算账本：
 
-```text
-输入预算 = system/developer + 用户消息 + 历史 + 外部资料 + 多模态计量
-输出预算 = 可见回答 + 结构化字段 + 可能的内部推理计量
-总窗口   = 输入预算 + 输出预算（具体规则随模型而变）
+```mermaid
+flowchart TD
+    Sources["System、User、History、External、Media"] --> Input["输入预算 / 估算"]
+    Reserve["可见输出、结构化字段、内部预算"] --> Output["输出预算 / 预留"]
+    Input --> Window{"输入 + 输出 ≤ Context Window？"}
+    Output --> Window
+    Window -->|是| Call["发送 Model Request"]
+    Call --> Usage["Usage / 实际计量"]
+    Window -->|否| Adjust["裁剪、摘要或换模型"]
+
+    classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
+    class Sources,Input,Reserve,Output,Window,Call,Usage,Adjust core;
 ```
+
+阅读提示：调用前用输入估算和输出预留保护窗口，调用后以 Provider 返回的 `Usage` 校准；估算值不能直接当账单。
 
 本篇沿用[Prompt 边界](./04-System-Instructions与Prompt边界)的来源模型，说明如何选择上下文；消息字段与块类型见[Message](./02-Message-Role与消息顺序)和[Content-Block](./03-Text-Image-Audio与Content-Block)。
 

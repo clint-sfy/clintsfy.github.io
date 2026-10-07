@@ -23,13 +23,21 @@ chapter: 03
 
 可以把一轮对话想成一条不可随意重排的日志：
 
-```text
-system/developer  →  规则与运行约束
-user              →  用户目标或输入
-assistant          →  模型产出的消息
-tool              →  外部执行结果（带关联 ID）
-assistant          →  根据结果继续生成
+```mermaid
+flowchart TD
+    Rules["system / developer\n规则与运行约束"] --> User["user\n目标或输入"]
+    User --> Assistant["assistant\n模型消息"]
+    Assistant --> NeedTool{"需要外部结果？"}
+    NeedTool -->|否| Final["assistant\n最终消息"]
+    NeedTool -->|是| Tool["tool\n结果 + tool_call_id"]
+    Tool --> Continue["assistant\n根据结果继续"]
+    Continue --> NeedTool
+
+    classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
+    class Rules,User,Assistant,NeedTool,Final,Tool,Continue core;
 ```
+
+阅读提示：消息按追加顺序形成输入；`tool` 结果必须带 `tool_call_id` 回填，不能把外部结果改写成没有来源的用户文本。
 
 本文沿用[Model、Provider 与 Model-Adapter](./01-Model-Provider与Model-Adapter)中的规范化调用边界，但只处理消息层；工具如何选择和执行属于第 04 章。
 

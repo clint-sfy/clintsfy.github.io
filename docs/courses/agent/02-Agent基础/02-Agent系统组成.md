@@ -89,6 +89,26 @@ Guardrail 是在输入、模型输出、工具参数或最终结果附近执行�
 
 状态层记录 Action、执行结果和控制字段，例如已用步数或待审批状态。更新 State 后，运行时才构造下一次 Context；不能让 Model 看到一个尚未写入的“虚构结果”。
 
+```mermaid
+flowchart TD
+    Input["Goal + Instructions"] --> Context["Context 构造"]
+    State["State / 已有事实"] --> Context
+    Context --> Model["Model"]
+    Model --> Decision{"Final Answer 或 Action？"}
+    Decision -->|Final Answer| Result["交付结果"]
+    Decision -->|Action| Runtime["Runtime 校验"]
+    Runtime --> Registry["Tool Registry"]
+    Registry --> Tool["Tool 执行"]
+    Tool --> Observation["Observation"]
+    Observation --> State
+    State --> Context
+
+    classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
+    class Input,Context,State,Model,Decision,Result,Runtime,Registry,Tool,Observation core;
+```
+
+阅读提示：`State` 保存运行时事实，`Context` 只是一次 Model 调用的投影；只有 Tool 真实返回 `Observation` 后，结果才回到 State。
+
 ## 一个单步组件装配例子
 
 下面的代码把一个确定性决策器、只读工具、运行状态和 Context 装配成一次可观察的单步执行；它用于看清组件边界，不实现完整循环。

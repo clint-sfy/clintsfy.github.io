@@ -23,12 +23,24 @@ Prompt 是发给模型的输入组织方式，安全边界是“哪些数据可�
 
 一条可靠的心智模型是：
 
-```text
-应用配置/策略 ──┐
-开发者约束 ─────┼─ Prompt 组装 ─→ Model
-用户目标 ──────┤                 │
-历史/检索数据 ──┘                 └─ 输出仍需校验
+```mermaid
+flowchart TD
+    Policy["应用配置 / System Instructions"] --> Builder["Prompt 组装器"]
+    Developer["Developer 约束"] --> Builder
+    User["User 目标"] --> Builder
+    External["历史 / 检索数据（不可信）"] --> Builder
+    Builder --> Prompt["有序 Prompt / Message"]
+    Prompt --> Model["Model"]
+    Model --> Output["候选输出"]
+    Output --> Gate["Schema、权限与业务校验"]
+
+    classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
+    class Policy,Builder,Developer,User,Prompt,Model,Output,Gate core;
+    classDef untrusted fill:transparent,stroke:currentColor,color:currentColor,stroke-dasharray:4 2;
+    class External untrusted;
 ```
+
+阅读提示：Prompt 组装器保留来源和顺序，但不把外部资料升级为指令；模型输出仍要经过独立的 Schema、权限与业务校验。
 
 消息对象和角色语义见[Message、Role 与消息顺序](./02-Message-Role与消息顺序)；本篇只处理“如何把这些输入放在边界内”，不展开工具调用 API。
 

@@ -21,17 +21,22 @@ chapter: 03
 
 Structured Output 是对模型输出形状的约束或期望，不是事实保证，也不是权限授予。一个完整管线至少包含：
 
-```text
-模型文本/事件
-      ↓
-JSON 解析       —— 能否读成数据？
-      ↓
-Schema 校验    —— 字段、类型、枚举、额外字段？
-      ↓
-业务校验       —— 值是否符合现实状态与权限？
-      ↓
-下游使用       —— 仍需副作用门控
+```mermaid
+flowchart TD
+    Output["模型文本 / 事件"] --> Parse["JSON 解析"]
+    Parse -->|失败| ParseError["ParseError"]
+    Parse -->|通过| Schema["Schema 校验"]
+    Schema -->|失败| SchemaError["SchemaError"]
+    Schema -->|通过| Business["业务校验"]
+    Business -->|失败| BusinessError["BusinessRuleError"]
+    Business -->|通过| Gate["权限与副作用门控"]
+    Gate --> Domain["下游领域对象"]
+
+    classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
+    class Output,Parse,ParseError,Schema,SchemaError,Business,BusinessError,Gate,Domain core;
 ```
+
+阅读提示：只有完成 JSON 解析、Schema 和业务校验后，结果才可进入下游；流式中间片段只能展示，不能跳过这些门控。
 
 消息与内容块见前面的[Message](./02-Message-Role与消息顺序)和[Content-Block](./03-Text-Image-Audio与Content-Block)；生成参数见[Temperature、Top-P 与生成参数](./06-Temperature-Top-P与生成参数)。本篇不把结构化字段提前当成工具调用。
 

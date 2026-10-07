@@ -40,6 +40,22 @@ Agent 的控制逻辑允许 Model 根据 Goal、Instructions、Constraints 和 O
 
 Agent 不意味着“把整个程序交给模型”。成熟架构通常把 Agent 放在受限的决策节点中，把关键授权、事务和最终提交留在普通代码或 Workflow 中。
 
+```mermaid
+flowchart TD
+    Input["普通程序 / 输入与权限校验"] --> Workflow["Workflow / 显式调度"]
+    Workflow --> Agent["Agent / 提议局部 Action"]
+    Agent --> Tool["Tool / 受控执行"]
+    Tool --> Observation["Observation"]
+    Observation --> Verify{"Workflow 验证 Postcondition？"}
+    Verify -->|是| Commit["普通程序 / 提交副作用"]
+    Verify -->|否| Recover["暂停或补偿"]
+
+    classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
+    class Input,Workflow,Agent,Tool,Observation,Verify,Commit,Recover core;
+```
+
+阅读提示：把动态决策限制在 Agent 节点，把调度、授权、后置条件和最终提交留在可审计的 Workflow/普通程序边界内。
+
 ## 维度对照
 
 | 维度 | 普通程序 | Workflow | Agent |

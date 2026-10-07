@@ -21,10 +21,21 @@ chapter: 03
 
 Streaming 改变的是结果交付方式，不是模型输出的可信度。普通调用可能一次返回 `ModelResponse`；流式调用返回一个事件序列，客户端需要把 Delta 应用到本地状态，等完成事件后才得到可持久化的最终响应。事件可能包含文本片段、角色/内容块开始、Usage、完成、取消和错误。
 
-```text
-started → output.delta → output.delta → usage? → completed
-                                  ↘ error / cancelled
+```mermaid
+flowchart TD
+    Started["response.started"] --> Events["按 sequence 消费事件"]
+    Events --> Kind{"事件类型？"}
+    Kind -->|delta / usage| Acc["DeltaAccumulator / 更新状态"]
+    Acc --> Events
+    Kind -->|completed| Complete["完成 + finish_reason"]
+    Kind -->|error / cancelled| Partial["partial / failed / cancelled"]
+    Complete --> Final["FinalResponse / 可持久化"]
+
+    classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
+    class Started,Events,Kind,Acc,Complete,Partial,Final core;
 ```
+
+阅读提示：`DeltaAccumulator` 按顺序聚合中间事件；只有合法终止事件才能生成 `FinalResponse`，错误或取消仍可保留 partial 文本但不能冒充成功。
 
 事件顺序、事件 ID 和终止状态是协议的一部分。不能把“收到两段文本”当成“请求成功”，也不能把 UI 已显示的部分内容当成可执行的结构化结果。
 

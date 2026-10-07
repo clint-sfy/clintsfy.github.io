@@ -21,15 +21,29 @@ chapter: 03
 
 模型调用失败不是一种错误。错误分类决定是否等待、是否重试、是否换模型以及应该向用户返回什么。一个安全的决策链是：
 
-```text
-请求/能力校验 ──错误：修复输入，不重试
-认证/权限      ──错误：修复配置，停止
-上下文超限     ──错误：裁剪/换窗口，停止原请求
-Rate Limit     ──等待 Retry-After 或退避，有限重试
-网络/5xx       ──有限重试，检查幂等
-流式断线       ──先确认状态，再恢复或报告不确定
-能力允许       ──最后才考虑模型降级
+```mermaid
+flowchart TD
+    Request["Model Request"] --> Failure{"错误类别？"}
+    Failure -->|请求、认证、上下文| Fix["修复边界 / 停止原请求"]
+    Failure -->|Rate Limit| Wait["Retry-After 或退避"]
+    Failure -->|网络、5xx、超时| Retry["有限重试 + 幂等检查"]
+    Wait --> Retry
+    Retry -->|预算可用| Attempt["再次调用"]
+    Retry -->|预算耗尽或不可幂等| Stop["失败 / 不确定"]
+    Failure -->|流式断线| Confirm["查询或恢复状态"]
+    Confirm -->|无法确认| Stop
+    Confirm -->|可恢复| Attempt
+    Attempt --> Result["成功或再次分类"]
+    Result -->|仍失败| Fallback
+    Stop --> Fallback{"契约允许降级？"}
+    Fallback -->|是| Select["能力检查后选择模型"]
+    Fallback -->|否| Report["向上层报告"]
+
+    classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
+    class Request,Failure,Fix,Wait,Retry,Attempt,Stop,Confirm,Result,Fallback,Select,Report core;
 ```
+
+阅读提示：先按错误类别决定修复、等待或有限重试；只有仍满足输入、窗口、Schema 与安全契约时，才把降级模型纳入候选。
 
 此前文章定义的 `Model`、`Model-Adapter`、消息、预算和流式终态都是本篇的前置边界；本篇不展开 Tool Calling 的执行重试与幂等，工具会有额外的副作用风险。
 

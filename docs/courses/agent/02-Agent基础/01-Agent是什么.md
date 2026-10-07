@@ -57,6 +57,22 @@ chapter: 02
 
 后续 [Observation、Action 与 Agent Loop](./04-Observation-Action与Agent-Loop) 会把这个闭环拆成可观察的状态转移。本篇先用一个确定性策略展示结构，不引入在线模型，以便把模型能力和循环职责分开。
 
+```mermaid
+flowchart TD
+    Goal["Goal / 目标"] --> Decide["Decision / 决策"]
+    Decide --> Action["Action / 行动"]
+    Action --> Env["Environment / 环境"]
+    Env --> Obs["Observation / 观察"]
+    Obs --> Stop{"满足停止条件？"}
+    Stop -->|否| Decide
+    Stop -->|是| Result["Final Result / 交付结果"]
+
+    classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
+    class Goal,Decide,Action,Env,Obs,Stop,Result core;
+```
+
+阅读提示：`Decision` 只提出候选动作，只有 Environment 返回新的 `Observation` 后，运行时才有依据继续或交付结果。
+
 ## 一个不依赖模型的最小闭环
 
 下面的代码用一个“把计数器推进到目标值”的模拟环境演示 Goal、Action、Observation 和停止分支之间的数据流；它可直接用 Python 运行，不需要密钥。

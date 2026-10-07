@@ -23,16 +23,23 @@ chapter: 03
 
 可以先记住这条数据流：
 
-```text
-Agent Loop
-   │ 规范化 ModelRequest
-   ▼
-Model 接口 ──调用──> Provider 选择的具体模型
-   │                    │
-   │                    └─ Adapter：核心对象 ↔ 供应商 payload
-   ▼
-ModelResponse / ModelError
+```mermaid
+flowchart TD
+    Loop["Agent Loop"] --> Request["ModelRequest / 规范化输入"]
+    Provider["Provider / 模型解析与资源"] --> Model["Model 接口"]
+    Request --> Model
+    Model --> Adapter["Model-Adapter / 协议翻译"]
+    Adapter --> API["供应商模型 API"]
+    API --> Adapter
+    Adapter --> Outcome{"规范化结果？"}
+    Outcome -->|成功| Response["ModelResponse"]
+    Outcome -->|失败| Error["ModelError"]
+
+    classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
+    class Loop,Request,Provider,Model,Adapter,API,Outcome,Response,Error core;
 ```
+
+阅读提示：`Provider` 负责找到模型与资源，`Model-Adapter` 只在边界翻译请求/响应；Agent Loop 只消费规范化的 `ModelResponse` 或 `ModelError`。
 
 本文只讨论推理边界。`Message` 的字段和顺序见[下一篇](./02-Message-Role与消息顺序)，内容块见[第三篇](./03-Text-Image-Audio与Content-Block)。
 

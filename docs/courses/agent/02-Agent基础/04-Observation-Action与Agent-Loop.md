@@ -64,6 +64,24 @@ Runtime 检查 Action 名称、参数、权限和当前约束，再调用匹配�
 
 如果 Observation 满足 Success Criteria，循环交付 Final Answer；如果违反硬约束、出现不可恢复错误或超过预算，则交付明确失败；否则继续下一轮。停止原因的分类会在 [停止条件、超时与失败边界](./06-停止条件超时与失败边界) 中展开。
 
+```mermaid
+flowchart TD
+    Observation["Observation / 当前事实"] --> Decide["Model 或策略决策"]
+    Decide --> Action["候选 Action"]
+    Action --> Check{"可解析且允许？"}
+    Check -->|否| Rejected["拒绝 / 错误 Observation"]
+    Check -->|是| Tool["Tool 执行"]
+    Tool --> NewObservation["Observation 回填"]
+    NewObservation --> Stop{"满足 Success Criteria？"}
+    Stop -->|否| Observation
+    Stop -->|是| Final["Final Answer"]
+
+    classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
+    class Observation,Decide,Action,Check,Rejected,Tool,NewObservation,Stop,Final core;
+```
+
+阅读提示：`Action` 是意图，`Tool` 才执行副作用；回填后的新 `Observation` 决定下一轮，而不是模型上一轮的猜测。
+
 ## 一个可观察的最小循环
 
 下面的代码用两个本地工具模拟“查询状态后生成报告”的任务，展示 Action 校验、Observation 回填和 Final Answer 的完整数据流。

@@ -52,6 +52,24 @@ Run
 
 但这不是所有框架的固定协议。某些工具调用会被视为独立 Turn，某些框架把模型调用和工具执行都记为 Step。稳定的判断依据是父子 ID、生命周期事件和状态更新，而不是字段名称。
 
+```mermaid
+flowchart TD
+    Run["Run / 完整运行"] --> Turn["Turn / 模型决策周期"]
+    Turn --> Parse["Step / 解析"]
+    Parse --> Execute["Step / Tool 执行"]
+    Execute --> Record["Step / Observation 回填"]
+    Record --> Continue{"继续？"}
+    Continue -->|是| Turn
+    Continue -->|否| End["RunStatus + StopReason"]
+    Run --> State["RunState / 可恢复事实"]
+    State --> End
+
+    classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
+    class Run,Turn,Parse,Execute,Record,Continue,End,State core;
+```
+
+阅读提示：`Run` 拥有最终状态，`Turn` 表示一次模型决策周期，`Step` 是可单独诊断的状态转移；具体框架可调整分组，但父子 ID 和生命周期事件不能丢。
+
 ## 运行状态的核心字段
 
 ### RunStatus

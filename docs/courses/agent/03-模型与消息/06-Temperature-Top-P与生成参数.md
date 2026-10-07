@@ -23,6 +23,21 @@ chapter: 03
 
 最重要的调参原则是：先确定任务契约，再只改变一个主要因素。抽取、分类和结构化输出通常需要低随机性与严格校验；创意生成需要更大的候选空间，但仍要限制长度、成本和安全边界。
 
+```mermaid
+flowchart TD
+    Task["任务契约"] --> Config["GenerationConfig"]
+    Config --> Validate["本地 profile 校验"]
+    Validate --> Capability{"Provider / Adapter 支持？"}
+    Capability -->|否| Reject["拒绝或记录未生效"]
+    Capability -->|是| Request["Model Request"]
+    Request --> Response["Response + finish_reason + Usage"]
+
+    classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
+    class Task,Config,Validate,Capability,Reject,Request,Response core;
+```
+
+阅读提示：生成参数先按任务契约和本地 profile 校验，再由 Adapter 按能力映射；日志记录实际生效值，而不是只记录调用方想发送的值。
+
 ## `temperature`：调整分布平滑度
 
 模型在每一步会为候选 token 产生 logits/概率。温度较低时，高概率候选更占优势；温度较高时，低概率候选也更有机会。`temperature=0` 常被当作“尽量确定”，但不保证跨请求、跨副本或跨模型版本绝对一致。

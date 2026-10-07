@@ -68,6 +68,28 @@ Runtime 在模型决策前后都可以检查 Constraints，但涉及副作用的
 
 Goal、Instructions 和 Constraints 冲突时，先保留硬约束，再在剩余空间中满足 Goal，最后用软约束优化表达方式。若硬约束让 Goal 不可完成，应返回明确的阻塞原因，而不是自行放宽约束。
 
+```mermaid
+flowchart TD
+    Goal["Goal / 期望结果"] --> Context["Context / 工作方法"]
+    Instructions["Instructions / 决策提示"] --> Context
+    Context --> Candidate["候选 Action"]
+    Candidate --> Hard{"硬约束通过？"}
+    Hard -->|否| Blocked["拒绝或暂停 / 记录原因"]
+    Hard -->|是| Soft{"软约束可满足？"}
+    Soft -->|是| Execute["进入执行层"]
+    Soft -->|否| Degrade["降级并记录"]
+    Execute --> Post["Postcondition / 结果观察"]
+    Degrade --> Post
+    Post --> Success{"Success Criteria？"}
+    Success -->|是| Done["Goal Reached"]
+    Success -->|否| Next["继续下一轮"]
+
+    classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
+    class Goal,Instructions,Context,Candidate,Hard,Blocked,Soft,Execute,Degrade,Post,Success,Done,Next core;
+```
+
+阅读提示：先由 Goal 和 Instructions 形成候选决定，再由 Runtime 强制检查硬约束；软约束只能在不破坏硬边界时降级。
+
 ## 用结构化对象表达任务边界
 
 下面的代码把 Goal、Instructions 和 Constraints 组合成一次“检查动作是否允许”的本地判断；它展示规则的职责位置，不依赖模型或框架。
