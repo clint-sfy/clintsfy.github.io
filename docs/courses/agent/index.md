@@ -6,25 +6,57 @@ showComment: false
 
 # Agent 开发
 
-这组笔记不围绕某一个框架背 API，而是从 Agent 系统真正长期有效的能力出发：模型与指令、工具调用、MCP、Skills、上下文工程、RAG、评测与可靠性。
+这是一套按认知依赖组织的 Agent 工程课程：基础正文和示例以 Python 为主，不重复 Java、Python 或 TypeScript 通用语言基础；先理解协议、状态和可靠性，再阅读框架源码。第一章是可随时查阅的资源导航，第 02 章开始按顺序连续学习。
 
-## 2026 年的学习判断
+路线会覆盖 MCP、Agent Skills、RAG、Evals，以及作为对照资料的 LangChain / LangGraph；这些关键词在后续章节按依赖关系拆开，不代表要先学习某个框架。
 
-| 主题 | 是否过时 | 建议定位 |
-| --- | --- | --- |
-| MCP | 不过时 | 工具与外部系统接入的主线协议 |
-| Agent Skills | 不过时 | 把流程、约束和资源沉淀成可复用能力 |
-| RAG | 不过时，但做法已升级 | 从“向量库问答”升级为检索、重排、引用、权限与评测体系 |
-| LangChain | 没过时，但不宜做主线 | 用于快速集成和理解生态；复杂状态流优先看 LangGraph 思路 |
-| Prompt Engineering | 没过时，但不够完整 | 应升级为 Context Engineering，包括状态、工具结果、记忆和压缩 |
+## 课程路线
 
-## 推荐顺序
+| 顺序 | 章节 | 学习目标 | 前置关系 |
+| --- | --- | --- | --- |
+| 01 | [项目与知识库导航](/courses/agent/01-项目与知识库导航/01-学习地图与资源使用方法) | 按问题、阶段和深度选择官方项目、文档、课程与论文 | Python 基础；可选入口 |
+| 02 | [Agent 基础](/courses/agent/02-Agent基础/01-Agent系统组成) | 建立 Model、Instructions、Tools、State、Context 和停止边界 | Python 基础 |
+| 03 | [模型与消息](/courses/agent/03-模型与消息/01-Model与推理边界) | 掌握 Message、Role、Token、Streaming、Structured Output | 02 |
+| 04 | [Tool Calling 与 Agent Loop](/courses/agent/04-Tool-Calling与Agent-Loop/01-函数调用与JSON-Schema) | 处理 schema、调用、回填、并行、重试、幂等和审批 | 02–03 |
+| 05 | [State、Context、Session 与 Memory](/courses/agent/05-状态上下文会话与记忆/01-State与Context) | 区分状态所有权、会话、检查点、压缩和记忆 | 02–04 |
+| 06 | [MCP](/courses/agent/06-MCP/01-MCP解决什么问题) | 理解 Host/Client/Server、能力、传输、生命周期和授权 | 02–05、JSON-RPC |
+| 07 | [Skills、Plugin 与 Hook](/courses/agent/07-Skills插件与Hook/01-Skill与渐进式上下文) | 区分工作方法、动作接口、协议和插件生命周期 | 02–06 |
+| 08 | [RAG 与 Context Engineering](/courses/agent/08-RAG与上下文工程/01-RAG管线与适用边界) | 实现摄取、切块、检索、重排、引用和分层评测 | 02–07 |
+| 09 | [Workflow、Planning 与 Multi-Agent](/courses/agent/09-工作流规划与多Agent/01-Workflow与状态机) | 先做单 Agent 状态机，再判断是否需要多 Agent | 02–08 |
+| 10 | [Evals、Tracing、Guardrails 与安全](/courses/agent/10-评测可观测性与安全/01-Trace-Span与事件日志) | 连接轨迹、回归评测、权限、注入防护和 Sandbox | 02–09 |
+| 11 | [源码精读](/courses/agent/11-源码精读/01-smolagents源码导读) | 对照五个项目的 Loop、State、扩展与可靠性设计 | 02–10、Git 阅读能力 |
 
-1. Agent 系统组成与单 Agent 闭环。
-2. Tool calling 与 MCP。
-3. Agent Skills 的边界和渐进式上下文。
-4. Context Engineering 与现代 RAG。
-5. Evals、Tracing、权限与失败恢复。
-6. 最后再对照 LangChain / LangGraph 等框架。
+## 依赖关系
 
-先学协议、模型和工程约束，再学框架，框架换代时知识不会一起作废。
+```
+01 资源导航（可选入口）
+        ↓
+02 Agent 基础 → 03 模型与消息 → 04 Tool Calling
+                                      ↓
+                         05 State/Session/Memory → 06 MCP
+                                      ↓                 ↓
+                              07 Skills/Plugin/Hook → 08 RAG
+                                                        ↓
+                                  09 Workflow/Multi-Agent → 10 Evals/安全
+                                                                  ↓
+                                                           11 源码精读
+```
+
+每篇文章都在开头标注前置知识、目标和状态。当前新增页面中的“**大纲骨架**”明确表示正文、代码和运行输出将在后续补充，不把计划冒充成已完成教程。
+
+## 五个源码主线
+
+五个项目固定按以下顺序精读，DeepSeek Harness 排在最后。项目名称、官方链接和独立源码导读在[第一章导航](/courses/agent/01-项目与知识库导航/01-学习地图与资源使用方法)中保持一致。
+
+1. [smolagents](https://github.com/huggingface/smolagents)：最小 Agent Loop、Tool、Code Agent、停止与执行。
+2. [OpenAI Agents SDK](https://github.com/openai/openai-agents-python)：Agent、Runner、Handoff、Guardrail、Session 与 Tracing。
+3. [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)：Client、Server、Transport、Capability 和协议错误。
+4. [LangGraph](https://github.com/langchain-ai/langgraph)：State、Node、Edge、Checkpoint、Interrupt 与 Durable Execution。
+5. [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)：Agent Driver、Plugin、Session、Skill、Hook、事件系统和 Cordis。
+
+## 如何使用
+
+- 想快速查一个边界：从侧栏进入对应章节，按 H3 标题定位；第一章外部资源注明推荐目录和阅读深度。
+- 想连续学习：从第 02 章第一篇开始按上一篇/下一篇顺序阅读，不跳过前置文章。
+- 想读源码：完成第 02–10 章后按五个项目的顺序进入第 11 章；TypeScript 只在 MCP SDK 和 DeepSeek Harness 导读中为理解当前抽象保留必要片段。
+- 涉及真实模型、密钥、文件、Shell、浏览器或网络时，先阅读权限边界和失败提示；可本地演示的状态机、检索、解析、校验与评测优先不依赖外部服务。

@@ -5,6 +5,20 @@ import { getChineseZodiac, getChineseZodiacAlias } from '../theme/utils.ts';
 import { getJavaCourseItems } from './java-course.ts';
 const sync = fg.sync;
 
+const agentGroupTitles: Record<string, string> = {
+  '01-项目与知识库导航': '项目与知识库导航',
+  '02-Agent基础': 'Agent 基础',
+  '03-模型与消息': '模型与消息',
+  '04-Tool-Calling与Agent-Loop': 'Tool Calling 与 Agent Loop',
+  '05-状态上下文会话与记忆': 'State、Context、Session 与 Memory',
+  '06-MCP': 'MCP',
+  '07-Skills插件与Hook': 'Skills、Plugin 与 Hook',
+  '08-RAG与上下文工程': 'RAG 与 Context Engineering',
+  '09-工作流规划与多Agent': 'Workflow、Planning 与 Multi-Agent',
+  '10-评测可观测性与安全': 'Evals、Tracing、Guardrails 与安全',
+  '11-源码精读': '源码精读',
+};
+
 export const sidebar: DefaultTheme.Config['sidebar'] = {
   '/my_project/': getItems("my_project"),
   '/open-source/': getOpenSourceItems('open-source'),
@@ -140,13 +154,14 @@ function getItems (path: string) {
   sync(`docs/${path}/*`, {
     onlyDirectories: true,
     objectMode: true,
-  }).forEach(({ name }) => {
+  }).filter(({ name }) => path !== 'courses/agent' || Boolean(agentGroupTitles[name]))
+    .sort((left, right) => compareCourseNames(left.name, right.name)).forEach(({ name }) => {
     let groupName = name;
     // 2.获取分组下的所有文章
     sync(`docs/${path}/${groupName}/*`, {
       onlyFiles: true,
       objectMode: true,
-    }).forEach((article) => {
+    }).sort((left, right) => compareCourseNames(left.name, right.name)).forEach((article) => {
       const articleFile = matter.read(`${article.path}`);
       const { data } = articleFile;
       // 向前追加标题
@@ -159,8 +174,11 @@ function getItems (path: string) {
 
     // 3.向前追加到分组
     // 当分组内文章数量少于 A 篇或文章总数显示超过 B 篇时，自动折叠分组
+    const displayName = path === 'courses/agent'
+      ? agentGroupTitles[groupName] ?? groupName.substring(groupName.indexOf('-') + 1)
+      : groupName.substring(groupName.indexOf('-') + 1);
     groups.push({
-      text: `${groupName.substring(groupName.indexOf('-') + 1)} (${items.length}篇)`,
+      text: `${displayName} (${items.length}篇)`,
       items: items,
       collapsed: items.length < groupCollapsedSize || total > titleCollapsedSize,
     })
@@ -237,6 +255,15 @@ function compareNames(left: string, right: string): number {
   if (left < right) return -1;
   if (left > right) return 1;
   return 0;
+}
+
+function compareCourseNames(left: string, right: string): number {
+  const leftPrefix = /^(\d+)/u.exec(left)?.[1];
+  const rightPrefix = /^(\d+)/u.exec(right)?.[1];
+  if (leftPrefix && rightPrefix && leftPrefix !== rightPrefix) {
+    return Number(leftPrefix) - Number(rightPrefix);
+  }
+  return left.localeCompare(right, 'zh-Hans', { numeric: true });
 }
 
 /**

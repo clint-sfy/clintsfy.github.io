@@ -1,0 +1,699 @@
+{
+  "version": "2026-10-07",
+  "languagePolicy": "02–10 章正文与示例以 Python 为主；TypeScript 只在相关源码导读中保留必要片段。",
+  "coreProjects": [
+    {
+      "name": "smolagents",
+      "url": "https://github.com/huggingface/smolagents",
+      "docsUrl": "https://huggingface.co/docs/smolagents/",
+      "sourceGuidePath": "docs/courses/agent/11-源码精读/01-smolagents源码导读.md",
+      "resourceArticlePath": "docs/courses/agent/01-项目与知识库导航/02-Agent框架与运行时.md",
+      "deepSeekHarnessMapping": "用最小 Agent Loop、Tool 和 CodeAgent 对照 dsh 的 Agent Driver、工具插件与执行边界。",
+      "checkedAt": "2026-10-07"
+    },
+    {
+      "name": "OpenAI Agents SDK",
+      "url": "https://github.com/openai/openai-agents-python",
+      "docsUrl": "https://openai.github.io/openai-agents-python/",
+      "sourceGuidePath": "docs/courses/agent/11-源码精读/02-OpenAI-Agents-SDK源码导读.md",
+      "resourceArticlePath": "docs/courses/agent/01-项目与知识库导航/02-Agent框架与运行时.md",
+      "deepSeekHarnessMapping": "用 Agent、Runner、handoff、guardrail、session 与 tracing 对照 dsh 的运行时服务和事件流。",
+      "checkedAt": "2026-10-07"
+    },
+    {
+      "name": "MCP TypeScript SDK",
+      "url": "https://github.com/modelcontextprotocol/typescript-sdk",
+      "docsUrl": "https://ts.sdk.modelcontextprotocol.io/v2/",
+      "sourceGuidePath": "docs/courses/agent/11-源码精读/03-MCP-TypeScript-SDK源码导读.md",
+      "resourceArticlePath": "docs/courses/agent/01-项目与知识库导航/04-MCP工具Skills与集成.md",
+      "deepSeekHarnessMapping": "以官方 TypeScript SDK v2 和 MCP 2026-07-28 规范为基线，用 Host、Client、Server、transport 和 capability 对照 dsh 的工具插件与外部能力接入。",
+      "checkedAt": "2026-10-07"
+    },
+    {
+      "name": "LangGraph",
+      "url": "https://github.com/langchain-ai/langgraph",
+      "docsUrl": "https://docs.langchain.com/oss/python/langgraph/",
+      "sourceGuidePath": "docs/courses/agent/11-源码精读/04-LangGraph源码导读.md",
+      "resourceArticlePath": "docs/courses/agent/01-项目与知识库导航/02-Agent框架与运行时.md",
+      "deepSeekHarnessMapping": "用 State、Node、Edge、checkpoint 和 interrupt 对照 dsh 的 Session、Hook 与可恢复运行。",
+      "checkedAt": "2026-10-07"
+    },
+    {
+      "name": "DeepSeek Harness",
+      "url": "https://github.com/deepseek-ai/deepseek-harness",
+      "docsUrl": "https://deepseek-harness.github.io/deepseek-harness/",
+      "sourceGuidePath": "docs/courses/agent/11-源码精读/05-DeepSeek-Harness源码导读.md",
+      "resourceArticlePath": "docs/courses/agent/01-项目与知识库导航/03-Coding-Agent与Harness.md",
+      "deepSeekHarnessMapping": "主线终点：Agent Driver、Everything is a Plugin、Cordis、Session、Skill、Hook 与事件系统。",
+      "checkedAt": "2026-10-07"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "01",
+      "title": "项目与知识库导航",
+      "sidebarTitle": "项目与知识库导航",
+      "directory": "docs/courses/agent/01-项目与知识库导航",
+      "goal": "学会按问题、阶段和阅读深度选择官方项目、协议、课程与论文。",
+      "prerequisites": ["已有 Python 基础编程能力", "知道 HTTP、JSON 和命令行的基本用途"],
+      "next": "02",
+      "articles": [
+        {
+          "path": "docs/courses/agent/01-项目与知识库导航/01-学习地图与资源使用方法.md",
+          "title": "学习地图与资源使用方法",
+          "introducedTerms": [],
+          "requiresTerms": []
+        },
+        {
+          "path": "docs/courses/agent/01-项目与知识库导航/02-Agent框架与运行时.md",
+          "title": "Agent 框架与运行时",
+          "introducedTerms": [],
+          "requiresTerms": []
+        },
+        {
+          "path": "docs/courses/agent/01-项目与知识库导航/03-Coding-Agent与Harness.md",
+          "title": "Coding Agent 与 Harness",
+          "introducedTerms": [],
+          "requiresTerms": []
+        },
+        {
+          "path": "docs/courses/agent/01-项目与知识库导航/04-MCP工具Skills与集成.md",
+          "title": "MCP、Tools、Skills 与集成",
+          "introducedTerms": [],
+          "requiresTerms": []
+        },
+        {
+          "path": "docs/courses/agent/01-项目与知识库导航/05-RAG记忆与上下文工程.md",
+          "title": "RAG、Memory 与 Context Engineering",
+          "introducedTerms": [],
+          "requiresTerms": []
+        },
+        {
+          "path": "docs/courses/agent/01-项目与知识库导航/06-工作流多Agent评测与可观测性.md",
+          "title": "Workflow、Multi-Agent、Evals 与 Tracing",
+          "introducedTerms": [],
+          "requiresTerms": []
+        },
+        {
+          "path": "docs/courses/agent/01-项目与知识库导航/07-课程知识库官方文档与论文.md",
+          "title": "课程知识库、官方文档与论文",
+          "introducedTerms": [],
+          "requiresTerms": []
+        }
+      ],
+      "resources": [
+        {
+          "name": "smolagents",
+          "category": "Agent 框架与运行时",
+          "url": "https://github.com/huggingface/smolagents",
+          "problem": "用很少的抽象搭建可读的 Agent Loop、工具和代码执行 Agent。",
+          "recommendedLearning": "先跑一个本地工具调用，再阅读 Agent 与 CodeAgent 的循环、停止和执行器边界。",
+          "prerequisites": ["Python 函数与异常处理", "Agent Loop、Tool 的直觉"],
+          "stage": "入门",
+          "readingDepth": "主线精读",
+          "recommendedReading": ["官方 README 的核心抽象", "docs/source/en/tutorials/overview.mdx", "src/smolagents/agents.py"],
+          "deepSeekHarnessMapping": "Agent Loop、Tool 与 CodeAgent 对应 dsh 的 Agent Driver、工具插件和执行沙箱边界。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "OpenAI Agents SDK",
+          "category": "Agent 框架与运行时",
+          "url": "https://openai.github.io/openai-agents-python/",
+          "problem": "把 Agent、工具、handoff、guardrail、session 和 tracing 组合成可观测运行时。",
+          "recommendedLearning": "按 Quickstart → Agents → Running agents → Handoffs → Guardrails → Tracing 阅读，比较托管 Runner 与自建循环。",
+          "prerequisites": ["Python 类型标注和数据校验的基本概念", "第 02–04 章"],
+          "stage": "进阶",
+          "readingDepth": "主线精读",
+          "recommendedReading": ["Quickstart", "Agents", "Running agents", "Tracing"],
+          "deepSeekHarnessMapping": "Agent/Runner、handoff 和 tracing 对应 dsh 的 driver、插件协作和事件流。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "MCP TypeScript SDK",
+          "category": "MCP、Tools、Skills 与集成",
+          "url": "https://github.com/modelcontextprotocol/typescript-sdk",
+          "problem": "用官方 SDK 实现 MCP Client/Server、tools/resources/prompts、传输和授权。",
+          "recommendedLearning": "以官方 TypeScript SDK v2 为实现基线，先阅读 Server tutorial，再按 Client、transport、capability、错误和 2026-07-28 适配说明查阅；旧 v1 包结构只用于迁移对照。",
+          "prerequisites": ["MCP 的 Host/Client/Server 模型", "只需能读懂当前 TypeScript 类型和 async 调用"],
+          "stage": "进阶",
+          "readingDepth": "主线精读",
+          "recommendedReading": ["v2 十分钟 Server tutorial", "2026-07-28 support guide", "packages/server", "packages/client", "examples"],
+          "deepSeekHarnessMapping": "MCP capability、transport 和 tool result 对应 dsh 的能力插件与外部工具边界。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "MCP Python SDK",
+          "category": "MCP、Tools、Skills 与集成",
+          "url": "https://github.com/modelcontextprotocol/python-sdk",
+          "problem": "用当前官方 Python SDK 构建 MCP Server/Client，并覆盖 tools、resources、prompts 与标准 transport。",
+          "recommendedLearning": "按当前官方文档的 Get started → Servers → Clients → Protocol versions 阅读，案例默认使用当前 mcp 包和 Python 3.10+；旧 v1 教程的导入路径、包结构和 initialize/session 假设需对照迁移指南。",
+          "prerequisites": ["Python 异步基础", "第 02–06 章的 Agent Loop、Tool、JSON-RPC、transport 和授权边界"],
+          "stage": "进阶",
+          "readingDepth": "案例参考",
+          "recommendedReading": ["Installation", "First steps", "Testing", "Servers / Tools", "Clients", "Protocol versions", "Migration Guide"],
+          "deepSeekHarnessMapping": "Python SDK 的 Server/Client 与 transport 对应 dsh 外部能力插件边界；SDK 不替代 dsh 的审批、沙箱和事件审计。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "LangGraph",
+          "category": "Workflow、Planning 与 Multi-Agent",
+          "url": "https://docs.langchain.com/oss/python/langgraph/",
+          "problem": "用显式 State、Node、Edge、checkpoint 和 interrupt 编排长流程、恢复与人工介入。",
+          "recommendedLearning": "先做单 Agent StateGraph，再阅读 checkpointer、interrupt、durable execution 和多 Agent 路由。",
+          "prerequisites": ["第 02–05、09 章", "Python 状态机思维"],
+          "stage": "进阶",
+          "readingDepth": "主线精读",
+          "recommendedReading": ["Graph API", "Persistence / Checkpointers", "Interrupts", "Durable execution"],
+          "deepSeekHarnessMapping": "State/checkpoint/interrupt 对应 dsh 的 Session、Hook 和可恢复事件。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "DeepSeek Harness",
+          "category": "Coding Agent 与 Harness",
+          "url": "https://github.com/deepseek-ai/deepseek-harness",
+          "problem": "用 Everything is a Plugin 的 Harness 组织 Coding Agent、工具、会话、技能和事件。",
+          "recommendedLearning": "最后阅读仓库结构、Cordis 上下文、Agent Driver、dsh-plugin、Session/Skill/Hook 调用链；运行前先看安全说明。",
+          "prerequisites": ["第 02–10 章", "Node.js 项目结构阅读能力"],
+          "stage": "生产工程",
+          "readingDepth": "主线精读",
+          "recommendedReading": ["README 与安全说明", "core/", "ai-agents/", "cordis/", "dsh-plugin/"],
+          "deepSeekHarnessMapping": "这是本课程的终点对照对象；内部接口处于 developer preview，不能当成永久稳定契约。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "OpenAI Responses API",
+          "category": "Agent 框架与运行时",
+          "url": "https://platform.openai.com/docs/guides/agents",
+          "problem": "在需要自主管理模型请求、工具循环和状态时提供较低层的 Agent 原语。",
+          "recommendedLearning": "用来理解托管 Agent SDK 与自建 loop 的边界，重点查 function calling、streaming 和 background mode。",
+          "prerequisites": ["第 02–04 章", "HTTP JSON API 基础"],
+          "stage": "进阶",
+          "readingDepth": "专题查阅",
+          "recommendedReading": ["Agents guide", "Tools", "Conversation state", "Streaming events"],
+          "deepSeekHarnessMapping": "Responses turn 与 tool result 可映射到 dsh 的 driver turn 和事件记录，但不等同于插件架构。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "OpenHands",
+          "category": "Coding Agent 与 Harness",
+          "url": "https://github.com/All-Hands-AI/OpenHands",
+          "problem": "提供可运行的 Coding Agent、工作区、工具和事件驱动执行参考。",
+          "recommendedLearning": "只选架构和运行时文档阅读，比较 agent controller、workspace 和安全隔离，不把产品功能当成通用保证。",
+          "prerequisites": ["第 02、04、06、10 章", "容器和工作区权限边界"],
+          "stage": "生产工程",
+          "readingDepth": "案例参考",
+          "recommendedReading": ["architecture overview", "agent runtime", "workspace / sandbox", "security docs"],
+          "deepSeekHarnessMapping": "Controller、workspace 和 event stream 可与 dsh driver、插件和 session 对照。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "SWE-agent",
+          "category": "Coding Agent 与 Harness",
+          "url": "https://github.com/SWE-agent/SWE-agent",
+          "problem": "展示面向软件工程任务的 agent loop、工具接口、轨迹记录和评测闭环。",
+          "recommendedLearning": "阅读配置、工具环境、轨迹和评测入口，专注可复现任务与失败边界，不以单次 benchmark 结果做结论。",
+          "prerequisites": ["Python 基础", "第 04、10 章"],
+          "stage": "进阶",
+          "readingDepth": "案例参考",
+          "recommendedReading": ["configuration", "agent loop", "environment tools", "evaluation"],
+          "deepSeekHarnessMapping": "任务轨迹和工具环境对应 dsh 的 session/event 与插件工具。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "MCP Specification",
+          "category": "MCP、Tools、Skills 与集成",
+          "url": "https://modelcontextprotocol.io/specification/2026-07-28",
+          "problem": "定义跨 Host、Client、Server 的消息、能力、资源、工具、提示、传输和生命周期契约。",
+          "recommendedLearning": "按 Architecture → Base Protocol → Server/Client Features → Extensions → Security 阅读；以 MCP 2026-07-28 规范为准，旧版本只用于迁移对照。",
+          "prerequisites": ["JSON-RPC 基本概念", "第 06 章"],
+          "stage": "进阶",
+          "readingDepth": "主线精读",
+          "recommendedReading": ["Architecture", "Base Protocol", "Server Features", "Client Features", "Extensions", "Security"],
+          "deepSeekHarnessMapping": "MCP 能力协商与授权是 dsh 接入外部工具时的协议边界，不替代 dsh 内部插件生命周期。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "MCP 官方服务器集合",
+          "category": "MCP、Tools、Skills 与集成",
+          "url": "https://github.com/modelcontextprotocol/servers",
+          "problem": "提供可运行的 MCP server 实例，用于观察工具 schema、资源暴露、错误和权限。",
+          "recommendedLearning": "选择一个无敏感数据的本地 server 运行，检查 README、schema、权限与日志；不要默认启用有写权限的服务。",
+          "prerequisites": ["MCP Host/Client/Server", "本地进程和权限基础"],
+          "stage": "入门",
+          "readingDepth": "案例参考",
+          "recommendedReading": ["README", "filesystem server", "每个 server 的安全说明", "测试用例"],
+          "deepSeekHarnessMapping": "可把 server 视作 dsh 的外部工具插件，比较进程边界、schema 和授权责任。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "Agent Skills Specification",
+          "category": "MCP、Tools、Skills 与集成",
+          "url": "https://agentskills.io/specification",
+          "problem": "约定如何以渐进式上下文包装可复用任务能力、脚本、资源和验证步骤。",
+          "recommendedLearning": "先读 frontmatter、目录布局、渐进加载和脚本边界，再对比 Skill、Tool、MCP、Plugin 的职责。",
+          "prerequisites": ["Markdown frontmatter", "第 07 章"],
+          "stage": "进阶",
+          "readingDepth": "专题查阅",
+          "recommendedReading": ["Specification", "What are skills?", "Writing skills", "Security considerations"],
+          "deepSeekHarnessMapping": "Skill 的渐进式上下文与验证步骤对应 dsh Skill 插件，加载和生命周期仍以 dsh 源码为准。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "LlamaIndex RAG 组件文档",
+          "category": "RAG、Memory 与 Context Engineering",
+          "url": "https://docs.llamaindex.ai/en/stable/module_guides/querying/",
+          "problem": "把文档摄取、索引、检索、重排和回答组装为可替换的 RAG 管线。",
+          "recommendedLearning": "只用作组件地图，先理解无框架 RAG，再按 ingestion、retriever、reranker、citation 查阅。",
+          "prerequisites": ["第 05、08 章", "文本切分与检索直觉"],
+          "stage": "进阶",
+          "readingDepth": "专题查阅",
+          "recommendedReading": ["Querying", "Retrievers", "Node parsers", "Evaluation"],
+          "deepSeekHarnessMapping": "检索结果与上下文组装可作为 dsh 工具/Skill 输出进入 driver context，但框架不决定 dsh session。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "Mem0",
+          "category": "RAG、Memory 与 Context Engineering",
+          "url": "https://github.com/mem0ai/mem0",
+          "problem": "提供长期记忆提取、存储和召回的实现参考，帮助区分会话状态与持久记忆。",
+          "recommendedLearning": "重点阅读 memory extraction、scoping、更新和删除策略；先设计隔离与保留策略，再尝试集成。",
+          "prerequisites": ["State、Session、Memory", "第 05 章"],
+          "stage": "生产工程",
+          "readingDepth": "案例参考",
+          "recommendedReading": ["memory model", "add/search/update/delete", "privacy and isolation", "tests"],
+          "deepSeekHarnessMapping": "长期记忆属于 dsh Session 之外的持久化插件，必须明确租户、用户和会话作用域。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "LangChain 文档：Context Engineering",
+          "category": "RAG、Memory 与 Context Engineering",
+          "url": "https://docs.langchain.com/oss/python/langchain/context-engineering",
+          "problem": "整理模型输入上下文、工具结果、状态和记忆的工程化边界。",
+          "recommendedLearning": "用来建立术语地图，回到本课程的无框架 Python 示例验证每个概念。",
+          "prerequisites": ["第 02–05 章"],
+          "stage": "入门",
+          "readingDepth": "专题查阅",
+          "recommendedReading": ["runtime context", "state", "memory", "context shaping"],
+          "deepSeekHarnessMapping": "Context shaping 对应 dsh driver 在每一轮把 Session、Skill 和 tool result 拼入模型输入的责任。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "CrewAI",
+          "category": "Workflow、Planning 与 Multi-Agent",
+          "url": "https://docs.crewai.com/",
+          "problem": "提供 role/task/crew/flow 等多 Agent 编排方式，便于比较协作抽象与显式状态机。",
+          "recommendedLearning": "先理解单 Agent 和确定性 Workflow，再阅读 delegation、state、guardrail 和 observability；不要默认多 Agent 更好。",
+          "prerequisites": ["第 02、05、09 章"],
+          "stage": "进阶",
+          "readingDepth": "案例参考",
+          "recommendedReading": ["Agents", "Tasks", "Flows", "Guardrails", "Observability"],
+          "deepSeekHarnessMapping": "Crew/Flow 的协作层与 dsh 插件协作对照，但 dsh 的核心可组合性来自 Cordis plugin context。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "AutoGen",
+          "category": "Workflow、Planning 与 Multi-Agent",
+          "url": "https://microsoft.github.io/autogen/stable/",
+          "problem": "展示消息驱动的多 Agent 对话、团队、工具和可扩展运行时。",
+          "recommendedLearning": "阅读 agent protocol、team runtime、termination 和 intervention，比较消息图与状态图的故障边界。",
+          "prerequisites": ["Message、Role、State", "第 03、09 章"],
+          "stage": "进阶",
+          "readingDepth": "案例参考",
+          "recommendedReading": ["AgentChat", "Core", "Teams", "Termination"],
+          "deepSeekHarnessMapping": "Agent message/runtime 可与 dsh 事件系统和插件协作对照，不等同于 Cordis 生命周期。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "OpenAI Evals",
+          "category": "Evals、Tracing 与可观测性",
+          "url": "https://github.com/openai/evals",
+          "problem": "为模型和 Agent 建立数据集、评测模板、可复现运行和回归对比。",
+          "recommendedLearning": "先以确定性 parser/schema 测试起步，再把工具轨迹和最终答案分层纳入数据集。",
+          "prerequisites": ["第 04、10 章", "测试断言与 JSONL 基础"],
+          "stage": "生产工程",
+          "readingDepth": "专题查阅",
+          "recommendedReading": ["evals registry", "sample evals", "model graded evals", "CLI"],
+          "deepSeekHarnessMapping": "评测输入、轨迹和结果对应 dsh 的 session/event 记录，适合验证 driver 与插件回归。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "LangSmith Tracing",
+          "category": "Evals、Tracing 与可观测性",
+          "url": "https://docs.langchain.com/langsmith/observability",
+          "problem": "记录运行、节点、工具和模型调用的 trace/span，定位 Agent 失败与成本。",
+          "recommendedLearning": "先掌握 trace/span/event 的数据模型，再比较采样、敏感字段脱敏和离线评测关联。",
+          "prerequisites": ["第 09、10 章", "事件日志和指标基础"],
+          "stage": "生产工程",
+          "readingDepth": "专题查阅",
+          "recommendedReading": ["Observability", "Tracing", "Datasets", "Online evaluations"],
+          "deepSeekHarnessMapping": "trace/span 可映射到 dsh event bus 和 driver 轨迹，但需自行审计敏感工具参数。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "Arize Phoenix",
+          "category": "Evals、Tracing 与可观测性",
+          "url": "https://github.com/Arize-ai/phoenix",
+          "problem": "提供开放式 LLM/Agent tracing、评测和本地观测界面。",
+          "recommendedLearning": "用本地示例观察 span 属性、检索/生成评测和敏感数据配置，不把展示结果当作正确性证明。",
+          "prerequisites": ["Trace、Span、RAG eval", "第 08、10 章"],
+          "stage": "生产工程",
+          "readingDepth": "案例参考",
+          "recommendedReading": ["OpenTelemetry tracing", "evaluators", "RAG analysis", "self-hosting"],
+          "deepSeekHarnessMapping": "OpenTelemetry span 可承载 dsh driver、plugin 和 tool event 的跨层观测。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "Browser Use",
+          "category": "Browser Agent、Sandbox 与执行环境",
+          "url": "https://github.com/browser-use/browser-use",
+          "problem": "展示让 Agent 观察和操作真实浏览器的状态、动作、工具与执行环境。",
+          "recommendedLearning": "先用无登录、无写入的本地页面实验，阅读浏览器 session、动作确认、超时和权限；真实账号必须隔离。",
+          "prerequisites": ["Tool Calling、State、Guardrail", "第 04、10 章"],
+          "stage": "生产工程",
+          "readingDepth": "案例参考",
+          "recommendedReading": ["quickstart", "browser session", "agent actions", "security and deployment"],
+          "deepSeekHarnessMapping": "浏览器动作可视作 dsh tool plugin；权限、审批、session 隔离和审计不能交给模型默认决定。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "Playwright",
+          "category": "Browser Agent、Sandbox 与执行环境",
+          "url": "https://playwright.dev/docs/intro",
+          "problem": "提供可重复的浏览器控制和测试基础，让 Agent 浏览器工具有确定性执行层。",
+          "recommendedLearning": "先掌握 locator、context、timeouts、tracing 和无头运行，再阅读 Agent 如何生成受控动作。",
+          "prerequisites": ["Python 函数、异常和测试", "浏览器基础"],
+          "stage": "入门",
+          "readingDepth": "专题查阅",
+          "recommendedReading": ["Library", "Browser contexts", "Auto-waiting", "Trace viewer"],
+          "deepSeekHarnessMapping": "Playwright context 是 dsh 浏览器插件可拥有的隔离资源；Harness 仍负责授权与审批。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "E2B Code Interpreter",
+          "category": "Browser Agent、Sandbox 与执行环境",
+          "url": "https://github.com/e2b-dev/E2B",
+          "problem": "提供临时隔离执行环境，帮助理解 Agent 生成代码与宿主文件系统的安全边界。",
+          "recommendedLearning": "重点读 sandbox 生命周期、网络/文件权限、超时和清理；危险代码只在受控测试数据中运行。",
+          "prerequisites": ["Tool、Sandbox、最小权限", "第 04、10 章"],
+          "stage": "生产工程",
+          "readingDepth": "案例参考",
+          "recommendedReading": ["sandbox lifecycle", "filesystem", "network controls", "timeouts and cleanup"],
+          "deepSeekHarnessMapping": "Sandbox 是 dsh 执行插件的隔离实现，不能由 LocalPythonExecutor 等 best-effort 模式替代。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "Hugging Face Agents Course",
+          "category": "中英文课程与知识库",
+          "url": "https://huggingface.co/learn/agents-course/en/unit0/introduction",
+          "problem": "以循序课程解释 Agent、工具、框架、检索和评测，并配合可运行实验。",
+          "recommendedLearning": "把 Unit 1 的基础概念作为入门补充，遇到框架 API 时回到本课程的协议与边界文章。",
+          "prerequisites": ["Python 基础", "能够阅读英文技术文档"],
+          "stage": "入门",
+          "readingDepth": "专题查阅",
+          "recommendedReading": ["Introduction", "What is an Agent?", "Tools", "Agentic frameworks"],
+          "deepSeekHarnessMapping": "课程抽象可作为 dsh driver、tool、memory 和 multi-agent 对照的入门词典。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "Anthropic: Building effective agents",
+          "category": "中英文课程与知识库",
+          "url": "https://www.anthropic.com/research/building-effective-agents",
+          "problem": "总结从简单 prompt chain 到 workflow 和 agent 的选择、边界和工程取舍。",
+          "recommendedLearning": "精读 augmented LLM、workflow、agent、orchestrator-workers、evaluator-optimizer，并记录何时不该增加复杂度。",
+          "prerequisites": ["Agent Loop、Workflow、Evals", "第 02、09、10 章"],
+          "stage": "进阶",
+          "readingDepth": "专题查阅",
+          "recommendedReading": ["Building blocks", "Workflows", "Agents", "When to use which pattern"],
+          "deepSeekHarnessMapping": "Workflow/agent 的边界帮助定位 dsh 是否需要插件扩展，而不是把所有任务都变成多 Agent。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "OpenAI Cookbook Agents 章节",
+          "category": "中英文课程与知识库",
+          "url": "https://cookbook.openai.com/topic/agents",
+          "problem": "以短示例呈现 Responses、工具、handoff、tracing 和评测的组合方式。",
+          "recommendedLearning": "运行无需真实密钥的结构化示例，需联网的代码先检查环境变量和成本提示。",
+          "prerequisites": ["Python 基础", "第 02–04、10 章"],
+          "stage": "进阶",
+          "readingDepth": "案例参考",
+          "recommendedReading": ["agents topic", "tool calling", "structured outputs", "evals"],
+          "deepSeekHarnessMapping": "示例中的 tool call、handoff、trace 可以映射到 dsh driver/plugin/event 三层。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "Datawhale LLM Cookbook",
+          "category": "中英文课程与知识库",
+          "url": "https://github.com/datawhalechina/llm-cookbook",
+          "problem": "提供中文大模型应用、提示、工具调用和 RAG 的入门资料与实验入口。",
+          "recommendedLearning": "只把与 Agent 工程相关的章节作为中文补充；对 API/模型版本回到官方文档核对。",
+          "prerequisites": ["Python 基础", "能够运行 notebook 或脚本"],
+          "stage": "入门",
+          "readingDepth": "案例参考",
+          "recommendedReading": ["大模型应用基础", "函数调用", "RAG", "评测相关章节"],
+          "deepSeekHarnessMapping": "中文资料帮助补齐 driver、tool、context 词汇，不替代 dsh 官方源码和安全说明。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "Model Context Protocol Security Best Practices",
+          "category": "官方协议、论文与规范",
+          "url": "https://modelcontextprotocol.io/specification/2026-07-28",
+          "problem": "明确 MCP token audience、confused deputy、SSRF、日志和不可信输入的安全边界。",
+          "recommendedLearning": "按 2026-07-28 Specification 的 Security and Trust、Consent、Data Privacy、Tool Safety 阅读；任何 tool 结果都不能直接升级为系统指令，旧安全页面只作为迁移对照。",
+          "prerequisites": ["MCP 生命周期和 OAuth 基本概念", "第 06、10 章"],
+          "stage": "生产工程",
+          "readingDepth": "主线精读",
+          "recommendedReading": ["Token passthrough", "Confused deputy", "SSRF", "User consent and data handling"],
+          "deepSeekHarnessMapping": "MCP server 的授权边界应与 dsh plugin 的 capability 和审批边界叠加，而不是互相替代。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "ReAct: Synergizing Reasoning and Acting",
+          "category": "官方协议、论文与规范",
+          "url": "https://arxiv.org/abs/2210.03629",
+          "problem": "解释 reasoning 与 action/observation 交错的 Agent Loop 思路和可解释轨迹。",
+          "recommendedLearning": "精读 action-observation loop、知识获取与异常处理，不把论文轨迹直接当成生产安全方案。",
+          "prerequisites": ["Model、Tool、Observation、StopReason", "第 02–04 章"],
+          "stage": "入门",
+          "readingDepth": "主线精读",
+          "recommendedReading": ["Introduction", "ReAct prompting", "Action spaces", "Experiments"],
+          "deepSeekHarnessMapping": "ReAct loop 是 dsh driver 迭代工具和事件的理论参照，dsh 还增加 plugin/session/safety 层。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "Toolformer",
+          "category": "官方协议、论文与规范",
+          "url": "https://arxiv.org/abs/2302.04761",
+          "problem": "研究模型学习决定是否调用外部 API、如何传参及如何使用返回结果。",
+          "recommendedLearning": "重点理解 API call token、参数和结果拼接，结合第 04 章区分训练能力与运行时安全。",
+          "prerequisites": ["Message、Tool schema、ToolResult", "第 03、04 章"],
+          "stage": "进阶",
+          "readingDepth": "专题查阅",
+          "recommendedReading": ["API calls", "Self-supervised data", "Tool use evaluation", "Limitations"],
+          "deepSeekHarnessMapping": "模型选工具只是 dsh driver 的一部分，插件注册、权限、审批和审计仍由 Harness 负责。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "Retrieval-Augmented Generation for Large Language Models: A Survey",
+          "category": "官方协议、论文与规范",
+          "url": "https://arxiv.org/abs/2312.10997",
+          "problem": "系统梳理 RAG 的数据、检索、增强、生成和评测组件及其边界。",
+          "recommendedLearning": "按 retrieval、augmentation、generation 和 evaluation 对照第 08 章的本地最小管线。",
+          "prerequisites": ["Embedding、检索、Citation", "第 08 章"],
+          "stage": "进阶",
+          "readingDepth": "专题查阅",
+          "recommendedReading": ["RAG taxonomy", "Retrieval", "Augmentation", "Evaluation"],
+          "deepSeekHarnessMapping": "RAG 输出可作为 dsh context provider 或 tool result；权限过滤和引用仍需 Harness/应用层负责。",
+          "checkedAt": "2026-10-07"
+        },
+        {
+          "name": "A Programming Paradigm for Spatiotemporal Composability",
+          "category": "官方协议、论文与规范",
+          "url": "https://arxiv.org/abs/2507.17979",
+          "problem": "解释 Cordis 的时空可组合插件范式，为理解 DeepSeek Harness 的运行时提供原始材料。",
+          "recommendedLearning": "在读完第 02–10 章和四个对照项目后精读 Context、service、event、scope 和生命周期。",
+          "prerequisites": ["Plugin、Hook、Event、Session", "第 07、09、11 章"],
+          "stage": "生产工程",
+          "readingDepth": "主线精读",
+          "recommendedReading": ["Context and composability", "Spatiotemporal model", "Plugin lifecycle", "Examples"],
+          "deepSeekHarnessMapping": "这是理解 dsh Cordis、Everything is a Plugin 和事件系统的核心原始材料。",
+          "checkedAt": "2026-10-07"
+        }
+      ]
+    },
+    {
+      "id": "02",
+      "title": "Agent 基础",
+      "sidebarTitle": "Agent 基础",
+      "directory": "docs/courses/agent/02-Agent基础",
+      "goal": "建立 Model、Instructions、Tools、State、Context 和停止边界的最小心智模型。",
+      "prerequisites": ["01 章资源导航可选", "已有 Python 基础编程能力"],
+      "next": "03",
+      "articles": [
+        {"path": "docs/courses/agent/02-Agent基础/01-Agent系统组成.md", "title": "Agent 系统组成", "introducedTerms": ["Agent", "Model", "Instructions", "Tool", "Tools", "State", "Context", "Guardrails", "Run", "StopReason"], "requiresTerms": []},
+        {"path": "docs/courses/agent/02-Agent基础/02-最小Agent-Loop.md", "title": "最小 Agent Loop", "introducedTerms": ["AgentLoop", "Observation", "Action", "FinalAnswer"], "requiresTerms": ["Agent", "Model", "Tools", "State", "Context"]},
+        {"path": "docs/courses/agent/02-Agent基础/03-停止条件与失败边界.md", "title": "停止条件与失败边界", "introducedTerms": ["MaxSteps", "FailureBoundary", "RetryBudget"], "requiresTerms": ["AgentLoop", "Observation", "Action", "StopReason"]},
+        {"path": "docs/courses/agent/02-Agent基础/04-同步异步与流式执行.md", "title": "同步、异步与流式执行", "introducedTerms": ["SyncRun", "AsyncRun", "EventStream"], "requiresTerms": ["AgentLoop", "Run", "State", "StopReason"]}
+      ]
+    },
+    {
+      "id": "03",
+      "title": "模型与消息",
+      "sidebarTitle": "模型与消息",
+      "directory": "docs/courses/agent/03-模型与消息",
+      "goal": "掌握 Model、Message、Role、Token、Streaming 和 Structured Output 的边界。",
+      "prerequisites": ["02 章按顺序阅读"],
+      "next": "04",
+      "articles": [
+        {"path": "docs/courses/agent/03-模型与消息/01-Model与推理边界.md", "title": "Model 与推理边界", "introducedTerms": ["ModelAdapter", "InferenceBoundary"], "requiresTerms": ["Model", "Instructions", "Context"]},
+        {"path": "docs/courses/agent/03-模型与消息/02-Message与Role.md", "title": "Message 与 Role", "introducedTerms": ["Message", "Role", "SystemMessage", "UserMessage", "AssistantMessage", "ToolMessage"], "requiresTerms": ["Model", "Instructions", "AgentLoop"]},
+        {"path": "docs/courses/agent/03-模型与消息/03-Token上下文窗口与截断.md", "title": "Token、上下文窗口与截断", "introducedTerms": ["Token", "ContextWindow", "Truncation"], "requiresTerms": ["Message", "Role", "Context"]},
+        {"path": "docs/courses/agent/03-模型与消息/04-Structured-Output.md", "title": "Structured Output", "introducedTerms": ["StructuredOutput", "SchemaValidation"], "requiresTerms": ["Message", "Model", "Token"]},
+        {"path": "docs/courses/agent/03-模型与消息/05-Streaming与事件.md", "title": "Streaming 与事件", "introducedTerms": ["Delta", "ModelEvent", "Usage"], "requiresTerms": ["Message", "EventStream", "Token"]}
+      ]
+    },
+    {
+      "id": "04",
+      "title": "Tool Calling 与 Agent Loop",
+      "sidebarTitle": "Tool Calling 与 Agent Loop",
+      "directory": "docs/courses/agent/04-Tool-Calling与Agent-Loop",
+      "goal": "从函数 schema 推进到工具注册、结果回填、并行、重试、幂等和审批。",
+      "prerequisites": ["02–03 章按顺序阅读"],
+      "next": "05",
+      "articles": [
+        {"path": "docs/courses/agent/04-Tool-Calling与Agent-Loop/01-函数调用与JSON-Schema.md", "title": "函数调用与 JSON Schema", "introducedTerms": ["ToolCalling", "JSONSchema", "ToolDefinition", "ToolCall"], "requiresTerms": ["Model", "Message", "StructuredOutput"]},
+        {"path": "docs/courses/agent/04-Tool-Calling与Agent-Loop/02-工具注册选择与结果回填.md", "title": "工具注册、选择与结果回填", "introducedTerms": ["ToolRegistry", "ToolSelection", "ToolResult", "ResultInjection"], "requiresTerms": ["ToolCalling", "ToolDefinition", "ToolCall", "Observation"]},
+        {"path": "docs/courses/agent/04-Tool-Calling与Agent-Loop/03-并行工具与依赖工具.md", "title": "并行工具与依赖工具", "introducedTerms": ["ParallelTool", "ToolDependency", "FanOut", "FanIn"], "requiresTerms": ["ToolCall", "ToolResult", "State", "AsyncRun"]},
+        {"path": "docs/courses/agent/04-Tool-Calling与Agent-Loop/04-超时重试幂等与去重.md", "title": "超时、重试、幂等与去重", "introducedTerms": ["Timeout", "Idempotency", "Deduplication", "Backoff"], "requiresTerms": ["ToolCall", "ToolResult", "RetryBudget", "State"]},
+        {"path": "docs/courses/agent/04-Tool-Calling与Agent-Loop/05-审批权限与危险操作.md", "title": "审批、权限与危险操作", "introducedTerms": ["Approval", "Permission", "DangerousOperation", "Audit"], "requiresTerms": ["ToolRegistry", "ToolCall", "Guardrails", "State"]},
+        {"path": "docs/courses/agent/04-Tool-Calling与Agent-Loop/06-完整可观测Agent-Loop.md", "title": "完整可观测 Agent Loop", "introducedTerms": ["Trace", "Span", "RunLog", "CostMetric"], "requiresTerms": ["AgentLoop", "ToolResult", "StopReason", "Audit"]}
+      ]
+    },
+    {
+      "id": "05",
+      "title": "State、Context、Session 与 Memory",
+      "sidebarTitle": "State、Context、Session 与 Memory",
+      "directory": "docs/courses/agent/05-状态上下文会话与记忆",
+      "goal": "区分状态所有权、上下文投影、会话生命周期、检查点和短长期记忆。",
+      "prerequisites": ["02–04 章按顺序阅读"],
+      "next": "06",
+      "articles": [
+        {"path": "docs/courses/agent/05-状态上下文会话与记忆/01-State与Context.md", "title": "State 与 Context", "introducedTerms": ["Memory", "StateOwnership", "ContextProjection"], "requiresTerms": ["State", "Context", "Message", "ToolResult"]},
+        {"path": "docs/courses/agent/05-状态上下文会话与记忆/02-Session生命周期.md", "title": "Session 生命周期", "introducedTerms": ["Session", "SessionId", "Lifecycle"], "requiresTerms": ["StateOwnership", "ContextProjection", "Run"]},
+        {"path": "docs/courses/agent/05-状态上下文会话与记忆/03-Checkpoint中断与恢复.md", "title": "Checkpoint、中断与恢复", "introducedTerms": ["Checkpoint", "Interrupt", "Resume", "Recovery"], "requiresTerms": ["Session", "State", "StopReason", "Audit"]},
+        {"path": "docs/courses/agent/05-状态上下文会话与记忆/04-上下文压缩与摘要.md", "title": "上下文压缩与摘要", "introducedTerms": ["ContextCompaction", "Summary", "Budget"], "requiresTerms": ["ContextWindow", "ContextProjection", "Message", "Token"]},
+        {"path": "docs/courses/agent/05-状态上下文会话与记忆/05-短期记忆与长期记忆.md", "title": "短期记忆与长期记忆", "introducedTerms": ["ShortTermMemory", "LongTermMemory", "MemoryScope"], "requiresTerms": ["Session", "Checkpoint", "ContextCompaction"]},
+        {"path": "docs/courses/agent/05-状态上下文会话与记忆/06-记忆污染与隔离.md", "title": "记忆污染与隔离", "introducedTerms": ["MemoryPoisoning", "TenantIsolation", "Retention"], "requiresTerms": ["LongTermMemory", "MemoryScope", "Permission", "Audit"]}
+      ]
+    },
+    {
+      "id": "06",
+      "title": "MCP",
+      "sidebarTitle": "MCP",
+      "directory": "docs/courses/agent/06-MCP",
+      "goal": "理解 MCP 的角色、能力、传输、生命周期、授权和安全边界，并能用 Python 运行最小服务。",
+      "prerequisites": ["02–05 章按顺序阅读", "JSON-RPC 与 HTTP 基本概念"],
+      "next": "07",
+      "articles": [
+        {"path": "docs/courses/agent/06-MCP/01-MCP解决什么问题.md", "title": "MCP 解决什么问题", "introducedTerms": ["MCP", "Host", "Client", "Server", "Capability"], "requiresTerms": ["Tool", "Context", "Permission"]},
+        {"path": "docs/courses/agent/06-MCP/02-Host-Client与Server.md", "title": "Host、Client 与 Server", "introducedTerms": ["HostBoundary", "ClientConnection", "ServerCapability"], "requiresTerms": ["MCP", "Host", "Client", "Server"]},
+        {"path": "docs/courses/agent/06-MCP/03-Tools-Resources与Prompts.md", "title": "Tools、Resources 与 Prompts", "introducedTerms": ["MCPTool", "MCPResource", "MCPPrompt"], "requiresTerms": ["Capability", "ToolDefinition", "Context"]},
+        {"path": "docs/courses/agent/06-MCP/04-stdio与Streamable-HTTP.md", "title": "stdio 与 Streamable HTTP", "introducedTerms": ["StdioTransport", "StreamableHTTP", "Transport"], "requiresTerms": ["ClientConnection", "ServerCapability", "Timeout", "Audit"]},
+        {"path": "docs/courses/agent/06-MCP/05-初始化能力协商与生命周期.md", "title": "初始化、能力协商与生命周期", "introducedTerms": ["Initialize", "CapabilityNegotiation", "Shutdown"], "requiresTerms": ["Transport", "Capability", "Lifecycle"]},
+        {"path": "docs/courses/agent/06-MCP/06-错误授权与安全边界.md", "title": "错误、授权与安全边界", "introducedTerms": ["JSONRPCError", "OAuth", "TokenAudience", "ConfusedDeputy"], "requiresTerms": ["Transport", "MCPTool", "Permission", "Audit"]},
+        {"path": "docs/courses/agent/06-MCP/07-Python实现最小MCP服务.md", "title": "Python 实现最小 MCP 服务", "introducedTerms": ["PythonMCPServer", "LocalTransport"], "requiresTerms": ["MCP", "MCPTool", "Transport", "CapabilityNegotiation"]}
+      ]
+    },
+    {
+      "id": "07",
+      "title": "Skills、Plugin 与 Hook",
+      "sidebarTitle": "Skills、Plugin 与 Hook",
+      "directory": "docs/courses/agent/07-Skills插件与Hook",
+      "goal": "区分 Skill、Tool、MCP、Plugin 和 Hook 的责任，理解渐进式上下文与扩展生命周期。",
+      "prerequisites": ["02–06 章按顺序阅读"],
+      "next": "08",
+      "articles": [
+        {"path": "docs/courses/agent/07-Skills插件与Hook/01-Skill与渐进式上下文.md", "title": "Skill 与渐进式上下文", "introducedTerms": ["Skill", "ProgressiveDisclosure", "SkillManifest"], "requiresTerms": ["ContextProjection", "Tool", "MCP"]},
+        {"path": "docs/courses/agent/07-Skills插件与Hook/02-Plugin能力注册与生命周期.md", "title": "Plugin 能力注册与生命周期", "introducedTerms": ["Plugin", "Registration", "PluginLifecycle", "Dependency"] , "requiresTerms": ["Skill", "Capability", "Lifecycle"]},
+        {"path": "docs/courses/agent/07-Skills插件与Hook/03-Hook拦截器与事件.md", "title": "Hook、拦截器与事件", "introducedTerms": ["Hook", "Interceptor", "EventBus"], "requiresTerms": ["Plugin", "Trace", "EventStream", "Audit"]},
+        {"path": "docs/courses/agent/07-Skills插件与Hook/04-能力发现冲突与版本.md", "title": "能力发现、冲突与版本", "introducedTerms": ["Discovery", "Conflict", "Compatibility", "Versioning"], "requiresTerms": ["Plugin", "Capability", "SkillManifest"]},
+        {"path": "docs/courses/agent/07-Skills插件与Hook/05-Skill-Tool-MCP与Plugin对比.md", "title": "Skill、Tool、MCP 与 Plugin 对比", "introducedTerms": ["ExtensionBoundary"], "requiresTerms": ["Skill", "Tool", "MCP", "Plugin", "Hook"]}
+      ]
+    },
+    {
+      "id": "08",
+      "title": "RAG 与 Context Engineering",
+      "sidebarTitle": "RAG 与 Context Engineering",
+      "directory": "docs/courses/agent/08-RAG与上下文工程",
+      "goal": "从本地语料开始实现检索、重排、引用、上下文组装和分层评测。",
+      "prerequisites": ["02–07 章按顺序阅读", "文本处理和基础线性代数直觉"],
+      "next": "09",
+      "articles": [
+        {"path": "docs/courses/agent/08-RAG与上下文工程/01-RAG管线与适用边界.md", "title": "RAG 管线与适用边界", "introducedTerms": ["RAG", "Retrieval", "Augmentation", "Generation"], "requiresTerms": ["Context", "Memory", "ToolResult"]},
+        {"path": "docs/courses/agent/08-RAG与上下文工程/02-Ingestion解析与清洗.md", "title": "Ingestion、解析与清洗", "introducedTerms": ["Ingestion", "Parsing", "Normalization", "Document"], "requiresTerms": ["RAG", "State"]},
+        {"path": "docs/courses/agent/08-RAG与上下文工程/03-Chunking与元数据.md", "title": "Chunking 与元数据", "introducedTerms": ["Chunk", "Metadata", "Overlap"], "requiresTerms": ["Document", "Token", "Ingestion"]},
+        {"path": "docs/courses/agent/08-RAG与上下文工程/04-Embedding与向量检索.md", "title": "Embedding 与向量检索", "introducedTerms": ["Embedding", "VectorSearch", "Similarity"], "requiresTerms": ["Chunk", "Metadata", "Retrieval"]},
+        {"path": "docs/courses/agent/08-RAG与上下文工程/05-关键词混合检索与过滤.md", "title": "关键词混合检索与过滤", "introducedTerms": ["KeywordSearch", "HybridSearch", "Filter", "Recall"], "requiresTerms": ["VectorSearch", "Metadata", "Permission"]},
+        {"path": "docs/courses/agent/08-RAG与上下文工程/06-Rerank引用与上下文组装.md", "title": "Rerank、引用与上下文组装", "introducedTerms": ["Rerank", "Citation", "ContextAssembly", "Faithfulness"], "requiresTerms": ["HybridSearch", "ContextWindow", "Retrieval"]},
+        {"path": "docs/courses/agent/08-RAG与上下文工程/07-检索评测与生成评测.md", "title": "检索评测与生成评测", "introducedTerms": ["RetrievalEval", "GenerationEval", "Precision", "RecallAtK"], "requiresTerms": ["Citation", "Faithfulness", "Trace"]}
+      ]
+    },
+    {
+      "id": "09",
+      "title": "Workflow、Planning 与 Multi-Agent",
+      "sidebarTitle": "Workflow、Planning 与 Multi-Agent",
+      "directory": "docs/courses/agent/09-工作流规划与多Agent",
+      "goal": "先用单 Agent 状态机表达流程，再按需要加入规划、路由、handoff、supervisor 和并发。",
+      "prerequisites": ["02–08 章按顺序阅读"],
+      "next": "10",
+      "articles": [
+        {"path": "docs/courses/agent/09-工作流规划与多Agent/01-Workflow与状态机.md", "title": "Workflow 与状态机", "introducedTerms": ["Workflow", "StateMachine", "Node", "Edge"], "requiresTerms": ["State", "Checkpoint"]},
+        {"path": "docs/courses/agent/09-工作流规划与多Agent/02-Planning与Plan-and-Execute.md", "title": "Planning 与 Plan-and-Execute", "introducedTerms": ["Planning", "PlanAndExecute", "Replanning"], "requiresTerms": ["Workflow", "AgentLoop", "State"]},
+        {"path": "docs/courses/agent/09-工作流规划与多Agent/03-Router与Handoff.md", "title": "Router 与 Handoff", "introducedTerms": ["Router", "Handoff", "RouteCondition"], "requiresTerms": ["Message", "Workflow", "Planning"]},
+        {"path": "docs/courses/agent/09-工作流规划与多Agent/04-Supervisor与Multi-Agent.md", "title": "Supervisor 与 Multi-Agent", "introducedTerms": ["Supervisor", "MultiAgent", "Delegation", "SharedState"], "requiresTerms": ["Router", "Handoff", "Session", "MemoryScope"]},
+        {"path": "docs/courses/agent/09-工作流规划与多Agent/05-Interrupt审批与恢复.md", "title": "Interrupt、审批与恢复", "introducedTerms": ["WorkflowInterrupt", "HumanApproval", "ResumeCommand"], "requiresTerms": ["Interrupt", "Approval", "Checkpoint", "Workflow"]},
+        {"path": "docs/courses/agent/09-工作流规划与多Agent/06-并发竞态与失败传播.md", "title": "并发竞态与失败传播", "introducedTerms": ["RaceCondition", "FailurePropagation", "Cancellation", "Compensation"], "requiresTerms": ["ParallelTool", "StateMachine", "RetryBudget", "Audit"]}
+      ]
+    },
+    {
+      "id": "10",
+      "title": "Evals、Tracing、Guardrails 与安全",
+      "sidebarTitle": "Evals、Tracing、Guardrails 与安全",
+      "directory": "docs/courses/agent/10-评测可观测性与安全",
+      "goal": "把轨迹、数据集、确定性校验、模型评审、权限、注入防护和 Sandbox 组成可靠性闭环。",
+      "prerequisites": ["02–09 章按顺序阅读"],
+      "next": "11",
+      "articles": [
+        {"path": "docs/courses/agent/10-评测可观测性与安全/01-Trace-Span与事件日志.md", "title": "Trace、Span 与事件日志", "introducedTerms": ["TraceSpan", "EventLog", "CorrelationId"], "requiresTerms": ["Trace", "Span", "EventBus", "RunLog"]},
+        {"path": "docs/courses/agent/10-评测可观测性与安全/02-Dataset与回归评测.md", "title": "Dataset 与回归评测", "introducedTerms": ["Dataset", "RegressionEval", "GoldenTask"], "requiresTerms": ["RetrievalEval", "GenerationEval", "TraceSpan"]},
+        {"path": "docs/courses/agent/10-评测可观测性与安全/03-确定性断言与LLM-as-Judge.md", "title": "确定性断言与 LLM-as-Judge", "introducedTerms": ["DeterministicAssertion", "LLMJudge", "Rubric"], "requiresTerms": ["Dataset", "GenerationEval", "StructuredOutput"]},
+        {"path": "docs/courses/agent/10-评测可观测性与安全/04-Guardrail输入输出与工具校验.md", "title": "Guardrail、输入输出与工具校验", "introducedTerms": ["InputGuardrail", "OutputGuardrail", "ToolValidation"], "requiresTerms": ["Guardrails", "ToolCall", "SchemaValidation", "Permission"]},
+        {"path": "docs/courses/agent/10-评测可观测性与安全/05-Prompt-Injection与数据泄露.md", "title": "Prompt Injection 与数据泄露", "introducedTerms": ["PromptInjection", "IndirectInjection", "DataExfiltration", "Taint"], "requiresTerms": ["Context", "MCPResource", "Permission", "Audit"]},
+        {"path": "docs/courses/agent/10-评测可观测性与安全/06-Sandbox最小权限与审计.md", "title": "Sandbox、最小权限与审计", "introducedTerms": ["Sandbox", "LeastPrivilege", "CapabilitySecurity"], "requiresTerms": ["DangerousOperation", "Permission", "ToolValidation", "Audit"]},
+        {"path": "docs/courses/agent/10-评测可观测性与安全/07-生产故障模式与排查顺序.md", "title": "生产故障模式与排查顺序", "introducedTerms": ["FailureMode", "IncidentTriage", "Rollback"], "requiresTerms": ["TraceSpan", "RegressionEval", "Recovery", "Sandbox"]}
+      ]
+    },
+    {
+      "id": "11",
+      "title": "源码精读",
+      "sidebarTitle": "源码精读",
+      "directory": "docs/courses/agent/11-源码精读",
+      "goal": "按 smolagents → OpenAI Agents SDK → MCP TypeScript SDK → LangGraph → DeepSeek Harness 阅读核心源码并比较取舍。",
+      "prerequisites": ["02–10 章按顺序阅读", "能使用 Git 定位文件和测试"],
+      "next": null,
+      "articles": [
+        {"path": "docs/courses/agent/11-源码精读/01-smolagents源码导读.md", "title": "smolagents 源码导读", "introducedTerms": ["CodeAgent", "LocalExecutor"], "requiresTerms": ["AgentLoop", "Tool", "Sandbox"]},
+        {"path": "docs/courses/agent/11-源码精读/02-OpenAI-Agents-SDK源码导读.md", "title": "OpenAI Agents SDK 源码导读", "introducedTerms": ["Runner", "HandoffRuntime", "SessionService"], "requiresTerms": ["Agent", "Handoff", "Guardrails", "TraceSpan"]},
+        {"path": "docs/courses/agent/11-源码精读/03-MCP-TypeScript-SDK源码导读.md", "title": "MCP TypeScript SDK 源码导读", "introducedTerms": ["MCPClientImplementation", "MCPServerImplementation"], "requiresTerms": ["MCP", "Transport", "Capability", "JSONRPCError"]},
+        {"path": "docs/courses/agent/11-源码精读/04-LangGraph源码导读.md", "title": "LangGraph 源码导读", "introducedTerms": ["StateGraph", "Checkpointer", "DurableExecution"], "requiresTerms": ["StateMachine", "Node", "Edge", "Checkpoint", "WorkflowInterrupt"]},
+        {"path": "docs/courses/agent/11-源码精读/05-DeepSeek-Harness源码导读.md", "title": "DeepSeek Harness 源码导读", "introducedTerms": ["AgentDriver", "Cordis", "PluginContext", "SkillRuntime", "HookRuntime"], "requiresTerms": ["Plugin", "Session", "Skill", "Hook", "EventBus"]},
+        {"path": "docs/courses/agent/11-源码精读/06-五个项目架构对照.md", "title": "五个项目架构对照", "introducedTerms": ["ArchitectureComparison"], "requiresTerms": ["CodeAgent", "Runner", "MCPClientImplementation", "StateGraph", "AgentDriver"]}
+      ]
+    }
+  ],
+  "introducedTerms": [
+    "Agent", "Model", "Instructions", "Tool", "Tools", "State", "Memory", "Context", "Guardrails", "Run", "StopReason", "AgentLoop", "Observation", "Action", "FinalAnswer", "MaxSteps", "FailureBoundary", "RetryBudget", "SyncRun", "AsyncRun", "EventStream", "ModelAdapter", "InferenceBoundary", "Message", "Role", "SystemMessage", "UserMessage", "AssistantMessage", "ToolMessage", "Token", "ContextWindow", "Truncation", "StructuredOutput", "SchemaValidation", "Delta", "ModelEvent", "Usage", "ToolCalling", "JSONSchema", "ToolDefinition", "ToolCall", "ToolRegistry", "ToolSelection", "ToolResult", "ResultInjection", "ParallelTool", "ToolDependency", "FanOut", "FanIn", "Timeout", "Idempotency", "Deduplication", "Backoff", "Approval", "Permission", "DangerousOperation", "Audit", "Trace", "Span", "RunLog", "CostMetric", "StateOwnership", "ContextProjection", "Session", "SessionId", "Lifecycle", "Checkpoint", "Interrupt", "Resume", "Recovery", "ContextCompaction", "Summary", "Budget", "ShortTermMemory", "LongTermMemory", "MemoryScope", "MemoryPoisoning", "TenantIsolation", "Retention", "MCP", "Host", "Client", "Server", "Capability", "HostBoundary", "ClientConnection", "ServerCapability", "MCPTool", "MCPResource", "MCPPrompt", "StdioTransport", "StreamableHTTP", "Transport", "Initialize", "CapabilityNegotiation", "Shutdown", "JSONRPCError", "OAuth", "TokenAudience", "ConfusedDeputy", "PythonMCPServer", "LocalTransport", "Skill", "ProgressiveDisclosure", "SkillManifest", "Plugin", "Registration", "PluginLifecycle", "Dependency", "Hook", "Interceptor", "EventBus", "Discovery", "Conflict", "Compatibility", "Versioning", "ExtensionBoundary", "RAG", "Retrieval", "Augmentation", "Generation", "Ingestion", "Parsing", "Normalization", "Document", "Chunk", "Metadata", "Overlap", "Embedding", "VectorSearch", "Similarity", "KeywordSearch", "HybridSearch", "Filter", "Recall", "Rerank", "Citation", "ContextAssembly", "Faithfulness", "RetrievalEval", "GenerationEval", "Precision", "RecallAtK", "Workflow", "StateMachine", "Node", "Edge", "Planning", "PlanAndExecute", "Replanning", "Router", "Handoff", "RouteCondition", "Supervisor", "MultiAgent", "Delegation", "SharedState", "WorkflowInterrupt", "HumanApproval", "ResumeCommand", "RaceCondition", "FailurePropagation", "Cancellation", "Compensation", "TraceSpan", "EventLog", "CorrelationId", "Dataset", "RegressionEval", "GoldenTask", "DeterministicAssertion", "LLMJudge", "Rubric", "InputGuardrail", "OutputGuardrail", "ToolValidation", "PromptInjection", "IndirectInjection", "DataExfiltration", "Taint", "Sandbox", "LeastPrivilege", "CapabilitySecurity", "FailureMode", "IncidentTriage", "Rollback", "CodeAgent", "LocalExecutor", "Runner", "HandoffRuntime", "SessionService", "MCPClientImplementation", "MCPServerImplementation", "StateGraph", "Checkpointer", "DurableExecution", "AgentDriver", "Cordis", "PluginContext", "SkillRuntime", "HookRuntime", "ArchitectureComparison"
+  ],
+  "requiresTerms": [
+    "Agent", "Model", "Instructions", "Tool", "Tools", "State", "Memory", "Context", "Guardrails", "Run", "StopReason", "AgentLoop", "Observation", "Action", "FinalAnswer", "MaxSteps", "FailureBoundary", "RetryBudget", "SyncRun", "AsyncRun", "EventStream", "ModelAdapter", "InferenceBoundary", "Message", "Role", "SystemMessage", "UserMessage", "AssistantMessage", "ToolMessage", "Token", "ContextWindow", "Truncation", "StructuredOutput", "SchemaValidation", "Delta", "ModelEvent", "Usage", "ToolCalling", "JSONSchema", "ToolDefinition", "ToolCall", "ToolRegistry", "ToolSelection", "ToolResult", "ResultInjection", "ParallelTool", "ToolDependency", "FanOut", "FanIn", "Timeout", "Idempotency", "Deduplication", "Backoff", "Approval", "Permission", "DangerousOperation", "Audit", "Trace", "Span", "RunLog", "CostMetric", "StateOwnership", "ContextProjection", "Session", "SessionId", "Lifecycle", "Checkpoint", "Interrupt", "Resume", "Recovery", "ContextCompaction", "Summary", "Budget", "ShortTermMemory", "LongTermMemory", "MemoryScope", "MemoryPoisoning", "TenantIsolation", "Retention", "MCP", "Host", "Client", "Server", "Capability", "HostBoundary", "ClientConnection", "ServerCapability", "MCPTool", "MCPResource", "MCPPrompt", "StdioTransport", "StreamableHTTP", "Transport", "Initialize", "CapabilityNegotiation", "Shutdown", "JSONRPCError", "OAuth", "TokenAudience", "ConfusedDeputy", "PythonMCPServer", "LocalTransport", "Skill", "ProgressiveDisclosure", "SkillManifest", "Plugin", "Registration", "PluginLifecycle", "Dependency", "Hook", "Interceptor", "EventBus", "Discovery", "Conflict", "Compatibility", "Versioning", "ExtensionBoundary", "RAG", "Retrieval", "Augmentation", "Generation", "Ingestion", "Parsing", "Normalization", "Document", "Chunk", "Metadata", "Overlap", "Embedding", "VectorSearch", "Similarity", "KeywordSearch", "HybridSearch", "Filter", "Recall", "Rerank", "Citation", "ContextAssembly", "Faithfulness", "RetrievalEval", "GenerationEval", "Precision", "RecallAtK", "Workflow", "StateMachine", "Node", "Edge", "Planning", "PlanAndExecute", "Replanning", "Router", "Handoff", "RouteCondition", "Supervisor", "MultiAgent", "Delegation", "SharedState", "WorkflowInterrupt", "HumanApproval", "ResumeCommand", "RaceCondition", "FailurePropagation", "Cancellation", "Compensation", "TraceSpan", "EventLog", "CorrelationId", "Dataset", "RegressionEval", "GoldenTask", "DeterministicAssertion", "LLMJudge", "Rubric", "InputGuardrail", "OutputGuardrail", "ToolValidation", "PromptInjection", "IndirectInjection", "DataExfiltration", "Taint", "Sandbox", "LeastPrivilege", "CapabilitySecurity", "FailureMode", "IncidentTriage", "Rollback", "CodeAgent", "LocalExecutor", "Runner", "HandoffRuntime", "SessionService", "MCPClientImplementation", "MCPServerImplementation", "StateGraph", "Checkpointer", "DurableExecution", "AgentDriver", "Cordis", "PluginContext", "SkillRuntime", "HookRuntime", "ArchitectureComparison"
+  ]
+}
