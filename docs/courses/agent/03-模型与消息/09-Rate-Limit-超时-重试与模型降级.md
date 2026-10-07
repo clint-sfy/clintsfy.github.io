@@ -28,22 +28,29 @@ flowchart TD
     Failure -->|Rate Limit| Wait["Retry-After 或退避"]
     Failure -->|网络、5xx、超时| Retry["有限重试 + 幂等检查"]
     Wait --> Retry
-    Retry -->|预算可用| Attempt["再次调用"]
-    Retry -->|预算耗尽或不可幂等| Stop["失败 / 不确定"]
-    Failure -->|流式断线| Confirm["查询或恢复状态"]
-    Confirm -->|无法确认| Stop
-    Confirm -->|可恢复| Attempt
-    Attempt --> Result["成功或再次分类"]
-    Result -->|仍失败| Fallback
-    Stop --> Fallback{"契约允许降级？"}
-    Fallback -->|是| Select["能力检查后选择模型"]
-    Fallback -->|否| Report["向上层报告"]
+    Retry -->|预算可用且可重试| Attempt["再次调用"]
+    Retry -->|预算耗尽| Stop["失败 / 预算耗尽"]
+    Retry -->|不可幂等| Report["向上层报告"]
+    Failure -->|流式断线| Confirm{"状态可确认？"}
+    Confirm -->|已完成且契约匹配| Success["成功响应"]
+    Confirm -->|可恢复且可重试| Attempt
+    Confirm -->|状态不明| Report["向上层报告"]
+    Attempt --> Outcome{"结果与状态？"}
+    Outcome -->|成功且契约匹配| Success
+    Outcome -->|成功但契约不匹配| Report
+    Outcome -->|可恢复失败| RetryBudget["检查重试预算"]
+    RetryBudget -->|仍有预算| Failure
+    RetryBudget -->|预算耗尽| Stop
+    Outcome -->|不可幂等或状态不明| Report
+    Stop --> FallbackGate{"明确允许降级且契约匹配？"}
+    FallbackGate -->|是| Select["能力检查后选择模型"]
+    FallbackGate -->|否| Report["向上层报告"]
 
     classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
-    class Request,Failure,Fix,Wait,Retry,Attempt,Stop,Confirm,Result,Fallback,Select,Report core;
+    class Request,Failure,Fix,Wait,Retry,Attempt,Stop,Confirm,Success,Report,Outcome,RetryBudget,FallbackGate,Select core;
 ```
 
-阅读提示：先按错误类别决定修复、等待或有限重试；只有仍满足输入、窗口、Schema 与安全契约时，才把降级模型纳入候选。
+阅读提示：先按错误类别决定修复、等待或有限重试；Attempt 的可恢复失败要回到分类与预算检查，不可幂等或流式状态不明直接报告；只有明确允许且契约匹配的可恢复失败，才进入降级候选。
 
 此前文章定义的 `Model`、`Model-Adapter`、消息、预算和流式终态都是本篇的前置边界；本篇不展开 Tool Calling 的执行重试与幂等，工具会有额外的副作用风险。
 

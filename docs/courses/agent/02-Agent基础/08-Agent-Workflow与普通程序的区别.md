@@ -44,17 +44,20 @@ Agent 不意味着“把整个程序交给模型”。成熟架构通常把 Agen
 flowchart TD
     Input["普通程序 / 输入与权限校验"] --> Workflow["Workflow / 显式调度"]
     Workflow --> Agent["Agent / 提议局部 Action"]
-    Agent --> Tool["Tool / 受控执行"]
-    Tool --> Observation["Observation"]
+    Agent --> Tool["Tool / 预演与参数校验"]
+    Tool --> Authorize{"Workflow 授权？"}
+    Authorize -->|否| Recover["暂停或补偿"]
+    Authorize -->|是| Execute["普通程序 / 唯一执行副作用"]
+    Execute --> Observation["Observation"]
     Observation --> Verify{"Workflow 验证 Postcondition？"}
-    Verify -->|是| Commit["普通程序 / 提交副作用"]
-    Verify -->|否| Recover["暂停或补偿"]
+    Verify -->|是| Commit["普通程序 / 记录提交结果"]
+    Verify -->|否| Recover
 
     classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
-    class Input,Workflow,Agent,Tool,Observation,Verify,Commit,Recover core;
+    class Input,Workflow,Agent,Tool,Authorize,Execute,Observation,Verify,Commit,Recover core;
 ```
 
-阅读提示：把动态决策限制在 Agent 节点，把调度、授权、后置条件和最终提交留在可审计的 Workflow/普通程序边界内。
+阅读提示：Agent 只提议；Tool 只做预演和参数校验，Workflow 授权后由普通程序唯一执行一次副作用，再验证 Postcondition 并记录结果，避免把 Tool 和提交都当成执行点。
 
 ## 维度对照
 

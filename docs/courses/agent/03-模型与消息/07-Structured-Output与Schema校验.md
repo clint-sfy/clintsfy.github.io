@@ -30,13 +30,14 @@ flowchart TD
     Schema -->|通过| Business["业务校验"]
     Business -->|失败| BusinessError["BusinessRuleError"]
     Business -->|通过| Gate["权限与副作用门控"]
-    Gate --> Domain["下游领域对象"]
+    Gate -->|允许| Domain["下游领域对象"]
+    Gate -->|拒绝| Rejected["Rejected / 不执行副作用"]
 
     classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
-    class Output,Parse,ParseError,Schema,SchemaError,Business,BusinessError,Gate,Domain core;
+    class Output,Parse,ParseError,Schema,SchemaError,Business,BusinessError,Gate,Domain,Rejected core;
 ```
 
-阅读提示：只有完成 JSON 解析、Schema 和业务校验后，结果才可进入下游；流式中间片段只能展示，不能跳过这些门控。
+阅读提示：只有完成 JSON 解析、Schema 和业务校验后，结果才可进入下游；Gate 还可能拒绝并终止副作用，流式中间片段只能展示，不能跳过这些门控。
 
 消息与内容块见前面的[Message](./02-Message-Role与消息顺序)和[Content-Block](./03-Text-Image-Audio与Content-Block)；生成参数见[Temperature、Top-P 与生成参数](./06-Temperature-Top-P与生成参数)。本篇不把结构化字段提前当成工具调用。
 

@@ -69,18 +69,22 @@ flowchart TD
     Observation["Observation / 当前事实"] --> Decide["Model 或策略决策"]
     Decide --> Action["候选 Action"]
     Action --> Check{"可解析且允许？"}
-    Check -->|否| Rejected["拒绝 / 错误 Observation"]
+    Check -->|否| Rejected["拒绝 Action"]
     Check -->|是| Tool["Tool 执行"]
     Tool --> NewObservation["Observation 回填"]
-    NewObservation --> Stop{"满足 Success Criteria？"}
-    Stop -->|否| Observation
-    Stop -->|是| Final["Final Answer"]
+    Rejected --> RejectedObservation["Observation / rejected"]
+    RejectedObservation --> Stop
+    NewObservation --> Stop
+    Stop{"成功、硬约束、不可恢复错误或预算？"}
+    Stop -->|继续| Observation
+    Stop -->|成功| Final["Final Answer"]
+    Stop -->|停止| Halt["失败或暂停"]
 
     classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
-    class Observation,Decide,Action,Check,Rejected,Tool,NewObservation,Stop,Final core;
+    class Observation,Decide,Action,Check,Rejected,RejectedObservation,Tool,NewObservation,Stop,Final,Halt core;
 ```
 
-阅读提示：`Action` 是意图，`Tool` 才执行副作用；回填后的新 `Observation` 决定下一轮，而不是模型上一轮的猜测。
+阅读提示：`Action` 是意图，`Tool` 才执行副作用；合法和拒绝的结果都先形成 `Observation`，再进入同一个停止判断，覆盖成功、硬约束、不可恢复错误与预算，决定继续、交付或暂停。
 
 ## 一个可观察的最小循环
 

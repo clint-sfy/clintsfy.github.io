@@ -77,8 +77,8 @@ flowchart TD
     Hard -->|否| Blocked["拒绝或暂停 / 记录原因"]
     Hard -->|是| Soft{"软约束可满足？"}
     Soft -->|是| Execute["进入执行层"]
-    Soft -->|否| Degrade["降级并记录"]
-    Execute --> Post["Postcondition / 结果观察"]
+    Soft -->|否| Degrade["降级并执行"]
+    Execute --> Post["Postcondition / 执行后观察"]
     Degrade --> Post
     Post --> Success{"Success Criteria？"}
     Success -->|是| Done["Goal Reached"]
@@ -88,7 +88,7 @@ flowchart TD
     class Goal,Instructions,Context,Candidate,Hard,Blocked,Soft,Execute,Degrade,Post,Success,Done,Next core;
 ```
 
-阅读提示：先由 Goal 和 Instructions 形成候选决定，再由 Runtime 强制检查硬约束；软约束只能在不破坏硬边界时降级。
+阅读提示：先由 Goal 和 Instructions 形成候选决定，再由 Runtime 强制检查硬约束；软约束只能在不破坏硬边界时降级，并且必须执行后再检查 Postcondition。
 
 ## 用结构化对象表达任务边界
 

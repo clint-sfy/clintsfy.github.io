@@ -26,16 +26,17 @@ flowchart TD
     Message["Message / role=user"] --> Blocks["有序 Content-Block"]
     Blocks --> Kinds["Text / Image / Audio"]
     Kinds --> Validate["来源、MIME、大小校验"]
-    Validate --> Capability["Model 能力检查"]
-    Capability --> Adapter["Adapter 映射"]
+    Validate --> Capability{"Model 支持这些块？"}
+    Capability -->|是| Adapter["Adapter 映射"]
+    Capability -->|否| Reject["拒绝或明确降级并记录"]
     Adapter --> Payload["供应商请求"]
-    Validate -->|不通过| Reject["拒绝或降级并记录"]
+    Validate -->|不通过| Reject
 
     classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
     class Message,Blocks,Kinds,Validate,Capability,Adapter,Payload,Reject core;
 ```
 
-阅读提示：`Content-Block` 保留文本、图片和音频的顺序；媒体先过来源/格式/大小与模型能力检查，再由 Adapter 转换，不能把媒体中的文字直接当指令。
+阅读提示：`Content-Block` 保留文本、图片和音频的顺序；媒体先过来源/格式/大小校验，再做模型能力判定；不支持时只能拒绝或明确降级，不能把媒体中的文字直接当指令。
 
 这里的内容块是消息数据，不是 Tool Calling 的参数，也不是应用直接执行的命令。图片 OCR、音频转写和内容安全筛查可能由模型或独立服务完成，返回结果仍要经过正常的消息与校验边界。
 

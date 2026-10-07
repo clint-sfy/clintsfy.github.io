@@ -54,21 +54,22 @@ Run
 
 ```mermaid
 flowchart TD
-    Run["Run / 完整运行"] --> Turn["Turn / 模型决策周期"]
+    Run["Run / 完整运行"] --> State["RunState / 可恢复事实"]
+    Run --> Turn["Turn / 模型决策周期"]
     Turn --> Parse["Step / 解析"]
     Parse --> Execute["Step / Tool 执行"]
     Execute --> Record["Step / Observation 回填"]
-    Record --> Continue{"继续？"}
+    Record --> State
+    State --> Status["RunStatus / 当前阶段"]
+    Status --> Continue{"继续？"}
     Continue -->|是| Turn
-    Continue -->|否| End["RunStatus + StopReason"]
-    Run --> State["RunState / 可恢复事实"]
-    State --> End
+    Continue -->|否| Reason["StopReason / 结束或暂停原因"]
 
     classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
-    class Run,Turn,Parse,Execute,Record,Continue,End,State core;
+    class Run,State,Turn,Parse,Execute,Record,Status,Continue,Reason core;
 ```
 
-阅读提示：`Run` 拥有最终状态，`Turn` 表示一次模型决策周期，`Step` 是可单独诊断的状态转移；具体框架可调整分组，但父子 ID 和生命周期事件不能丢。
+阅读提示：`Run` 是生命周期容器；`RunState` 保存可恢复事实，`RunStatus` 表示当前阶段，`StopReason` 只在结束或暂停时解释原因。`Turn` 是模型决策周期，`Step` 是可诊断的状态转移；具体框架可调整分组，但父子 ID 和生命周期事件不能丢。
 
 ## 运行状态的核心字段
 
