@@ -209,4 +209,4 @@ DeepSeek Harness 把 Agent Driver、Plugin、Hook 和事件组织成更完整的
 - 能根据控制权、确定性和副作用边界判断一个组件属于 Agent、Workflow 还是普通程序。
 - 能设计“程序校验 → Workflow 调度 → Agent 提议 → Tool 执行 → 程序提交”的混合结构。
 - 能解释为什么固定规则不应为了展示智能而交给模型。
-- 至此完成第 02 章；下一步进入 [第 03 章：模型与消息](/courses/agent/03-模型与消息/01-Model与推理边界)，学习 Model 输入输出的消息边界。
+- 至此完成第 02 章；下一步进入 [第 03 章：模型与消息](/courses/agent/03-模型与消息/01-Model-Provider与Model-Adapter)，学习 Model 输入输出的消息边界。

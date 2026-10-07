@@ -41,6 +41,44 @@ test('agent roadmap follows the approved 01-11 order', () => {
   assert.deepEqual([...routePosition].sort((a, b) => a - b), routePosition, 'homepage chapter order should match roadmap')
 })
 
+test('chapters 02 and 03 expose the rewritten article order and entry points', () => {
+  const roadmap = readRoadmap()
+  const expected = {
+    '02': [
+      'docs/courses/agent/02-Agent基础/01-Agent是什么.md',
+      'docs/courses/agent/02-Agent基础/02-Agent系统组成.md',
+      'docs/courses/agent/02-Agent基础/03-Goal-Instructions与Constraints.md',
+      'docs/courses/agent/02-Agent基础/04-Observation-Action与Agent-Loop.md',
+      'docs/courses/agent/02-Agent基础/05-Run-Turn-Step与运行状态.md',
+      'docs/courses/agent/02-Agent基础/06-停止条件超时与失败边界.md',
+      'docs/courses/agent/02-Agent基础/07-同步异步取消与流式执行.md',
+      'docs/courses/agent/02-Agent基础/08-Agent-Workflow与普通程序的区别.md',
+    ],
+    '03': [
+      'docs/courses/agent/03-模型与消息/01-Model-Provider与Model-Adapter.md',
+      'docs/courses/agent/03-模型与消息/02-Message-Role与消息顺序.md',
+      'docs/courses/agent/03-模型与消息/03-Text-Image-Audio与Content-Block.md',
+      'docs/courses/agent/03-模型与消息/04-System-Instructions与Prompt边界.md',
+      'docs/courses/agent/03-模型与消息/05-Token-上下文窗口与Usage.md',
+      'docs/courses/agent/03-模型与消息/06-Temperature-Top-P与生成参数.md',
+      'docs/courses/agent/03-模型与消息/07-Structured-Output与Schema校验.md',
+      'docs/courses/agent/03-模型与消息/08-Streaming-Delta与模型事件.md',
+      'docs/courses/agent/03-模型与消息/09-Rate-Limit-超时-重试与模型降级.md',
+    ],
+  }
+
+  for (const [chapterId, paths] of Object.entries(expected)) {
+    const chapter = roadmap.chapters.find(({ id }) => id === chapterId)
+    assert.ok(chapter, `chapter ${chapterId} should exist`)
+    assert.deepEqual(chapter.articles.map(({ path }) => path), paths)
+    assert.equal(chapter.articles.length, paths.length)
+  }
+
+  const homepage = readArticle('docs/courses/agent/index.md')
+  assert.match(homepage, /\| 02 \| \[Agent 基础（8 篇）\]\(\/courses\/agent\/02-Agent基础\/01-Agent是什么\)/)
+  assert.match(homepage, /\| 03 \| \[模型与消息（9 篇）\]\(\/courses\/agent\/03-模型与消息\/01-Model-Provider与Model-Adapter\)/)
+})
+
 test('every required term is introduced before use', () => {
   const roadmap = readRoadmap()
   const introduced = new Set()
@@ -62,6 +100,30 @@ test('course examples obey the Python-first policy', () => {
       const source = readArticle(article.path)
       assert.doesNotMatch(source, /```(?:typescript|tsx|javascript|ts|js)\b/i,
         `${article.path} should keep examples in Python`)
+    }
+  }
+})
+
+test('chapters 02 and 03 are complete正文 rather than outline skeletons', () => {
+  const roadmap = readRoadmap()
+  for (const chapter of roadmap.chapters.filter(({ id }) => ['02', '03'].includes(id))) {
+    for (const article of chapter.articles) {
+      const source = readArticle(article.path)
+      const parsed = matter(source)
+      const questionSection = source.split(/^## 课后小问\s*$/m)[1] ?? ''
+
+      assert.notEqual(String(parsed.data.status ?? '').toLowerCase(), 'outline', `${article.path} must be正文`)
+      assert.doesNotMatch(source, /大纲骨架|status:\s*outline/i, `${article.path} must not advertise outline status`)
+      assert.ok((source.match(/^## (?!学习目标|前置知识|易混点|课后小问|本节小结|快速回顾).+/gm) ?? []).length >= 1,
+        `${article.path} should explain a concept`)
+      assert.ok((source.match(/^###\s+.+/gm) ?? []).length >= 2, `${article.path} should provide H3 structure`)
+      assert.match(source, /用途|作用|适合|用于|场景|责任|边界/, `${article.path} should explain usage or responsibility`)
+      assert.match(source, /```python\b/i, `${article.path} should include a Python example`)
+      assert.match(source, /^## 易混点\s*$/m, `${article.path} should include 易混点`)
+      assert.match(source, /^## 课后小问\s*$/m, `${article.path} should include 课后小问`)
+      assert.match(questionSection, /解析|答案/, `${article.path} questions should include an explanation`)
+      assert.match(source, /^## 本节小结\s*$/m, `${article.path} should include 本节小结`)
+      assert.match(source, /^## 快速回顾\s*$/m, `${article.path} should include 快速回顾`)
     }
   }
 })
@@ -119,6 +181,20 @@ test('agent article paths and internal links resolve', () => {
         const route = link[1].replace(/\/$/, '')
         assert.ok(knownRoutes.has(route), `${article.path} points to missing route ${route}`)
       }
+    }
+  }
+})
+
+test('renamed chapter 02 and 03 articles leave no stale internal links', () => {
+  const staleNames = [
+    '01-Agent系统组成', '02-最小Agent-Loop', '03-停止条件与失败边界', '04-同步异步与流式执行',
+    '01-Model与推理边界', '02-Message与Role', '03-Token上下文窗口与截断', '04-Structured-Output', '05-Streaming与事件',
+  ]
+  for (const path of fg.sync('docs/courses/agent/**/*.md')) {
+    const source = readArticle(path)
+    for (const staleName of staleNames) {
+      assert.doesNotMatch(source, new RegExp(staleName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+        `${path} should not point to removed article ${staleName}`)
     }
   }
 })

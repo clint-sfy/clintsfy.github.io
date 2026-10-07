@@ -9,7 +9,7 @@ status: 预览版导航
 
 # Agent 框架与运行时
 
-这一页解决“先看哪个运行时”的问题。阅读顺序是：先用 smolagents 建立最小 loop，再看 OpenAI Agents SDK 如何托管常见运行时能力，随后用 Responses API 理解更低层的自主管理边界，最后用 LangGraph 观察显式状态图如何承载长流程。不要先背框架 API；先回到 [02 Agent 基础](/courses/agent/02-Agent基础/01-Agent系统组成) 的 Model、Tools、State 和 StopReason。
+这一页解决“先看哪个运行时”的问题。阅读顺序是：先用 smolagents 建立最小 loop，再看 OpenAI Agents SDK 如何托管常见运行时能力，随后用 Responses API 理解更低层的自主管理边界，最后用 LangGraph 观察显式状态图如何承载长流程。不要先背框架 API；先回到 [02 Agent 基础](/courses/agent/02-Agent基础/01-Agent是什么) 的 Model、Tools、State 和 StopReason。
 
 ## smolagents
 

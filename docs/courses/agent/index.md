@@ -15,8 +15,8 @@ showComment: false
 | 顺序 | 章节 | 学习目标 | 前置关系 |
 | --- | --- | --- | --- |
 | 01 | [项目与知识库导航](/courses/agent/01-项目与知识库导航/01-学习地图与资源使用方法) | 按问题、阶段和深度选择官方项目、文档、课程与论文 | Python 基础；可选入口 |
-| 02 | [Agent 基础](/courses/agent/02-Agent基础/01-Agent系统组成) | 建立 Model、Instructions、Tools、State、Context 和停止边界 | Python 基础 |
-| 03 | [模型与消息](/courses/agent/03-模型与消息/01-Model与推理边界) | 掌握 Message、Role、Token、Streaming、Structured Output | 02 |
+| 02 | [Agent 基础（8 篇）](/courses/agent/02-Agent基础/01-Agent是什么) | 从 Agent、系统组成到可停止的 Loop，建立 Model、Instructions、Tools、State、Context 和停止边界 | Python 基础 |
+| 03 | [模型与消息（9 篇）](/courses/agent/03-模型与消息/01-Model-Provider与Model-Adapter) | 从 Provider/Adapter、消息和内容块到 Token、生成参数、结构化输出、流式与可靠性 | 02 按顺序 |
 | 04 | [Tool Calling 与 Agent Loop](/courses/agent/04-Tool-Calling与Agent-Loop/01-函数调用与JSON-Schema) | 处理 schema、调用、回填、并行、重试、幂等和审批 | 02–03 |
 | 05 | [State、Context、Session 与 Memory](/courses/agent/05-状态上下文会话与记忆/01-State与Context) | 区分状态所有权、会话、检查点、压缩和记忆 | 02–04 |
 | 06 | [MCP](/courses/agent/06-MCP/01-MCP解决什么问题) | 理解 Host/Client/Server、能力、传输、生命周期和授权 | 02–05、JSON-RPC |

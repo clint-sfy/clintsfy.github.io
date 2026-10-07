@@ -529,10 +529,14 @@
       "prerequisites": ["01 章资源导航可选", "已有 Python 基础编程能力"],
       "next": "03",
       "articles": [
-        {"path": "docs/courses/agent/02-Agent基础/01-Agent系统组成.md", "title": "Agent 系统组成", "introducedTerms": ["Agent", "Model", "Instructions", "Tool", "Tools", "State", "Context", "Guardrails", "Run", "StopReason"], "requiresTerms": []},
-        {"path": "docs/courses/agent/02-Agent基础/02-最小Agent-Loop.md", "title": "最小 Agent Loop", "introducedTerms": ["AgentLoop", "Observation", "Action", "FinalAnswer"], "requiresTerms": ["Agent", "Model", "Tools", "State", "Context"]},
-        {"path": "docs/courses/agent/02-Agent基础/03-停止条件与失败边界.md", "title": "停止条件与失败边界", "introducedTerms": ["MaxSteps", "FailureBoundary", "RetryBudget"], "requiresTerms": ["AgentLoop", "Observation", "Action", "StopReason"]},
-        {"path": "docs/courses/agent/02-Agent基础/04-同步异步与流式执行.md", "title": "同步、异步与流式执行", "introducedTerms": ["SyncRun", "AsyncRun", "EventStream"], "requiresTerms": ["AgentLoop", "Run", "State", "StopReason"]}
+        {"path": "docs/courses/agent/02-Agent基础/01-Agent是什么.md", "title": "Agent 是什么", "introducedTerms": ["Agent", "Goal", "Model", "Environment", "Action", "Observation", "AgentLoop", "StopCondition", "FinalAnswer"], "requiresTerms": []},
+        {"path": "docs/courses/agent/02-Agent基础/02-Agent系统组成.md", "title": "Agent 系统组成", "introducedTerms": ["Instructions", "Tool", "Tools", "State", "Context", "Guardrails", "Runtime", "ToolRegistry", "StateStore", "ContextBuilder"], "requiresTerms": ["Agent", "Goal", "Model", "Action", "Observation", "AgentLoop"]},
+        {"path": "docs/courses/agent/02-Agent基础/03-Goal-Instructions与Constraints.md", "title": "Goal、Instructions 与 Constraints", "introducedTerms": ["Constraints", "SuccessCriteria", "Preconditions", "Postconditions", "FailureBoundary", "ValidationBoundary"], "requiresTerms": ["Agent", "Goal", "Model", "Instructions", "Tool", "Tools", "State", "Context", "Action", "Observation"]},
+        {"path": "docs/courses/agent/02-Agent基础/04-Observation-Action与Agent-Loop.md", "title": "Observation、Action 与 Agent Loop", "introducedTerms": ["Transition", "ActionProposal", "ActionValidation", "ToolResult"], "requiresTerms": ["Goal", "Constraints", "State", "Context", "Tool", "Observation", "Action", "AgentLoop"]},
+        {"path": "docs/courses/agent/02-Agent基础/05-Run-Turn-Step与运行状态.md", "title": "Run、Turn、Step 与运行状态", "introducedTerms": ["Run", "Turn", "Step", "RunState", "RunStatus", "StepStatus", "RunId"], "requiresTerms": ["Goal", "State", "Context", "Action", "Observation", "AgentLoop", "ToolResult"]},
+        {"path": "docs/courses/agent/02-Agent基础/06-停止条件超时与失败边界.md", "title": "停止条件、超时与失败边界", "introducedTerms": ["StopReason", "MaxSteps", "Timeout", "RunDeadline", "RetryBudget", "Cancellation"], "requiresTerms": ["Goal", "Constraints", "Run", "RunState", "RunStatus", "Action", "Observation", "ToolResult"]},
+        {"path": "docs/courses/agent/02-Agent基础/07-同步异步取消与流式执行.md", "title": "同步、异步、取消与流式执行", "introducedTerms": ["SyncRun", "AsyncRun", "EventStream", "Streaming", "CancellationCheckpoint", "Delta"], "requiresTerms": ["Run", "Turn", "Step", "State", "StopReason", "Timeout", "Tool", "ToolResult"]},
+        {"path": "docs/courses/agent/02-Agent基础/08-Agent-Workflow与普通程序的区别.md", "title": "Agent、Workflow 与普通程序的区别", "introducedTerms": ["Workflow", "ControlFlow", "ArchitectureBoundary"], "requiresTerms": ["Agent", "Goal", "Action", "Observation", "AgentLoop", "Run", "StopReason", "EventStream"]}
       ]
     },
     {
@@ -544,11 +548,15 @@
       "prerequisites": ["02 章按顺序阅读"],
       "next": "04",
       "articles": [
-        {"path": "docs/courses/agent/03-模型与消息/01-Model与推理边界.md", "title": "Model 与推理边界", "introducedTerms": ["ModelAdapter", "InferenceBoundary"], "requiresTerms": ["Model", "Instructions", "Context"]},
-        {"path": "docs/courses/agent/03-模型与消息/02-Message与Role.md", "title": "Message 与 Role", "introducedTerms": ["Message", "Role", "SystemMessage", "UserMessage", "AssistantMessage", "ToolMessage"], "requiresTerms": ["Model", "Instructions", "AgentLoop"]},
-        {"path": "docs/courses/agent/03-模型与消息/03-Token上下文窗口与截断.md", "title": "Token、上下文窗口与截断", "introducedTerms": ["Token", "ContextWindow", "Truncation"], "requiresTerms": ["Message", "Role", "Context"]},
-        {"path": "docs/courses/agent/03-模型与消息/04-Structured-Output.md", "title": "Structured Output", "introducedTerms": ["StructuredOutput", "SchemaValidation"], "requiresTerms": ["Message", "Model", "Token"]},
-        {"path": "docs/courses/agent/03-模型与消息/05-Streaming与事件.md", "title": "Streaming 与事件", "introducedTerms": ["Delta", "ModelEvent", "Usage"], "requiresTerms": ["Message", "EventStream", "Token"]}
+        {"path": "docs/courses/agent/03-模型与消息/01-Model-Provider与Model-Adapter.md", "title": "Model、Provider 与 Model-Adapter", "introducedTerms": ["Provider", "ModelAdapter", "InferenceBoundary", "ModelRequest", "ModelResponse"], "requiresTerms": ["Model", "Instructions", "Context"]},
+        {"path": "docs/courses/agent/03-模型与消息/02-Message-Role与消息顺序.md", "title": "Message、Role 与消息顺序", "introducedTerms": ["Message", "Role", "SystemMessage", "UserMessage", "AssistantMessage", "ToolMessage", "Conversation", "MessageHistory", "MessageOrder"], "requiresTerms": ["Model", "Instructions", "AgentLoop"]},
+        {"path": "docs/courses/agent/03-模型与消息/03-Text-Image-Audio与Content-Block.md", "title": "Text、Image、Audio 与 Content-Block", "introducedTerms": ["ContentBlock", "TextBlock", "ImageBlock", "AudioBlock", "Multimodal", "MimeType"], "requiresTerms": ["Message", "Role", "Context"]},
+        {"path": "docs/courses/agent/03-模型与消息/04-System-Instructions与Prompt边界.md", "title": "System-Instructions 与 Prompt 边界", "introducedTerms": ["SystemInstructions", "Prompt", "PromptAssembly", "Injection", "TrustBoundary", "ExternalData"], "requiresTerms": ["Message", "Role", "ContentBlock", "Instructions", "Constraints"]},
+        {"path": "docs/courses/agent/03-模型与消息/05-Token-上下文窗口与Usage.md", "title": "Token、上下文窗口与 Usage", "introducedTerms": ["Token", "ContextWindow", "Truncation", "Usage", "Budget", "InputTokens", "OutputTokens"], "requiresTerms": ["Message", "ContentBlock", "Context", "ModelAdapter"]},
+        {"path": "docs/courses/agent/03-模型与消息/06-Temperature-Top-P与生成参数.md", "title": "Temperature、Top-P 与生成参数", "introducedTerms": ["Temperature", "TopP", "Sampling", "MaxOutputTokens", "StopSequence", "Seed", "GenerationConfig"], "requiresTerms": ["Model", "Token", "ContextWindow", "Usage"]},
+        {"path": "docs/courses/agent/03-模型与消息/07-Structured-Output与Schema校验.md", "title": "Structured-Output 与 Schema 校验", "introducedTerms": ["StructuredOutput", "Schema", "SchemaValidation", "ParseError", "BusinessValidation"], "requiresTerms": ["Message", "ContentBlock", "Model", "Prompt", "Constraints"]},
+        {"path": "docs/courses/agent/03-模型与消息/08-Streaming-Delta与模型事件.md", "title": "Streaming、Delta 与模型事件", "introducedTerms": ["Streaming", "Delta", "ModelEvent", "UsageEvent", "CompletionEvent", "ErrorEvent"], "requiresTerms": ["Message", "ContentBlock", "EventStream", "Token", "Model"]},
+        {"path": "docs/courses/agent/03-模型与消息/09-Rate-Limit-超时-重试与模型降级.md", "title": "Rate-Limit、超时、重试与模型降级", "introducedTerms": ["RateLimit", "RetryAfter", "Backoff", "Jitter", "Fallback", "ModelProfile", "IdempotencyKey", "ModelFailure"], "requiresTerms": ["Model", "ModelAdapter", "Usage", "EventStream", "RetryBudget", "Timeout"]}
       ]
     },
     {
