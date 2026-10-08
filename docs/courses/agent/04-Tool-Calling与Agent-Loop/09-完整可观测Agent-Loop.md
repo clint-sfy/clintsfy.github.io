@@ -42,14 +42,18 @@ flowchart TD
     ApprovalDecision -->|批准| Recheck["恢复后重新校验"]
     Recheck --> Validate
     Validate -->|通过| Execute["Tool execution Span"]
-    Execute --> ToolSpanClosed["tool span close"]
-    ToolSpanClosed --> Outcome{"成功、可重试或未知？"}
-    Outcome -->|成功| Result["ToolResult + Audit"]
-    Outcome -->|可重试| Retry{"RetryBudget / deadline？"}
+    Execute --> Outcome{"成功、可重试或未知？"}
+    Outcome -->|成功| Succeeded["record tool_succeeded"]
+    Succeeded --> SuccessSpanClosed["tool span close"]
+    SuccessSpanClosed --> Result["ToolResult + Audit"]
+    Outcome -->|可重试| Retryable["record tool_retry"]
+    Retryable --> RetrySpanClosed["tool span close"]
+    RetrySpanClosed --> Retry{"RetryBudget / deadline？"}
     Retry -->|允许| Execute
     Retry -->|耗尽| Failed
-    Outcome -->|未知副作用| UnknownSideEffect["UnknownSideEffect"]
-    UnknownSideEffect --> Query["query / reconcile"]
+    Outcome -->|未知副作用| UnknownSideEffect["record unknown_side_effect"]
+    UnknownSideEffect --> UnknownSpanClosed["tool span close"]
+    UnknownSpanClosed --> Query["query / reconcile"]
     Query -->|已确认提交| Result
     Query -->|已确认未提交| Execute
     Query -->|仍未知| ManualIntervention["ManualIntervention"]
@@ -62,7 +66,7 @@ flowchart TD
     StopReason --> RunClosed["close Run trace + CostMetric"]
 
     classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
-    class Start,Model,Parse,Success,Feedback,Validate,Failed,PendingApproval,Checkpoint,ApprovalSuspended,ApprovalDecision,Recheck,Execute,ToolSpanClosed,Outcome,Retry,Result,UnknownSideEffect,Query,ManualIntervention,ManualSuspended,Backfill,StopReason,RunClosed core;
+    class Start,Model,Parse,Success,Feedback,Validate,Failed,PendingApproval,Checkpoint,ApprovalSuspended,ApprovalDecision,Recheck,Execute,Outcome,Succeeded,SuccessSpanClosed,Retryable,RetrySpanClosed,Retry,Result,UnknownSideEffect,UnknownSpanClosed,Query,ManualIntervention,ManualSuspended,Backfill,StopReason,RunClosed core;
 ```
 
 阅读提示：PendingApproval 会 checkpoint 并 suspend，决定到达后重新校验；UnknownSideEffect 只能 query/reconcile 或转 ManualIntervention。只有带明确 StopReason 的 Success/Failed 才 close Run trace，暂停路径只 close 对应 span。
@@ -118,6 +122,7 @@ FINAL_STOP_REASONS = {
     "timeout",
     "cancelled",
     "max_steps",
+    "unresolved_side_effect",
 }
 SUSPEND_REASONS = {"pending_approval", "unknown_side_effect", "manual_intervention"}
 
@@ -228,8 +233,8 @@ def run_agent(model: ScriptedModel, tool: LocalStatusTool, max_steps: int = 3) -
                 trace.record("tool_span_closed")
                 break
             except RetryableError:
-                trace.record("tool_span_closed")
                 trace.record("tool_retry")
+                trace.record("tool_span_closed")
         if result is None:
             trace.close("retry_budget_exhausted")
             return trace.summary("failed")
@@ -264,12 +269,24 @@ def resume_after_approval(trace: Trace) -> dict[str, Any]:
 
 def unknown_side_effect() -> dict[str, Any]:
     trace = Trace("run-unknown")
+    trace.record("unknown_side_effect")
     trace.record("tool_span_closed")
+    trace.suspend("unknown_side_effect")
     trace.record("reconcile_requested")
     trace.record("manual_intervention")
     trace.record("reconcile_span_closed")
     trace.suspend("manual_intervention")
     return trace.summary("waiting")
+
+
+def unresolved_side_effect() -> dict[str, Any]:
+    trace = Trace("run-unresolved")
+    trace.record("unknown_side_effect")
+    trace.record("tool_span_closed")
+    trace.record("reconcile_requested")
+    trace.record("reconcile_unresolved")
+    trace.close("unresolved_side_effect")
+    return trace.summary("failed")
 
 
 demo = run_agent(ScriptedModel(), LocalStatusTool())
@@ -280,16 +297,19 @@ assert resumed["lifecycle"] == "running"
 print({key: approval[key] for key in ("status", "lifecycle", "suspend_reason")})
 unknown = unknown_side_effect()
 print({key: unknown[key] for key in ("status", "lifecycle", "suspend_reason")})
+unresolved = unresolved_side_effect()
+print({key: unresolved[key] for key in ("status", "lifecycle", "stop_reason")})
 # 输出：{'status': 'completed', 'lifecycle': 'closed', 'stop_reason': 'success', 'suspend_reason': None}
 # 输出：{'status': 'waiting', 'lifecycle': 'suspended', 'suspend_reason': 'pending_approval'}
 # 输出：{'status': 'waiting', 'lifecycle': 'suspended', 'suspend_reason': 'manual_intervention'}
+# 输出：{'status': 'failed', 'lifecycle': 'closed', 'stop_reason': 'unresolved_side_effect'}
 ```
 
 示例中的 estimated_tokens 是固定的测试指标，不是任何供应商账单；真实系统应从 ModelResponse 或 Usage 事件读取实际口径。若模型返回危险 ToolCall，循环应在 validation/approval 分支终止或等待，而不能沿成功脚本继续。
 
 ### StopReason：终态必须可分类
 
-至少区分 success、unknown_tool、validation_error、permission_denied、approval_denied、approval_expired、tool_failed、retry_budget_exhausted、timeout、cancelled、max_steps 和 unknown_side_effect；另用 pending_approval、manual_intervention 标记 suspended，而不是当作已关闭终态。只有明确的 StopReason 才能关闭 Run trace；分类决定用户反馈、是否可恢复、评测断言和告警路由。
+至少区分 success、unknown_tool、validation_error、permission_denied、approval_denied、approval_expired、tool_failed、retry_budget_exhausted、timeout、cancelled、max_steps 和 unresolved_side_effect。unknown_side_effect 是 query/reconcile 前的中间状态；pending_approval、manual_intervention 是 suspended 原因，不是最终 StopReason。只有明确的 StopReason 才能关闭 Run trace；分类决定用户反馈、是否可恢复、评测断言和告警路由。
 
 ### 失败轨迹到回归测试
 
@@ -349,7 +369,7 @@ print({key: unknown[key] for key in ("status", "lifecycle", "suspend_reason")})
 
 - 完整可观测 Loop 把决策、校验、审批、执行、重试、回填和终态放进同一条关联轨迹。
 - Trace、Span、RunLog 和 CostMetric 分别解决 Run 关联、操作边界、事件回放和资源统计。
-- StopReason 必须区分成功、拒绝、超时、取消、预算耗尽和未知副作用；pending_approval/manual_intervention 是 suspended，不提前 close Run trace。
+- StopReason 必须区分成功、拒绝、超时、取消、预算耗尽和无法恢复的 unresolved_side_effect；unknown_side_effect 进入 query/reconcile，pending_approval/manual_intervention 是 suspended，不提前 close Run trace。
 - 失败 Trace 应能被压缩成可重复的回归测试，而不是只留下自然语言日志。
 
 ## 快速回顾

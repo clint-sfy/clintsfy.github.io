@@ -576,7 +576,7 @@
         {"path": "docs/courses/agent/04-Tool-Calling与Agent-Loop/06-多工具并行调用与依赖调用.md", "title": "多工具并行调用与依赖调用", "introducedTerms": ["ParallelTool", "ToolDependency", "FanOut", "FanIn"], "requiresTerms": ["ToolCall", "ToolResult", "State", "AsyncRun"]},
         {"path": "docs/courses/agent/04-Tool-Calling与Agent-Loop/07-超时重试幂等与去重.md", "title": "超时、重试、幂等与去重", "introducedTerms": ["Idempotency", "Deduplication", "RetryDecision", "UnknownSideEffect", "ManualIntervention"], "requiresTerms": ["ToolCall", "ToolResult", "RetryBudget", "State", "IdempotencyKey"]},
         {"path": "docs/courses/agent/04-Tool-Calling与Agent-Loop/08-审批权限Sandbox与危险操作.md", "title": "审批、权限、Sandbox 与危险操作", "introducedTerms": ["Approval", "Permission", "DangerousOperation", "Sandbox", "Audit", "AuditSink", "AuditEvent"], "requiresTerms": ["ToolRegistry", "ToolCall", "Guardrails", "State"]},
-        {"path": "docs/courses/agent/04-Tool-Calling与Agent-Loop/09-完整可观测Agent-Loop.md", "title": "完整可观测 Agent Loop", "introducedTerms": ["Trace", "Span", "RunLog", "CostMetric", "PendingApproval", "SpanClose"], "requiresTerms": ["AgentLoop", "ToolResult", "StopReason", "Audit", "Approval", "RetryBudget", "UnknownSideEffect", "ManualIntervention"]}
+        {"path": "docs/courses/agent/04-Tool-Calling与Agent-Loop/09-完整可观测Agent-Loop.md", "title": "完整可观测 Agent Loop", "introducedTerms": ["Trace", "Span", "RunLog", "CostMetric", "PendingApproval", "SpanClose", "UnresolvedSideEffect"], "requiresTerms": ["AgentLoop", "ToolResult", "StopReason", "Audit", "Approval", "RetryBudget", "UnknownSideEffect", "ManualIntervention"]}
       ]
     },
     {
