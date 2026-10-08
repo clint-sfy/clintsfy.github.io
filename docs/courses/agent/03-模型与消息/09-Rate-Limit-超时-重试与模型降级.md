@@ -467,3 +467,4 @@ DeepSeek Harness 的插件化运行时可能在模型、会话和事件层分别
 - 重试：受总 deadline、attempt、幂等和流状态约束。
 - 降级：能力/契约先行，原因、模型和尝试次数入 trace。
 - 终态：成功、partial、cancelled、failed 不能混写成一个字符串。
+- 下一篇阅读[Function Calling 与 JSON Schema](/courses/agent/04-Tool-Calling与Agent-Loop/01-函数调用与JSON-Schema)，把模型边界连接到工具定义和执行边界。

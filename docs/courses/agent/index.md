@@ -17,7 +17,7 @@ showComment: false
 | 01 | [项目与知识库导航](/courses/agent/01-项目与知识库导航/01-学习地图与资源使用方法) | 按问题、阶段和深度选择官方项目、文档、课程与论文 | Python 基础；可选入口 |
 | 02 | [Agent 基础（8 篇）](/courses/agent/02-Agent基础/01-Agent是什么) | 从 Agent、系统组成到可停止的 Loop，建立 Model、Instructions、Tools、State、Context 和停止边界 | Python 基础 |
 | 03 | [模型与消息（9 篇）](/courses/agent/03-模型与消息/01-Model-Provider与Model-Adapter) | 从 Provider/Adapter、消息和内容块到 Token、生成参数、结构化输出、流式与可靠性 | 02 按顺序 |
-| 04 | [Tool Calling 与 Agent Loop](/courses/agent/04-Tool-Calling与Agent-Loop/01-函数调用与JSON-Schema) | 处理 schema、调用、回填、并行、重试、幂等和审批 | 02–03 |
+| 04 | [Tool Calling 与 Agent Loop（9 篇）](/courses/agent/04-Tool-Calling与Agent-Loop/01-函数调用与JSON-Schema) | 从 Function Calling 与 schema 推进到选择、校验、执行、回填、并行、重试、幂等、审批与可观测 Loop | 02–03 |
 | 05 | [State、Context、Session 与 Memory](/courses/agent/05-状态上下文会话与记忆/01-State与Context) | 区分状态所有权、会话、检查点、压缩和记忆 | 02–04 |
 | 06 | [MCP](/courses/agent/06-MCP/01-MCP解决什么问题) | 理解 Host/Client/Server、能力、传输、生命周期和授权 | 02–05、JSON-RPC |
 | 07 | [Skills、Plugin 与 Hook](/courses/agent/07-Skills插件与Hook/01-Skill与渐进式上下文) | 区分工作方法、动作接口、协议和插件生命周期 | 02–06 |
@@ -42,7 +42,7 @@ showComment: false
                                                            11 源码精读
 ```
 
-每篇文章都在开头标注前置知识、目标和状态。当前新增页面中的“**大纲骨架**”明确表示正文、代码和运行输出将在后续补充，不把计划冒充成已完成教程。
+每篇文章都在开头标注前置知识、目标和边界；可本地运行的示例明确给出输入、状态变化和输出契约，不把模型生成的候选动作冒充成已经发生的副作用。
 
 ## 五个源码主线
 

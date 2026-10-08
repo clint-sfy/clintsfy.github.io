@@ -79,6 +79,27 @@ test('chapters 02 and 03 expose the rewritten article order and entry points', (
   assert.match(homepage, /\| 03 \| \[模型与消息（9 篇）\]\(\/courses\/agent\/03-模型与消息\/01-Model-Provider与Model-Adapter\)/)
 })
 
+test('chapter 04 exposes the approved nine-article Tool Calling order', () => {
+  const roadmap = readRoadmap()
+  const chapter = roadmap.chapters.find(({ id }) => id === '04')
+  assert.ok(chapter, 'chapter 04 should exist')
+  assert.deepEqual(chapter.articles.map(({ path }) => path), [
+    'docs/courses/agent/04-Tool-Calling与Agent-Loop/01-函数调用与JSON-Schema.md',
+    'docs/courses/agent/04-Tool-Calling与Agent-Loop/02-工具定义注册与能力发现.md',
+    'docs/courses/agent/04-Tool-Calling与Agent-Loop/03-模型如何选择工具和生成参数.md',
+    'docs/courses/agent/04-Tool-Calling与Agent-Loop/04-参数校验类型转换与错误反馈.md',
+    'docs/courses/agent/04-Tool-Calling与Agent-Loop/05-工具执行Tool-Result与消息回填.md',
+    'docs/courses/agent/04-Tool-Calling与Agent-Loop/06-多工具并行调用与依赖调用.md',
+    'docs/courses/agent/04-Tool-Calling与Agent-Loop/07-超时重试幂等与去重.md',
+    'docs/courses/agent/04-Tool-Calling与Agent-Loop/08-审批权限Sandbox与危险操作.md',
+    'docs/courses/agent/04-Tool-Calling与Agent-Loop/09-完整可观测Agent-Loop.md',
+  ])
+  assert.equal(chapter.articles.length, 9)
+
+  const homepage = readArticle('docs/courses/agent/index.md')
+  assert.match(homepage, /\| 04 \| \[Tool Calling 与 Agent Loop（9 篇）\]\(\/courses\/agent\/04-Tool-Calling与Agent-Loop\/01-函数调用与JSON-Schema\)/)
+})
+
 test('every required term is introduced before use', () => {
   const roadmap = readRoadmap()
   const introduced = new Set()
@@ -104,9 +125,9 @@ test('course examples obey the Python-first policy', () => {
   }
 })
 
-test('chapters 02 and 03 are complete正文 rather than outline skeletons', () => {
+test('chapters 02 through 04 are complete正文 rather than outline skeletons', () => {
   const roadmap = readRoadmap()
-  for (const chapter of roadmap.chapters.filter(({ id }) => ['02', '03'].includes(id))) {
+  for (const chapter of roadmap.chapters.filter(({ id }) => ['02', '03', '04'].includes(id))) {
     for (const article of chapter.articles) {
       const source = readArticle(article.path)
       const parsed = matter(source)
@@ -128,9 +149,9 @@ test('chapters 02 and 03 are complete正文 rather than outline skeletons', () =
   }
 })
 
-test('chapters 02 and 03 keep one readable Mermaid diagram per article', () => {
+test('chapters 02 through 04 keep one readable Mermaid diagram per article', () => {
   const roadmap = readRoadmap()
-  for (const chapter of roadmap.chapters.filter(({ id }) => ['02', '03'].includes(id))) {
+  for (const chapter of roadmap.chapters.filter(({ id }) => ['02', '03', '04'].includes(id))) {
     for (const article of chapter.articles) {
       const source = readArticle(article.path)
       const diagrams = source.match(/```mermaid\s*\r?\n[\s\S]*?\r?\n```/g) ?? []
