@@ -38,7 +38,7 @@ chapter: 07
 
 ### Lifecycle：状态而不是一串回调
 
-**PluginLifecycle** 至少包含 declared、checking、applying、ready、failed、disabled 和 disposed 等可观察状态。实现可以合并状态，但必须能解释当前能力是否可见、是否可调用和谁负责清理。
+**PluginLifecycle** 要把持久化的配置 entry 和短暂的运行实例分开看：entry 可以是 present、disabled-entry 或 removed；运行实例可以经历 checking、applying、ready、disposing、unmounted 或 failed。实现可以合并显示字段，但必须能解释配置是否保留、实例是否挂载、effects 是否存在以及谁负责清理。
 
 ### Rollback：失败时撤销已成功的部分
 
@@ -52,29 +52,28 @@ Plugin 像一间搬进宿主的工作室：先核对钥匙和水电（依赖）�
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Declared: 读取 manifest
-    Declared --> Checking: 校验配置/版本/权限
-    Checking --> Failed: 依赖缺失或策略拒绝
-    Checking --> Applying: 检查通过
-    Applying --> Applying: 注册 Service/Tool/Skill/Hook
-    Applying --> Ready: 所有 effect 成功
-    Applying --> RollingBack: 注册失败
-    RollingBack --> Failed: 清理完成并记录原因
-    Ready --> Disabled: 配置禁用
-    Disabled --> Applying: 重新启用
-    Ready --> Disposing: unload / scope 结束
-    Disabled --> Disposing: unload
-    Disposing --> Disposed: disposer 逆序完成
+    [*] --> ConfigEntry: 读取并保留配置 entry
+    ConfigEntry --> Checking: 启用/重新启用
+    Checking --> Failed: 依赖缺失或装配策略拒绝
+    Checking --> Applying: 装配期检查通过
+    Applying --> Applying: 注册 Service/Tool/Skill/Hook effects
+    Applying --> Ready: 运行实例与 effects 就绪
+    Applying --> Disposing: 部分注册失败
+    Ready --> Disposing: 禁用、卸载或 scope 结束
+    Disposing --> Unmounted: effects 逆序 dispose 完成
+    Unmounted --> DisabledEntry: 保留配置 entry，运行实例已卸载
+    DisabledEntry --> Checking: 重新启用
+    DisabledEntry --> RemovedEntry: 删除配置 entry
     Failed --> Disposing: 清理部分注册
-    Disposed --> [*]
+    RemovedEntry --> [*]
 
     note right of Applying
-      每个注册都要绑定 owner
-      和可调用的 disposer
+      配置 entry 与运行实例分离
+      每个 effect 都绑定 owner/disposer
     end note
 ```
 
-阅读提示：只有 `Ready` 才表示全部注册完成；`Failed` 仍可能需要回滚，`Disabled` 不是 `Disposed`，因为禁用可以保留配置并再次启用。
+阅读提示：只有 `Ready` 才表示运行实例和全部 effects 已挂载；`Disposing` 之后是 `Unmounted`，配置 entry 可以继续停留在 `DisabledEntry`；重新启用必须回到 `Checking → Applying`，不能复用已卸载实例。
 
 ## 一个带回滚的本地 Host
 
@@ -86,66 +85,90 @@ from typing import Callable
 
 
 @dataclass
-class Host:
+class PluginEntry:
+    """配置 entry 保留；effects 属于可反复挂载的运行实例。"""
+
+    name: str
+    enabled: bool = True
+    status: str = "ConfigEntry"
     services: list[str] = field(default_factory=list)
     _effects: list[Callable[[], None]] = field(default_factory=list)
 
-    def effect(self, install: Callable[[], Callable[[], None]]) -> None:
+    def _effect(self, install: Callable[[], Callable[[], None]]) -> None:
         disposer = install()
         self._effects.append(disposer)
 
-    def dispose(self) -> None:
+    def _dispose_effects(self) -> None:
         for disposer in reversed(self._effects):
             disposer()
         self._effects.clear()
 
+    def mount(self, fail: bool = False) -> None:
+        if not self.enabled:
+            self.status = "DisabledEntry"
+            return
+        self.status = "Checking"
+        self.status = "Applying"
+        try:
+            self._effect(lambda: (self.services.append("skill"), lambda: self.services.remove("skill"))[1])
+            self._effect(lambda: (self.services.append("tool"), lambda: self.services.remove("tool"))[1])
+            if fail:
+                raise RuntimeError("missing dependency: audit")
+            self.status = "Ready"
+        except RuntimeError:
+            self._dispose_effects()
+            self.status = "Failed"
+            raise
 
-def install_plugin(host: Host) -> str:
-    host.effect(lambda: (host.services.append("skill"), lambda: host.services.remove("skill"))[1])
-    host.effect(lambda: (host.services.append("tool"), lambda: host.services.remove("tool"))[1])
+    def disable(self) -> None:
+        self.enabled = False
+        self.status = "Disposing"
+        self._dispose_effects()
+        self.status = "Unmounted"
+        self.status = "DisabledEntry"
 
-    def failing_install() -> Callable[[], None]:
-        raise RuntimeError("missing dependency: audit")
-
-    host.effect(failing_install)
-    return "ready"
+    def enable(self) -> None:
+        self.enabled = True
+        self.mount()
 
 
-host = Host()
+entry = PluginEntry("audit")
 try:
-    install_plugin(host)
+    entry.mount(fail=True)
 except RuntimeError as error:
     print(type(error).__name__, str(error))
-    host.dispose()
-print(host.services)
+print(entry.status, entry.services)
 
-host.effect(lambda: (host.services.append("temporary"), lambda: host.services.remove("temporary"))[1])
-print(host.services)
-host.dispose()
-print(host.services)
+entry.disable()
+print(entry.status, entry.services, entry.enabled)
+entry.enable()  # 重新检查并创建新的运行实例/effects。
+print(entry.status, entry.services)
+entry.disable()
+print(entry.status, entry.services)
 # 输出：RuntimeError missing dependency: audit
-# 输出：[]
-# 输出：['temporary']
-# 输出：[]
+# 输出：Failed []
+# 输出：DisabledEntry [] False
+# 输出：Ready ['skill', 'tool']
+# 输出：DisabledEntry []
 ```
 
-示例把回滚调用写在异常处理处；真实 Host 应在一次 composition transaction 中自动执行逆序清理，并为已失败的 disposer 继续记录诊断。
+示例把配置 entry、运行实例和 effects 分开：装配失败会回滚 effects 但保留 entry；禁用会 `Disposing → Unmounted → DisabledEntry`，重新启用会重新经过 `Checking → Applying`，而不是复用旧实例。真实 Host 还应记录清理错误和配置删除事件。
 
 ### `apply(ctx)`：声明式入口而非全部语义
 
 许多插件系统用 `apply(ctx)` 或相似函数把能力挂入 Context。这个函数只说明装配入口；真正的生命周期还包括依赖等待、scope、配置变更、错误传播和 dispose。看到 `apply` 不代表它是行业标准 API。
 
-### Enabled/Disabled：配置状态与资源状态分离
+### Configuration Entry 与 Runtime Instance：配置保留、实例卸载
 
-禁用通常意味着不再对新调用提供能力，但不一定删除 manifest 或持久化配置。停用时要先阻断新请求，再等待或取消在途任务，最后撤销监听器和服务；重新启用应重新检查依赖和权限。
+禁用通常意味着保留 manifest/配置 entry，但不再对新调用提供能力；运行实例、事件监听和 Service effects 必须先进入 `Disposing`，再成为 `Unmounted`。entry 可标记为 `DisabledEntry`，重新启用时重新检查依赖并创建新实例；只有用户删除配置时才进入 `RemovedEntry`。
 
 ### Hot Reload：重新装配而不是覆盖全局对象
 
-热重载应通过稳定 ID 区分“同一个 entry 的新代码”和“旧 entry 删除”，先 dispose 旧 effect 再 apply 新实例。直接覆盖全局注册表容易留下旧监听器、缓存和后台任务。
+热重载应通过稳定 ID 区分“同一个 entry 的新代码”和“旧 entry 删除”，先让旧运行实例 `Disposing → Unmounted`，再从保留的 entry 经过 `Checking → Applying` 挂载新实例。直接覆盖全局注册表容易留下旧监听器、缓存和后台任务。
 
 ### Plugin Error：失败传播要有策略
 
-必需 Plugin 失败可以阻止 Host 启动；可选 Plugin 失败可以被隔离并继续，但用户应看到能力不可用和原因。无论策略是什么，都不应把半注册状态当成 ready。
+必需 Plugin 失败可以阻止 Host 启动；可选 Plugin 失败可以被隔离并继续，但用户应看到能力不可用和原因。无论策略是什么，都不应把半注册状态当成 `Ready`；失败后的 entry 是否保留、是否标记 `DisabledEntry` 要与运行实例的清理结果分开记录。
 
 ## 源码阅读心智模型
 
@@ -193,22 +216,22 @@ Plugin 可以创建 MCP Client/Server 连接，但 initialize、transport close 
 
    **解析**：若第三个 Service 是必需依赖，半注册状态会导致调用方拿到不完整能力。即使允许部分可用，也必须把状态标为 degraded 而不是 ready。
 
-3. 为什么 Disabled 不等于 Disposed？
+3. 为什么 DisabledEntry 不等于 Unmounted？
 
-   **答案**：禁用可能只是暂时停止新调用并保留配置，稍后可以在重新检查后启用；Disposed 表示实例和其资源已清理。
+   **答案**：`DisabledEntry` 是保留配置、停止新调用的 entry 状态；`Unmounted` 是运行实例和 effects 已清理的运行状态。
 
-   **解析**：把两者混合会导致重新启用复用失效对象，或为了暂时禁用而丢失用户配置。状态机应让生命周期和持久化配置分别可观察。
+   **解析**：禁用路径必须先 `Disposing → Unmounted`，再保留 entry；重新启用要从 `Checking → Applying` 创建新实例，不能复用已经卸载的对象。
 
 ## 本节小结
 
 - Plugin 是拥有配置、依赖、注册和清理的可组合生命周期单元。
-- Manifest 预检、apply 注册、ready、rollback、disable 和 dispose 要有清晰状态。
+- Manifest 预检、apply 注册、ready、rollback、disable、unmount 和 entry removal 要有清晰状态。
 - 每个 effect 绑定 owner 和 disposer，失败按逆序清理，避免半注册能力泄漏。
 - 阅读 DeepSeek Harness 时沿 composition → `apply(ctx)` → effect/disposer → scope 销毁追踪。
 
 ## 快速回顾
 
-- 能画出 Plugin 从 declared 到 disposed 的状态机。
+- 能画出配置 entry 与运行实例分离的状态机，说明 `Ready → Disposing → Unmounted → DisabledEntry`。
 - 能说明安装、注册、禁用、卸载和回滚的差异。
 - 能解释为什么热重载依赖可组合的 effect/disposer。
 - 下一篇阅读 [Dependency Injection 与能力容器](./06-Dependency-Injection与能力容器)。

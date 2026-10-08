@@ -18,7 +18,7 @@ chapter: 05
 
 ## 前置知识
 
-- 已阅读 [Run State 与状态所有权](./02-Session生命周期)。
+- 已阅读 [Run State 与状态所有权](./02-Run-State与状态所有权)。
 - 已理解第02章的 Run 生命周期、第04章的权限边界，以及 State 与 Context 的投影关系。
 
 ## Session 是哪一层边界
@@ -106,9 +106,23 @@ class SessionStore:
         self.sessions: dict[str, Session] = {}
 
     def create(self, session_id: str, tenant_id: str, user_id: str, now: int) -> Session:
+        if session_id in self.sessions:
+            raise KeyError("session id already exists")
         session = Session(session_id, tenant_id, user_id, lease_until=now + 3)
         self.sessions[session_id] = session
         return session
+
+    def _authorize(
+        self,
+        session: Session,
+        tenant_id: str,
+        user_id: str,
+        expected_revision: int,
+    ) -> None:
+        if (session.tenant_id, session.user_id) != (tenant_id, user_id):
+            raise PermissionError("session scope mismatch")
+        if expected_revision != session.revision:
+            raise RuntimeError("session revision conflict")
 
     def attach(
         self,
@@ -117,10 +131,12 @@ class SessionStore:
         user_id: str,
         run_id: str,
         now: int,
+        expected_revision: int,
     ) -> Session:
         session = self.sessions[session_id]
-        if (session.tenant_id, session.user_id) != (tenant_id, user_id):
-            raise PermissionError("session scope mismatch")
+        self._authorize(session, tenant_id, user_id, expected_revision)
+        if not run_id:
+            raise ValueError("run id is required")
         if session.status != "active" or now > session.lease_until:
             session.status = "expired"
             raise RuntimeError("session is not attachable")
@@ -131,8 +147,16 @@ class SessionStore:
         session.revision += 1
         return session
 
-    def detach(self, session_id: str, run_id: str) -> None:
+    def detach(
+        self,
+        session_id: str,
+        tenant_id: str,
+        user_id: str,
+        run_id: str,
+        expected_revision: int,
+    ) -> None:
         session = self.sessions[session_id]
+        self._authorize(session, tenant_id, user_id, expected_revision)
         if session.attached_run != run_id:
             raise RuntimeError("run is not attached")
         session.attached_run = None
@@ -141,23 +165,53 @@ class SessionStore:
 
 store = SessionStore()
 store.create("s-a", "tenant-a", "alice", now=1)
-store.attach("s-a", "tenant-a", "alice", "run-1", now=2)
-store.detach("s-a", "run-1")
+try:
+    store.create("s-a", "tenant-a", "alice", now=1)
+except KeyError as error:
+    print(type(error).__name__, str(error))
+store.attach("s-a", "tenant-a", "alice", "run-1", now=2, expected_revision=0)
+store.detach("s-a", "tenant-a", "alice", "run-1", expected_revision=1)
 print(store.sessions["s-a"].status, store.sessions["s-a"].revision)
 try:
-    store.attach("s-a", "tenant-b", "bob", "run-x", now=2)
+    store.attach(
+        "s-a",
+        "tenant-b",
+        "bob",
+        "run-x",
+        now=2,
+        expected_revision=2,
+    )
 except (PermissionError, RuntimeError) as error:
     print(type(error).__name__, str(error))
 try:
-    store.attach("s-a", "tenant-a", "alice", "run-2", now=9)
+    store.detach(
+        "s-a",
+        "tenant-b",
+        "bob",
+        "run-1",
+        expected_revision=2,
+    )
 except (PermissionError, RuntimeError) as error:
     print(type(error).__name__, str(error))
+try:
+    store.attach(
+        "s-a",
+        "tenant-a",
+        "alice",
+        "run-2",
+        now=9,
+        expected_revision=2,
+    )
+except (PermissionError, RuntimeError) as error:
+    print(type(error).__name__, str(error))
+# 输出：KeyError 'session id already exists'
 # 输出：active 2
+# 输出：PermissionError session scope mismatch
 # 输出：PermissionError session scope mismatch
 # 输出：RuntimeError session is not attachable
 ```
 
-示例把租户和用户检查放在 attach 前，把租约判断放在生命周期边界；代码没有尝试“帮忙恢复”过期 Session。恢复一个 Run 时应先建立新的合法挂载，再读取 checkpoint 和 State。
+示例让 create 拒绝重复 ID，并让 attach/detach 对称验证 tenant、user、revision 和 run 归属；代码没有尝试“帮忙恢复”过期 Session。恢复一个 Run 时应先建立新的合法挂载，再读取 checkpoint 和 State。
 
 ## 源码阅读心智模型
 
@@ -167,15 +221,15 @@ except (PermissionError, RuntimeError) as error:
 
 ### OpenAI Agents SDK
 
-区分 Runner 的单次运行容器、Session 服务提供的跨 Run 历史，以及 tracing 的持久化。阅读时重点看“何时读取历史、何时追加新消息、关闭或并发时由谁加锁”。
+区分 Runner 的单次运行容器、RunContextWrapper 的应用依赖、Session history 的跨 Run 历史和 RunState interruption 的可恢复快照。源码锚点是 RunContextWrapper.context、Session.get_items/session_input_callback、RunResult.to_state；它们不是一个统一 Session API，重点仍是何时读取历史、何时追加新消息、恢复时如何保证同一 Session 独占。
 
 ### LangGraph
 
-把 thread/session 标识看作图执行与 checkpoint 的挂载边界，再检查 checkpoint store 是否按租户或用户分区。图的 State 能恢复，不等于任意调用者都能读取这份 State。
+把 configurable.thread_id 看作恢复定位键，配合 checkpoint_ns/checkpoint_id 读取 StateSnapshot；interrupt 暂停后必须用同一 thread_id 发送 Command(resume=...)，节点会从 interrupt 所在节点开头重跑。再检查 reducer 和 Store namespace 是否按租户/用户分区；这些是 LangGraph 的具体 API，不等于本章 SessionStore。
 
 ### DeepSeek Harness
 
-从 Session 初始化、Driver 挂载、事件上下文和插件生命周期追踪隔离字段。重点检查插件是否复用全局对象、关闭时是否释放监听器，以及跨 Session 的 Memory 是否经过 scope 过滤。
+从 ctx.sessions 的 append-only SessionEvent 日志、ctx.agents/agent-loop 的 Driver 运行挂载、Plugin/Hook 事件和 SessionPersistence 的 SessionHandle 追踪隔离字段。官方持久化入口是 ctx.sessionPersistence 的 create/open/stat/list 与 handle read/append/flush/close；检查插件是否复用全局对象、关闭时是否释放监听器，以及跨 Session 的 Memory 是否经过 scope 过滤。
 
 ## 易混点
 
@@ -217,4 +271,4 @@ except (PermissionError, RuntimeError) as error:
 - 能解释 Session 与 Run、租约与授权、关闭与删除的三组差别。
 - 能说出一次 attach 至少需要哪些检查。
 - 能指出会话元数据、对话事件和 Run State 的不同所有者。
-- 下一篇阅读 [Checkpoint、Suspend 与 Resume](./04-上下文压缩与摘要)，看 Session 中断后如何安全恢复。
+- 下一篇阅读 [Checkpoint、Suspend 与 Resume](./04-Checkpoint-Suspend与Resume)，看 Session 中断后如何安全恢复。

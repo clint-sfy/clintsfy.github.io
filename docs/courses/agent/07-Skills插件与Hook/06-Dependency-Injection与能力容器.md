@@ -46,6 +46,14 @@ chapter: 07
 
 **Scope** 决定一个组件看到哪些 provider，例如 host、agent preset、workspace 或一次 Session。父 scope 可以提供默认实现，子 scope 可以覆盖或限制它；规则必须明确，不能靠字典遍历顺序碰运气。
 
+### AssemblyPolicy：装配期能否挂载
+
+**AssemblyPolicy** 判断某个 Plugin/Provider 是否允许进入当前 composition，例如是否满足 scope、配置、依赖和宿主能力要求。它发生在注入前，决定“实现是否可见”；它不是某个用户请求的授权结论。
+
+### CallPermission：调用期能否使用
+
+**CallPermission** 判断当前 caller、resource 和 Run 是否可以使用已经解析到的能力。它发生在 Tool/Service 的实际调用边界，必须重新检查主体、资源、参数和 Run 状态；不能因为装配期允许就跳过。
+
 ## 注入数据流与生命周期
 
 ```mermaid
@@ -54,20 +62,26 @@ flowchart TD
     Graph --> Scope[当前 Host/Agent/Session scope]
     Scope --> Container[Capability Container]
     Provider[Provider 工厂/实例] --> Container
-    Container --> Resolve{解析 + policy 检查}
+    Container --> Resolve{Implementation resolution}
     Resolve -->|缺失/循环| Fail[注册失败或降级]
-    Resolve -->|允许| Inject[注入 Plugin/Tool/Hook]
-    Inject --> Run[执行请求]
-    Run --> Event[生命周期/审计事件]
+    Resolve --> AssemblyPolicy{AssemblyPolicy：scope/依赖/配置}
+    AssemblyPolicy -->|拒绝装配| Fail
+    AssemblyPolicy -->|允许挂载| Inject[注入 Plugin/Tool/Hook]
+    Inject --> Run[一次执行请求]
+    Run --> CallPermission{CallPermission：caller/resource/Run}
+    CallPermission -->|拒绝| Deny[拒绝并审计]
+    CallPermission -->|允许| Use[调用能力实现]
+    Use --> Event[生命周期/审计事件]
+    Deny --> Event
     Scope --> Dispose[scope 结束]
     Dispose --> Cleanup[逆序 dispose provider]
     Container --> Cleanup
 
     classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
-    class Manifest,Graph,Scope,Container,Provider,Resolve,Fail,Inject,Run,Event,Dispose,Cleanup core;
+    class Manifest,Graph,Scope,Container,Provider,Resolve,AssemblyPolicy,Fail,Inject,Run,CallPermission,Deny,Use,Event,Dispose,Cleanup core;
 ```
 
-阅读提示：`Container` 解决“找到实现”，`policy` 决定“本次是否可用”；依赖图在注入前检查，scope 结束时按所有权逆序清理。
+阅读提示：`Container` 只做 implementation resolution；`AssemblyPolicy` 决定实现能否挂载，`CallPermission` 决定一次调用能否使用。二者都不是容器的隐式副作用，依赖图在装配期检查，scope 结束时按所有权逆序清理。
 
 ## 一个带 scope 的本地容器
 
@@ -110,6 +124,20 @@ class Scope:
         self._disposers.clear()
 
 
+def assembly_policy(scope: Scope, key: str) -> bool:
+    """装配期检查：当前 scope 是否允许挂载这个 capability。"""
+    try:
+        scope.resolve(key)
+    except LookupError:
+        return False
+    return key != "workspace.write"
+
+
+def call_permission(subject: str, resource: str, run_id: str) -> bool:
+    """调用期检查：caller、resource 与 Run 是否满足本次使用条件。"""
+    return subject == "reviewer" and resource == "workspace.read" and run_id.startswith("run-")
+
+
 host = Scope()
 host.provide("logger", lambda: "host-logger")
 agent = Scope(parent=host)
@@ -117,6 +145,8 @@ agent.provide("logger", lambda: "agent-logger")
 agent.provide("workspace.read", lambda: "read-only")
 print(agent.resolve("logger"))
 print(agent.resolve("workspace.read"))
+print(assembly_policy(agent, "workspace.read"))
+print(call_permission("reviewer", "workspace.read", "run-7"))
 try:
     agent.resolve("workspace.write")
 except LookupError as error:
@@ -124,10 +154,12 @@ except LookupError as error:
 agent.dispose()
 # 输出：agent-logger
 # 输出：read-only
+# 输出：True
+# 输出：True
 # 输出：LookupError missing capability: workspace.write
 ```
 
-“解析得到 `workspace.read`”只说明容器存在实现；真正把它暴露为 Tool 前仍应检查调用者、资源路径、审计和当前 Run 的 allowlist。
+“解析得到 `workspace.read`”只说明容器存在实现；`assembly_policy` 只表示装配期允许挂载，真正把它暴露为 Tool 时还要用 `call_permission` 检查调用者、资源和当前 Run 的 allowlist。
 
 ### `inject`：声明而不是隐式读取
 
@@ -137,9 +169,9 @@ agent.dispose()
 
 Provider 可以返回 Host 级共享实例、每个 Agent scope 一个实例，或每次解析都新建实例。生命周期必须和 disposer、并发安全及缓存策略一起定义；“默认单例”不是普遍正确的选择。
 
-### Container 与权限：解析之后再门控
+### Container 与 Permission：解析之后再门控
 
-一个 Container 若把 `shell.exec` 注入 Plugin，只表示实现可达；权限策略可能仍禁止当前 Agent、workspace 或请求调用它。安全边界最好在 Tool/Service 的实际入口再次检查，避免能力引用被转发到不该看到的范围。
+一个 Container 若把 `shell.exec` 注入 Plugin，只表示 implementation resolution 成功；`AssemblyPolicy` 可能仍禁止该 Provider 进入当前 composition，`CallPermission` 也可能禁止当前 Agent、workspace 或 Run 调用它。安全边界最好在 Tool/Service 的实际入口再次检查，避免能力引用被转发到不该看到的范围。
 
 ### 依赖循环：让错误在装配时出现
 
@@ -149,7 +181,7 @@ Provider 可以返回 Host 级共享实例、每个 Agent scope 一个实例，�
 
 ### DeepSeek Harness/Cordis：Context 是组合面，不是魔法全局
 
-Cordis 的 Context 将服务、Plugin 和事件放在可组合的 scope 中；某些 Plugin 通过 `inject` 声明依赖，服务在对应 Context 层出现后才进入可用状态。阅读时追踪“依赖声明 → scope 组合 → service 挂载 → effect/dispose”，并检查 provider 是 host 级还是 Agent preset 级。
+Cordis 的 Context 将服务、Plugin 和事件放在可组合的 scope 中；某些 Plugin 通过 `inject` 声明依赖，服务在对应 Context 层出现后才进入可用状态。阅读时追踪“依赖声明 → `AssemblyPolicy`/scope 组合 → service 挂载 → `CallPermission` → effect/dispose”，并检查 provider 是 host 级还是 Agent preset 级。
 
 官方 Skills 文档所说的 host+per-scope registry 也体现了这一点：同一名称在不同 scope 可能有不同可见项，读取时按 scope 链合并。具体优先级属于产品实现，不能反推为 DI 标准。
 
@@ -164,14 +196,14 @@ MCP 初始化阶段的 capability 是连接双方声明能支持哪些协议能�
 ### 读源码的五个问题
 
 1. provider 注册到哪个 scope，名字是否全局唯一？
-2. `inject` 何时检查，缺失依赖是否阻止启动？
+2. `inject` 与 `AssemblyPolicy` 何时检查，缺失依赖是否阻止启动？
 3. 父子 scope 的同名覆盖规则是什么？
-4. resolve 返回实例时是否再次做 policy/permission 检查？
+4. resolve 返回实例后，调用入口是否再次执行 `CallPermission`？
 5. scope dispose 如何释放 provider、事件监听和缓存？
 
 ## 易混点
 
-- **解析成功不等于授权成功**：Container 只解决实现发现，Policy 仍决定是否可用。
+- **解析成功不等于授权成功**：Container 只解决 implementation resolution，`AssemblyPolicy` 与 `CallPermission` 分别决定能否挂载、能否调用。
 - **DI 不等于 Service Locator**：组件主动从全局容器取值会隐藏依赖，降低可测试性和所有权清晰度。
 - **MCP capability 不等于 DI capability**：协议协商和进程内实例解析解决不同问题。
 - **子 scope 覆盖不等于全局替换**：父 scope 的其他消费者仍可能使用原 provider。
@@ -200,8 +232,8 @@ MCP 初始化阶段的 capability 是连接双方声明能支持哪些协议能�
 ## 本节小结
 
 - Capability 是契约，Container 解析实现，DI 显式注入，Scope 决定可见范围。
-- 依赖图、重复检查、policy 门控和 disposer 共同构成安全的容器生命周期。
-- 解析与授权、协议协商与进程内 DI 必须分开描述。
+- 依赖图、重复检查、`AssemblyPolicy`、`CallPermission` 和 disposer 共同构成安全的容器生命周期。
+- implementation resolution、装配期 policy、调用期 permission、协议协商与进程内 DI 必须分开描述。
 - 阅读 Cordis/Plugin 源码时沿 scope → inject → service → effect/dispose 追踪。
 
 ## 快速回顾

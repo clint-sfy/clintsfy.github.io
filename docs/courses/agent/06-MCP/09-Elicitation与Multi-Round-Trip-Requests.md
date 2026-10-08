@@ -41,8 +41,8 @@ Form 模式禁止请求密码、访问令牌、API key 和支付凭据。Client 
 1. Client 发起 tools/call、prompts/get 或 resources/read；
 2. Server 返回 resultType=input_required；
 3. 结果携带 inputRequests 和可选 requestState；
-4. Client 通过 UI、回调或其它来源获得 InputResponses；
-5. Client 重试原方法，带 inputResponses、原 requestState 和新的 JSON-RPC id；
+4. Client 通过 UI、回调或其它来源获得 InputResponses；每个答案的 key 必须对应 inputRequests 的 key，Elicitation 答案还要带 action；
+5. Client 重试原方法，在 params 中把 inputResponses 和 requestState 作为同级字段传回，并使用新的 JSON-RPC id；
 6. Server 完成并返回 resultType=complete，或继续要求输入。
 
 只有上述三种 Client Request 可以返回 InputRequiredResult。它不是所有 RPC 都能随意使用的通用包装。
@@ -68,7 +68,7 @@ sequenceDiagram
     S-->>C: resultType=input_required<br/>inputRequests + opaque requestState
     C->>User: 展示 form 或 URL，并等待同意
     User-->>C: accept / decline / cancel 或表单内容
-    C->>S: tools/call id=11 + inputResponses + 原样 requestState
+    C->>S: tools/call id=11 + inputResponses(action=accept) + 原样 requestState
     S-->>C: resultType=complete 或再次 input_required
     Note over C,S: Server 不发送独立 elicitation/create Request
 ~~~
@@ -114,7 +114,12 @@ def verify(state: str, principal: str, item: str) -> bool:
     )
 
 
-def handle_call(principal: str, item: str, input_responses=None):
+def handle_call(
+    principal: str,
+    item: str,
+    input_responses=None,
+    request_state=None,
+):
     if input_responses is None:
         return {
             "resultType": "input_required",
@@ -135,10 +140,25 @@ def handle_call(principal: str, item: str, input_responses=None):
             "requestState": seal(principal, item),
         }
 
-    accepted = input_responses.get("confirm", {}).get("content", {}).get("approved")
-    state = input_responses["requestState"]
-    if not verify(state, principal, item):
+    if request_state is None or not verify(request_state, principal, item):
         raise ValueError("invalid requestState")
+
+    answer = input_responses.get("confirm", {})
+    if answer.get("action") != "accept":
+        return {
+            "resultType": "complete",
+            "content": [
+                {
+                    "type": "text",
+                    "text": f"deleted=False ({answer.get('action', 'missing')})",
+                }
+            ],
+        }
+
+    content = answer.get("content")
+    if not isinstance(content, dict):
+        raise ValueError("accept requires content")
+    accepted = content.get("approved")
     return {
         "resultType": "complete",
         "content": [{"type": "text", "text": f"deleted={bool(accepted)}"}],
@@ -148,10 +168,20 @@ def handle_call(principal: str, item: str, input_responses=None):
 first = handle_call("alice", "draft.txt")
 print(first["resultType"], sorted(first["inputRequests"]))
 second_input = {
-    "confirm": {"content": {"approved": True}},
+    "confirm": {"action": "accept", "content": {"approved": True}},
+}
+retry_params = {
+    "inputResponses": second_input,
     "requestState": first["requestState"],
 }
-print(handle_call("alice", "draft.txt", second_input)["content"][0]["text"])
+print(
+    handle_call(
+        "alice",
+        "draft.txt",
+        input_responses=retry_params["inputResponses"],
+        request_state=retry_params["requestState"],
+    )["content"][0]["text"]
+)
 ~~~
 
 输出：
@@ -161,11 +191,11 @@ input_required ['confirm']
 deleted=True
 ~~~
 
-真实 MCP 的 inputResponses 结构由 schema.ts 定义；上面的代码仅保留核心安全检查，不应当把 HMAC 密钥硬编码在生产代码中。
+真实 MCP 的 inputResponses 与 requestState 在原始请求 params 中是同级字段；每个 inputResponses key 对应一个 inputRequests key，Elicitation 的 accept 才读取 content，decline/cancel 通常不带 content。上面的代码仅保留核心安全检查，不应当把 HMAC 密钥硬编码在生产代码中。
 
-### Python SDK v2 的抽象提示
+### Python SDK v2 的现代/legacy 分流
 
-官方 Python SDK v2 推荐用 Resolver/Resolve 让同一个工具在旧时代和现代时代都能获取用户输入；底层仍可手写 InputRequiredResult。示例应锁定 Python 3.10+ 和 mcp 2.x，并以 Migration Guide 为准。不要在现代连接上假定 ctx.elicit() 一定能打开独立反向通道：v2 会将现代请求转为 MRTR。
+官方 Python SDK v2.2.0 推荐使用 resolver 函数与 `Resolve` 标记，让同一个工具在旧时代和现代时代都能获取用户输入。现代 MRTR 只有两条路径：`Annotated[..., Resolve(resolver_fn)]` 中的 resolver 函数返回 `Elicit(...)`，或底层代码手写 `InputRequiredResult`。在现代 2026-07-28 连接上，工具内直接调用 `ctx.elicit()` 会抛 `NoBackChannelError`，SDK 不会把它自动转换成 MRTR；`ctx.elicit()` 应只放在保留 server→client 通道的 legacy（2025-11-25 及更早）连接语境中。示例应锁定 Python 3.10+ 和 mcp==2.2.0，并以 Migration Guide 为准。
 
 ## 术语与白话
 
@@ -238,3 +268,5 @@ Elicitation 保留用户控制，form 收集非敏感字段，url 把敏感交�
 - [Elicitation](https://modelcontextprotocol.io/specification/2026-07-28/client/elicitation)
 - [Multi Round-Trip Requests](https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/mrtr)
 - [2026-07-28 schema.ts](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/2026-07-28/schema.ts)
+- [Python SDK v2.2.0 Elicitation handlers](https://github.com/modelcontextprotocol/python-sdk/blob/v2.2.0/docs/handlers/elicitation.md)
+- [Python SDK v2.2.0 Migration Guide](https://github.com/modelcontextprotocol/python-sdk/blob/v2.2.0/docs/migration.md)

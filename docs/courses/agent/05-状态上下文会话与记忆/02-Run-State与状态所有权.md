@@ -45,7 +45,7 @@ StateOwnership 指定谁能创建、读取、更新和关闭一类状态。典�
 
 ### 状态来源和可解释性
 
-每个字段都应能回答三个问题：来源是什么、何时被接受、能否在恢复时重新验证。例如 facts 中的 build=green 应带有 tool call 关联；手写的 summary 不应冒充工具事实；从旧版本恢复时要知道它来自哪一个 checkpoint。
+每个字段都应能回答三个问题：来源是什么、何时被接受、能否在恢复时重新验证。例如 facts 中的 build=green 应带有 tool call 关联；手写的 summary 不应冒充工具事实；从旧版本恢复时要知道它来自哪一个 checkpoint。source 说明具体生产者，authority 说明经过认证的写入边界；模型文本不能自填这两个字段来获得状态写权限。
 
 ## 从候选事件到状态
 
@@ -107,17 +107,33 @@ class RunState:
 class StateEvent:
     kind: str
     source: str
+    authority: str
     value: str
     expected_revision: int
 
 
 class StateStore:
+    EVENT_RULES = {
+        "run_started": ("runtime", {"runtime"}),
+        "tool_result": ("tool_executor", {"tool:get_status"}),
+        "run_completed": ("runtime", {"runtime"}),
+    }
+
     def __init__(self, state: RunState) -> None:
         self.state = state
 
     def apply(self, event: StateEvent) -> RunState:
         if event.expected_revision != self.state.revision:
             raise RuntimeError("revision conflict")
+        rule = self.EVENT_RULES.get(event.kind)
+        if rule is None:
+            raise ValueError("unknown event: " + event.kind)
+        expected_authority, allowed_sources = rule
+        if (
+            event.authority != expected_authority
+            or event.source not in allowed_sources
+        ):
+            raise PermissionError("event source/authority rejected")
         if event.kind == "run_started":
             if self.state.status != "queued":
                 raise ValueError("run cannot start from " + self.state.status)
@@ -131,28 +147,40 @@ class StateStore:
                 raise ValueError("success criterion is not met")
             self.state.status = "completed"
             self.state.stop_reason = "goal_reached"
-        else:
-            raise ValueError("unknown event: " + event.kind)
         self.state.revision += 1
         return self.state
 
 
 state = RunState("run-7")
 store = StateStore(state)
-store.apply(StateEvent("run_started", "runtime", "", 0))
-tool_proposal = StateEvent("tool_result", "tool:get_status", "build=green", 1)
+store.apply(StateEvent("run_started", "runtime", "runtime", "", 0))
+tool_proposal = StateEvent(
+    "tool_result",
+    "tool:get_status",
+    "tool_executor",
+    "build=green",
+    1,
+)
 store.apply(tool_proposal)
-store.apply(StateEvent("run_completed", "runtime", "", 2))
+store.apply(StateEvent("run_completed", "runtime", "runtime", "", 2))
 print(state.status, state.revision, state.facts)
 try:
-    store.apply(StateEvent("run_completed", "model", "", 1))
-except (RuntimeError, ValueError) as error:
+    store.apply(
+        StateEvent(
+            "run_completed",
+            "model:planner",
+            "model",
+            "",
+            state.revision,
+        )
+    )
+except (PermissionError, RuntimeError, ValueError) as error:
     print(type(error).__name__, str(error))
 # 输出：completed 3 ['build=green']
-# 输出：RuntimeError revision conflict
+# 输出：PermissionError event source/authority rejected
 ```
 
-工具只提供了 tool_proposal；它没有直接改变 status。最后一个事件能成功，是因为 Runtime 先验证了 build=green 和当前 revision。过期事件被拒绝后，调用者应重新读取 State 决定重算，而不是盲目覆盖。
+工具只提供了 tool_proposal；它没有直接改变 status。最后一个事件能成功，是因为 Runtime 先验证了 build=green、source/authority 和当前 revision。示例最后用正确 revision 提交 model 的完成事件，仍因 authority 不允许而拒绝；版本检查不能替代写入权检查。
 
 ## 源码阅读心智模型
 
@@ -162,15 +190,15 @@ except (RuntimeError, ValueError) as error:
 
 ### OpenAI Agents SDK
 
-重点看 Runner 如何接受工具结果、guardrail 结果和最终输出，以及 RunContext 中哪些字段是依赖注入、哪些字段会跨 Run 持久化。不要把给工具的上下文对象自动当成可写 State。
+重点检索 RunContextWrapper.context、Session history 和 RunState 的边界：RunContextWrapper 是应用依赖包装器，不是持久化 State；Session history 保存跨 Run 对话；RunState 才是 interruption/resume 的可序列化运行快照。它们不是统一 API，具体以 context.md、sessions 文档和 run_state.py 当前源码为准。
 
 ### LangGraph
 
-把节点返回的 dict 或事件看成更新提议，把 checkpointer 和图执行器看成 State 所有者。阅读 reducer、版本和恢复逻辑时，重点检查两个节点同时更新同一字段时如何合并或拒绝。
+以 thread_id、checkpoint_ns、checkpoint_id 定位一次图状态；StateSnapshot 是某个 checkpoint 的快照，reducer 决定并行节点如何合并更新，Command(resume=...) 是中断后的输入。另查 Store 的 namespace 过滤；这些是 LangGraph 的具体锚点，不是本课程 StateStore 的通用 API，参见官方 checkpointers 和 graph API 文档。
 
 ### DeepSeek Harness
 
-沿 Driver、Session 和事件总线寻找状态写入点；Plugin/Hook 可以产生事件，但运行时应在统一入口校验其来源和顺序。若多个插件直接操作共享 Session 字段，要检查是否有 revision 或锁。
+沿 ctx.agents/agent-loop 的 Driver 运行入口、ctx.sessions/Session.append 的事件写入、Plugin/Hook 的事件生产和 SessionPersistence 的 create/open/stat/list 入口追踪状态所有权。官方实现是 event-sourced、append-only Session，持久化通过 ctx.sessionPersistence/SessionHandle 接缝提供；具体事件与持久化能力以官方 session.md 和 persistence.md 当前源码为准，不能假设它与本地 StateStore 有相同 API。
 
 ## 易混点
 
@@ -212,4 +240,4 @@ except (RuntimeError, ValueError) as error:
 - 能给一个 Run State 字段写出提议者、写入者和校验条件。
 - 能解释 ToolResult、StateEvent、State 快照和 Context 的顺序。
 - 能说明 revision conflict 为什么是业务信号而不是普通日志。
-- 下一篇阅读 [Session 生命周期与隔离](./03-Checkpoint中断与恢复)，把 Run 挂载到跨 Run 的会话边界。
+- 下一篇阅读 [Session 生命周期与隔离](./03-Session生命周期与隔离)，把 Run 挂载到跨 Run 的会话边界。

@@ -172,15 +172,15 @@ print("memory count:", len(context["memory"]))
 
 ### OpenAI Agents SDK
 
-重点找 Runner 的运行容器、RunContext 一类的运行期输入和 Session/Tracing 的持久化接缝。先区分“本次 Run 可用的依赖”与“跨 Run 保存的对话/事实”，再阅读具体的会话服务实现。
+先找 RunContextWrapper.context：它是应用提供给本次 Run 的本地依赖，不自动成为模型输入或跨 Run Memory；再找 Session history 的 get_items/session_input_callback，以及 RunState interruption/resume。三者的 owner 和生命周期不同，SDK 没有把 State、Context、Session、Memory 合成一个统一对象。
 
 ### LangGraph
 
-将图的 State 看成显式状态账本，将节点返回的更新看成候选事件，将 checkpointer 保存的数据看成恢复边界。图节点构造给模型的消息仍是 Context，不等于整个图 State。
+沿 configurable.thread_id、checkpoint_ns、checkpoint_id 定位 StateSnapshot；节点返回值交给 reducer 合并，checkpointer 决定恢复边界，Store namespace 则是跨线程数据入口。节点构造给模型的消息仍是 Context，不等于整个图 State。
 
 ### DeepSeek Harness
 
-可把 Session、Driver、事件和插件上下文分别映射到会话容器、Runtime、State 事件和 Context 扩展。阅读时追踪一次事件如何关联 session、run 和工具结果，再判断哪些数据会跨 Run 保留。
+从 ctx.agents/agent-loop 的 Driver 运行入口追到 ctx.sessions 的 Session.append/SessionEvent，再看 Plugin/Hook 如何产生事件和上下文扩展；ctx.sessionPersistence 的 create/open/stat/list 与 SessionHandle 的 read/append/flush/close 是保存边界。不要把这些具体入口误读成跨框架统一 API。
 
 ## 易混点
 
@@ -222,4 +222,4 @@ print("memory count:", len(context["memory"]))
 - 能用一句白话解释 State、Context、Session、Memory 的差别。
 - 能画出 Observation 回到 State、候选事实进入 Memory 的两条不同路径。
 - 能指出 ContextBuilder、StateStore、SessionStore、MemoryStore 的责任边界。
-- 下一篇阅读 [Run State 与状态所有权](./02-Session生命周期)，把“谁能写当前进度”具体化。
+- 下一篇阅读 [Run State 与状态所有权](./02-Run-State与状态所有权)，把“谁能写当前进度”具体化。

@@ -84,11 +84,11 @@ test('chapters 05 through 07 expose the integrated article order and entry point
   const expected = {
     '05': [
       'docs/courses/agent/05-状态上下文会话与记忆/01-State与Context.md',
-      'docs/courses/agent/05-状态上下文会话与记忆/02-Session生命周期.md',
-      'docs/courses/agent/05-状态上下文会话与记忆/03-Checkpoint中断与恢复.md',
-      'docs/courses/agent/05-状态上下文会话与记忆/04-上下文压缩与摘要.md',
-      'docs/courses/agent/05-状态上下文会话与记忆/05-短期记忆与长期记忆.md',
-      'docs/courses/agent/05-状态上下文会话与记忆/06-记忆污染与隔离.md',
+      'docs/courses/agent/05-状态上下文会话与记忆/02-Run-State与状态所有权.md',
+      'docs/courses/agent/05-状态上下文会话与记忆/03-Session生命周期与隔离.md',
+      'docs/courses/agent/05-状态上下文会话与记忆/04-Checkpoint-Suspend与Resume.md',
+      'docs/courses/agent/05-状态上下文会话与记忆/05-Context构建选择与预算.md',
+      'docs/courses/agent/05-状态上下文会话与记忆/06-上下文压缩摘要与信息损失.md',
       'docs/courses/agent/05-状态上下文会话与记忆/07-短期记忆与对话历史.md',
       'docs/courses/agent/05-状态上下文会话与记忆/08-长期记忆写入检索与更新.md',
       'docs/courses/agent/05-状态上下文会话与记忆/09-记忆污染并发冲突与数据隔离.md',
@@ -245,6 +245,7 @@ test('chapter 06 locks the MCP 2026-07-28 protocol baseline', () => {
   const sources = chapter.articles.map(({ path }) => readArticle(path)).join('\n')
   const stateless = readArticle('docs/courses/agent/06-MCP/04-无状态模型与版本协商.md')
   const metadata = readArticle('docs/courses/agent/06-MCP/03-JSON-RPC请求响应通知与_meta.md')
+  const elicitation = readArticle('docs/courses/agent/06-MCP/09-Elicitation与Multi-Round-Trip-Requests.md')
   const authorization = readArticle('docs/courses/agent/06-MCP/12-Authorization安全边界与Python-SDK-v2实践.md')
   const navigation = readArticle('docs/courses/agent/01-项目与知识库导航/04-MCP工具Skills与集成.md')
 
@@ -253,6 +254,9 @@ test('chapter 06 locks the MCP 2026-07-28 protocol baseline', () => {
   assert.match(stateless, /没有 initialize\/initialized 握手和协议 Session/)
   assert.match(stateless, /server\/discover/)
   assert.match(stateless, /Tasks 是 2026-07-28 的可选扩展/)
+  assert.match(elicitation, /inputResponses[\s\S]{0,200}requestState|requestState[\s\S]{0,200}inputResponses/)
+  assert.match(elicitation, /ctx\.elicit\(\)[\s\S]{0,120}NoBackChannelError|NoBackChannelError[\s\S]{0,120}ctx\.elicit\(\)/)
+  assert.match(elicitation, /(?:不会|不会被|不应).{0,20}自动.{0,20}MRTR/)
   assert.match(authorization, /Python SDK v2/)
   assert.match(authorization, /Roots、Sampling 和 MCP logging 在规范中 deprecated/)
   assert.match(navigation, /TypeScript SDK v2/)

@@ -172,6 +172,7 @@ False 5
 | --- | --- |
 | FastMCP from mcp.server.fastmcp | MCPServer from mcp.server.mcpserver |
 | 手动 transport + ClientSession + initialize | 高层 Client，进入 async with 后连接；现代路径无 initialize 握手 |
+| 低层 ClientSession.initialize() | legacy（2025-11-25 及更早）；现代显式 ClientSession.discover() |
 | get_context() / ambient ContextVar | 在函数参数中声明 ctx: Context |
 | mcp.shared.version | mcp.types.version |
 | Python 属性常见 camelCase | Python 属性 snake_case，线上 JSON 仍 camelCase |
@@ -183,7 +184,7 @@ False 5
 
 ### Python SDK v2 与现代协议
 
-v2 的 Client 可以与现代 2026-07-28 Server 工作，也可以根据模式兼容旧版 Server。高层 Client 负责发现/回退策略；不要在业务代码里手写 initialize 假设。对于需要用户输入的工具，优先使用官方 v2 的 Resolve/Resolver 抽象，让 SDK 对旧时代使用实时 elicitation，对现代时代使用 MRTR；若手写 InputRequiredResult，必须遵循本章第 09 篇的 state 安全规则。
+v2 的 Client 可以与现代 2026-07-28 Server 工作，也可以根据模式兼容旧版 Server。高层 Client 在 async with 进入时负责探测/回退，业务代码不需要手写 initialize。对于需要用户输入的工具，使用 resolver 函数与 Resolve 标记：resolver 返回 Elicit(...) 时，SDK 对 legacy 使用实时 elicitation，对现代时代使用 MRTR；若手写 InputRequiredResult，必须遵循本章第 09 篇的 state 安全规则。现代连接中直接 ctx.elicit() 会抛 NoBackChannelError，不会自动改写成 MRTR。
 
 Roots、Sampling 和 MCP logging 在规范中 deprecated；不要因为 v2 仍暴露兼容 API 就在新系统把它们当作核心设计。Tasks 是可选 extension，不应从 Client 的普通 list_tools 结果中自行推断。
 
@@ -226,7 +227,7 @@ _meta.serverInfo 只是自报身份，不应作为授权判断或路由唯一键
 
 ### SDK v2 的 Client 仍有低层 ClientSession
 
-低层对象是逃生舱，不代表业务代码必须回到 v1 的手动 initialize。默认优先使用高层 Client；只有需要自定义 dispatcher 或协议扩展时才下沉，并按 Migration Guide 检查签名。
+低层对象是逃生舱，不代表业务代码必须回到 v1 的手动 initialize。默认优先使用高层 Client；只有需要自定义 dispatcher 或协议扩展时才下沉。使用低层 `ClientSession` 时，legacy（2025-11-25 及更早）调用 `session.initialize()`；现代 2026-07-28 显式调用 `session.discover()`。高层 `Client` 在 `async with` 中自动探测 `server/discover`，必要时回退 legacy `initialize`，不要求业务代码手动调用 `initialize()`；具体签名按 v2.2.0 Migration Guide。
 
 ### mcp==2.2.0 不是 MCP 协议版本
 
@@ -248,11 +249,11 @@ SDK 能够传播取消信号，但数据库事务是否回滚、第三方请求�
 
 ### 问题 3：v1 教程里 await session.initialize()，迁移 v2 后应该放到哪里？
 
-**解析**：高层 v2 Client 通过 async with 进入连接，并自动按现代/旧时代策略工作；现代 2026-07-28 不执行 initialize 握手。若使用低层 ClientSession，必须按 v2 Migration Guide 的连接和版本选项改写，而不是盲目保留旧调用。
+**解析**：高层 v2 Client 通过 async with 进入连接，自动探测 modern/legacy，业务代码无需手动 initialize。若使用低层 ClientSession，legacy 调用 initialize()，现代 2026-07-28 显式调用 discover()；不要在现代路径调用 initialize()。
 
 ## 小结
 
-安全边界先于 API：Host 管同意，Client 管传输和元数据，Server 验证当前主体、参数和下游权限，Authorization Server 发行合适 audience 的 token。Python SDK v2 稳定线以 mcp==2.2.0 示例展示 MCPServer 与 Client，要求 Python 3.10+，并通过 Resolve/MRTR 适应现代无握手协议。v1 到 v2 的迁移要同时处理包名、snake_case、Client 生命周期、transport 配置和 deprecated 能力。
+安全边界先于 API：Host 管同意，Client 管传输和元数据，Server 验证当前主体、参数和下游权限，Authorization Server 发行合适 audience 的 token。Python SDK v2 稳定线以 mcp==2.2.0 示例展示 MCPServer 与 Client，要求 Python 3.10+，并通过 resolver 函数、Resolve 标记与 MRTR 适应现代无握手协议。v1 到 v2 的迁移要同时处理包名、snake_case、Client 生命周期、transport 配置和 deprecated 能力。
 
 ## 快速回顾
 
@@ -268,6 +269,6 @@ SDK 能够传播取消信号，但数据库事务是否回滚、第三方请求�
 
 - [MCP Authorization 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization)
 - [MCP Security Best Practices](https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices.md)
-- [Python SDK v2 What's new](https://github.com/modelcontextprotocol/python-sdk/blob/main/docs/whats-new.md)
-- [Python SDK v1 to v2 Migration Guide](https://github.com/modelcontextprotocol/python-sdk/blob/main/docs/migration.md)
-- [Python SDK v2 Client](https://github.com/modelcontextprotocol/python-sdk/blob/main/docs/client/index.md)
+- [Python SDK v2.2.0 What's new](https://github.com/modelcontextprotocol/python-sdk/blob/v2.2.0/docs/whats-new.md)
+- [Python SDK v2.2.0 Migration Guide](https://github.com/modelcontextprotocol/python-sdk/blob/v2.2.0/docs/migration.md)
+- [Python SDK v2.2.0 Client](https://github.com/modelcontextprotocol/python-sdk/blob/v2.2.0/docs/client/index.md)

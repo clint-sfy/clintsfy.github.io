@@ -18,7 +18,7 @@ chapter: 05
 
 ## 前置知识
 
-- 已阅读 [Session 生命周期与隔离](./03-Checkpoint中断与恢复)。
+- 已阅读 [Session 生命周期与隔离](./03-Session生命周期与隔离)。
 - 已理解第02章的 StopReason、第04章的幂等、未知副作用和审批边界。
 
 ## Checkpoint 保存什么
@@ -56,14 +56,15 @@ flowchart TD
     Version -->|否| RecoveryFail["恢复失败 / 人工接管"]
     Version -->|是| Reconcile["查询未知副作用"]
     Reconcile --> SideEffect{"结果已确认？"}
-    SideEffect -->|是| Reuse["复用 ToolResult"]
-    SideEffect -->|否| Recheck["重新校验待执行 Action"]
+    SideEffect -->|已提交| Reuse["复用 ToolResult"]
+    SideEffect -->|未提交| Recheck["重新校验待执行 Action"]
+    SideEffect -->|未知| Manual["保持 suspended / manual"]
     Reuse --> Resume["Resume event"]
     Recheck --> Resume
     Resume --> Running
 
     classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
-    class Running,Boundary,Save,Suspended,Signal,Load,Version,RecoveryFail,Reconcile,SideEffect,Reuse,Recheck,Resume core;
+    class Running,Boundary,Save,Suspended,Signal,Load,Version,RecoveryFail,Reconcile,SideEffect,Reuse,Recheck,Manual,Resume core;
 ```
 
 阅读提示：Checkpoint 是持久化边界，Suspend 是生命周期状态，Resume 是重新校验后的事件。图中的 Reconcile 防止把“响应丢失”误判成“工具没有执行”。
@@ -147,6 +148,19 @@ def resume(
     return state.result
 
 
+def reconcile_unknown(state: RunState, query_result: str | None) -> str:
+    if state.status != "suspended":
+        raise RuntimeError("unknown side effect requires suspended state")
+    if query_result == "committed":
+        state.result = "reuse committed result"
+        state.status = "running"
+        state.revision += 1
+        return "reused"
+    if query_result == "not_committed":
+        return "safe_to_recheck"
+    return "manual_intervention"
+
+
 state = RunState("run-approval")
 checkpoint = suspend_for_approval(state, "publish:demo")
 print(state.status, checkpoint.revision, checkpoint.idempotency_key)
@@ -156,13 +170,21 @@ except RuntimeError as error:
     print(type(error).__name__, str(error))
 print(resume(state, checkpoint, approved=True, current_revision=checkpoint.revision))
 print(state.status, state.revision)
+unknown = RunState(
+    "run-unknown",
+    status="suspended",
+    revision=1,
+    pending_action="publish:demo",
+)
+print(reconcile_unknown(unknown, query_result=None), unknown.status)
 # 输出：suspended 1 idem-run-approval
 # 输出：RuntimeError stale checkpoint
 # 输出：would execute publish:demo
 # 输出：running 2
+# 输出：manual_intervention suspended
 ```
 
-示例中的 would execute 是本地占位结果，故意没有真正发布。真实系统在这个位置仍要通过工具权限、资源版本和幂等检查，再决定是否执行。
+示例中的 would execute 是本地占位结果，故意没有真正发布；未知副作用的 query_result=None 明确停留在 suspended 并返回 manual_intervention。真实系统在继续前仍要通过工具权限、资源版本和幂等检查。
 
 ## 源码阅读心智模型
 
@@ -172,15 +194,15 @@ print(state.status, state.revision)
 
 ### OpenAI Agents SDK
 
-沿 Runner 的暂停/恢复、Session 持久化、工具 tracing 和审批回调寻找边界。具体 API 会变化，但判断标准不变：恢复前是否重新校验，并且是否能区分等待和终态。
+沿 RunResult.interruptions → RunResult.to_state() → Runner.run(state) 追踪审批暂停；RunState 保存 pending approvals 和可恢复运行元数据，Session history 仍是另一条持久化边界。具体 API 会变化，但判断标准不变：恢复前是否重新校验，并且是否能区分等待、不可恢复和终态。
 
 ### LangGraph
 
-把 checkpointer 保存的图 State 看成 Checkpoint，把 interrupt 产生的暂停看成 Suspend，把继续执行的 command/事件看成 Resume。检查节点重放时，外部副作用是否有幂等或 reconcile 保护。
+把 checkpointer 保存的 StateSnapshot 看成 Checkpoint，把 interrupt 产生的暂停看成 Suspend，把同一 thread_id 上的 Command(resume=...) 看成 Resume。LangGraph 会从 interrupt 所在节点开头重跑，因此要检查节点前半段和外部副作用是否幂等，并区分未提交、已提交和无法确认。
 
 ### DeepSeek Harness
 
-从 Driver 的 checkpoint、事件、Hook 和 Session 关联观察挂起原因与恢复事件。插件可以请求暂停，但最终 Run 生命周期和权限复核应由统一 Driver 控制。
+从 ctx.agents/agent-loop 的 Driver 运行入口、ctx.sessions 的 SessionEvent append-only 日志、Plugin/Hook 事件和 SessionPersistence flush/checkpoint 入口观察挂起原因与恢复事件。插件可以请求暂停，但最终生命周期、未知副作用和权限复核应由统一 Driver/Session 约束控制；具体事件名以当前仓库为准。
 
 ## 易混点
 
@@ -222,4 +244,4 @@ print(state.status, state.revision)
 - 能说出 Checkpoint、Suspend、Resume 的各自责任。
 - 能画出审批挂起到恢复前的版本和副作用检查。
 - 能解释为什么“请求已发出但响应丢失”必须单独分类。
-- 下一篇阅读 [Context 构建、选择与预算](./05-短期记忆与长期记忆)，把恢复后的 State 变成受控模型输入。
+- 下一篇阅读 [Context 构建、选择与预算](./05-Context构建选择与预算)，把恢复后的 State 变成受控模型输入。

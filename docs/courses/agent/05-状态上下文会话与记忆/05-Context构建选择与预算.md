@@ -18,7 +18,7 @@ chapter: 05
 
 ## 前置知识
 
-- 已阅读 [State、Context、Session 与 Memory 的边界](./01-State与Context) 和 [Run State 与状态所有权](./02-Session生命周期)。
+- 已阅读 [State、Context、Session 与 Memory 的边界](./01-State与Context) 和 [Run State 与状态所有权](./02-Run-State与状态所有权)。
 - 已理解第03章的 Token、Context Window、Usage、Truncation 和预算；本文不假设某个供应商 API。
 
 ## Context 是一次投影
@@ -84,7 +84,7 @@ Model 只能基于当前 projection 产生 Action 或 Final。若事实缺失，
 
 ## 本地模拟：按优先级和预算构建 Context
 
-用途：下面的纯标准库示例用字符数近似预算，展示权限过滤、优先级选择和敏感字段脱敏；估算只用于教学，不代表真实 Token 计费。
+用途：下面的纯标准库示例用字符数近似预算，展示权限过滤、优先级选择和敏感字段脱敏；费用同时计入 source 标签、消息结构开销和输出预留。估算只用于教学，不代表真实 Token 计费。
 
 ```python
 from __future__ import annotations
@@ -101,13 +101,31 @@ class Candidate:
     sensitive: bool = False
 
 
+@dataclass(frozen=True)
+class ContextBudget:
+    context_window: int
+    output_reserve: int
+    message_overhead: int = 4
+
+    @property
+    def input_limit(self) -> int:
+        if self.output_reserve >= self.context_window:
+            raise ValueError("output reserve must leave input capacity")
+        return self.context_window - self.output_reserve
+
+
+def render(item: Candidate, text: str) -> str:
+    return "<" + item.source + "> " + text
+
+
 def build_context(
     candidates: list[Candidate],
     allowed_scope: str,
-    char_budget: int,
-) -> tuple[list[str], list[str]]:
+    budget: ContextBudget,
+) -> tuple[list[str], list[str], dict[str, int]]:
     selected: list[str] = []
     decisions: list[str] = []
+    costs: dict[str, int] = {}
     used = 0
     ordered = sorted(candidates, key=lambda item: -item.priority)
     for item in ordered:
@@ -115,14 +133,16 @@ def build_context(
             decisions.append(item.source + ":scope_denied")
             continue
         text = "[redacted]" if item.sensitive else item.text
-        cost = len(text)
-        if used + cost > char_budget:
+        rendered = render(item, text)
+        cost = len(rendered) + budget.message_overhead
+        costs[item.source] = cost
+        if used + cost > budget.input_limit:
             decisions.append(item.source + ":budget_skipped")
             continue
-        selected.append(item.source + "=" + text)
+        selected.append(rendered)
         decisions.append(item.source + ":included")
         used += cost
-    return selected, decisions
+    return selected, decisions, costs
 
 
 candidates = [
@@ -132,14 +152,17 @@ candidates = [
     Candidate("other_user", "secret=42", 80, "tenant-b"),
     Candidate("history", "很久以前的闲聊", 10, "tenant-a"),
 ]
-selected, decisions = build_context(candidates, "tenant-a", char_budget=24)
+budget = ContextBudget(context_window=60, output_reserve=12, message_overhead=4)
+selected, decisions, costs = build_context(candidates, "tenant-a", budget)
 print(selected)
 print(decisions)
-# 输出：['goal=部署 demo', 'tool_result=build=green']
+# 输出：['<goal> 部署 demo', '<tool_result> build=green']
 # 输出：['goal:included', 'tool_result:included', 'other_user:scope_denied', 'memory:budget_skipped', 'history:budget_skipped']
+print(costs, budget.input_limit)
+# 输出：{'goal': 18, 'tool_result': 29, 'memory': 17, 'history': 21} 48
 ```
 
-输出说明：tool_result 即使优先级高也要先过 scope；memory 因预算被延后，不代表它从 Store 中消失。真实系统还应把 token 估算、脱敏规则和舍弃原因写入可观测事件。
+输出说明：context_window=60 先为输出预留12，只剩48个输入字符预算；goal 的标签/结构/文本成本18，tool_result成本29，二者合计47，memory因此被跳过。真实系统还应从 ModelResponse Usage 读取 token，而不是把字符估算当账单。
 
 ## 源码阅读心智模型
 
@@ -149,15 +172,15 @@ print(decisions)
 
 ### OpenAI Agents SDK
 
-区分 Agent instructions、Runner 的运行期 context、Session 历史和模型请求消息。源码阅读关注“哪些字段在请求前被注入、哪些只给工具、哪些会跨 Run 保留”。
+区分 RunContextWrapper.context 这种本地依赖、Session history 和模型请求消息；再沿 SessionSettings、session_input_callback 与 Usage 观察历史输入和输出预留如何影响一次 Run。它们不是统一的 ContextBuilder API，重点是哪些字段在请求前被注入、哪些只给工具、哪些会跨 Run 保留。
 
 ### LangGraph
 
-节点输入通常是图 State 的一个投影；检查节点如何选择消息、工具结果和 checkpoint 字段。图状态的完整性不等于每个节点都能看到全部内容。
+节点输入通常是图 State 的一个投影；沿 StateSnapshot.values、reducer 和 Store namespace 检查节点如何选择消息、工具结果和 checkpoint 字段。图状态的完整性不等于每个节点都能看到全部内容。
 
 ### DeepSeek Harness
 
-把 Driver 的上下文装配、Skill/Plugin 提供的片段和事件过滤看成分层 ContextBuilder。重点检查扩展能力是否能绕过 scope 或预算，把任意持久化数据塞进模型输入。
+把 ctx.agents/agent-loop 中 Driver 的模型请求装配、ctx.sessions 的 Session 派生消息、Skill/Plugin provider 内容和 Event 过滤看成分层 ContextBuilder；真实检索锚点是 Driver、SessionEvent、ctx.skills 和 hook/extension 入口。重点检查扩展能力是否能绕过 scope 或预算，把任意持久化数据塞进模型输入。
 
 ## 易混点
 
@@ -199,4 +222,4 @@ print(decisions)
 - 能解释“保存了但没进入 Context”和“没有保存”的区别。
 - 能列出 ContextBuilder 至少要记录的来源和选择信息。
 - 能说明为什么模型输入预算不能替代租户隔离。
-- 下一篇阅读 [上下文压缩、摘要与信息损失](./06-记忆污染与隔离)，继续处理预算不足但不能随意丢事实的问题。
+- 下一篇阅读 [上下文压缩、摘要与信息损失](./06-上下文压缩摘要与信息损失)，继续处理预算不足但不能随意丢事实的问题。

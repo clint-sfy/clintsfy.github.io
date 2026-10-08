@@ -30,6 +30,8 @@ chapter: 07
 
 用途：需要增加一个 Skill 来源时，新增 Provider，而不是把扫描文件、匹配关键词和执行 Tool 全塞进 Agent Loop。
 
+Provider 的注册属于 Plugin 或 Scope Owner 的资源。Owner 保存注册返回的 `Registration`/disposer，并在卸载、scope 结束或注册失败时调用 `dispose(registration)`；Consumer 不拥有 Provider 的注册资源。
+
 ### SkillRegistry：合并并选择可见项
 
 **SkillRegistry** 保存 provider 注册、scope 层级和当前 revision，并在读取时合并候选。它可以按名称、优先级、来源或 scope 选择 winner；这些规则是实现约定，除非协议明确说明，不应写成通用标准。
@@ -70,42 +72,46 @@ Provider、配置或文件变化时，需要使目录缓存失效。失效事件
 
 ### Unload：撤销注册和调用
 
-卸载要撤销 Provider 注册、停止观察器、取消未完成加载、清理临时资源，并让旧 Consumer 看到“不可再用”而不是继续使用悬空对象。已加载的只读正文可以保留为审计快照，但不能继续冒充当前可调用能力。
+卸载由持有注册的 Plugin/Scope Owner 发起：Owner 调用 `dispose(registration)`，Registry 再撤销 Provider 注册、停止观察器、取消未完成加载并清理临时资源。Consumer 只能 `list`、`get`、`refetch`，或接收 `unavailable`；它不直接 dispose 注册。已加载的只读正文可以保留为审计快照，但不能继续冒充当前可调用能力。
 
 ## 从 Provider 到 Runtime 的数据流
 
 ```mermaid
 sequenceDiagram
+    participant O as Plugin/Scope Owner
     participant C as Consumer
     participant R as Registry
     participant P as Provider
     participant T as Runtime
     participant S as Scope/Policy
 
+    O->>R: registerProvider(provider)
+    R-->>O: registration + disposer
     C->>R: list(scope, query)
     R->>P: discover(options)
     P-->>R: candidates + complete/revision
     R->>S: normalize/filter/match
     S-->>R: visible summaries
     R-->>C: sorted summaries
-    C->>R: load(name, scope)
+    C->>R: get(name, scope)
     R->>P: read definition/resources
     P-->>R: definition + generation
     R->>T: bind(scope, policy, generation)
     T-->>C: context projection or structured error
     P-->>R: invalidation
-    R-->>C: refresh on next read
-    C->>R: dispose(provider)
+    R-->>C: refetch on next read
+    R-->>C: unavailable(name, reason) when provider is gone
+    O->>R: dispose(registration)
     R->>P: cancel and unregister
 
     Note over R,T: cache is an observation, not authorization
 ```
 
-阅读提示：`list` 只产生可见摘要，`load` 才取正文并绑定 Runtime；Provider 的 invalidation 不应绕过 scope/policy 重新检查，`dispose` 要覆盖注册和在途工作。
+阅读提示：`list` 只产生可见摘要，Consumer 的 `get` 才取正文并绑定 Runtime；Provider 的 invalidation 不应绕过 scope/policy 重新检查，Owner 的 `dispose(registration)` 要覆盖注册和在途工作。
 
 ## 一个可卸载的本地 Skill Registry
 
-下面的代码用标准库模拟 Provider 注册、主题匹配、加载计数和 disposer；它展示“注册返回清理函数”的习惯，不执行任意脚本。
+下面的代码用标准库模拟 Provider 注册、主题匹配、加载计数和 disposer；`PluginOwner` 持有 registration，Consumer 只调用 `list`/`get`，不直接清理 Provider，不执行任意脚本。
 
 ```python
 from dataclasses import dataclass
@@ -138,7 +144,7 @@ class SkillRegistry:
         candidates = [candidate for discover in self._providers.values() for candidate in discover()]
         return sorted(candidate.name for candidate in candidates if topic in candidate.topics)
 
-    def load(self, name: str) -> str:
+    def get(self, name: str) -> str:
         candidates = [candidate for discover in self._providers.values() for candidate in discover()]
         for candidate in candidates:
             if candidate.name == name:
@@ -147,21 +153,29 @@ class SkillRegistry:
         raise KeyError(name)
 
 
+class PluginOwner:
+    def __init__(self, registry: SkillRegistry) -> None:
+        self._registration = registry.register(
+            "workspace",
+            lambda: [Candidate("release-review", frozenset({"release"}), "check diff then test")],
+        )
+
+    def dispose(self) -> None:
+        self._registration()
+
+
 registry = SkillRegistry()
-dispose = registry.register(
-    "workspace",
-    lambda: [Candidate("release-review", frozenset({"release"}), "check diff then test")],
-)
+owner = PluginOwner(registry)
 print(registry.list("release"))
-print(registry.load("release-review"))
-dispose()
+print(registry.get("release-review"))
+owner.dispose()
 print(registry.list("release"))
 # 输出：['release-review']
 # 输出：check diff then test
 # 输出：[]
 ```
 
-真实实现还要为每次发现携带 `scope`、`revision`、`complete` 和取消信号；这个最小版本只用列表展示注册/卸载的责任边界。
+真实实现还要为每次发现携带 `scope`、`revision`、`complete` 和取消信号；这个最小版本只用列表展示“Owner 持有 registration、Consumer 读取、Owner 卸载”的责任边界。
 
 ### Discovery Revision：让缓存有依据
 
@@ -171,11 +185,11 @@ print(registry.list("release"))
 
 ### Scope：同名能力的可见范围
 
-**Scope** 表示一次读取可以看到的层级，例如全局、仓库、Agent preset 或 Session。Scope 选择应在 list 和 load 两个入口都生效；只在展示时过滤、加载时回到全局查找，会产生越权或幽灵 Skill。
+**Scope** 表示一次读取可以看到的层级，例如全局、仓库、Agent preset 或 Session。Scope 选择应在 `list` 和 Consumer 的 `get` 两个入口都生效；只在展示时过滤、加载时回到全局查找，会产生越权或幽灵 Skill。
 
 ### Disposer：卸载的可组合句柄
 
-**Disposer** 是注册或加载返回的清理函数。它应幂等、只撤销自己拥有的资源，并能按照相反顺序释放依赖。把 disposer 丢进全局列表而不绑定 Plugin/Scope，会让热重载后出现重复监听和陈旧 provider。
+**Disposer** 是注册返回并由 Plugin/Scope Owner 持有的清理函数。它应幂等、只撤销该 registration 拥有的资源，并能按照相反顺序释放依赖。把 disposer 交给 Consumer 或丢进全局列表，会让热重载后出现重复监听和陈旧 provider。
 
 ### Incomplete Observation：不完整发现
 
@@ -185,7 +199,7 @@ print(registry.list("release"))
 
 ### DeepSeek Harness：看 `ctx.skills` 的注册和读取分离
 
-当前官方 Skills 文档说明，provider 在 plugin apply 阶段同步注册，远程初始化和 discovery 进入 `list()`；registry 按 host 和 per-scope layers 合并，读取时再返回排序后的摘要。源码阅读顺序应是 `registerProvider`/`register` → `list`/snapshot → load/consumer → disposer/invalidation，而不是从用户看到的 Skill 文本倒推。
+当前官方 Skills 文档说明，provider 在 plugin apply 阶段同步注册，远程初始化和 discovery 进入 `list()`；registry 按 host 和 per-scope layers 合并，读取时再返回排序后的摘要。源码阅读顺序应是 Owner 的 `registerProvider`/`register` → `list`/snapshot → `get`/consumer → Owner 的 `dispose(registration)` → invalidation，而不是从用户看到的 Skill 文本倒推。
 
 同名 provider 的 scope、rank、provider order 等规则是该实现的选择。即使某个版本采用“最近层优先”，也不要把它写成 Skill 的通用标准。
 
@@ -200,9 +214,9 @@ MCP Client 的 initialize、list、call、close 可能与 Skill 的 discovery/lo
 ### 读源码的检查清单
 
 - 发现是否有完整性标记和 revision？
-- list 与 load 是否使用同一个 scope 和 policy？
+- list 与 Consumer 的 get 是否使用同一个 scope 和 policy？
 - Provider 失败是拒绝整次读取、返回 last-good，还是返回不完整观察？
-- dispose 是否取消在途任务、清理监听器并使缓存失效？
+- Owner 的 dispose 是否取消在途任务、清理监听器并使缓存失效？Consumer 是否只得到 unavailable？
 - 同一 provider 重载是否会导致重复注册或旧版本同时可见？
 
 ## 易混点
@@ -215,7 +229,7 @@ MCP Client 的 initialize、list、call、close 可能与 Skill 的 discovery/lo
 
 ## 课后小问
 
-1. 为什么 `list(scope=A)` 后不能无参数 `load(name)`？
+1. 为什么 `list(scope=A)` 后不能无参数 `get(name)`？
 
    **答案**：加载必须沿用 scope A 和 policy，否则可能把同名的全局或其他 Agent Skill 加载进来。
 
@@ -242,7 +256,7 @@ MCP Client 的 initialize、list、call、close 可能与 Skill 的 discovery/lo
 
 ## 快速回顾
 
-- 能解释 `list`、`load` 和 `dispose` 的不同责任。
+- 能解释 Consumer 的 `list`/`get`/`refetch`/`unavailable` 与 Owner 的 `dispose` 不同责任。
 - 能指出不完整发现和空列表的语义差异。
 - 能说明 scope 为什么必须贯穿展示与加载。
 - 下一篇阅读 [Skill 指令、资源与脚本](./04-Skill指令资源与脚本)。
