@@ -589,11 +589,14 @@
       "next": "06",
       "articles": [
         {"path": "docs/courses/agent/05-状态上下文会话与记忆/01-State与Context.md", "title": "State 与 Context", "introducedTerms": ["Memory", "StateOwnership", "ContextProjection"], "requiresTerms": ["State", "Context", "Message", "ToolResult"]},
-        {"path": "docs/courses/agent/05-状态上下文会话与记忆/02-Session生命周期.md", "title": "Session 生命周期", "introducedTerms": ["Session", "SessionId", "Lifecycle"], "requiresTerms": ["StateOwnership", "ContextProjection", "Run"]},
-        {"path": "docs/courses/agent/05-状态上下文会话与记忆/03-Checkpoint中断与恢复.md", "title": "Checkpoint、中断与恢复", "introducedTerms": ["Checkpoint", "Interrupt", "Resume", "Recovery"], "requiresTerms": ["Session", "State", "StopReason", "Audit"]},
-        {"path": "docs/courses/agent/05-状态上下文会话与记忆/04-上下文压缩与摘要.md", "title": "上下文压缩与摘要", "introducedTerms": ["ContextCompaction", "Summary", "Budget"], "requiresTerms": ["ContextWindow", "ContextProjection", "Message", "Token"]},
-        {"path": "docs/courses/agent/05-状态上下文会话与记忆/05-短期记忆与长期记忆.md", "title": "短期记忆与长期记忆", "introducedTerms": ["ShortTermMemory", "LongTermMemory", "MemoryScope"], "requiresTerms": ["Session", "Checkpoint", "ContextCompaction"]},
-        {"path": "docs/courses/agent/05-状态上下文会话与记忆/06-记忆污染与隔离.md", "title": "记忆污染与隔离", "introducedTerms": ["MemoryPoisoning", "TenantIsolation", "Retention"], "requiresTerms": ["LongTermMemory", "MemoryScope", "Permission", "Audit"]}
+        {"path": "docs/courses/agent/05-状态上下文会话与记忆/02-Session生命周期.md", "title": "Session 生命周期", "introducedTerms": ["RunState", "StateEvent", "StateTransition", "Revision"], "requiresTerms": ["StateOwnership", "ContextProjection", "Run"]},
+        {"path": "docs/courses/agent/05-状态上下文会话与记忆/03-Checkpoint中断与恢复.md", "title": "Session 生命周期与隔离", "introducedTerms": ["Session", "SessionId", "Lifecycle", "TenantIsolation"], "requiresTerms": ["StateOwnership", "RunState", "Permission", "Revision"]},
+        {"path": "docs/courses/agent/05-状态上下文会话与记忆/04-上下文压缩与摘要.md", "title": "Checkpoint、中断与恢复", "introducedTerms": ["Checkpoint", "Interrupt", "Suspend", "Resume", "Recovery"], "requiresTerms": ["Session", "State", "StopReason", "Audit"]},
+        {"path": "docs/courses/agent/05-状态上下文会话与记忆/05-短期记忆与长期记忆.md", "title": "上下文构造、选择与预算", "introducedTerms": ["ContextBuilder", "ContextSelection"], "requiresTerms": ["Session", "Checkpoint", "ContextProjection", "ContextWindow"]},
+        {"path": "docs/courses/agent/05-状态上下文会话与记忆/06-记忆污染与隔离.md", "title": "上下文压缩、摘要与信息损失", "introducedTerms": ["ContextCompaction", "Summary", "Persistence", "InformationLoss"], "requiresTerms": ["ContextWindow", "ContextProjection", "ContextBuilder", "Message", "Token"]},
+        {"path": "docs/courses/agent/05-状态上下文会话与记忆/07-短期记忆与对话历史.md", "title": "短期记忆与对话历史", "introducedTerms": ["ShortTermMemory", "ConversationHistory"], "requiresTerms": ["Session", "ContextCompaction", "Summary", "ContextWindow"]},
+        {"path": "docs/courses/agent/05-状态上下文会话与记忆/08-长期记忆写入检索与更新.md", "title": "长期记忆写入、检索与更新", "introducedTerms": ["LongTermMemory", "MemoryScope", "Provenance", "Confidence", "Retention"], "requiresTerms": ["ShortTermMemory", "Session", "Permission", "Revision"]},
+        {"path": "docs/courses/agent/05-状态上下文会话与记忆/09-记忆污染并发冲突与数据隔离.md", "title": "记忆污染、并发冲突与数据隔离", "introducedTerms": ["MemoryPoisoning", "ConcurrencyConflict", "Namespace", "CAS", "Tombstone", "Quarantine"], "requiresTerms": ["LongTermMemory", "MemoryScope", "Provenance", "Permission", "Audit"]}
       ]
     },
     {
@@ -607,11 +610,16 @@
       "articles": [
         {"path": "docs/courses/agent/06-MCP/01-MCP解决什么问题.md", "title": "MCP 解决什么问题", "introducedTerms": ["MCP", "Host", "Client", "Server", "Capability"], "requiresTerms": ["Tool", "Context", "Permission"]},
         {"path": "docs/courses/agent/06-MCP/02-Host-Client与Server.md", "title": "Host、Client 与 Server", "introducedTerms": ["HostBoundary", "ClientConnection", "ServerCapability"], "requiresTerms": ["MCP", "Host", "Client", "Server"]},
-        {"path": "docs/courses/agent/06-MCP/03-Tools-Resources与Prompts.md", "title": "Tools、Resources 与 Prompts", "introducedTerms": ["MCPTool", "MCPResource", "MCPPrompt"], "requiresTerms": ["Capability", "ToolDefinition", "Context"]},
-        {"path": "docs/courses/agent/06-MCP/04-stdio与Streamable-HTTP.md", "title": "stdio 与 Streamable HTTP", "introducedTerms": ["StdioTransport", "StreamableHTTP", "Transport"], "requiresTerms": ["ClientConnection", "ServerCapability", "Timeout", "Audit"]},
-        {"path": "docs/courses/agent/06-MCP/05-初始化能力协商与生命周期.md", "title": "初始化、能力协商与生命周期", "introducedTerms": ["Initialize", "CapabilityNegotiation", "Shutdown"], "requiresTerms": ["Transport", "Capability", "Lifecycle"]},
-        {"path": "docs/courses/agent/06-MCP/06-错误授权与安全边界.md", "title": "错误、授权与安全边界", "introducedTerms": ["JSONRPCError", "OAuth", "TokenAudience", "ConfusedDeputy"], "requiresTerms": ["Transport", "MCPTool", "Permission", "Audit"]},
-        {"path": "docs/courses/agent/06-MCP/07-Python实现最小MCP服务.md", "title": "Python 实现最小 MCP 服务", "introducedTerms": ["PythonMCPServer", "LocalTransport"], "requiresTerms": ["MCP", "MCPTool", "Transport", "CapabilityNegotiation"]}
+        {"path": "docs/courses/agent/06-MCP/03-JSON-RPC请求响应通知与_meta.md", "title": "JSON-RPC 请求、响应、通知与 _meta", "introducedTerms": ["Request", "Response", "Notification", "ResultType", "RequestMeta", "JSONRPCError"], "requiresTerms": ["ClientConnection", "ServerCapability", "ToolDefinition", "Context"]},
+        {"path": "docs/courses/agent/06-MCP/04-无状态模型与版本协商.md", "title": "无状态模型与版本协商", "introducedTerms": ["Stateless", "ProtocolSession", "VersionNegotiation", "ProtocolVersion", "Extension", "ServerDiscover", "TasksExtension"], "requiresTerms": ["Request", "RequestMeta", "ResultType", "Capability"]},
+        {"path": "docs/courses/agent/06-MCP/05-server-discover与能力发现.md", "title": "server/discover 与能力发现", "introducedTerms": ["DiscoverResult", "ListChanged", "CacheScope", "ServerInfo"], "requiresTerms": ["ServerDiscover", "Capability", "RequestMeta", "VersionNegotiation"]},
+        {"path": "docs/courses/agent/06-MCP/06-Tools与JSON-Schema-2020-12.md", "title": "Tools 与 JSON Schema 2020-12", "introducedTerms": ["MCPTool", "InputSchema", "OutputSchema", "Content", "IsError"], "requiresTerms": ["Capability", "ToolDefinition", "Context", "ServerCapability"]},
+        {"path": "docs/courses/agent/06-MCP/07-Resources-URI与订阅.md", "title": "Resources、URI 与订阅", "introducedTerms": ["MCPResource", "ResourceTemplate", "URI", "Subscription", "ResourcesUpdated"], "requiresTerms": ["Capability", "RequestMeta", "CacheScope"]},
+        {"path": "docs/courses/agent/06-MCP/08-Prompts与参数补全.md", "title": "Prompts 与参数补全", "introducedTerms": ["MCPPrompt", "PromptMessage", "Completion", "PromptArguments"], "requiresTerms": ["MCPResource", "RequestMeta", "Context"]},
+        {"path": "docs/courses/agent/06-MCP/09-Elicitation与Multi-Round-Trip-Requests.md", "title": "Elicitation 与 Multi-Round-Trip Requests", "introducedTerms": ["Elicitation", "MRTR", "InputRequiredResult", "RequestState", "Resolver"], "requiresTerms": ["Request", "Response", "ResultType", "RequestMeta", "Extension"]},
+        {"path": "docs/courses/agent/06-MCP/10-stdio与Streamable-HTTP.md", "title": "stdio 与 Streamable HTTP", "introducedTerms": ["StdioTransport", "StreamableHTTP", "Transport", "RequestScopedSSE", "OriginValidation"], "requiresTerms": ["ClientConnection", "ServerCapability", "Timeout", "Audit", "RequestMeta"]},
+        {"path": "docs/courses/agent/06-MCP/11-Cancellation-Progress-Pagination与错误.md", "title": "Cancellation、Progress、Pagination 与错误", "introducedTerms": ["ProgressToken", "Cursor", "Pagination", "ToolExecutionError", "Progress"], "requiresTerms": ["Request", "ResultType", "Transport", "ToolResult", "RequestMeta"]},
+        {"path": "docs/courses/agent/06-MCP/12-Authorization安全边界与Python-SDK-v2实践.md", "title": "Authorization、安全边界与 Python SDK v2 实践", "introducedTerms": ["Authorization", "OAuth", "ResourceServer", "AuthorizationServer", "Audience", "TokenPassthrough", "ConfusedDeputy", "SSRF", "DNSRebinding", "PythonSDKv2", "MCPServer", "MCPClientV2", "DeprecatedCapability"], "requiresTerms": ["Elicitation", "MRTR", "StdioTransport", "StreamableHTTP", "RequestMeta", "Permission"]}
       ]
     },
     {
@@ -623,11 +631,15 @@
       "prerequisites": ["02–06 章按顺序阅读"],
       "next": "08",
       "articles": [
-        {"path": "docs/courses/agent/07-Skills插件与Hook/01-Skill与渐进式上下文.md", "title": "Skill 与渐进式上下文", "introducedTerms": ["Skill", "ProgressiveDisclosure", "SkillManifest"], "requiresTerms": ["ContextProjection", "Tool", "MCP"]},
-        {"path": "docs/courses/agent/07-Skills插件与Hook/02-Plugin能力注册与生命周期.md", "title": "Plugin 能力注册与生命周期", "introducedTerms": ["Plugin", "Registration", "PluginLifecycle", "Dependency"] , "requiresTerms": ["Skill", "Capability", "Lifecycle"]},
-        {"path": "docs/courses/agent/07-Skills插件与Hook/03-Hook拦截器与事件.md", "title": "Hook、拦截器与事件", "introducedTerms": ["Hook", "Interceptor", "EventBus"], "requiresTerms": ["Plugin", "Trace", "EventStream", "Audit"]},
-        {"path": "docs/courses/agent/07-Skills插件与Hook/04-能力发现冲突与版本.md", "title": "能力发现、冲突与版本", "introducedTerms": ["Discovery", "Conflict", "Compatibility", "Versioning"], "requiresTerms": ["Plugin", "Capability", "SkillManifest"]},
-        {"path": "docs/courses/agent/07-Skills插件与Hook/05-Skill-Tool-MCP与Plugin对比.md", "title": "Skill、Tool、MCP 与 Plugin 对比", "introducedTerms": ["ExtensionBoundary"], "requiresTerms": ["Skill", "Tool", "MCP", "Plugin", "Hook"]}
+        {"path": "docs/courses/agent/07-Skills插件与Hook/01-Skill-Tool-MCP-Plugin与Hook边界.md", "title": "Skill、Tool、MCP、Plugin 与 Hook 边界", "introducedTerms": ["Skill", "ProgressiveDisclosure", "SkillManifest"], "requiresTerms": ["ContextProjection", "Tool", "MCP"]},
+        {"path": "docs/courses/agent/07-Skills插件与Hook/02-Skill结构与渐进式上下文.md", "title": "Skill 结构与渐进式上下文", "introducedTerms": ["SkillInstructions", "SkillResources", "SkillScripts", "CatalogCache", "TokenBudget"], "requiresTerms": ["Skill", "SkillManifest", "ProgressiveDisclosure", "ContextProjection"]},
+        {"path": "docs/courses/agent/07-Skills插件与Hook/03-Skill发现匹配加载与卸载.md", "title": "Skill 发现、匹配、加载与卸载", "introducedTerms": ["Discovery", "SkillProvider", "SkillRegistry", "SkillConsumer", "SkillRuntime", "Loading", "Disposer", "DiscoveryRevision"], "requiresTerms": ["SkillManifest", "SkillInstructions", "SkillResources", "Session", "ContextProjection"]},
+        {"path": "docs/courses/agent/07-Skills插件与Hook/04-Skill指令资源与脚本.md", "title": "Skill 指令、资源与脚本", "introducedTerms": ["Instructions", "Resources", "Scripts", "Verification", "ScriptRegistry", "TrustBoundary"], "requiresTerms": ["SkillInstructions", "SkillResources", "SkillScripts", "Discovery", "Permission"]},
+        {"path": "docs/courses/agent/07-Skills插件与Hook/05-Plugin注册与生命周期.md", "title": "Plugin 注册与生命周期", "introducedTerms": ["Plugin", "Registration", "PluginLifecycle", "Dependency", "Rollback", "Composition"], "requiresTerms": ["Skill", "Capability", "Lifecycle", "Discovery", "Disposer"]},
+        {"path": "docs/courses/agent/07-Skills插件与Hook/06-Dependency-Injection与能力容器.md", "title": "Dependency Injection 与能力容器", "introducedTerms": ["DependencyInjection", "Container", "Provider", "CapabilityContainer"], "requiresTerms": ["Plugin", "Capability", "Dependency", "ContextProjection"]},
+        {"path": "docs/courses/agent/07-Skills插件与Hook/07-Hook-Interceptor与事件系统.md", "title": "Hook、Interceptor 与事件系统", "introducedTerms": ["Hook", "Interceptor", "EventBus", "Event", "Payload", "DispatchMode", "Reentrancy"], "requiresTerms": ["Plugin", "Trace", "EventStream", "Audit", "DependencyInjection"]},
+        {"path": "docs/courses/agent/07-Skills插件与Hook/08-能力冲突版本与依赖排序.md", "title": "能力冲突、版本与依赖排序", "introducedTerms": ["Conflict", "Compatibility", "Versioning", "ExtensionBoundary", "CapabilityKey", "DependencyOrdering", "SemVer"], "requiresTerms": ["Plugin", "Capability", "SkillManifest", "Discovery", "DependencyInjection"]},
+        {"path": "docs/courses/agent/07-Skills插件与Hook/09-权限隔离失败传播与插件安全.md", "title": "权限隔离、失败传播与插件安全", "introducedTerms": ["Isolation", "FailurePropagation", "LeastPrivilege", "DefaultDeny", "PluginSecurity", "UnknownSideEffect"], "requiresTerms": ["Skill", "Tool", "MCP", "Plugin", "Hook", "Permission", "ExtensionBoundary", "Conflict"]}
       ]
     },
     {

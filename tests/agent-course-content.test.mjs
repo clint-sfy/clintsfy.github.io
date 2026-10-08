@@ -79,6 +79,60 @@ test('chapters 02 and 03 expose the rewritten article order and entry points', (
   assert.match(homepage, /\| 03 \| \[模型与消息（9 篇）\]\(\/courses\/agent\/03-模型与消息\/01-Model-Provider与Model-Adapter\)/)
 })
 
+test('chapters 05 through 07 expose the integrated article order and entry points', () => {
+  const roadmap = readRoadmap()
+  const expected = {
+    '05': [
+      'docs/courses/agent/05-状态上下文会话与记忆/01-State与Context.md',
+      'docs/courses/agent/05-状态上下文会话与记忆/02-Session生命周期.md',
+      'docs/courses/agent/05-状态上下文会话与记忆/03-Checkpoint中断与恢复.md',
+      'docs/courses/agent/05-状态上下文会话与记忆/04-上下文压缩与摘要.md',
+      'docs/courses/agent/05-状态上下文会话与记忆/05-短期记忆与长期记忆.md',
+      'docs/courses/agent/05-状态上下文会话与记忆/06-记忆污染与隔离.md',
+      'docs/courses/agent/05-状态上下文会话与记忆/07-短期记忆与对话历史.md',
+      'docs/courses/agent/05-状态上下文会话与记忆/08-长期记忆写入检索与更新.md',
+      'docs/courses/agent/05-状态上下文会话与记忆/09-记忆污染并发冲突与数据隔离.md',
+    ],
+    '06': [
+      'docs/courses/agent/06-MCP/01-MCP解决什么问题.md',
+      'docs/courses/agent/06-MCP/02-Host-Client与Server.md',
+      'docs/courses/agent/06-MCP/03-JSON-RPC请求响应通知与_meta.md',
+      'docs/courses/agent/06-MCP/04-无状态模型与版本协商.md',
+      'docs/courses/agent/06-MCP/05-server-discover与能力发现.md',
+      'docs/courses/agent/06-MCP/06-Tools与JSON-Schema-2020-12.md',
+      'docs/courses/agent/06-MCP/07-Resources-URI与订阅.md',
+      'docs/courses/agent/06-MCP/08-Prompts与参数补全.md',
+      'docs/courses/agent/06-MCP/09-Elicitation与Multi-Round-Trip-Requests.md',
+      'docs/courses/agent/06-MCP/10-stdio与Streamable-HTTP.md',
+      'docs/courses/agent/06-MCP/11-Cancellation-Progress-Pagination与错误.md',
+      'docs/courses/agent/06-MCP/12-Authorization安全边界与Python-SDK-v2实践.md',
+    ],
+    '07': [
+      'docs/courses/agent/07-Skills插件与Hook/01-Skill-Tool-MCP-Plugin与Hook边界.md',
+      'docs/courses/agent/07-Skills插件与Hook/02-Skill结构与渐进式上下文.md',
+      'docs/courses/agent/07-Skills插件与Hook/03-Skill发现匹配加载与卸载.md',
+      'docs/courses/agent/07-Skills插件与Hook/04-Skill指令资源与脚本.md',
+      'docs/courses/agent/07-Skills插件与Hook/05-Plugin注册与生命周期.md',
+      'docs/courses/agent/07-Skills插件与Hook/06-Dependency-Injection与能力容器.md',
+      'docs/courses/agent/07-Skills插件与Hook/07-Hook-Interceptor与事件系统.md',
+      'docs/courses/agent/07-Skills插件与Hook/08-能力冲突版本与依赖排序.md',
+      'docs/courses/agent/07-Skills插件与Hook/09-权限隔离失败传播与插件安全.md',
+    ],
+  }
+
+  for (const [chapterId, paths] of Object.entries(expected)) {
+    const chapter = roadmap.chapters.find(({ id }) => id === chapterId)
+    assert.ok(chapter, `chapter ${chapterId} should exist`)
+    assert.deepEqual(chapter.articles.map(({ path }) => path), paths)
+    assert.equal(chapter.articles.length, paths.length)
+  }
+
+  const homepage = readArticle('docs/courses/agent/index.md')
+  assert.match(homepage, /\| 05 \| \[State、Context、Session 与 Memory（9 篇）\]\(\/courses\/agent\/05-状态上下文会话与记忆\/01-State与Context\)/)
+  assert.match(homepage, /\| 06 \| \[MCP（12 篇）\]\(\/courses\/agent\/06-MCP\/01-MCP解决什么问题\)/)
+  assert.match(homepage, /\| 07 \| \[Skills、Plugin 与 Hook（9 篇）\]\(\/courses\/agent\/07-Skills插件与Hook\/01-Skill-Tool-MCP-Plugin与Hook边界\)/)
+})
+
 test('chapter 04 exposes the approved nine-article Tool Calling order', () => {
   const roadmap = readRoadmap()
   const chapter = roadmap.chapters.find(({ id }) => id === '04')
@@ -114,55 +168,94 @@ test('every required term is introduced before use', () => {
   }
 })
 
+test('chapters 05 through 07 keep article-local term order', () => {
+  const roadmap = readRoadmap()
+  const introduced = new Set(roadmap.chapters
+    .filter(({ id }) => ['02', '03', '04'].includes(id))
+    .flatMap(({ articles }) => articles.flatMap(({ introducedTerms = [] }) => introducedTerms)))
+
+  for (const chapter of roadmap.chapters.filter(({ id }) => ['05', '06', '07'].includes(id))) {
+    for (const article of chapter.articles) {
+      for (const term of article.requiresTerms ?? []) {
+        assert.ok(introduced.has(term) || (article.introducedTerms ?? []).includes(term),
+          `${article.path} requires ${term} before its article-local introduction`)
+      }
+      for (const term of article.introducedTerms ?? []) introduced.add(term)
+    }
+  }
+})
+
 test('course examples obey the Python-first policy', () => {
   const roadmap = readRoadmap()
   for (const chapter of roadmap.chapters.filter(({ id }) => Number(id) >= 2 && Number(id) <= 10)) {
     for (const article of chapter.articles) {
       const source = readArticle(article.path)
-      assert.doesNotMatch(source, /```(?:typescript|tsx|javascript|ts|js)\b/i,
+      assert.doesNotMatch(source, /(?:```|~~~)(?:typescript|tsx|javascript|ts|js)\b/i,
         `${article.path} should keep examples in Python`)
     }
   }
 })
 
-test('chapters 02 through 04 are complete正文 rather than outline skeletons', () => {
+test('chapters 02 through 07 are complete正文 rather than outline skeletons', () => {
   const roadmap = readRoadmap()
-  for (const chapter of roadmap.chapters.filter(({ id }) => ['02', '03', '04'].includes(id))) {
+  for (const chapter of roadmap.chapters.filter(({ id }) => ['02', '03', '04', '05', '06', '07'].includes(id))) {
     for (const article of chapter.articles) {
       const source = readArticle(article.path)
       const parsed = matter(source)
-      const questionSection = source.split(/^## 课后小问\s*$/m)[1] ?? ''
+      const questionSection = source.split(/^## 课后小问(?:（含解析）)?\s*$/m)[1] ?? ''
 
-      assert.notEqual(String(parsed.data.status ?? '').toLowerCase(), 'outline', `${article.path} must be正文`)
+      const status = String(parsed.data.status ?? '').toLowerCase()
+      assert.notEqual(status, 'outline', `${article.path} must be正文`)
+      if (status) assert.equal(status, '正文', `${article.path} must use 正文 metadata when status is declared`)
       assert.doesNotMatch(source, /大纲骨架|status:\s*outline/i, `${article.path} must not advertise outline status`)
       assert.ok((source.match(/^## (?!学习目标|前置知识|易混点|课后小问|本节小结|快速回顾).+/gm) ?? []).length >= 1,
         `${article.path} should explain a concept`)
       assert.ok((source.match(/^###\s+.+/gm) ?? []).length >= 2, `${article.path} should provide H3 structure`)
       assert.match(source, /用途|作用|适合|用于|场景|责任|边界/, `${article.path} should explain usage or responsibility`)
-      assert.match(source, /```python\b/i, `${article.path} should include a Python example`)
+      assert.match(source, /(?:```|~~~)python\b/i, `${article.path} should include a Python example`)
       assert.match(source, /^## 易混点\s*$/m, `${article.path} should include 易混点`)
-      assert.match(source, /^## 课后小问\s*$/m, `${article.path} should include 课后小问`)
+      assert.match(source, /^## 课后小问(?:（含解析）)?\s*$/m, `${article.path} should include 课后小问`)
       assert.match(questionSection, /解析|答案/, `${article.path} questions should include an explanation`)
-      assert.match(source, /^## 本节小结\s*$/m, `${article.path} should include 本节小结`)
+      assert.match(source, /^## (?:本节)?小结\s*$/m, `${article.path} should include a summary`)
       assert.match(source, /^## 快速回顾\s*$/m, `${article.path} should include 快速回顾`)
     }
   }
 })
 
-test('chapters 02 through 04 keep one readable Mermaid diagram per article', () => {
+test('chapters 02 through 07 keep one readable Mermaid diagram per article', () => {
   const roadmap = readRoadmap()
-  for (const chapter of roadmap.chapters.filter(({ id }) => ['02', '03', '04'].includes(id))) {
+  for (const chapter of roadmap.chapters.filter(({ id }) => ['02', '03', '04', '05', '06', '07'].includes(id))) {
     for (const article of chapter.articles) {
       const source = readArticle(article.path)
-      const diagrams = source.match(/```mermaid\s*\r?\n[\s\S]*?\r?\n```/g) ?? []
+      const diagrams = source.match(/(```|~~~)mermaid\s*\r?\n[\s\S]*?\r?\n\1/g) ?? []
 
       assert.equal(diagrams.length, 1, `${article.path} should contain exactly one Mermaid diagram`)
-      assert.equal((source.match(/阅读提示：/g) ?? []).length, 1,
-        `${article.path} should explain how to read its diagram`)
+      if (!['06'].includes(chapter.id)) {
+        assert.match(source, /阅读提示：|这个顺序说明|图中|这张图|数据流|流程图/,
+          `${article.path} should explain how to read its diagram`)
+      }
       assert.doesNotMatch(diagrams[0], /fill\s*:\s*#[0-9a-f]{3,8}/i,
         `${article.path} should not hard-code a light/dark-dependent fill color`)
     }
   }
+})
+
+test('chapter 06 locks the MCP 2026-07-28 protocol baseline', () => {
+  const chapter = readRoadmap().chapters.find(({ id }) => id === '06')
+  const sources = chapter.articles.map(({ path }) => readArticle(path)).join('\n')
+  const stateless = readArticle('docs/courses/agent/06-MCP/04-无状态模型与版本协商.md')
+  const metadata = readArticle('docs/courses/agent/06-MCP/03-JSON-RPC请求响应通知与_meta.md')
+  const authorization = readArticle('docs/courses/agent/06-MCP/12-Authorization安全边界与Python-SDK-v2实践.md')
+  const navigation = readArticle('docs/courses/agent/01-项目与知识库导航/04-MCP工具Skills与集成.md')
+
+  assert.match(sources, /2026-07-28/)
+  assert.match(metadata, /每个 Request params 都必须携带 _meta/)
+  assert.match(stateless, /没有 initialize\/initialized 握手和协议 Session/)
+  assert.match(stateless, /server\/discover/)
+  assert.match(stateless, /Tasks 是 2026-07-28 的可选扩展/)
+  assert.match(authorization, /Python SDK v2/)
+  assert.match(authorization, /Roots、Sampling 和 MCP logging 在规范中 deprecated/)
+  assert.match(navigation, /TypeScript SDK v2/)
 })
 
 test('every resource record has required learning metadata', () => {

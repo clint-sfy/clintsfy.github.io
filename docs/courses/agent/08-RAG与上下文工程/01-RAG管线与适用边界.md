@@ -15,6 +15,7 @@ chapter: 08
 ## 前置知识
 
 - 第 02–07 章的 Context、Memory、Tool、MCP 和评测边界。
+- 建议先完成 [第07章 Skills、Plugin 与 Hook](/courses/agent/07-Skills插件与Hook/01-Skill-Tool-MCP-Plugin与Hook边界)，尤其是渐进式上下文、权限和扩展生命周期；本章再把外部资料接入检索管线。
 
 ## 知识点
 
