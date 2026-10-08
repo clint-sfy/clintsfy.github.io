@@ -28,27 +28,39 @@ Permission 是程序根据主体、资源和动作做的授权判断；Approval 
 
 ```mermaid
 flowchart TD
-    Call["Validated Dangerous ToolCall"] --> Permission{"主体/资源/动作允许？"}
-    Permission -->|否| Denied["Rejected: permission_denied"]
-    Permission -->|是| Risk{"需要人工 Approval？"}
-    Risk -->|否| Sandbox["受限 Sandbox 执行"]
-    Risk -->|是| Waiting["Waiting: pending_approval"]
-    Waiting --> Decision{"明确批准且未过期？"}
-    Decision -->|否| Rejected["Rejected: approval_denied/expired"]
-    Decision -->|是| Recheck["重新检查权限与资源状态"]
-    Recheck -->|失败| Stale["Rejected: stale_or_revoked"]
-    Recheck -->|通过| Sandbox
-    Sandbox --> Audit["Audit: 输入摘要、决定、结果"]
-    Denied --> Audit
-    Rejected --> Audit
-    Stale --> Audit
-    Audit --> Outcome["ToolResult / Run 终态"]
+    subgraph Stage1["1. Intent + Permission"]
+        Call["Validated Dangerous ToolCall"] --> Intent["audit intent"]
+        Intent --> Permission{"主体/资源/动作允许？"}
+        Permission -->|否| PermissionDenied["decision: permission_denied"]
+        Permission -->|是| Risk{"需要人工 Approval？"}
+    end
+    subgraph Stage2["2. Approval + Recheck"]
+        Risk -->|否| Approved["decision: allowed"]
+        Risk -->|是| Waiting["checkpoint: pending_approval"]
+        Waiting --> Decision{"明确批准且未过期？"}
+        Decision -->|否| ApprovalDenied["decision: approval_denied"]
+        Decision -->|是| Approved
+        Approved --> Recheck["重新检查权限与资源状态"]
+        Recheck -->|失败| Stale["decision: stale_or_revoked"]
+    end
+    subgraph Stage3["3. Sandbox + Outcome Audit"]
+        Recheck -->|通过| Sandbox["受限 Sandbox 执行"]
+        Sandbox -->|not_found| NotFound["executor outcome: not_found"]
+        Sandbox -->|success| Succeeded["executor outcome: succeeded"]
+        PermissionDenied --> Outcome["outcome audit"]
+        ApprovalDenied --> Outcome
+        Stale --> Outcome
+        NotFound --> Outcome
+        Succeeded --> Outcome
+        Outcome --> Result["ToolResult / Run 终态"]
+    end
 
     classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
-    class Call,Permission,Denied,Risk,Sandbox,Waiting,Decision,Rejected,Recheck,Stale,Audit,Outcome core;
+    class Call,Intent,Permission,PermissionDenied,Risk,Approved,Waiting,Decision,ApprovalDenied,Recheck,Stale,Sandbox,NotFound,Succeeded,Outcome,Result core;
+
 ```
 
-阅读提示：Approval 只允许进入重新检查后的执行路径；等待期间权限、资源状态和参数都可能变化，不能拿旧快照直接执行。
+阅读提示：图分三阶段：先记录 intent 并判断 Permission，再处理 Approval 和恢复后的 Recheck，最后才进入 Sandbox；每个 decision 都汇入 outcome audit。等待期间权限、资源状态和参数都可能变化，不能拿旧快照直接执行。
 
 ### Permission：谁能对哪个资源做什么
 
@@ -76,7 +88,7 @@ Sandbox 是执行环境约束，不是授权替代。它可以限制可见文件
 
 ### enforce：危险操作的完整门控
 
-用途：用内存 Sandbox 和可控审批函数演示权限拒绝、审批等待/拒绝和批准后执行；示例不会修改真实文件。
+用途：用内存 Sandbox 和结构化 AuditSink 演示权限拒绝、审批拒绝、资源不存在和成功执行；每条路径都写 intent、decision、outcome，示例不会修改真实文件。
 
 ```python
 from dataclasses import dataclass
@@ -91,11 +103,41 @@ class DangerousOperation:
     path: str
 
 
+class AuditSink:
+    def __init__(self) -> None:
+        self.events: list[dict[str, str]] = []
+
+    def record(
+        self,
+        phase: str,
+        operation: DangerousOperation,
+        status: str,
+        reason: str,
+    ) -> None:
+        # 关键可观测状态：每条路径都保存结构化 intent/decision/outcome。
+        self.events.append({
+            "phase": phase,
+            "call_id": operation.call_id,
+            "status": status,
+            "reason": reason,
+        })
+
+    def has(self, call_id: str, phase: str, reason: str) -> bool:
+        return any(
+            event["call_id"] == call_id
+            and event["phase"] == phase
+            and event["reason"] == reason
+            for event in self.events
+        )
+
+
 class MemorySandbox:
     def __init__(self, files: dict[str, str]) -> None:
         self.files = dict(files)
+        self.executor_calls = 0
 
     def delete(self, path: str) -> str:
+        self.executor_calls += 1
         if path not in self.files:
             raise FileNotFoundError(path)
         del self.files[path]
@@ -110,31 +152,59 @@ def enforce(
     operation: DangerousOperation,
     sandbox: MemorySandbox,
     approve: Callable[[DangerousOperation], bool],
+    audit: AuditSink,
 ) -> str:
+    audit.record("intent", operation, "requested", f"{operation.action}:{operation.path}")
     if not permission_allows(operation):
+        audit.record("decision", operation, "denied", "permission_denied")
+        audit.record("outcome", operation, "rejected", "permission_denied")
         return "rejected:permission_denied"
     if not approve(operation):
+        audit.record("decision", operation, "denied", "approval_denied")
+        audit.record("outcome", operation, "rejected", "approval_denied")
         return "rejected:approval_denied"
     # 关键状态变化：批准后重新检查权限，再进入仅含内存文件的 Sandbox。
     if not permission_allows(operation):
+        audit.record("decision", operation, "denied", "permission_revoked")
+        audit.record("outcome", operation, "rejected", "permission_revoked")
         return "rejected:permission_revoked"
+    audit.record("decision", operation, "approved", "permission_granted")
     try:
         result = sandbox.delete(operation.path)
     except FileNotFoundError:
+        audit.record("outcome", operation, "failed", "not_found")
         return "failed:not_found"
-    print(f"audit:{operation.call_id}:{operation.action}:{result}")
+    audit.record("outcome", operation, "succeeded", result)
     return f"succeeded:{result}"
 
 
 sandbox = MemorySandbox({"/demo/draft.txt": "local-only"})
-operation = DangerousOperation("call_8", "operator", "delete", "/demo/draft.txt")
-print(enforce(operation, sandbox, lambda _: False))
-print(enforce(operation, sandbox, lambda _: True))
-print(sandbox.files)
+audit = AuditSink()
+permission_denied = DangerousOperation("call_denied", "guest", "delete", "/demo/draft.txt")
+before = sandbox.executor_calls
+print(enforce(permission_denied, sandbox, lambda _: True, audit))
+assert sandbox.executor_calls == before
+assert audit.has("call_denied", "outcome", "permission_denied")
+
+approval_denied = DangerousOperation("call_approval", "operator", "delete", "/demo/draft.txt")
+before = sandbox.executor_calls
+print(enforce(approval_denied, sandbox, lambda _: False, audit))
+assert sandbox.executor_calls == before
+assert audit.has("call_approval", "outcome", "approval_denied")
+
+not_found = DangerousOperation("call_missing", "operator", "delete", "/demo/missing.txt")
+print(enforce(not_found, sandbox, lambda _: True, audit))
+assert audit.has("call_missing", "outcome", "not_found")
+
+success = DangerousOperation("call_success", "operator", "delete", "/demo/draft.txt")
+print(enforce(success, sandbox, lambda _: True, audit))
+assert audit.has("call_success", "outcome", "deleted:/demo/draft.txt")
+print(len(audit.events))
+# 输出：rejected:permission_denied
 # 输出：rejected:approval_denied
-# 输出：audit:call_8:delete:deleted:/demo/draft.txt
+# 输出：failed:not_found
 # 输出：succeeded:deleted:/demo/draft.txt
-# 输出：{}
+# 输出：12
 ```
 
 即使示例批准了删除，副作用也只发生在 MemorySandbox 的字典中；这不是对真实文件删除的安全保证。生产系统应把审批、权限、Sandbox 和审计接到独立可验证的组件。
