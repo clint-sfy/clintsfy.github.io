@@ -6,7 +6,7 @@ showComment: false
 
 # Agent 开发
 
-这是一套按认知依赖组织的 Agent 工程课程：基础正文和示例以 Python 为主，不重复 Java、Python 或 TypeScript 通用语言基础；先理解协议、状态和可靠性，再阅读框架源码。第一章是可随时查阅的资源导航，第 02 章开始按顺序连续学习。
+这是一套按认知依赖组织的 Agent 工程课程，共 11 章、89 篇正文与导航。基础正文和示例以 Python 为主，不重复 Java、Python 或 TypeScript 通用语言基础；先理解协议、状态和可靠性，再阅读框架源码。第一章是可随时查阅的资源导航，第 02 章开始按顺序连续学习。
 
 路线会覆盖 MCP、Agent Skills、RAG、Evals，以及作为对照资料的 LangChain / LangGraph；这些关键词在后续章节按依赖关系拆开，不代表要先学习某个框架。
 
@@ -14,17 +14,17 @@ showComment: false
 
 | 顺序 | 章节 | 学习目标 | 前置关系 |
 | --- | --- | --- | --- |
-| 01 | [项目与知识库导航](/courses/agent/01-项目与知识库导航/01-学习地图与资源使用方法) | 按问题、阶段和深度选择官方项目、文档、课程与论文 | Python 基础；可选入口 |
+| 01 | [项目与知识库导航（7 篇）](/courses/agent/01-项目与知识库导航/01-学习地图与资源使用方法) | 按问题、阶段和深度选择官方项目、文档、课程与论文 | Python 基础；可选入口 |
 | 02 | [Agent 基础（8 篇）](/courses/agent/02-Agent基础/01-Agent是什么) | 从 Agent、系统组成到可停止的 Loop，建立 Model、Instructions、Tools、State、Context 和停止边界 | Python 基础 |
 | 03 | [模型与消息（9 篇）](/courses/agent/03-模型与消息/01-Model-Provider与Model-Adapter) | 从 Provider/Adapter、消息和内容块到 Token、生成参数、结构化输出、流式与可靠性 | 02 按顺序 |
 | 04 | [Tool Calling 与 Agent Loop（9 篇）](/courses/agent/04-Tool-Calling与Agent-Loop/01-函数调用与JSON-Schema) | 从 Function Calling 与 schema 推进到选择、校验、执行、回填、并行、重试、幂等、审批与可观测 Loop | 02–03 |
 | 05 | [State、Context、Session 与 Memory（9 篇）](/courses/agent/05-状态上下文会话与记忆/01-State与Context) | 区分状态所有权、会话、检查点、压缩、短期/长期记忆和隔离 | 02–04 |
 | 06 | [MCP（12 篇）](/courses/agent/06-MCP/01-MCP解决什么问题) | 按 MCP 2026-07-28 理解 JSON-RPC、无协议 Session、每请求元数据、发现、能力、传输、扩展和授权 | 02–05、JSON-RPC |
 | 07 | [Skills、Plugin 与 Hook（9 篇）](/courses/agent/07-Skills插件与Hook/01-Skill-Tool-MCP-Plugin与Hook边界) | 区分工作方法、动作接口、协议和插件生命周期、依赖注入、Hook 与安全隔离 | 02–06 |
-| 08 | [RAG 与 Context Engineering](/courses/agent/08-RAG与上下文工程/01-RAG管线与适用边界) | 实现摄取、切块、检索、重排、引用和分层评测 | 02–07 |
-| 09 | [Workflow、Planning 与 Multi-Agent](/courses/agent/09-工作流规划与多Agent/01-Workflow与状态机) | 先做单 Agent 状态机，再判断是否需要多 Agent | 02–08 |
-| 10 | [Evals、Tracing、Guardrails 与安全](/courses/agent/10-评测可观测性与安全/01-Trace-Span与事件日志) | 连接轨迹、回归评测、权限、注入防护和 Sandbox | 02–09 |
-| 11 | [源码精读](/courses/agent/11-源码精读/01-smolagents源码导读) | 对照五个项目的 Loop、State、扩展与可靠性设计 | 02–10、Git 阅读能力 |
+| 08 | [RAG 与 Context Engineering（7 篇）](/courses/agent/08-RAG与上下文工程/01-RAG管线与适用边界) | 实现摄取、切块、检索、重排、引用和分层评测 | 02–07 |
+| 09 | [Workflow、Planning 与 Multi-Agent（6 篇）](/courses/agent/09-工作流规划与多Agent/01-Workflow与状态机) | 先做单 Agent 状态机，再判断是否需要多 Agent | 02–08 |
+| 10 | [Evals、Tracing、Guardrails 与安全（7 篇）](/courses/agent/10-评测可观测性与安全/01-Trace-Span与事件日志) | 连接轨迹、回归评测、权限、注入防护和 Sandbox | 02–09 |
+| 11 | [源码精读（6 篇）](/courses/agent/11-源码精读/01-smolagents源码导读) | 对照五个项目的 Loop、State、扩展与可靠性设计 | 02–10、Git 阅读能力 |
 
 ## 依赖关系
 

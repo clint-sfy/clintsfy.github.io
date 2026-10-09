@@ -196,9 +196,9 @@ test('course examples obey the Python-first policy', () => {
   }
 })
 
-test('chapters 02 through 07 are complete正文 rather than outline skeletons', () => {
+test('chapters 02 through 10 are complete正文 rather than outline skeletons', () => {
   const roadmap = readRoadmap()
-  for (const chapter of roadmap.chapters.filter(({ id }) => ['02', '03', '04', '05', '06', '07'].includes(id))) {
+  for (const chapter of roadmap.chapters.filter(({ id }) => Number(id) >= 2 && Number(id) <= 10)) {
     for (const article of chapter.articles) {
       const source = readArticle(article.path)
       const parsed = matter(source)
@@ -222,21 +222,55 @@ test('chapters 02 through 07 are complete正文 rather than outline skeletons', 
   }
 })
 
-test('chapters 02 through 07 keep one readable Mermaid diagram per article', () => {
+test('chapters 02 through 10 keep one readable Mermaid diagram per article', () => {
   const roadmap = readRoadmap()
-  for (const chapter of roadmap.chapters.filter(({ id }) => ['02', '03', '04', '05', '06', '07'].includes(id))) {
+  for (const chapter of roadmap.chapters.filter(({ id }) => Number(id) >= 2 && Number(id) <= 10)) {
     for (const article of chapter.articles) {
       const source = readArticle(article.path)
       const diagrams = source.match(/(```|~~~)mermaid\s*\r?\n[\s\S]*?\r?\n\1/g) ?? []
 
       assert.equal(diagrams.length, 1, `${article.path} should contain exactly one Mermaid diagram`)
       if (!['06'].includes(chapter.id)) {
-        assert.match(source, /阅读提示：|这个顺序说明|图中|这张图|数据流|流程图/,
+        assert.match(source, /阅读提示：|阅读顺序|阅读时|读图时|这个顺序说明|图中|这张图|数据流|流程图/,
           `${article.path} should explain how to read its diagram`)
       }
       assert.doesNotMatch(diagrams[0], /fill\s*:\s*#[0-9a-f]{3,8}/i,
         `${article.path} should not hard-code a light/dark-dependent fill color`)
     }
+  }
+})
+
+test('roadmap and homepage expose all 11 chapters as complete and counted', () => {
+  const roadmap = readRoadmap()
+  const homepage = readArticle('docs/courses/agent/index.md')
+  const totalArticles = roadmap.chapters.reduce((sum, chapter) => sum + chapter.articles.length, 0)
+
+  assert.equal(totalArticles, 89)
+  for (const chapter of roadmap.chapters) {
+    assert.equal(chapter.status, '完成', `chapter ${chapter.id} should be marked complete`)
+    assert.match(homepage, new RegExp(`\\| ${chapter.id} \\| \\[.+（${chapter.articles.length} 篇）\\]`),
+      `chapter ${chapter.id} should show its article count on the homepage`)
+  }
+})
+
+test('chapter 11 source guides keep the source-reading contract', () => {
+  const chapter = readRoadmap().chapters.find(({ id }) => id === '11')
+  assert.ok(chapter, 'chapter 11 should exist')
+  assert.equal(chapter.articles.length, 6)
+
+  for (const article of chapter.articles) {
+    const source = readArticle(article.path)
+    const parsed = matter(source)
+    assert.equal(parsed.data.status, '正文', `${article.path} should be正文`)
+    assert.doesNotMatch(source, /大纲骨架|status:\s*outline/i, `${article.path} must not remain an outline`)
+    assert.ok((source.match(/^###\s+.+/gm) ?? []).length >= 3, `${article.path} should expose searchable H3 headings`)
+    assert.match(source, /^## (?:阅读顺序|源码阅读顺序|源码阅读锚点|项目定位|对照维度|架构总览|核心抽象|阅读目标|先看懂整体调用链)/m,
+      `${article.path} should expose a source-reading entry point`)
+    assert.match(source, /源码|仓库|模块|符号|入口|调用链/u, `${article.path} should explain how to navigate source code`)
+    assert.match(source, /^## 易混点\s*$/m, `${article.path} should include 易混点`)
+    assert.match(source, /^## 课后小问（含解析）\s*$/m, `${article.path} should include questions and explanations`)
+    assert.match(source, /^## 本节小结\s*$/m, `${article.path} should include a summary`)
+    assert.match(source, /^## 快速回顾\s*$/m, `${article.path} should include quick review`)
   }
 })
 
