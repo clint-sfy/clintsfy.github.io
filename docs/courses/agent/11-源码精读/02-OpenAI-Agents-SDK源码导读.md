@@ -134,7 +134,11 @@ system prompt 可能是字符串，也可能由动态 prompt provider 产生。�
 
 ### `InputGuardrail.run`
 
-输入 guardrail 在模型或工具产生副作用前检查用户输入/上下文。其结果可能允许继续，也可能触发 tripwire 终止 run。源码阅读时要看 guardrail 失败时模型是否已经被调用。
+输入 guardrail 默认 `run_in_parallel=True`，会与 Agent 执行并发；因此 tripwire 触发时，模型可能已经消耗 token，甚至已经执行工具，不能绝对说它发生在所有副作用之前。若必须先检查、通过后才启动 Agent，设置 `run_in_parallel=False`。源码阅读时要沿并发分支和阻塞分支分别确认失败时模型/工具是否已经启动。
+
+### `FunctionTool.tool_input_guardrails` 与 `tool_output_guardrails`
+
+工具级 guardrail 绑定具体的 `FunctionTool`：`tool_input_guardrails` 在调用工具前检查参数，`tool_output_guardrails` 在工具返回后检查结果；它们比 Agent 级 input guardrail 更适合保护某一个有副作用的工具。工具若还配置 approval，审批会改变“检查—暂停—执行”的时序；`ToolExecutionConfig.pre_approval_tool_input_guardrails=True` 可在发出审批中断前先检查一次，获批后仍会在真正执行前再次检查。
 
 ### `OutputGuardrail.run`
 
@@ -259,4 +263,5 @@ OpenAI Agents SDK 的主线是 `Runner → AgentRunner → run_internal`。Agent
 - [`guardrail.py`](https://github.com/openai/openai-agents-python/blob/main/src/agents/guardrail.py)
 - [`memory/session.py`](https://github.com/openai/openai-agents-python/blob/main/src/agents/memory/session.py)
 - [Running agents 官方文档](https://openai.github.io/openai-agents-python/running_agents/)
+- [Guardrails 官方文档](https://openai.github.io/openai-agents-python/guardrails/)
 - [Tracing 官方文档](https://openai.github.io/openai-agents-python/tracing/)

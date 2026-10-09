@@ -183,13 +183,13 @@ SDK client 启动或准备 `dsh --profile sdk` 运行时。它将“你的 Pytho
 
 它执行 SDK 协议级的初始化，不应与 MCP 的 `initialize` 混淆。读 protocol/types 以确认请求/响应字段和运行时能力，不要凭名字复用 MCP 客户端代码。
 
-### `HarnessClient.prompt`
+### `HarnessClient.session_prompt`
 
-它向指定 session 发送 prompt，并等待协议层结果。真正的 Agent loop 在 runtime 内部发生；client 只看到结果与通知。
+它向指定 session 发送 prompt 并返回消息 id；真正的 Agent loop 在 runtime 内部发生，调用方要通过通知订阅观察结果。高层 `Session.run` 会把这两个动作组合起来并等待 session 回到 idle。
 
-### `HarnessClient.subscribe`
+### `HarnessClient.subscribe_session_notifications`
 
-订阅返回 `AsyncIterable` 风格的 notification stream，可观察 session event、agent status 和 subagent 完成。订阅关闭、runtime 退出和协议错误必须分开处理。
+订阅返回通知订阅对象，可观察 session event、agent status 和 subagent 完成。订阅关闭、runtime 退出和协议错误必须分开处理。
 
 ### `HarnessClient.close`
 
@@ -197,21 +197,24 @@ SDK client 启动或准备 `dsh --profile sdk` 运行时。它将“你的 Pytho
 
 ## Python 视角：从进程外调用 Harness
 
-下面是概念性 Python 伪代码，表达官方 Python SDK 的边界：Python 客户端通过 stdio JSON-RPC 驱动同版本 runtime，并且必须显式指定 Harness home；它不是直接 import TypeScript loop。
+下面调用官方 Python SDK 的真实高层 API：Python 客户端通过 stdio JSON-RPC 驱动同版本 runtime，并且必须显式指定 Harness home；它不是直接 import TypeScript loop。`DeepSeekHarness.run` 内部会创建/复用 session，再调用真实的 `session_prompt()` 和 `subscribe_session_notifications()`。
 
 ```python
-def run_harness_turn(harness, session_id, text):
-    # 输入：已启动的 Harness runtime、session id、用户消息。
-    harness.initialize()
-    output = harness.prompt(session_id, [{"type": "text", "text": text}])
-    events = list(harness.subscribe_session_tree(session_id))
-    harness.close()
-    return {"output": output, "events": events}
+from deepseek_harness import DeepSeekHarness
 
-# 输出：runtime 结果 + 事件；loop、插件和持久化仍在 Harness 进程内。
+with DeepSeekHarness(
+    dsh_home="/absolute/path/to/isolated-dsh-home",
+    cwd="/absolute/path/to/workspace",
+    provider="deepseek-official",
+    model="deepseek-v4-flash",
+) as harness:
+    result = harness.run("解释一次工具调用的调用链", session_id="study-001")
+
+# 输出：RunResult；result.final_response 是最终文本，
+# result.events / result.notifications 保留本次运行的事件与通知。
 ```
 
-真正运行时请以官方 `python/sdk` 文档和发布包版本为准，尤其不要让测试代码自动读取默认 `~/.dsh` 或把真实凭据放进 workspace。
+真正运行时请以官方 `python/sdk` 文档和发布包版本为准；示例路径需要替换为隔离目录，尤其不要让测试代码自动读取默认 `~/.dsh` 或把真实凭据放进 workspace。
 
 ## 源码阅读锚点
 
@@ -256,7 +259,7 @@ DeepSeek Harness 的主线是 `Cordis Context/Scope → SessionStore + capabilit
 - 请求构建：`preStep → prepareRequest → buildRequest`。
 - 会话：`SessionStore.create/enter/flush`，事件再派生消息。
 - 组装：Cordis `Context`、`apply(ctx)`、`Scope.dispose`。
-- 外部驱动：`HarnessClient.initialize/prompt/subscribe/close`。
+- 外部驱动：`HarnessClient.initialize/session_prompt/subscribe_session_notifications/close`；高层入口是 `DeepSeekHarness.run`。
 - 风险：developer preview，不是安全沙箱或生产保证。
 
 ## 官方源码与文档

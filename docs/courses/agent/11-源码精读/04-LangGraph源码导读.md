@@ -33,7 +33,7 @@ LangGraph 的核心不是“再封装一个聊天 Agent”，而是把有状态�
 | Pregel runtime | [`libs/langgraph/langgraph/pregel/main.py`](https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/pregel/main.py) | `Pregel`、`invoke`、`stream` |
 | 节点/执行辅助 | [`libs/langgraph/langgraph/pregel/`](https://github.com/langchain-ai/langgraph/tree/main/libs/langgraph/langgraph/pregel) | task、loop、runner、write |
 | interrupt/Command | [`libs/langgraph/langgraph/types.py`](https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/types.py) | `interrupt`、`Command`、`StateSnapshot` |
-| checkpoint 基类 | [`libs/checkpoint/langgraph/checkpoint/base/__init__.py`](https://github.com/langchain-ai/langgraph-checkpoint/blob/main/libs/checkpoint/langgraph/checkpoint/base/__init__.py) | `BaseCheckpointSaver`、读写 checkpoint |
+| checkpoint 基类 | [`libs/checkpoint/langgraph/checkpoint/base/__init__.py`](https://github.com/langchain-ai/langgraph/blob/main/libs/checkpoint/langgraph/checkpoint/base/__init__.py) | `BaseCheckpointSaver`、读写 checkpoint |
 
 ## 从图声明到恢复执行
 
@@ -247,6 +247,6 @@ LangGraph 的源码主线是 `StateGraph → compile → CompiledStateGraph/Preg
 - [`graph/state.py`](https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/graph/state.py)
 - [`pregel/main.py`](https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/pregel/main.py)
 - [`types.py`](https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/langgraph/types.py)
-- [LangGraph Checkpoint 源码](https://github.com/langchain-ai/langgraph-checkpoint/tree/main/libs/checkpoint)
+- [LangGraph Checkpoint 源码](https://github.com/langchain-ai/langgraph/tree/main/libs/checkpoint)
 - [Interrupt 官方文档](https://docs.langchain.com/oss/python/langgraph/interrupts)
 - [Durable execution 官方文档](https://docs.langchain.com/oss/python/langgraph/durable-execution)

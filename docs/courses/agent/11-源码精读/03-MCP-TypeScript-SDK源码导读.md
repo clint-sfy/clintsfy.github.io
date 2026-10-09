@@ -89,7 +89,7 @@ Express、Fastify、Hono、Node HTTP 等 middleware 只是运行时适配器。�
 
 ### `Client.connect`
 
-连接方法根据 transport 和协议时代选择连接路径。v2 的现代路径以无协议 Session 的 discover 为主；源码仍保留 legacy handshake 兼容逻辑，因此不要因为看到 `_legacyHandshake` 就把 v2 课程写回旧初始化模型。
+连接方法根据 transport 和协议时代选择连接路径。v2 的 `Client` 同时支持现代 `server/discover` 和 legacy `initialize`：未传 `versionNegotiation` 或显式使用 `mode: "legacy"` 时，默认直接走 legacy handshake；只有显式设置 `versionNegotiation: { mode: "auto" }` 才会先探测 `server/discover`，再在不支持现代协议的对端上回退到 `initialize`。源码仍保留两条分支，因此不要因为看到 `_legacyHandshake` 就把 v2 课程写回单一旧模型。
 
 ### `Client.discover`
 
@@ -177,11 +177,16 @@ MCP 2026-07-28 的现代核心采用无状态模型；本项目 v2 仍保留 leg
 
 ```typescript
 // 伪代码：Host 只依赖 Client，Transport 决定连接方式。
-const client = new Client({ name: "study-host", version: "0.1.0" });
+const client = new Client(
+  { name: "study-host", version: "0.1.0" },
+  // 显式启用现代 discover 探测；不支持时自动回退 legacy initialize。
+  { versionNegotiation: { mode: "auto" } },
+);
 const transport = new StdioClientTransport({ command: "python", args: ["server.py"] });
 
 await client.connect(transport);
-const discovery = await client.discover();
+// connect() 已完成协议时代协商；getProtocolEra() 可观察最终选择。
+console.log(client.getProtocolEra());
 const tools = await client.listTools();
 const result = await client.callTool({
   name: "search_notes",
@@ -247,13 +252,13 @@ MCP TypeScript SDK 的关键分层是 `Client/McpServer → Protocol → Transpo
 - 传输：stdio 或 Streamable HTTP 只搬运 JSON-RPC。
 - 版本：v2.3.1、`main`、Node >=20；v1 在 `v1.x`。
 
+如果要单独查看完整发现结果，仍可在已连接的 client 上显式调用 `client.discover()`；上例的 `auto` 连接已经用 discover 完成了协商，不需要为了建立连接再重复调用。
+
 ## 官方源码与文档
 
 - [MCP TypeScript SDK 官方仓库](https://github.com/modelcontextprotocol/typescript-sdk)
-- [`packages/client`](https://github.com/modelcontextprotocol/typescript-sdk/tree/main/packages/client)
-- [`packages/server`](https://github.com/modelcontextprotocol/typescript-sdk/tree/main/packages/server)
-- [`packages/core`](https://github.com/modelcontextprotocol/typescript-sdk/tree/main/packages/core)
+- [MCP TypeScript SDK v2 文档首页](https://ts.sdk.modelcontextprotocol.io/v2/)
+- [v2 包与迁移说明](https://ts.sdk.modelcontextprotocol.io/v2/get-started/packages.html)
 - [`Client`](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/packages/client/src/client/client.ts)
 - [`McpServer`](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/packages/server/src/server/mcp.ts)
-- [v2 包与迁移说明](https://ts.sdk.modelcontextprotocol.io/v2/getting-started/packages/)
 - [MCP 2026-07-28 规范](https://modelcontextprotocol.io/specification/2026-07-28)
