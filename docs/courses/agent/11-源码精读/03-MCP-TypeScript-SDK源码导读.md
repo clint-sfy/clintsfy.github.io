@@ -83,6 +83,10 @@ Express、Fastify、Hono、Node HTTP 等 middleware 只是运行时适配器。�
 
 当前 `Client` 继承共享 `Protocol`，所以既有公共能力方法，也继承 request/notification、错误和 transport 生命周期。读类定义后要跳到父类，尤其是 capability 检查和 request id 的分配。
 
+### `MCPClientImplementation`：路线中的旧映射名
+
+路线里的 `MCPClientImplementation` 表示“客户端实现层”的职责；当前 v2 公共源码使用的真实 class 是 `Client`，位于 `packages/client/src/client/client.ts`。不要把旧映射名当成当前导出符号。
+
 ### `Client.connect`
 
 连接方法根据 transport 和协议时代选择连接路径。v2 的现代路径以无协议 Session 的 discover 为主；源码仍保留 legacy handshake 兼容逻辑，因此不要因为看到 `_legacyHandshake` 就把 v2 课程写回旧初始化模型。
@@ -108,6 +112,10 @@ Express、Fastify、Hono、Node HTTP 等 middleware 只是运行时适配器。�
 ### `McpServer`
 
 `McpServer` 聚合 server info、注册表、completion、工具/资源/prompt handler 和通知。它把开发者提供的 callback 变成协议层的统一结果。
+
+### `MCPServerImplementation`：路线中的旧映射名
+
+同理，`MCPServerImplementation` 是路线中的职责名；当前 v2 的真实公共 class 是 `McpServer`。需要读实现时从 `McpServer` 的注册和 handler 方法进入，而不是搜索一个不存在的同名 class。
 
 ### `McpServer.registerTool`
 
@@ -195,7 +203,7 @@ def use_mcp(client, name, arguments):
 # 输出：CallToolResult；协议失败与工具业务失败应分别记录。
 ```
 
-## 源码阅读顺序与建议断点
+## 源码阅读锚点
 
 1. 先读 monorepo README 与 `packages/client/package.json`，确认 v2 包名、Node 要求和导出。
 2. 从 `Client.callTool` 进入父类 Protocol 的 request，再进入 transport。

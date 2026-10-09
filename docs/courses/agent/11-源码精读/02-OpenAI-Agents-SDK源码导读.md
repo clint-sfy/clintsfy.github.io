@@ -126,6 +126,10 @@ system prompt 可能是字符串，也可能由动态 prompt provider 产生。�
 
 这是值得下断点的转交执行点。它会处理 handoff 输入、调用回调并返回目标 Agent 的运行信息。重点看原 Agent 的历史、目标 Agent 的输入、trace parent 和 session 是否按设计继承。
 
+### `HandoffRuntime`：路线中的职责名
+
+路线里的 `HandoffRuntime` 表示“执行 handoff 并切换当前 Agent”的运行时职责；当前 SDK 的源码入口主要分布在 `src/agents/handoffs/`、`run_internal` 和 `AgentRunner`，不要据此臆造一个必须存在的顶层 class。
+
 ## Guardrail 与工具审批
 
 ### `InputGuardrail.run`
@@ -145,6 +149,10 @@ system prompt 可能是字符串，也可能由动态 prompt provider 产生。�
 ### `Session` Protocol
 
 当前 SDK 用 `Session` Protocol 描述 `get_items`、`add_items`、`pop_item`、`clear_session` 等能力。路线中常说的 `SessionService` 是概念名；当前代码的公共事实是 Protocol 加上具体实现，例如 `SQLiteSession`。
+
+### `SessionService`：概念到实现的映射
+
+如果旧资料写 `SessionService`，把它理解为“Runner 使用的会话服务边界”；本版本不应直接搜索一个同名核心类，而应从 `Session` Protocol、具体 session 和 `run_internal/session_persistence.py` 追读。
 
 ### `SQLiteSession`
 
@@ -195,7 +203,7 @@ async def run_once(agent, user_input, session=None):
 
 这是教学用伪代码，不代替 SDK 的类型、错误、流式和 tracing 实现，但可以用来对照每个源码函数的责任。
 
-## 建议阅读顺序与断点
+## 源码阅读锚点
 
 1. `Runner.run`：记下输入形态、Agent、session、run config。
 2. `AgentRunner._run_impl`：确定 turn 和最大 turn 的边界。

@@ -213,7 +213,7 @@ def run_harness_turn(harness, session_id, text):
 
 真正运行时请以官方 `python/sdk` 文档和发布包版本为准，尤其不要让测试代码自动读取默认 `~/.dsh` 或把真实凭据放进 workspace。
 
-## 源码阅读顺序与建议断点
+## 源码阅读锚点
 
 1. 先读官方 README、`SAFETY.md` 和根 `package.json`，固定 branch/version/Node。
 2. 从 `packages/core/agent-loop/src/agent.ts` 的 `send → kick → turn → step` 建立 loop 主线。

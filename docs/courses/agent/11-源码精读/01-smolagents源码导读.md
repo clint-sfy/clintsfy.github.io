@@ -128,6 +128,10 @@ flowchart TD
 
 `LocalPythonExecutor` 会解析 AST、限制 import、提供受控变量和工具，并捕获执行错误；但它仍在宿主 Python 进程内工作。官方 README 明确警告：它不是安全沙箱，限制可能被绕过，不应运行不受信代码。
 
+### `LocalExecutor`：路线中的泛称
+
+路线里的 `LocalExecutor` 是“本地执行器”的概念名；当前仓库已核对的具体实现叫 `LocalPythonExecutor`，并通过 `PythonExecutor` 抽象连接到 `CodeAgent`。搜索源码时以具体名称为准，不要假设存在一个同名 `LocalExecutor` 类。
+
 ### `evaluate_python_code`
 
 它负责把代码转成 AST 并执行支持的节点。断点应放在 import 检查、调用表达式、异常包装和 `FinalAnswerException` 处理处，观察“禁用语法”与“允许的副作用”是否是同一层策略。
@@ -167,7 +171,7 @@ class TinyAgent:
 
 这段代码不是 smolagents 的复制品，而是读源码时的导航尺：真正实现多了流式事件、不同 step 类型、工具 schema、回调、异常包装和模型适配。
 
-## 源码阅读顺序与建议断点
+## 源码阅读锚点
 
 1. 在 `MultiStepAgent.run` 入口记录 `task`、`max_steps` 和初始 tools。
 2. 进入 `_run_stream`，确认每个 step 的创建和结束位置。

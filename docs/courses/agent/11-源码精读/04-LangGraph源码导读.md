@@ -123,6 +123,10 @@ Channel 是运行时保存某类状态更新的通道。字段默认覆盖还是
 
 它定义 checkpoint 的读取、写入、写入 channel、列出历史和删除 thread 等接口。具体 saver 可以是内存、SQLite、Postgres 等；runtime 依赖接口，不依赖某个数据库。
 
+### `Checkpointer`：课程中的简写
+
+课程和文档常把 checkpoint 持有者简称为 `Checkpointer`；当前核心源码的具体接口名是 `BaseCheckpointSaver`，编译后的 graph 通过它读写 checkpoint。阅读时以当前 package 的接口和具体 saver 为准。
+
 ### `thread_id`
 
 `thread_id` 是持久化执行的逻辑游标。相同 thread 让 runtime 找回同一状态；更换 thread 会开启隔离的执行历史。它不是用户 id，也不应直接当作权限凭证。
@@ -134,6 +138,10 @@ snapshot 将当前 values、next 节点、config、metadata 和任务信息暴�
 ### durability
 
 durability 讨论的是状态何时、以什么保证写入持久层。不要把“有 checkpointer”简单等于“每条外部副作用都可回滚”；邮件、支付、写文件等副作用仍需幂等和业务事务边界。
+
+### `DurableExecution`
+
+`DurableExecution` 是“可持久化执行”的架构概念，不是本文假定存在的单一 runtime class。它由 checkpoint、thread、重试/恢复策略和副作用幂等共同实现；读源码时应沿这些真实入口验证，而不是只搜索一个名字。
 
 ## `interrupt` 与 `Command`
 
@@ -188,7 +196,7 @@ finished = graph.invoke(Command(resume=True), config)
 
 官方源码的 `types.py` 说明了一个容易漏掉的事实：节点会从头重跑。示例中的 `approval_node` 没有在 interrupt 前写外部副作用，正是为了避免恢复时重复执行。
 
-## 源码阅读顺序与建议断点
+## 源码阅读锚点
 
 1. `StateGraph.__init__`、`add_node`、`add_edge`、`compile`：画出声明到编译的转换。
 2. `CompiledStateGraph`：确认 graph 如何附着节点、边和 branch。
