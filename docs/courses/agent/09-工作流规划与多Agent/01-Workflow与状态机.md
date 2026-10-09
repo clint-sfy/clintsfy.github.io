@@ -95,12 +95,16 @@ executed_keys: set[str] = set()
 
 
 def validate(state: WorkflowState) -> WorkflowState:
+    if state.status == "cancelled":
+        return state
     if state.quantity <= 0:
         return replace(state, status="failed", error="quantity must be positive")
     return replace(state, status="validated", idempotency_key=f"{state.order_id}:reserve")
 
 
 def execute(state: WorkflowState) -> WorkflowState:
+    if state.status == "cancelled":
+        return state
     if state.status != "validated":
         return replace(state, status="failed", error="unexpected state")
     if state.idempotency_key in executed_keys:
@@ -117,13 +121,16 @@ state = validate(state)
 state = execute(state)
 retry_state = validate(WorkflowState(order_id="o-100", quantity=1))
 again = execute(retry_state)
+cancelled = execute(validate(WorkflowState(order_id="o-101", quantity=1, status="cancelled")))
 print(state.status, inventory["book"])
 print(again.status, inventory["book"])
+print(cancelled.status)
 # 输出：succeeded 2
 # 输出：succeeded 2
+# 输出：cancelled
 ```
 
-这里的输入是 `order_id=o-100、quantity=1`；两次执行都先经过 `validated` 状态检查，再由同一个幂等键识别第二次请求。非法状态不会因为碰巧复用了幂等键而被当成成功。
+这里的输入包括两个正常请求和一个已经取消的请求；正常请求都先经过 `validated` 状态检查，再由同一个幂等键识别第二次请求。取消是不可逆终态，`validate` 和 `execute` 都保持 `cancelled`，不会把它重新验证、改成失败或继续产生副作用。
 
 ## Edge 如何表达转移
 

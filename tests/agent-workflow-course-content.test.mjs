@@ -55,6 +55,7 @@ test('chapter 09 examples enforce the reviewed safety branches', () => {
   const approval = read('05-Interrupt审批与恢复.md')
 
   assert.match(workflow, /Literal\[[^\n]*cancelled/)
+  assert.match(workflow, /if state\.status == "cancelled":\s*\n\s+return state/)
   assert.match(workflow, /if state\.status != "validated"[\s\S]*if state\.idempotency_key in executed_keys/)
   assert.match(planning, /done_when: Callable\[\[str\], bool\]/)
   assert.match(planning, /idempotency_key: str[\s\S]*completed_keys[\s\S]*step\.done_when\(result\)/)
