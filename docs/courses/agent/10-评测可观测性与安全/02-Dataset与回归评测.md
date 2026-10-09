@@ -47,6 +47,14 @@ GoldenTask 是有明确验收条件的代表性任务，不是“唯一正确的
 
 一个任务可以有多个合法答案。把生成文本逐字比较当成唯一指标，常常会把正确的改写判成失败。
 
+对工具型任务，契约还应显式写出 required_tools、tool_sequence 和 max_tool_calls：
+
+- required_tools：至少调用过的工具集合，适合声明必须经过的能力。
+- tool_sequence：工具名的精确执行顺序；如果不关心顺序就留空。
+- max_tool_calls：工具调用总次数上限，防止重复调用和成本失控。
+
+这些字段不是装饰性元数据，评测器必须从真实 Trace 或运行结果中读取并验证；只检查最终答案无法证明工具行为符合契约。
+
 ### Fixture 与隔离
 
 Fixture 是运行时固定的外部环境，例如假的天气工具、内存数据库和冻结时间。它的作用是把模型或代码的变化与网络、数据和时间变化隔离开。
@@ -117,12 +125,31 @@ class GoldenTask:
     prompt: str
     expected_answer: str
     allowed_tools: tuple[str, ...]
+    required_tools: tuple[str, ...] = ()
+    tool_sequence: tuple[str, ...] = ()
+    max_tool_calls: int = 0
     tags: tuple[str, ...] = ()
 
 
 DATASET = (
-    GoldenTask("sum-01", "计算 2+3", "5", (), ("deterministic",)),
-    GoldenTask("search-01", "查找文档", "found", ("search_docs",), ("tool",)),
+    GoldenTask(
+        case_id="sum-01",
+        prompt="计算 2+3",
+        expected_answer="5",
+        allowed_tools=(),
+        max_tool_calls=0,
+        tags=("deterministic",),
+    ),
+    GoldenTask(
+        case_id="search-01",
+        prompt="查找文档",
+        expected_answer="found",
+        allowed_tools=("search_docs",),
+        required_tools=("search_docs",),
+        tool_sequence=("search_docs",),
+        max_tool_calls=1,
+        tags=("tool",),
+    ),
 )
 
 
@@ -133,13 +160,27 @@ def run_case(task):
 
 
 def evaluate(task, result):
+    tools = result.get("tools", [])
     answer_ok = task.expected_answer in result["answer"]
-    tools_ok = set(result["tools"]) <= set(task.allowed_tools)
+    tools_ok = set(tools) <= set(task.allowed_tools)
+    required_tools_ok = set(task.required_tools) <= set(tools)
+    sequence_ok = not task.tool_sequence or tuple(tools) == task.tool_sequence
+    call_count_ok = len(tools) <= task.max_tool_calls
     return {
         "case_id": task.case_id,
         "answer_ok": answer_ok,
         "tools_ok": tools_ok,
-        "passed": answer_ok and tools_ok and result["trace_status"] == "ok",
+        "required_tools_ok": required_tools_ok,
+        "sequence_ok": sequence_ok,
+        "call_count_ok": call_count_ok,
+        "passed": (
+            answer_ok
+            and tools_ok
+            and required_tools_ok
+            and sequence_ok
+            and call_count_ok
+            and result["trace_status"] == "ok"
+        ),
         "tags": task.tags,
     }
 

@@ -80,6 +80,8 @@ request_digest, policy_version, approval_id, decision, outcome, timestamp
 
 审计事件应追加写入，限制普通 Agent、插件和业务服务的删除或修改权限。它不必保存所有敏感原文，但要能关联到受控证据存储。审计数据的读取和导出也要审计。
 
+路径边界不能依赖 PurePosixPath 的字符串或词法父子关系；包含 .. 时，词法判断可能与实际文件位置不一致。应从可信根目录出发 resolve，再用 relative_to 判断；符号链接、挂载点和 TOCTOU 仍由 Sandbox 执行器在打开或执行瞬间再次校验。
+
 ### 清理、恢复与人工接管
 
 任务结束或超时后，必须回收临时目录、进程、网络凭据、文件锁和租约。清理要幂等，即重复执行不会破坏恢复所需的检查点。
@@ -113,7 +115,7 @@ flowchart TD
 ~~~python
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from pathlib import PurePosixPath
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -123,15 +125,24 @@ class Lease:
     expires_at: datetime
 
 
+SANDBOX_ROOT = Path("/workspace").resolve()
+
+
+def resolve_sandbox_path(raw_path):
+    candidate = (SANDBOX_ROOT / raw_path).resolve()
+    try:
+        candidate.relative_to(SANDBOX_ROOT)
+    except ValueError:
+        return None
+    return candidate
+
+
 def authorize(lease, capability, path, now):
-    normalized = PurePosixPath(path)
-    workspace = PurePosixPath("/workspace")
-    in_workspace = workspace == normalized or workspace in normalized.parents
     if lease.expires_at <= now:
         return False, "租约已过期"
     if capability not in lease.capabilities:
         return False, "能力不在 allowlist"
-    if not in_workspace:
+    if resolve_sandbox_path(path) is None:
         return False, "资源不在工作区"
     return True, "允许"
 
@@ -159,9 +170,11 @@ audit({
 print(allowed)
 # 输出：{'event': 'capability.check', 'subject': 'run-7', 'capability': 'filesystem.read', 'resource': '/workspace/readme.md', 'decision': '允许'}
 # 输出：True
+print(authorize(lease, "filesystem.read", "/workspace/../secret.txt", now))
+# 输出： (False, '资源不在工作区')
 ~~~
 
-示例没有处理真实的符号链接、挂载、Windows 路径、网络代理和容器逃逸；生产策略必须使用经过验证的执行器和平台隔离，不能把 PurePosixPath 当作完整 Sandbox。
+示例只验证了词法后的可信根目录；它没有处理真实的符号链接、挂载、Windows 路径、网络代理和容器逃逸。生产策略必须使用经过验证的执行器和平台隔离，不能把 Path.resolve 当作完整 Sandbox；执行器还要在打开文件时再次检查符号链接和挂载边界。
 
 ## 防御边界和不能保证之处
 
@@ -230,4 +243,4 @@ Sandbox、最小权限、租约和审计分别解决隔离、授权时空范围�
 - [OWASP LLM Top 10](https://genai.owasp.org/llm-top-10/)
 - [NIST AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework)
 - [OpenAI Agents SDK tool approval](https://openai.github.io/openai-agents-python/tools/)
-- [MCP security best practices](https://modelcontextprotocol.io/specification/2025-06-18/basic/security_best_practices)
+- [MCP 2026-07-28 security best practices](https://modelcontextprotocol.io/specification/2026-07-28/basic/security_best_practices)

@@ -123,6 +123,8 @@ class Check:
 
 
 def deterministic_checks(result, trace):
+    if not isinstance(result, dict):
+        return [Check("json_shape", False, "结果必须是对象")]
     checks = [
         Check("json_shape", isinstance(result, dict), "结果必须是对象"),
         Check("answer_present", bool(result.get("answer")), "answer 不能为空"),
@@ -147,7 +149,7 @@ def fixed_judge(answer, rubric):
     }
 
 
-result = {"answer": "事实已核对，分点说明如下。"}
+result = {"answer": "事实已核对，内容清晰，分点说明如下。"}
 trace = {"tools": ["search_docs"]}
 hard = deterministic_checks(result, trace)
 soft = fixed_judge(result["answer"], "answer-quality-v1")
@@ -155,10 +157,10 @@ print(json.dumps({
     "hard_passed": all(check.passed for check in hard),
     "judge": soft,
 }, ensure_ascii=False))
-# 输出：{"hard_passed": true, "judge": {"rubric_id": "answer-quality-v1", "score": 2, ...}}
+# 输出：{"hard_passed": true, "judge": {"rubric_id": "answer-quality-v1", "score": 2, "reasons": ["包含事实", "分点说明"], ...}}
 ~~~
 
-如果把 search_docs 改成 delete_file，hard_passed 必须为 False，即使 judge 觉得回答很清晰，也不能通过安全门禁。
+如果把 result 改成字符串，deterministic_checks 会先返回 json_shape 失败，而不会调用 result.get；如果把 search_docs 改成 delete_file，hard_passed 必须为 False，即使 judge 觉得回答很清晰，也不能通过安全门禁。
 
 ## 哪些问题适合哪种方法
 

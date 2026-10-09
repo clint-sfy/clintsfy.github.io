@@ -218,4 +218,4 @@ Prompt Injection 的核心是来源边界混淆，数据泄露的核心是秘密
 - [OWASP LLM Top 10: Prompt Injection](https://genai.owasp.org/llmrisk/llm01-prompt-injection/)
 - [OWASP LLM Top 10: Sensitive Information Disclosure](https://genai.owasp.org/llmrisk/llm02-sensitive-information-disclosure/)
 - [OpenAI safety best practices](https://platform.openai.com/docs/guides/safety-best-practices)
-- [MCP security best practices](https://modelcontextprotocol.io/specification/2025-06-18/basic/security_best_practices)
+- [MCP 2026-07-28 security best practices](https://modelcontextprotocol.io/specification/2026-07-28/basic/security_best_practices)

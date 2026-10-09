@@ -70,3 +70,37 @@ test('chapter 10 keeps the safety and evaluation boundaries explicit', () => {
   assert.match(sources, /数据泄漏|数据泄露/u)
   assert.match(sources, /回归门禁|发布门禁/u)
 })
+
+test('chapter 10 examples lock the reviewed safety contracts', () => {
+  const trace = readArticle('01-Trace-Span与事件日志.md')
+  assert.match(trace, /current\.attributes\.update\(redact\(attributes\)\)/u)
+  assert.match(trace, /api_key="secret-key", cookie="session-value"/u)
+  assert.match(trace, /message": "redacted"/u)
+  assert.doesNotMatch(trace, /message":\s*str\(exc\)/u)
+
+  const dataset = readArticle('02-Dataset与回归评测.md')
+  for (const field of ['required_tools', 'tool_sequence', 'max_tool_calls']) {
+    assert.match(dataset, new RegExp(field), 'GoldenTask should validate ' + field)
+  }
+  assert.match(dataset, /required_tools_ok/u)
+  assert.match(dataset, /sequence_ok/u)
+  assert.match(dataset, /call_count_ok/u)
+
+  const assertions = readArticle('03-确定性断言与LLM-as-Judge.md')
+  const nonDictGuard = assertions.indexOf('if not isinstance(result, dict):')
+  const resultGet = assertions.indexOf('result.get("answer")')
+  assert.ok(nonDictGuard >= 0 && nonDictGuard < resultGet, 'non-dict result must fail before result.get')
+  assert.match(assertions, /内容清晰，分点说明/u)
+  assert.match(assertions, /"score": 2/u)
+
+  for (const file of [
+    '04-Guardrail输入输出与工具校验.md',
+    '06-Sandbox最小权限与审计.md',
+  ]) {
+    const source = readArticle(file)
+    assert.match(source, /Path\("\/workspace"\)\.resolve\(\)/u)
+    assert.match(source, /candidate\.relative_to\(/u)
+    assert.match(source, /workspace\/\.\.\/(?:secrets|secret)\.txt/u)
+    assert.match(source, /符号链接/u)
+  }
+})

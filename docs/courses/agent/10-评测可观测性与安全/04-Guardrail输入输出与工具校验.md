@@ -69,6 +69,8 @@ Guardrail 的结果不应只有 pass/fail，还应包含 reason、policy_id、ev
 
 Schema 通过只说明“参数形状正确”，不能说明“调用者有权对这个对象执行操作”。能力校验通过也不等于资源一定存在，执行后仍要记录真实结果。
 
+路径校验不能只用 startswith。应由服务端固定可信根目录，先把用户路径解析成候选绝对路径，再用 relative_to 判断它是否仍在根目录内；这样可以拒绝 ../、绝对路径绕过和规范化后的越界。符号链接、挂载点和 TOCTOU 仍需要执行器在真正打开文件时再次校验，必要时使用不跟随符号链接的系统调用或独立 Sandbox。
+
 ### 失败关闭与恢复
 
 安全不确定时默认失败关闭（fail closed）：拒绝调用、暂停运行或升级人工，而不是让模型猜一个允许的值。低风险、无副作用的格式问题可以自动修复，但要有次数和时间预算。
@@ -110,6 +112,7 @@ flowchart LR
 
 ~~~python
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -125,6 +128,18 @@ def input_guardrail(text):
     return Decision("allow", "输入格式可接受", "input.length.v1")
 
 
+WORKSPACE_ROOT = Path("/workspace").resolve()
+
+
+def resolve_workspace_path(raw_path):
+    candidate = (WORKSPACE_ROOT / raw_path).resolve()
+    try:
+        candidate.relative_to(WORKSPACE_ROOT)
+    except ValueError:
+        return None
+    return candidate
+
+
 def validate_tool_call(call, allowed_capabilities):
     required = {"path", "content"}
     arguments = call.get("arguments", {})
@@ -134,7 +149,7 @@ def validate_tool_call(call, allowed_capabilities):
         return Decision("block", "缺少 path 或 content", "tool.schema.v1")
     if "filesystem.write" not in allowed_capabilities:
         return Decision("escalate", "当前运行没有写文件能力", "tool.capability.v1")
-    if not arguments["path"].startswith("/workspace/"):
+    if resolve_workspace_path(arguments["path"]) is None:
         return Decision("block", "路径不在工作区", "tool.path.v1")
     return Decision("ask", "写文件是副作用，需要审批", "tool.approval.v1")
 
@@ -150,13 +165,18 @@ call = {"name": "write_file", "arguments": {
     "path": "/workspace/demo.txt", "content": "hello",
 }}
 print(validate_tool_call(call, {"filesystem.write"}).action)
+traversal = {"name": "write_file", "arguments": {
+    "path": "/workspace/../secrets.txt", "content": "no",
+}}
+print(validate_tool_call(traversal, {"filesystem.write"}).action)
 print(output_guardrail("已完成，未展示凭据。").action)
 # 输出：allow
 # 输出：ask
+# 输出：block
 # 输出：allow
 ~~~
 
-这个例子没有把 ask 当成 allow；真实运行时应暂停执行、展示清晰的动作和资源范围，收到用户同意后才进入 Execute。
+这个例子没有把 ask 当成 allow；真实运行时应暂停执行、展示清晰的动作和资源范围，收到用户同意后才进入 Execute。即使 resolve_workspace_path 通过，真正的文件执行器仍要在打开文件的瞬间再次检查符号链接和挂载边界。
 
 ## 业务规则与能力授权不要混在一起
 
@@ -223,4 +243,4 @@ Guardrail 位于输入、工具和输出三个边界，分别保护进入系统�
 
 - [OpenAI Agents SDK guardrails](https://openai.github.io/openai-agents-python/guardrails/)
 - [JSON Schema validation](https://json-schema.org/learn/getting-started-step-by-step)
-- [MCP Tools](https://modelcontextprotocol.io/specification/2025-06-18/server/tools)
+- [MCP 2026-07-28 Tools](https://modelcontextprotocol.io/specification/2026-07-28/server/tools)

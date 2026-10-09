@@ -98,6 +98,8 @@ input_digest 是输入摘要或哈希，方便判断两次请求是否相同；�
 
 这不是“把日志删光”的理由。目标是用最少的字段恢复因果链，并让真正需要阅读原文的人经过额外授权。
 
+脱敏必须覆盖所有观测入口，而不是只处理 Event。attributes、事件字段和异常摘要都要走同一个递归脱敏函数；异常消息默认只保留类型和固定摘要，不能把原始异常文本写入观测系统。敏感键至少包括 api_key、token、cookie、secret、password、authorization 及其常见连字符或下划线变体。
+
 ## 一张图看清数据流
 
 ~~~mermaid
@@ -134,14 +136,32 @@ def new_id(prefix):
     return f"{prefix}_{uuid4().hex[:8]}"
 
 
+SENSITIVE_KEY_NAMES = {
+    "api_key", "apikey", "access_token", "refresh_token", "token",
+    "cookie", "set_cookie", "authorization", "password", "secret",
+    "secret_key", "private_key",
+}
+
+
+def is_sensitive_key(key):
+    normalized = str(key).lower().replace("-", "_")
+    return (
+        normalized in SENSITIVE_KEY_NAMES
+        or "cookie" in normalized
+        or normalized.endswith(("_token", "_secret", "_password", "_key"))
+    )
+
+
 def redact(value):
     if isinstance(value, dict):
         return {
-            key: ("***" if key.lower() in {"password", "token", "authorization"} else redact(item))
+            key: ("***" if is_sensitive_key(key) else redact(item))
             for key, item in value.items()
         }
     if isinstance(value, list):
         return [redact(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(redact(item) for item in value)
     return value
 
 
@@ -165,18 +185,18 @@ class Trace:
     @contextmanager
     def span(self, name, parent=None, **attributes):
         current = Span(name, self.trace_id, parent.span_id if parent else None)
-        current.attributes.update(attributes)
+        current.attributes.update(redact(attributes))
         self.spans.append(current)
         started = perf_counter()
         try:
             yield current
         except Exception as exc:
             current.status = "error"
-            current.events.append({
+            current.events.append(redact({
                 "name": "exception",
                 "type": type(exc).__name__,
-                "message": str(exc),
-            })
+                "message": "redacted",
+            }))
             raise
         finally:
             current.attributes["duration_ms"] = round((perf_counter() - started) * 1000, 3)
@@ -203,20 +223,29 @@ class Trace:
 
 
 trace = Trace("summarize_repository")
-with trace.span("agent.run", user_id="user-7") as root:
+with trace.span("agent.run", user_id="user-7", api_key="secret-key", cookie="session-value") as root:
     trace.event(root, "model.requested", model="demo-model", token="secret-token")
     with trace.span("tool.search_files", root, tool_name="search_files") as tool:
         trace.event(tool, "tool.started", query="*.py", authorization="Bearer hidden")
         trace.event(tool, "tool.completed", result_count=3)
+    try:
+        with trace.span("tool.failing", root) as failing:
+            raise RuntimeError("raw secret should never enter the trace")
+    except RuntimeError:
+        pass
 
 record = trace.export()
 print(record["name"], len(record["spans"]))
 print(record["spans"][1]["events"][0])
-# 输出：summarize_repository 2
+# 输出：summarize_repository 3
 # 输出：{'name': 'tool.started', 'query': '*.py', 'authorization': '***'}
+print(record["spans"][0]["attributes"]["api_key"])
+# 输出：***
+print(record["spans"][2]["events"][0])
+# 输出：{'name': 'exception', 'type': 'RuntimeError', 'message': 'redacted'}
 ~~~
 
-代码里的 Trace.span 只负责观测，不负责执行工具或授予权限。真实系统应在运行时执行成功后再写 tool.completed；如果工具抛异常，Span 状态为 error，根 Trace 可以根据异常决定重试、恢复或交付失败。
+代码里的 Trace.span 只负责观测，不负责执行工具或授予权限。真实系统应在运行时执行成功后再写 tool.completed；如果工具抛异常，Span 状态为 error，根 Trace 可以根据异常类型决定重试、恢复或交付失败，但不能把异常原文直接写进事件。
 
 ## 从一条轨迹定位失败
 
