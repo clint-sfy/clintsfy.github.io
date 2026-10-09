@@ -47,7 +47,9 @@ Resume 是一次新的受控状态转移：读取 Checkpoint → 校验身份和
 
 ```mermaid
 flowchart TD
-    Running["Run: running"] --> Boundary["达到恢复边界"]
+    Running["Run: running"] --> Guard{"running 且 pending 为空？"}
+    Guard -->|否| RejectSuspend["拒绝重复/非法挂起"]
+    Guard -->|是| Boundary["达到恢复边界"]
     Boundary --> Save["保存 Checkpoint"]
     Save --> Suspended["Run: suspended"]
     Suspended --> Signal["审批 / 回调 / 人工决定"]
@@ -64,7 +66,7 @@ flowchart TD
     Resume --> Running
 
     classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
-    class Running,Boundary,Save,Suspended,Signal,Load,Version,RecoveryFail,Reconcile,SideEffect,Reuse,Recheck,Manual,Resume core;
+    class Running,Guard,RejectSuspend,Boundary,Save,Suspended,Signal,Load,Version,RecoveryFail,Reconcile,SideEffect,Reuse,Recheck,Manual,Resume core;
 ```
 
 阅读提示：Checkpoint 是持久化边界，Suspend 是生命周期状态，Resume 是重新校验后的事件。图中的 Reconcile 防止把“响应丢失”误判成“工具没有执行”。
@@ -85,7 +87,7 @@ flowchart TD
 
 ## 本地模拟：审批挂起后安全恢复
 
-用途：下面的标准库示例模拟一个待审批动作。它展示旧 revision 会被拒绝、批准后重新检查并使用幂等键；没有真实工具调用，不会产生外部副作用。
+用途：下面的标准库示例模拟一个待审批动作。它展示挂起前的 running/pending 校验、重复挂起拒绝、checkpoint 的 run/action 关联、旧 revision 拒绝，以及批准后重新检查并使用幂等键；没有真实工具调用，不会产生外部副作用。
 
 ```python
 from __future__ import annotations
@@ -112,6 +114,8 @@ class Checkpoint:
 
 
 def suspend_for_approval(state: RunState, action: str) -> Checkpoint:
+    if state.status != "running" or state.pending_action is not None:
+        raise RuntimeError("suspend requires running state with no pending action")
     state.status = "suspended"
     state.pending_action = action
     state.idempotency_key = "idem-" + state.run_id
@@ -134,6 +138,10 @@ def resume(
         raise RuntimeError("stale checkpoint")
     if state.status != "suspended":
         raise RuntimeError("run is not suspended")
+    if checkpoint.run_id != state.run_id:
+        raise RuntimeError("checkpoint run mismatch")
+    if checkpoint.action != state.pending_action:
+        raise RuntimeError("checkpoint action mismatch")
     if not approved:
         state.status = "failed"
         state.pending_action = None
@@ -165,6 +173,28 @@ state = RunState("run-approval")
 checkpoint = suspend_for_approval(state, "publish:demo")
 print(state.status, checkpoint.revision, checkpoint.idempotency_key)
 try:
+    suspend_for_approval(state, "publish:again")
+except RuntimeError as error:
+    print(type(error).__name__, str(error))
+try:
+    resume(
+        state,
+        Checkpoint("run-other", checkpoint.revision, checkpoint.action, checkpoint.idempotency_key),
+        approved=True,
+        current_revision=checkpoint.revision,
+    )
+except RuntimeError as error:
+    print(type(error).__name__, str(error))
+try:
+    resume(
+        state,
+        Checkpoint(checkpoint.run_id, checkpoint.revision, "delete:demo", checkpoint.idempotency_key),
+        approved=True,
+        current_revision=checkpoint.revision,
+    )
+except RuntimeError as error:
+    print(type(error).__name__, str(error))
+try:
     resume(state, checkpoint, approved=True, current_revision=checkpoint.revision - 1)
 except RuntimeError as error:
     print(type(error).__name__, str(error))
@@ -178,6 +208,9 @@ unknown = RunState(
 )
 print(reconcile_unknown(unknown, query_result=None), unknown.status)
 # 输出：suspended 1 idem-run-approval
+# 输出：RuntimeError suspend requires running state with no pending action
+# 输出：RuntimeError checkpoint run mismatch
+# 输出：RuntimeError checkpoint action mismatch
 # 输出：RuntimeError stale checkpoint
 # 输出：would execute publish:demo
 # 输出：running 2

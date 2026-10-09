@@ -49,16 +49,18 @@ StateOwnership 指定谁能创建、读取、更新和关闭一类状态。典�
 
 ## 从候选事件到状态
 
-Runtime 可以把组件输出统一成事件，再按版本应用到 Run State。事件不是“日志字符串”，而是带有类型、来源、版本、时间和安全摘要的状态变更提议。StateStore 接受事件后递增 revision；ContextBuilder 只读取已提交的 State。
+Runtime 可以把组件输出统一成 StateProposal，再由受信的执行入口从调用上下文注入 source/authority，构造内部事件并按版本应用到 Run State。模型文本只有 kind、value 和 expected_revision，不能携带 authority 伪装成 Runtime。StateStore 接受已注入的事件后递增 revision；ContextBuilder 只读取已提交的 State。
 
 ```mermaid
 flowchart TD
-    Model["Model / Action 候选"] --> Validate["Runtime 校验"]
+    Model["Model / Action 候选"] --> Proposal["StateProposal"]
     Tool["Tool Executor"] --> Result["ToolResult"]
     User["审批者"] --> Decision["Approval Decision"]
-    Validate --> Event["Typed State Event"]
-    Result --> Event
-    Decision --> Event
+    Result --> Proposal
+    Decision --> Proposal
+    Runtime["Trusted Runtime context"] --> Inject["执行入口注入 source / authority"]
+    Proposal --> Inject
+    Inject --> Event["Internal State Event"]
     Event --> CAS{"revision 匹配？"}
     CAS -->|否| Conflict["拒绝并重新读取"]
     CAS -->|是| Store["StateStore 应用"]
@@ -67,7 +69,7 @@ flowchart TD
     State --> Trace["Trace / 审计事件"]
 
     classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
-    class Model,Tool,User,Validate,Result,Decision,Event,CAS,Conflict,Store,State,Context,Trace core;
+    class Model,Tool,User,Proposal,Result,Decision,Runtime,Inject,Event,CAS,Conflict,Store,State,Context,Trace core;
 ```
 
 阅读提示：模型、工具和审批者都可能产生“更新提议”，但只有 Runtime/StateStore 能把它变成新的 Run State。revision 是并发护栏，不是业务状态本身。
@@ -104,6 +106,19 @@ class RunState:
 
 
 @dataclass(frozen=True)
+class StateProposal:
+    kind: str
+    value: str
+    expected_revision: int
+
+
+@dataclass(frozen=True)
+class ExecutionContext:
+    source: str
+    authority: str
+
+
+@dataclass(frozen=True)
 class StateEvent:
     kind: str
     source: str
@@ -122,7 +137,19 @@ class StateStore:
     def __init__(self, state: RunState) -> None:
         self.state = state
 
-    def apply(self, event: StateEvent) -> RunState:
+    def apply(
+        self,
+        proposal: StateProposal,
+        *,
+        context: ExecutionContext,
+    ) -> RunState:
+        event = StateEvent(
+            proposal.kind,
+            context.source,
+            context.authority,
+            proposal.value,
+            proposal.expected_revision,
+        )
         if event.expected_revision != self.state.revision:
             raise RuntimeError("revision conflict")
         rule = self.EVENT_RULES.get(event.kind)
@@ -151,28 +178,48 @@ class StateStore:
         return self.state
 
 
+class Runtime:
+    def __init__(self, store: StateStore) -> None:
+        self.store = store
+
+    @staticmethod
+    def _context(source: str, authority: str) -> ExecutionContext:
+        return ExecutionContext(source, authority)
+
+    def accept_runtime(self, proposal: StateProposal) -> RunState:
+        return self.store.apply(
+            proposal,
+            context=self._context("runtime", "runtime"),
+        )
+
+    def accept_tool_result(
+        self,
+        tool_name: str,
+        proposal: StateProposal,
+    ) -> RunState:
+        return self.store.apply(
+            proposal,
+            context=self._context("tool:" + tool_name, "tool_executor"),
+        )
+
+    def accept_model_proposal(self, proposal: StateProposal) -> RunState:
+        return self.store.apply(
+            proposal,
+            context=self._context("model:planner", "model"),
+        )
+
+
 state = RunState("run-7")
 store = StateStore(state)
-store.apply(StateEvent("run_started", "runtime", "runtime", "", 0))
-tool_proposal = StateEvent(
-    "tool_result",
-    "tool:get_status",
-    "tool_executor",
-    "build=green",
-    1,
-)
-store.apply(tool_proposal)
-store.apply(StateEvent("run_completed", "runtime", "runtime", "", 2))
+runtime = Runtime(store)
+runtime.accept_runtime(StateProposal("run_started", "", 0))
+tool_proposal = StateProposal("tool_result", "build=green", 1)
+runtime.accept_tool_result("get_status", tool_proposal)
+runtime.accept_runtime(StateProposal("run_completed", "", 2))
 print(state.status, state.revision, state.facts)
 try:
-    store.apply(
-        StateEvent(
-            "run_completed",
-            "model:planner",
-            "model",
-            "",
-            state.revision,
-        )
+    runtime.accept_model_proposal(
+        StateProposal("run_completed", "", state.revision)
     )
 except (PermissionError, RuntimeError, ValueError) as error:
     print(type(error).__name__, str(error))
@@ -180,7 +227,7 @@ except (PermissionError, RuntimeError, ValueError) as error:
 # 输出：PermissionError event source/authority rejected
 ```
 
-工具只提供了 tool_proposal；它没有直接改变 status。最后一个事件能成功，是因为 Runtime 先验证了 build=green、source/authority 和当前 revision。示例最后用正确 revision 提交 model 的完成事件，仍因 authority 不允许而拒绝；版本检查不能替代写入权检查。
+工具只提供了 tool_proposal；它没有直接改变 status。Runtime 的执行入口从工具名或 Runtime 分支注入 source/authority，模型只能提交没有这两个字段的 StateProposal。示例最后用正确 revision 提交 model 的完成提议，StateStore 仍因受信 authority 不允许而拒绝；版本检查不能替代写入权检查。
 
 ## 源码阅读心智模型
 
