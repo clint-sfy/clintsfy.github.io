@@ -240,6 +240,32 @@ test('chapters 02 through 07 keep one readable Mermaid diagram per article', () 
   }
 })
 
+test('chapter 08 RAG articles are complete and searchable', () => {
+  const chapter = readRoadmap().chapters.find(({ id }) => id === '08')
+  assert.ok(chapter, 'chapter 08 should exist')
+  assert.equal(chapter.articles.length, 7)
+
+  for (const article of chapter.articles) {
+    const source = readArticle(article.path)
+    const parsed = matter(source)
+    assert.equal(parsed.data.status, '正文', `${article.path} should be正文`)
+    assert.doesNotMatch(source, /大纲骨架|status:\s*outline/i, `${article.path} must not remain an outline`)
+    assert.ok((source.match(/^###\s+.+/gm) ?? []).length >= 2, `${article.path} should expose searchable H3 headings`)
+    assert.match(source, /(?:```|~~~)python\b/i, `${article.path} should include a Python example`)
+    assert.match(source, /```python[\s\S]*?# 输出：/i, `${article.path} should explain a representative output in a separate comment`)
+    assert.match(source, /^## 源码阅读锚点\s*$/m, `${article.path} should include source-reading anchors`)
+    assert.match(source, /^## 易混点\s*$/m, `${article.path} should include 易混点`)
+    assert.match(source, /^## 课后小问（含解析）\s*$/m, `${article.path} should include 课后小问解析`)
+    assert.match(source, /^## 本节小结\s*$/m, `${article.path} should include a summary`)
+    assert.match(source, /^## 快速回顾\s*$/m, `${article.path} should include quick review`)
+
+    const diagrams = source.match(/(```|~~~)mermaid\s*\r?\n[\s\S]*?\r?\n\1/g) ?? []
+    assert.equal(diagrams.length, 1, `${article.path} should contain one Mermaid diagram`)
+    assert.match(source, /阅读提示：|这张图|数据流|流程/, `${article.path} should explain how to read the diagram`)
+    assert.doesNotMatch(diagrams[0], /fill\s*:\s*#[0-9a-f]{3,8}/i, `${article.path} should keep Mermaid theme-neutral`)
+  }
+})
+
 test('chapter 06 locks the MCP 2026-07-28 protocol baseline', () => {
   const chapter = readRoadmap().chapters.find(({ id }) => id === '06')
   const sources = chapter.articles.map(({ path }) => readArticle(path)).join('\n')
