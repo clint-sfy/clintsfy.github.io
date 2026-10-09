@@ -13,7 +13,7 @@ chapter: 07
 ## 学习目标
 
 - 解释 Dependency Injection、Capability、Container、scope 和生命周期所有权之间的关系。
-- 区分“能解析到一个对象”和“当前调用者有权使用该能力”。
+- 区分“查到 provider descriptor”“创建实例”和“当前调用者有权使用该能力”。
 - 用一个标准库容器模拟依赖排序、作用域覆盖和 disposer，并建立阅读 Cordis `Context` 的心智模型。
 
 ## 前置知识
@@ -32,9 +32,15 @@ chapter: 07
 
 ### Container：能力与实现的解析边界
 
-**Container** 保存 capability key 到 provider/factory 的映射，并按照 scope、生命周期和依赖规则返回实例。它可以检测缺失、重复和循环，但不应把解析成功当成授权成功。
+**Container** 保存 capability key 到 provider descriptor/factory metadata 的映射，并按照 scope、生命周期和依赖规则查找实现。它可以检测缺失、重复和循环，但不应把 descriptor 查到当成实例已经创建，更不能把查找成功当成授权成功。
 
-白话说，Container 像服务台：你可以问“谁能提供日志服务”，服务台给出当前 scope 的实现；是否允许你使用，仍由策略和调用边界决定。
+白话说，Container 像服务台：你可以先问“谁声明能提供日志服务”，服务台只给出当前 scope 的登记卡；是否允许装配、何时构造实例以及这一次能否使用，仍由不同策略和调用边界决定。
+
+### Provider Descriptor：先读元数据，再决定是否构造
+
+**Provider descriptor** 是 provider 的登记信息，至少包含 capability key、scope、依赖、生命周期和 factory 的引用。descriptor/metadata lookup 只读注册表，不调用 factory，因此不应产生连接、打开文件或其他构造副作用。
+
+白话说，先看商品标签，再决定是否把商品从仓库取出来。`AssemblyPolicy` 必须在 `instantiate` 或实例级 `resolve` 之前通过；只有通过后，容器才可以按生命周期创建实例。对 transient provider，一次批准的调用只创建一次，不能因为 policy 检查或重复 resolve 又构造第二个实例。
 
 ### Dependency Injection：把依赖显式交给组件
 
@@ -50,42 +56,47 @@ chapter: 07
 
 **AssemblyPolicy** 判断某个 Plugin/Provider 是否允许进入当前 composition，例如是否满足 scope、配置、依赖和宿主能力要求。它发生在注入前，决定“实现是否可见”；它不是某个用户请求的授权结论。
 
+### Instantiate：通过装配策略后才创建实例
+
+**Instantiate** 是真正调用 provider factory、得到 singleton/scope/transient 实例的步骤。它必须位于 descriptor lookup 和 `AssemblyPolicy` 之后；factory 的连接、句柄或缓存初始化都属于可能失败的构造副作用，不能在 metadata lookup 中提前发生。
+
 ### CallPermission：调用期能否使用
 
-**CallPermission** 判断当前 caller、resource 和 Run 是否可以使用已经解析到的能力。它发生在 Tool/Service 的实际调用边界，必须重新检查主体、资源、参数和 Run 状态；不能因为装配期允许就跳过。
+**CallPermission** 判断当前 caller、resource 和 Run 是否可以使用已经装配的能力。它发生在 Tool/Service 的实际调用入口，必须重新检查主体、资源、参数和 Run 状态；不能因为装配期允许就跳过。
 
 ## 注入数据流与生命周期
 
 ```mermaid
 flowchart TD
-    Manifest[Plugin inject 声明] --> Graph[依赖图与拓扑检查]
-    Graph --> Scope[当前 Host/Agent/Session scope]
-    Scope --> Container[Capability Container]
-    Provider[Provider 工厂/实例] --> Container
-    Container --> Resolve{Implementation resolution}
-    Resolve -->|缺失/循环| Fail[注册失败或降级]
-    Resolve --> AssemblyPolicy{AssemblyPolicy：scope/依赖/配置}
-    AssemblyPolicy -->|拒绝装配| Fail
-    AssemblyPolicy -->|允许挂载| Inject[注入 Plugin/Tool/Hook]
-    Inject --> Run[一次执行请求]
-    Run --> CallPermission{CallPermission：caller/resource/Run}
-    CallPermission -->|拒绝| Deny[拒绝并审计]
-    CallPermission -->|允许| Use[调用能力实现]
-    Use --> Event[生命周期/审计事件]
+    Manifest["Plugin inject 声明"] --> Graph["依赖图与拓扑检查"]
+    Graph --> Scope["当前 Host/Agent/Session scope"]
+    Scope --> Container["Capability Container"]
+    Provider["Provider descriptor + factory metadata"] --> Container
+    Container --> DescriptorLookup{descriptor / metadata lookup}
+    DescriptorLookup -->|缺失/循环/元数据无效| Fail["注册失败或降级"]
+    DescriptorLookup --> AssemblyPolicy{"AssemblyPolicy：scope/依赖/配置"}
+    AssemblyPolicy -->|"拒绝装配，不构造"| Fail
+    AssemblyPolicy -->|允许挂载| Inject["注入 Plugin/Tool/Hook"]
+    Inject --> Run["一次执行请求"]
+    Run --> CallPermission{"CallPermission：caller/resource/Run"}
+    CallPermission -->|拒绝| Deny["拒绝并审计"]
+    CallPermission -->|允许| InstanceResolve["resolve / instantiate instance"]
+    InstanceResolve --> Use["调用能力实现"]
+    Use --> Event["生命周期/审计事件"]
     Deny --> Event
-    Scope --> Dispose[scope 结束]
-    Dispose --> Cleanup[逆序 dispose provider]
+    Scope --> Dispose["scope 结束"]
+    Dispose --> Cleanup["逆序 dispose provider"]
     Container --> Cleanup
 
     classDef core fill:transparent,stroke:currentColor,color:currentColor,stroke-width:1px;
-    class Manifest,Graph,Scope,Container,Provider,Resolve,AssemblyPolicy,Fail,Inject,Run,CallPermission,Deny,Use,Event,Dispose,Cleanup core;
+    class Manifest,Graph,Scope,Container,Provider,DescriptorLookup,AssemblyPolicy,Fail,Inject,Run,CallPermission,InstanceResolve,Deny,Use,Event,Dispose,Cleanup core;
 ```
 
-阅读提示：`Container` 只做 implementation resolution；`AssemblyPolicy` 决定实现能否挂载，`CallPermission` 决定一次调用能否使用。二者都不是容器的隐式副作用，依赖图在装配期检查，scope 结束时按所有权逆序清理。
+阅读提示：`Container` 先做无副作用的 descriptor/metadata lookup；`AssemblyPolicy` 决定实现能否挂载，实例级 `resolve/instantiate` 只能在它之后发生，`CallPermission` 仍位于一次调用入口。二者都不是容器的隐式副作用，依赖图在装配期检查，scope 结束时按所有权逆序清理。
 
 ## 一个带 scope 的本地容器
 
-下面的代码用父子 scope、工厂和 disposer 模拟同名能力覆盖；它展示解析路径，不执行任何外部副作用。
+下面的代码用父子 scope、descriptor、工厂和 disposer 模拟同名能力覆盖；metadata lookup 不会调用工厂，只有装配策略和调用权限都通过后才创建实例。工厂只在内存中追加一个标记，用来证明 transient 没有被 policy 检查重复构造。
 
 ```python
 from __future__ import annotations
@@ -95,28 +106,47 @@ from typing import Callable
 
 
 @dataclass
+class ProviderDescriptor:
+    key: str
+    metadata: dict[str, str]
+    factory: Callable[[], str]
+
+
+@dataclass
 class Scope:
+    name: str
     parent: "Scope | None" = None
-    providers: dict[str, Callable[[], str]] | None = None
+    providers: dict[str, ProviderDescriptor] | None = None
 
     def __post_init__(self) -> None:
         if self.providers is None:
             self.providers = {}
         self._disposers: list[Callable[[], None]] = []
 
-    def provide(self, key: str, factory: Callable[[], str], dispose: Callable[[], None] | None = None) -> None:
+    def provide(
+        self,
+        key: str,
+        factory: Callable[[], str],
+        metadata: dict[str, str],
+        dispose: Callable[[], None] | None = None,
+    ) -> None:
         if key in self.providers:
             raise ValueError(f"duplicate capability: {key}")
-        self.providers[key] = factory
+        self.providers[key] = ProviderDescriptor(key, dict(metadata), factory)
         if dispose is not None:
             self._disposers.append(dispose)
 
-    def resolve(self, key: str) -> str:
+    def lookup_descriptor(self, key: str) -> ProviderDescriptor:
+        """只读 metadata；不会调用 factory。"""
         if key in self.providers:
-            return self.providers[key]()
+            return self.providers[key]
         if self.parent is not None:
-            return self.parent.resolve(key)
-        raise LookupError(f"missing capability: {key}")
+            return self.parent.lookup_descriptor(key)
+        raise LookupError(f"missing provider descriptor: {key}")
+
+    def instantiate(self, descriptor: ProviderDescriptor) -> str:
+        """AssemblyPolicy 之后才调用；transient 每次批准调用只进来一次。"""
+        return descriptor.factory()
 
     def dispose(self) -> None:
         for disposer in reversed(self._disposers):
@@ -124,13 +154,12 @@ class Scope:
         self._disposers.clear()
 
 
-def assembly_policy(scope: Scope, key: str) -> bool:
-    """装配期检查：当前 scope 是否允许挂载这个 capability。"""
-    try:
-        scope.resolve(key)
-    except LookupError:
-        return False
-    return key != "workspace.write"
+def assembly_policy(scope: Scope, descriptor: ProviderDescriptor) -> bool:
+    """只检查 descriptor metadata；不会构造实例。"""
+    return (
+        descriptor.key != "workspace.write"
+        and descriptor.metadata.get("scope") == scope.name
+    )
 
 
 def call_permission(subject: str, resource: str, run_id: str) -> bool:
@@ -138,28 +167,59 @@ def call_permission(subject: str, resource: str, run_id: str) -> bool:
     return subject == "reviewer" and resource == "workspace.read" and run_id.startswith("run-")
 
 
-host = Scope()
-host.provide("logger", lambda: "host-logger")
-agent = Scope(parent=host)
-agent.provide("logger", lambda: "agent-logger")
-agent.provide("workspace.read", lambda: "read-only")
-print(agent.resolve("logger"))
-print(agent.resolve("workspace.read"))
-print(assembly_policy(agent, "workspace.read"))
-print(call_permission("reviewer", "workspace.read", "run-7"))
+def invoke(scope: Scope, key: str, subject: str, resource: str, run_id: str) -> str:
+    """调用入口：lookup -> AssemblyPolicy -> CallPermission -> instantiate。"""
+    descriptor = scope.lookup_descriptor(key)  # metadata lookup，不构造实例
+    if not assembly_policy(scope, descriptor):
+        raise PermissionError("assembly policy denied")
+    if not call_permission(subject, resource, run_id):
+        raise PermissionError("call permission denied")
+    return scope.instantiate(descriptor)  # 对 transient 只构造这一次
+
+
+created: list[str] = []
+
+
+def make_read_only() -> str:
+    created.append("workspace.read")
+    return "read-only"
+
+
+host = Scope(name="host")
+host.provide("logger", lambda: "host-logger", {"scope": "host", "lifecycle": "singleton"})
+agent = Scope(name="agent", parent=host)
+agent.provide("logger", lambda: "agent-logger", {"scope": "agent", "lifecycle": "scope"})
+agent.provide(
+    "workspace.read",
+    make_read_only,
+    {"scope": "agent", "lifecycle": "transient"},
+)
+
+descriptor = agent.lookup_descriptor("workspace.read")
+print(descriptor.metadata)
+print(created)  # lookup 没有调用 factory
+print(invoke(agent, "workspace.read", "reviewer", "workspace.read", "run-7"))
+print(created)  # instantiate 只调用一次
 try:
-    agent.resolve("workspace.write")
+    invoke(agent, "workspace.read", "guest", "workspace.read", "run-7")
+except PermissionError as error:
+    print(type(error).__name__, str(error))
+print(created)  # 被拒绝的调用没有二次构造
+try:
+    agent.lookup_descriptor("workspace.write")
 except LookupError as error:
     print(type(error).__name__, str(error))
 agent.dispose()
-# 输出：agent-logger
+# 输出：{'scope': 'agent', 'lifecycle': 'transient'}
+# 输出：[]
 # 输出：read-only
-# 输出：True
-# 输出：True
-# 输出：LookupError missing capability: workspace.write
+# 输出：['workspace.read']
+# 输出：PermissionError call permission denied
+# 输出：['workspace.read']
+# 输出：LookupError missing provider descriptor: workspace.write
 ```
 
-“解析得到 `workspace.read`”只说明容器存在实现；`assembly_policy` 只表示装配期允许挂载，真正把它暴露为 Tool 时还要用 `call_permission` 检查调用者、资源和当前 Run 的 allowlist。
+查到 `workspace.read` 的 descriptor 只说明注册表有实现元数据；它没有调用 factory。`assembly_policy` 只检查装配期 scope 和配置，真正进入 Tool 调用入口时还要用 `call_permission` 检查调用者、资源和当前 Run 的 allowlist，最后才允许 `instantiate` 创建一次 transient 实例。
 
 ### `inject`：声明而不是隐式读取
 
@@ -167,11 +227,11 @@ agent.dispose()
 
 ### Provider 生命周期：singleton、scope 和 transient
 
-Provider 可以返回 Host 级共享实例、每个 Agent scope 一个实例，或每次解析都新建实例。生命周期必须和 disposer、并发安全及缓存策略一起定义；“默认单例”不是普遍正确的选择。
+Provider 可以创建 Host 级共享实例、每个 Agent scope 一个实例，或每次获准调用都新建实例。生命周期必须和 disposer、并发安全及缓存策略一起定义；“默认单例”不是普遍正确的选择。无论是哪种生命周期，metadata lookup 都不应提前构造，transient 也不能在 policy 检查与真正调用之间重复 instantiate。
 
-### Container 与 Permission：解析之后再门控
+### Container 与 Permission：实例化前后各有门
 
-一个 Container 若把 `shell.exec` 注入 Plugin，只表示 implementation resolution 成功；`AssemblyPolicy` 可能仍禁止该 Provider 进入当前 composition，`CallPermission` 也可能禁止当前 Agent、workspace 或 Run 调用它。安全边界最好在 Tool/Service 的实际入口再次检查，避免能力引用被转发到不该看到的范围。
+一个 Container 若登记 `shell.exec` 的 descriptor，只表示 metadata lookup 成功；`AssemblyPolicy` 仍可能禁止该 Provider 进入当前 composition，`CallPermission` 也可能禁止当前 Agent、workspace 或 Run 调用它。实例化前先完成装配策略，Tool/Service 的实际入口再做调用权限检查，避免构造副作用或能力引用被转发到不该看到的范围。
 
 ### 依赖循环：让错误在装配时出现
 
@@ -198,12 +258,12 @@ MCP 初始化阶段的 capability 是连接双方声明能支持哪些协议能�
 1. provider 注册到哪个 scope，名字是否全局唯一？
 2. `inject` 与 `AssemblyPolicy` 何时检查，缺失依赖是否阻止启动？
 3. 父子 scope 的同名覆盖规则是什么？
-4. resolve 返回实例后，调用入口是否再次执行 `CallPermission`？
+4. descriptor lookup、`AssemblyPolicy`、`instantiate/resolve` 和调用入口的 `CallPermission` 分别发生在什么时候？
 5. scope dispose 如何释放 provider、事件监听和缓存？
 
 ## 易混点
 
-- **解析成功不等于授权成功**：Container 只解决 implementation resolution，`AssemblyPolicy` 与 `CallPermission` 分别决定能否挂载、能否调用。
+- **查到 descriptor 不等于创建实例或授权成功**：Container 只做 metadata lookup，`AssemblyPolicy` 与 `CallPermission` 分别决定能否装配、能否调用，`instantiate/resolve` 只能在前者之后发生。
 - **DI 不等于 Service Locator**：组件主动从全局容器取值会隐藏依赖，降低可测试性和所有权清晰度。
 - **MCP capability 不等于 DI capability**：协议协商和进程内实例解析解决不同问题。
 - **子 scope 覆盖不等于全局替换**：父 scope 的其他消费者仍可能使用原 provider。
@@ -231,9 +291,9 @@ MCP 初始化阶段的 capability 是连接双方声明能支持哪些协议能�
 
 ## 本节小结
 
-- Capability 是契约，Container 解析实现，DI 显式注入，Scope 决定可见范围。
+- Capability 是契约，Container 查 descriptor，DI 显式注入，Scope 决定可见范围，instantiate 才创建实现实例。
 - 依赖图、重复检查、`AssemblyPolicy`、`CallPermission` 和 disposer 共同构成安全的容器生命周期。
-- implementation resolution、装配期 policy、调用期 permission、协议协商与进程内 DI 必须分开描述。
+- metadata lookup、instance creation、装配期 policy、调用期 permission、协议协商与进程内 DI 必须分开描述。
 - 阅读 Cordis/Plugin 源码时沿 scope → inject → service → effect/dispose 追踪。
 
 ## 快速回顾
