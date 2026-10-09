@@ -101,7 +101,7 @@ flowchart LR
 
 ## 一个可运行的文本 Ingestion 示例
 
-下面用标准库实现 Markdown 文本的最小导入：计算 checksum、提取标题路径、规范化空白并输出统一记录。它不连接真实文件或索引，便于先理解数据形状。
+下面用标准库实现 Markdown 文本的最小导入：计算 checksum、按正文位置维护当前标题路径、规范化空白并输出统一记录。它不连接真实文件或索引，便于先理解数据形状。
 
 ```python
 from dataclasses import asdict, dataclass
@@ -111,11 +111,17 @@ import re
 
 
 @dataclass(frozen=True)
+class DocumentSection:
+    text: str
+    section_path: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class DocumentRecord:
     source_id: str
     version: str
     text: str
-    section_path: tuple[str, ...]
+    sections: tuple[DocumentSection, ...]
     checksum: str
 
 
@@ -123,14 +129,33 @@ def ingest_markdown(source_id: str, raw: str) -> DocumentRecord:
     normalized = raw.replace("\r\n", "\n").replace("\r", "\n")
     normalized = re.sub(r"[ \t]+", " ", normalized)
     normalized = re.sub(r"\n{3,}", "\n\n", normalized).strip()
-    headings = tuple(match.group(2).strip() for match in re.finditer(r"^(#{1,3})[ \t]+(.+)$", normalized, re.MULTILINE))
+    heading_stack: list[str] = []
+    sections: list[DocumentSection] = []
+    body: list[str] = []
+
+    def flush() -> None:
+        if body:
+            sections.append(DocumentSection(" ".join(body), tuple(heading_stack)))
+            body.clear()
+
+    for line in normalized.splitlines():
+        heading = re.match(r"^(#{1,3})[ \t]+(.+)$", line)
+        if heading:
+            flush()
+            level = len(heading.group(1))
+            heading_stack[:] = heading_stack[: level - 1] + [heading.group(2).strip()]
+        elif line.strip():
+            body.append(line.strip())
+    flush()
     checksum = hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:12]
-    return DocumentRecord(source_id, checksum, normalized, headings, checksum)
+    return DocumentRecord(source_id, checksum, normalized, tuple(sections), checksum)
 
 
-record = ingest_markdown("notes/rag.md", "# RAG\r\n\r\n## Pipeline\r\n\r\n\r\n检索。")
+record = ingest_markdown("notes/rag.md", "# RAG\r\n\r\n## Pipeline\r\n\r\n\r\n检索。\r\n\r\n## Metadata\r\n\r\n过滤。")
+print([(section.section_path, section.text) for section in record.sections])
+# 输出：[(('RAG', 'Pipeline'), '检索。'), (('RAG', 'Metadata'), '过滤。')]
 print(json.dumps(asdict(record), ensure_ascii=False, indent=2))
-# 输出：包含 source_id、version、规范化后的 text、section_path 和 checksum 的 JSON 记录
+# 输出：包含 source_id、version、规范化后的 text、按正文位置保存的 sections 和 checksum
 # 输出：version 与 checksum 的示例值会随输入内容变化
 ```
 

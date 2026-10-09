@@ -102,7 +102,7 @@ flowchart TD
 
 ## 一个结构感知的最小分块器
 
-下面按 Markdown 标题建立 section path，再把正文按字符预算切成带位置的 chunk；代码只用标准库，便于理解数据如何流动。
+下面按 Markdown 标题建立 section path，再把正文按字符预算切成带位置的 chunk；代码只用标准库，便于理解数据如何流动。这个示例把 `max_chars` 定义为硬上限：如果单行过长，也会按字符切开；真实项目可以在硬切之前优先按句号、空格或语法边界切。
 
 ```python
 from dataclasses import asdict, dataclass
@@ -119,6 +119,8 @@ class Chunk:
 
 
 def chunk_markdown(source_id: str, markdown: str, max_chars: int = 36) -> list[Chunk]:
+    if max_chars < 1:
+        raise ValueError("max_chars must be positive")
     path: list[str] = []
     chunks: list[Chunk] = []
     buffer: list[str] = []
@@ -127,8 +129,9 @@ def chunk_markdown(source_id: str, markdown: str, max_chars: int = 36) -> list[C
     def flush() -> None:
         nonlocal ordinal
         text = " ".join(buffer).strip()
-        if text:
-            chunks.append(Chunk(f"{source_id}#{ordinal}", text, tuple(path), ordinal))
+        while text:
+            part, text = text[:max_chars], text[max_chars:].lstrip()
+            chunks.append(Chunk(f"{source_id}#{ordinal}", part, tuple(path), ordinal))
             ordinal += 1
         buffer.clear()
 
@@ -151,6 +154,8 @@ items = chunk_markdown("rag.md", "# RAG\n## Chunking\nChunk 要保留标题。\n
 print(json.dumps([asdict(item) for item in items], ensure_ascii=False))
 # 输出：每个对象都有 chunk_id、text、section_path 和 ordinal
 # 输出：section_path 会把 Chunking 或 Metadata 标题带到对应片段
+print(max(len(item.text) for item in items))
+# 输出：20 以内；超长单行也会被硬切成不超过 max_chars 的片段
 ```
 
 示例用字符数代替 token 数，真实系统应使用目标模型或 embedding 模型对应的 tokenizer，并为代码块、表格、超长单句增加专门策略。

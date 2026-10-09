@@ -266,6 +266,26 @@ test('chapter 08 RAG articles are complete and searchable', () => {
   }
 })
 
+test('chapter 08 RAG examples pin section paths, hard chunk limits, and no-answer recall', () => {
+  const ingestion = readArticle('docs/courses/agent/08-RAG与上下文工程/02-Ingestion解析与清洗.md')
+  assert.match(ingestion, /heading_stack[\s\S]*heading_stack\[: level - 1\]/,
+    'ingestion should maintain the current heading hierarchy')
+  assert.match(ingestion, /DocumentSection[\s\S]*section_path/,
+    'ingestion should attach section_path to the body section at its position')
+
+  const chunking = readArticle('docs/courses/agent/08-RAG与上下文工程/03-Chunking与元数据.md')
+  assert.match(chunking, /while text:[\s\S]*text\[:max_chars\]/,
+    'chunking should hard-split an overlong line at max_chars')
+  assert.match(chunking, /max_chars must be positive/,
+    'chunking should reject an invalid hard limit')
+
+  const evaluation = readArticle('docs/courses/agent/08-RAG与上下文工程/07-检索评测与生成评测.md')
+  assert.match(evaluation, /if not relevant:\s*\n\s*return None/,
+    'recall should not treat a no-answer case as perfect recall')
+  assert.match(evaluation, /measured = \[value for value in values if value is not None\]/,
+    'mean recall should skip no-answer samples explicitly')
+})
+
 test('chapter 06 locks the MCP 2026-07-28 protocol baseline', () => {
   const chapter = readRoadmap().chapters.find(({ id }) => id === '06')
   const sources = chapter.articles.map(({ path }) => readArticle(path)).join('\n')
