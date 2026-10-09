@@ -79,6 +79,8 @@ StepStatus = Literal["pending", "running", "succeeded", "failed"]
 class Step:
     step_id: str
     action: Callable[[], str]
+    done_when: Callable[[str], bool]
+    idempotency_key: str
     depends_on: tuple[str, ...] = ()
     status: StepStatus = "pending"
     result: str | None = None
@@ -90,6 +92,7 @@ class Plan:
     goal: str
     steps: dict[str, Step]
     events: list[str] = field(default_factory=list)
+    completed_keys: set[str] = field(default_factory=set)
 
 
 def ready_steps(plan: Plan) -> list[Step]:
@@ -106,8 +109,17 @@ def execute_plan(plan: Plan) -> Plan:
         step.status = "running"
         plan.events.append(f"start:{step.step_id}")
         try:
-            step.result = step.action()
+            if step.idempotency_key in plan.completed_keys:
+                step.result = "已有结果"
+                step.status = "succeeded"
+                plan.events.append(f"skip:{step.step_id}:{step.idempotency_key}")
+                continue
+            result = step.action()
+            if not step.done_when(result):
+                raise ValueError("done_when rejected result")
+            step.result = result
             step.status = "succeeded"
+            plan.completed_keys.add(step.idempotency_key)
             plan.events.append(f"success:{step.step_id}")
         except Exception as exc:
             step.status = "failed"
@@ -120,19 +132,21 @@ def execute_plan(plan: Plan) -> Plan:
 plan = Plan(
     goal="生成周报",
     steps={
-        "collect": Step("collect", lambda: "收集完成"),
-        "summarize": Step("summarize", lambda: "摘要完成", ("collect",)),
-        "publish": Step("publish", lambda: "发布完成", ("summarize",)),
+        "collect": Step("collect", lambda: "收集完成", lambda result: result.endswith("完成"), "weekly:collect"),
+        "summarize": Step("summarize", lambda: "摘要完成", lambda result: result.endswith("完成"), "weekly:summarize", ("collect",)),
+        "publish": Step("publish", lambda: "发布完成", lambda result: result.endswith("完成"), "weekly:publish", ("summarize",)),
     },
 )
 execute_plan(plan)
+plan.steps["publish"].status = "pending"  # 模拟从 checkpoint 恢复后重复投递同一个步骤
+execute_plan(plan)
 print([step.status for step in plan.steps.values()])
-print(plan.events)
+print(plan.events[-1])
 # 输出：['succeeded', 'succeeded', 'succeeded']
-# 输出：['start:collect', 'success:collect', 'start:summarize', 'success:summarize', 'start:publish', 'success:publish']
+# 输出：skip:publish:weekly:publish
 ```
 
-这里的输入是“生成周报”以及 `collect → summarize → publish` 的依赖；输出同时包含每个步骤的状态和事件顺序。真实系统还应把这些字段写入 checkpoint，而不是只留在内存里。
+这里的输入是“生成周报”以及 `collect → summarize → publish` 的依赖；`done_when` 验证动作结果，`idempotency_key` 和 `completed_keys` 让恢复后的重复投递只记录跳过而不再次执行。真实系统还应把这些字段写入 checkpoint，而不是只留在内存里。
 
 ## Planner 的职责
 

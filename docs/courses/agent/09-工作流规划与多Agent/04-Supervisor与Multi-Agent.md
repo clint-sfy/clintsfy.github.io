@@ -53,9 +53,11 @@ flowchart TD
     R2 --> Sup
     R3 --> Sup
     Sup --> Judge{完成条件满足?}
+    Judge -->|证据缺失| Review[复核并标记 partial]
     Judge -->|否| Recover[重试/换 Worker/人工接管]
     Recover --> Sup
     Judge -->|是| Aggregate[汇总并写入父状态]
+    Review --> End[返回带缺口的结果]
     Aggregate --> Done[父任务完成]
 ```
 
@@ -111,6 +113,8 @@ class WorkerResult:
     status: WorkerStatus
     facts: tuple[str, ...]
     evidence: tuple[str, ...]
+    warnings: tuple[str, ...] = ()
+    side_effects: tuple[str, ...] = ()
     error: str | None = None
 
 
@@ -118,7 +122,9 @@ def run_worker(task_id: str, topic: str) -> WorkerResult:
     if topic == "billing":
         return WorkerResult(task_id, "succeeded", ("金额已核对",), ("invoice-42",))
     if topic == "unknown":
-        return WorkerResult(task_id, "failed", (), (), "unsupported topic")
+        return WorkerResult(task_id, "failed", (), (), ("worker failed",), (), "unsupported topic")
+    if topic == "no-evidence":
+        return WorkerResult(task_id, "succeeded", ("草稿已生成",), (), ("missing evidence",), ())
     return WorkerResult(task_id, "succeeded", (f"{topic} 已检查",), (f"source:{topic}",))
 
 
@@ -126,20 +132,25 @@ def supervise(tasks: list[tuple[str, str]]) -> dict[str, object]:
     results = [run_worker(task_id, topic) for task_id, topic in tasks]
     accepted = [result for result in results if result.status == "succeeded" and result.evidence]
     failed = [result.task_id for result in results if result.status == "failed"]
+    review = [result.task_id for result in results if result.status == "succeeded" and not result.evidence]
+    status = "succeeded" if not failed and not review else "partial" if accepted or review else "failed"
     return {
-        "status": "succeeded" if not failed else "partial",
+        "status": status,
         "facts": [fact for result in accepted for fact in result.facts],
         "evidence": [source for result in accepted for source in result.evidence],
         "failed_tasks": failed,
+        "review_tasks": review,
+        "warnings": [warning for result in results for warning in result.warnings],
+        "side_effects": [effect for result in results for effect in result.side_effects],
     }
 
 
-report = supervise([("t-1", "billing"), ("t-2", "unknown")])
+report = supervise([("t-1", "billing"), ("t-2", "unknown"), ("t-3", "no-evidence")])
 print(report)
-# 输出：{'status': 'partial', 'facts': ['金额已核对'], 'evidence': ['invoice-42'], 'failed_tasks': ['t-2']}
+# 输出：{'status': 'partial', 'facts': ['金额已核对'], 'evidence': ['invoice-42'], 'failed_tasks': ['t-2'], 'review_tasks': ['t-3'], 'warnings': ['worker failed', 'missing evidence'], 'side_effects': []}
 ```
 
-输入中的 `t-2` 故意失败；Supervisor 没有把整体伪装成成功，而是保留可验证结果并标记 `partial`。真实系统还要把每个 Worker 的重试、超时和权限决策写入审计事件。
+输入中的 `t-2` 故意失败，`t-3` 返回成功但没有证据；Supervisor 不会静默丢弃 `t-3`，而是放进 `review_tasks` 并标记整体 `partial`。`warnings` 和 `side_effects` 也随结果汇总，真实系统还要把每个 Worker 的重试、超时和权限决策写入审计事件。
 
 ## 共享状态与消息汇总
 

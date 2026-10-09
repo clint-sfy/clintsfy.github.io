@@ -46,3 +46,22 @@ test('chapter 09 keeps failure semantics visible', () => {
     assert.match(sources, new RegExp(term), `chapter 09 should explain ${term}`)
   }
 })
+
+test('chapter 09 examples enforce the reviewed safety branches', () => {
+  const read = (name) => readFileSync(join(chapterRoot, name), 'utf8')
+  const workflow = read('01-Workflow与状态机.md')
+  const planning = read('02-Planning与Plan-and-Execute.md')
+  const supervisor = read('04-Supervisor与Multi-Agent.md')
+  const approval = read('05-Interrupt审批与恢复.md')
+
+  assert.match(workflow, /Literal\[[^\n]*cancelled/)
+  assert.match(workflow, /if state\.status != "validated"[\s\S]*if state\.idempotency_key in executed_keys/)
+  assert.match(planning, /done_when: Callable\[\[str\], bool\]/)
+  assert.match(planning, /idempotency_key: str[\s\S]*completed_keys[\s\S]*step\.done_when\(result\)/)
+  assert.match(supervisor, /warnings: tuple\[str, \.\.\.\][\s\S]*side_effects: tuple\[str, \.\.\.\]/)
+  assert.match(supervisor, /review = \[result\.task_id[\s\S]*not result\.evidence\]/)
+  assert.match(supervisor, /review_tasks.*review/)
+  assert.match(approval, /command\.actor not in checkpoint\.allowed_actors/)
+  assert.match(approval, /command\.idempotency_key in checkpoint\.executed_keys[\s\S]*duplicate approval/)
+  assert.match(approval, /checkpoint\.status != "waiting"/)
+})

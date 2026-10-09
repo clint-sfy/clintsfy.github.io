@@ -88,6 +88,7 @@ class Checkpoint:
     approval_id: str | None = None
     expires_at: int = 0
     executed_keys: frozenset[str] = frozenset()
+    allowed_actors: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -104,14 +105,18 @@ class ResumeCommand:
 def resume(checkpoint: Checkpoint, command: ResumeCommand) -> Checkpoint:
     if command.run_id != checkpoint.run_id:
         raise ValueError("run mismatch")
+    if command.actor not in checkpoint.allowed_actors:
+        raise PermissionError("actor is not authorized")
+    if command.idempotency_key in checkpoint.executed_keys:
+        raise ValueError("duplicate approval")
+    if checkpoint.status != "waiting":
+        raise ValueError("checkpoint is not waiting")
     if command.expected_version != checkpoint.version:
         raise ValueError("stale checkpoint")
     if command.approval_id != checkpoint.approval_id:
         raise ValueError("approval mismatch")
     if command.now >= checkpoint.expires_at:
         return replace(checkpoint, version=checkpoint.version + 1, status="expired")
-    if command.idempotency_key in checkpoint.executed_keys:
-        return checkpoint
     if command.decision == "reject":
         return replace(checkpoint, version=checkpoint.version + 1, status="rejected")
     return replace(
@@ -122,17 +127,27 @@ def resume(checkpoint: Checkpoint, command: ResumeCommand) -> Checkpoint:
     )
 
 
-checkpoint = Checkpoint("run-7", 4, "delete-temp", "waiting", "approval-9", expires_at=100)
+checkpoint = Checkpoint(
+    run_id="run-7",
+    version=4,
+    action="delete-temp",
+    status="waiting",
+    approval_id="approval-9",
+    expires_at=100,
+    allowed_actors=frozenset({"alice"}),
+)
 command = ResumeCommand("run-7", 4, "approval-9", "approve", "alice", "resume-1", now=20)
 approved = resume(checkpoint, command)
 print(approved.status, approved.version)
-again = ResumeCommand("run-7", 5, "approval-9", "approve", "alice", "resume-1", now=20)
-print(resume(approved, again).status)
+try:
+    resume(approved, command)
+except ValueError as exc:
+    print(exc)
 # 输出：approved 5
-# 输出：approved
+# 输出：duplicate approval
 ```
 
-输入是版本为 4 的等待审批 checkpoint 和 Alice 的批准命令；第一次恢复进入 `approved`，重复提交同一个命令不会再次改变状态。批准后是否执行动作，还应由后续节点根据新版本继续。
+输入是版本为 4、只允许 Alice 审批的等待状态 checkpoint；第一次恢复进入 `approved`，重复提交同一个命令会被明确拒绝。批准后是否执行动作，还应由后续节点根据新版本继续。
 
 ## ResumeCommand 的校验
 

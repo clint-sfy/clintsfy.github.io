@@ -47,10 +47,12 @@ stateDiagram-v2
     Plan --> Execute
     Execute --> Succeeded: 结果满足条件
     Execute --> Retryable: 临时失败且有预算
+    Execute --> Cancelled: 收到取消
     Retryable --> Execute: 退避后重试
     Execute --> Failed: 不可重试或超预算
     Succeeded --> [*]
     Failed --> [*]
+    Cancelled --> [*]
 ```
 
 阅读这张图时，先看每个节点的责任，再看每条边的条件。`Retryable` 不是“失败后必然重试”，它仍然要经过重试预算、幂等性和取消状态检查。
@@ -76,7 +78,7 @@ from dataclasses import dataclass, replace
 from typing import Literal
 
 
-Status = Literal["new", "validated", "executed", "succeeded", "failed"]
+Status = Literal["new", "validated", "executed", "succeeded", "failed", "cancelled"]
 
 
 @dataclass(frozen=True)
@@ -99,10 +101,10 @@ def validate(state: WorkflowState) -> WorkflowState:
 
 
 def execute(state: WorkflowState) -> WorkflowState:
-    if state.idempotency_key in executed_keys:
-        return replace(state, status="succeeded")
     if state.status != "validated":
         return replace(state, status="failed", error="unexpected state")
+    if state.idempotency_key in executed_keys:
+        return replace(state, status="succeeded")
     if inventory["book"] < state.quantity:
         return replace(state, status="failed", error="out of stock")
     inventory["book"] -= state.quantity
@@ -113,14 +115,15 @@ def execute(state: WorkflowState) -> WorkflowState:
 state = WorkflowState(order_id="o-100", quantity=1)
 state = validate(state)
 state = execute(state)
-again = execute(state)
+retry_state = validate(WorkflowState(order_id="o-100", quantity=1))
+again = execute(retry_state)
 print(state.status, inventory["book"])
 print(again.status, inventory["book"])
 # 输出：succeeded 2
 # 输出：succeeded 2
 ```
 
-这里的输入是 `order_id=o-100、quantity=1`；`validate` 产生幂等键，`execute` 第一次扣库存，第二次即使被重放也只返回已有结果。
+这里的输入是 `order_id=o-100、quantity=1`；两次执行都先经过 `validated` 状态检查，再由同一个幂等键识别第二次请求。非法状态不会因为碰巧复用了幂等键而被当成成功。
 
 ## Edge 如何表达转移
 
