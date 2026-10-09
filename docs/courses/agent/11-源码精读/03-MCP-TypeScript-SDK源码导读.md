@@ -252,7 +252,13 @@ MCP TypeScript SDK 的关键分层是 `Client/McpServer → Protocol → Transpo
 - 传输：stdio 或 Streamable HTTP 只搬运 JSON-RPC。
 - 版本：v2.3.1、`main`、Node >=20；v1 在 `v1.x`。
 
-如果要单独查看完整发现结果，仍可在已连接的 client 上显式调用 `client.discover()`；上例的 `auto` 连接已经用 discover 完成了协商，不需要为了建立连接再重复调用。
+上例的 `auto` 连接已经在协商阶段完成现代 discover 探测。读取这次探测结果时优先使用 `client.getDiscoverResult()`；只有 `client.getProtocolEra() === "modern"` 且没有缓存结果时，才显式调用 `client.discover()` 刷新结果。若 auto 回退到 legacy，`getDiscoverResult()` 可能是 `undefined`，不要在 legacy 连接上强行调用现代 discover。
+
+```typescript
+const discovery =
+  client.getDiscoverResult() ??
+  (client.getProtocolEra() === "modern" ? await client.discover() : undefined);
+```
 
 ## 官方源码与文档
 
