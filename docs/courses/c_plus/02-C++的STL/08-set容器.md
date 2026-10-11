@@ -168,7 +168,7 @@ ostream& operator << (ostream &out, Person ob)
 }
 
 
-// 输出：class MyComparePerson
+class MyComparePerson
 {
     public:
     bool operator()(Person ob1, Person ob2)
