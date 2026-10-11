@@ -96,7 +96,7 @@ using namespace std;
 class MyCompare
 {
     public:
-    bool operator()(int v1, int v2)
+    bool operator()(int v1, int v2) const
     {
         return v1>v2;
     }
@@ -171,7 +171,7 @@ ostream& operator << (ostream &out, Person ob)
 class MyComparePerson
 {
     public:
-    bool operator()(Person ob1, Person ob2)
+    bool operator()(Person ob1, Person ob2) const
     {
         return ob1.num < ob2.num;
     }
