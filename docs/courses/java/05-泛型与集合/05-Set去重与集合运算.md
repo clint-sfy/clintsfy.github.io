@@ -40,7 +40,6 @@ description: 速查 HashSet、LinkedHashSet、TreeSet、EnumSet 的去重、排�
 `HashSet()` 创建一个初始为空的可变集合，它依赖元素的 `hashCode` 和 `equals` 去重，但不保证迭代顺序。
 
 ```java
-// 语义：HashSet 初始为空；加入 "java" 和 "sql" 后保留两个不同元素。
 import java.util.HashSet;
 import java.util.Set;
 
@@ -56,7 +55,6 @@ System.out.println(tags.size());
 add 在元素尚不存在时写入并返回 true，重复元素不会再次加入。
 
 ```java
-// 语义：add 在元素尚不存在时写入并返回 true，重复元素不会再次加入。
 import java.util.HashSet;
 import java.util.Set;
 
@@ -76,7 +74,6 @@ public class SetAddDemo {
 contains 按集合的相等规则查询元素，HashSet 通常依赖 hashCode 和 equals。
 
 ```java
-// 语义：contains 按集合的相等规则查询元素，HashSet 通常依赖 hashCode 和 equals。
 import java.util.HashSet;
 import java.util.Set;
 
@@ -96,7 +93,6 @@ public class SetContainsDemo {
 remove 删除匹配元素并返回是否成功，目标不存在时集合保持不变。
 
 ```java
-// 语义：remove 删除匹配元素并返回是否成功，目标不存在时集合保持不变。
 import java.util.HashSet;
 import java.util.Set;
 
@@ -116,7 +112,6 @@ public class SetRemoveDemo {
 LinkedHashSet 在 HashSet 的去重基础上维护插入顺序，适合去重后稳定展示；需要排序时改用 TreeSet。
 
 ```java
-// 语义：LinkedHashSet 在 HashSet 的去重基础上维护插入顺序，适合去重后稳定展示。
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -137,7 +132,6 @@ public class LinkedHashSetDemo {
 addAll 把另一个集合的元素加入当前集合，重复元素自动忽略；这是原地操作，需要保留原集合时先复制。
 
 ```java
-// 语义：addAll 把另一个集合的元素加入当前集合，重复元素自动忽略。
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -156,7 +150,6 @@ public class SetUnionDemo {
 retainAll 只保留当前集合和参数集合共有的元素，属于原地修改。
 
 ```java
-// 语义：retainAll 只保留当前集合和参数集合共有的元素，属于原地修改。
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -164,7 +157,6 @@ public class SetIntersectionDemo {
     public static void main(String[] args) {
         Set<String> common = new LinkedHashSet<>(Set.of("java", "sql", "web"));
         common.retainAll(Set.of("java", "web"));
-        // 关键变化：common.retainAll(Set.of("java", "web"));；只保留 java 和 web，删除 sql，返回 true；common 变为 [java, web]。
         System.out.println(common);
         // 输出：[java, web]
     }
@@ -176,7 +168,6 @@ public class SetIntersectionDemo {
 removeAll 删除当前集合中出现在参数集合里的元素；参数集合很大时可考虑它的查找复杂度。
 
 ```java
-// 语义：removeAll 删除当前集合中出现在参数集合里的元素。
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -184,7 +175,6 @@ public class SetDifferenceDemo {
     public static void main(String[] args) {
         Set<String> onlyLeft = new LinkedHashSet<>(Set.of("java", "sql", "web"));
         onlyLeft.removeAll(Set.of("sql"));
-        // 关键变化：onlyLeft.removeAll(Set.of("sql"));；删除 onlyLeft 中的 sql，返回 true；onlyLeft 变为 [java, web]。
         System.out.println(onlyLeft);
         // 输出：[java, web]
     }
@@ -196,7 +186,6 @@ public class SetDifferenceDemo {
 size 返回去重后的元素个数，而不是 add 的调用次数。
 
 ```java
-// 语义：size 返回去重后的元素个数，而不是 add 的调用次数。
 import java.util.HashSet;
 import java.util.Set;
 
@@ -216,7 +205,6 @@ public class SetSizeDemo {
 isEmpty 直接表达“没有元素”，比比较 size 是否为 0 更清晰。
 
 ```java
-// 语义：isEmpty 直接表达“没有元素”，比比较 size 是否为 0 更清晰。
 import java.util.HashSet;
 import java.util.Set;
 
@@ -237,7 +225,6 @@ public class SetIsEmptyDemo {
 clear 删除当前集合的全部元素，但其他指向同一集合的引用仍指向它。
 
 ```java
-// 语义：clear 删除当前集合的全部元素，但其他指向同一集合的引用仍指向它。
 import java.util.HashSet;
 import java.util.Set;
 
@@ -245,7 +232,6 @@ public class SetClearDemo {
     public static void main(String[] args) {
         Set<Integer> set = new HashSet<>(Set.of(1, 2));
         set.clear();
-        // 关键变化：set.clear();；清空 set，无返回值；集合内容变为空。
         System.out.println(set);
         // 输出：[]
     }
@@ -257,7 +243,6 @@ public class SetClearDemo {
 Set.copyOf 复制当前元素结构并拒绝 null；结果不能 add、remove，元素本身如果可变仍不自动深复制。
 
 ```java
-// 语义：Set.copyOf 复制当前元素结构并拒绝 null。
 import java.util.HashSet;
 import java.util.Set;
 
@@ -277,7 +262,6 @@ public class SetCopyOfDemo {
 TreeSet 依靠自然顺序或 Comparator 排列元素，并用比较结果判断重复。
 
 ```java
-// 语义：TreeSet 依靠自然顺序或 Comparator 排列元素，并用比较结果判断重复。
 import java.util.TreeSet;
 
 public class TreeSetOrderDemo {
@@ -297,7 +281,6 @@ public class TreeSetOrderDemo {
 first 返回排序后的第一个元素，空集合调用会抛 NoSuchElementException。
 
 ```java
-// 语义：first 返回排序后的第一个元素，空集合调用会抛 NoSuchElementException。
 import java.util.TreeSet;
 
 public class TreeSetFirstDemo {
@@ -316,7 +299,6 @@ public class TreeSetFirstDemo {
 last 返回排序后的最后一个元素，调用前要确认集合不为空。
 
 ```java
-// 语义：last 返回排序后的最后一个元素，调用前要确认集合不为空。
 import java.util.TreeSet;
 
 public class TreeSetLastDemo {
@@ -335,7 +317,6 @@ public class TreeSetLastDemo {
 ceiling 返回不小于目标的最近元素，不存在时返回 null。
 
 ```java
-// 语义：ceiling 返回不小于目标的最近元素，不存在时返回 null。
 import java.util.TreeSet;
 
 public class TreeSetCeilingDemo {
@@ -354,7 +335,6 @@ public class TreeSetCeilingDemo {
 floor 返回不大于目标的最近元素，不存在时返回 null。
 
 ```java
-// 语义：floor 返回不大于目标的最近元素，不存在时返回 null。
 import java.util.TreeSet;
 
 public class TreeSetFloorDemo {
@@ -480,7 +460,6 @@ public class EnumSetComplementDemo {
     public static void main(String[] args) {
         EnumSet<Permission> missing =
             EnumSet.complementOf(EnumSet.of(Permission.READ));
-            // 关键变化：EnumSet.complementOf(EnumSet.of(Permission.READ));；按 Permission.READ 调用 of 创建值，返回新实例。
         System.out.println(missing);
         // 输出：[WRITE, DELETE]
     }

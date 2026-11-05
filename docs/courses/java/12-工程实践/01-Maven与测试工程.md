@@ -32,7 +32,6 @@ Maven 坐标由 groupId、artifactId、version 组成，依赖树和 dependencyM
 // 说明：Maven 生命周期：运行测试与工程校验 的具体调用为 String[] lifecycle = {"mvn", "test", "&&", "mvn", "verify"};
 String[] lifecycle = {"mvn", "test", "&&", "mvn", "verify"};
 // 作用：String[] lifecycle = {"mvn", "test", "&&", "mvn", "verify"};；运行测试与工程校验。
-// 初始状态：lifecycle = {"mvn", "test", "&&", "mvn", "verify"}。
 System.out.println(String.join(" ", lifecycle));
 // 输出：构建成功时显示 BUILD SUCCESS，失败时进程返回非零退出码。
 // 命令：mvn test
@@ -50,7 +49,6 @@ import org.junit.jupiter.api.Test;
 
 class PriceTest {
     @Test
-// 初始状态：@Test。
 // 作用：@Test；声明单元测试。
     void totalsTwoItems() {
         assertEquals(30, 10 + 20);
@@ -69,8 +67,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 var error = assertThrows(IllegalArgumentException.class,
         () -> Integer.parseInt("x"));
-// 初始状态：() -> Integer.parseInt("x"))。
-// 初始状态：error = assertThrows(IllegalArgumentException.class,。
 // 作用：var error = assertThrows(IllegalArgumentException.class,；验证异常路径。
 // 输出：error 的类型是 NumberFormatException。
 ```
@@ -82,7 +78,6 @@ var error = assertThrows(IllegalArgumentException.class,
 ```java
 // 说明：SLF4J 参数化日志：记录结构化上下文 的具体调用为 logger.info("order accepted, orderId={}", orderId);
 logger.info("order accepted, orderId={}", orderId);
-// 初始状态：orderId = {}", orderId)。
 // 作用：logger.info("order accepted, orderId={}", orderId);；记录结构化上下文。
 // 输出：INFO order accepted, orderId=42（前提：orderId 为 42 且 INFO 级别已启用）。
 ```
@@ -97,7 +92,6 @@ import jakarta.annotation.PreDestroy;
 class Worker {
     private boolean closed;
     @PreDestroy void close() { closed = true; }
-// 初始状态：closed = true; }。
 // 作用：@PreDestroy void close() { closed = true; }；在容器销毁前释放资源。
     boolean isClosed() { return closed; }
 }
@@ -113,12 +107,10 @@ class Worker {
 import jakarta.annotation.Resource;
 class ReportService {
     @Resource(name = "auditClock")
-// 初始状态：name = "auditClock")。
 // 作用：@Resource(name = "auditClock")；按名称或类型注入依赖。
     java.time.Clock clock;
     long now() { return clock.millis(); }
 // 作用：long now() { return clock.millis(); }；按名称或类型注入依赖。
-// 初始状态：long now() { return clock.millis(); 。
 }
 // 结果：容器把名为 auditClock 的 Bean 注入 clock
 ```
@@ -131,7 +123,6 @@ class ReportService {
 // 说明：Charset.forName：按规范名称查找字符集 的具体调用为 Charset utf8 = Charset.forName("UTF-8");
 import java.nio.charset.Charset;
 Charset utf8 = Charset.forName("UTF-8");
-// 初始状态：utf8 = Charset.forName("UTF-8")。
 // 作用：Charset utf8 = Charset.forName("UTF-8");；按规范名称查找字符集。
 System.out.println(utf8.name());
 // 输出：UTF-8
@@ -149,7 +140,6 @@ System.out.println(utf8.newEncoder().canEncode('中'));
 // 说明：Charset.defaultCharset：读取平台默认字符集 的具体调用为 Charset current = Charset.defaultCharset();
 import java.nio.charset.Charset;
 Charset current = Charset.defaultCharset();
-// 初始状态：current = Charset.defaultCharset()。
 // 作用：Charset current = Charset.defaultCharset();；读取平台默认字符集。
 System.out.println(current != null);
 // 输出：true
@@ -168,9 +158,7 @@ System.out.println(Charset.isSupported(current.name()));
 import java.util.Random;
 var random = new Random(42);
 // 作用：var random = new Random(42);；生成有上界的伪随机整数。
-// 初始状态：random = new Random(42)。
 int value = random.nextInt(10);
-// 初始状态：value = random.nextInt(10)。
 // 作用：int value = random.nextInt(10);；生成有上界的伪随机整数。
 System.out.println(value >= 0);
 // 输出：true
@@ -188,7 +176,6 @@ System.out.println(value);
 // 说明：UUID.randomUUID：生成随机 UUID 的具体调用为 UUID id = UUID.randomUUID();
 import java.util.UUID;
 UUID id = UUID.randomUUID();
-// 初始状态：id = UUID.randomUUID()。
 // 作用：UUID id = UUID.randomUUID();；生成随机 UUID。
 System.out.println(id.version());
 // 输出：版本 4

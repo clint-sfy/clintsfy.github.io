@@ -43,11 +43,8 @@ description: 速查 static、final、常量、静态导入和嵌套类型，建�
 静态字段只有一份，所有实例共享；并发计数器要使用合适的同步或原子类型，不能把普通 `++` 当成线程安全操作。
 
 ```java
-// 语义：静态字段只有一份，所有实例共享。
-// 初始状态：next 初始为 1。
 class Sequence {
     private static int next = 1;
-    // 初始状态：next 当前为 1。
 
     static int nextValue() {
     // 作用：静态字段只有一份，所有实例共享；并发计数器要使用合适的同步或原子类型，不能把普通 ++ 当成线程安全操作。
@@ -57,10 +54,8 @@ class Sequence {
 
 int first = Sequence.nextValue();
 // 返回：第一次 Sequence.nextValue() 读取 next=1，并把 next 更新为 2，first=1。
-// 关键变化：Sequence.nextValue() 读取共享 next=1 并递增到 2，first 变为 1。
 int second = Sequence.nextValue();
 // 返回：第二次 Sequence.nextValue() 读取 next=2，并把 next 更新为 3，second=2。
-// 关键变化：Sequence.nextValue() 再读取共享 next=2 并递增到 3，second 变为 2。
 System.out.println(first + ", " + second);
 // 输出：1, 2
 ```
@@ -87,12 +82,9 @@ System.out.println(Texts.quote("Java"));
 常量名通常使用大写下划线；值应稳定且不依赖可变运行时状态，配置项不要伪装成编译期常量。
 
 ```java
-// 语义：常量名通常使用大写下划线。
-// 初始状态：MAX_RETRY 初始为 3。
 class Limits {
 // 作用：常量名通常使用大写下划线；值应稳定且不依赖可变运行时状态，配置项不要伪装成编译期常量。
     static final int MAX_RETRY = 3;
-// 初始状态：MAX_RETRY 的初始值为 3。
 }
 
 System.out.println(Limits.MAX_RETRY);
@@ -104,11 +96,7 @@ System.out.println(Limits.MAX_RETRY);
 局部 `final` 只能赋值一次，适合表达不应被后续分支覆盖的中间值；effectively final 的局部变量也能被 Lambda 或内部类捕获。
 
 ```java
-// 语义：局部 final 只能赋值一次，适合表达不应被后续分支覆盖的中间值。
-// 初始状态：port 初始为 8080。
 final int port = 8080;
-// 关键变化：port 接收表达式 8080 的计算结果。
-// 初始状态：port 当前为 8080。
 System.out.println(port);
 // 输出：8080
 ```
@@ -141,16 +129,12 @@ System.out.println(new User("U-1").id());
 引用不能重新指向另一个列表，但列表内容仍可修改；需要不可变结果时用 `List.copyOf` 或防御性复制。
 
 ```java
-// 语义：引用不能重新指向另一个列表，但列表内容仍可修改。
-// 初始状态：names 初始为 new ArrayList<>()。
 import java.util.ArrayList;
 import java.util.List;
 
 final List<String> names = new ArrayList<>();
-// 初始状态：names 的初始值为 new ArrayList<>()。
 // 作用：引用不能重新指向另一个列表，但列表内容仍可修改；需要不可变结果时用 List.copyOf 或防御性复制。
 names.add("Ann");
-// 关键变化：names.add("Ann") 修改 final 引用指向的列表，names 变为 [Ann]。
 System.out.println(names);
 // 输出：[Ann]
 ```
@@ -200,7 +184,6 @@ System.out.println(new Token("abc").value());
 静态嵌套类只借用外部类的命名空间，不持有外部实例；与成员内部类的生命周期差异见[内部类与枚举基础](/courses/java/03-面向对象/04-内部类枚举基础)。
 
 ```java
-// 语义：静态嵌套类只借用外部类的命名空间，不持有外部实例。
 class Parser {
     static class Result {
         final boolean ok;
@@ -223,7 +206,6 @@ System.out.println(new Parser.Result(true).ok);
 ```java
 class Registry {
     static String name = "ready";
-// 初始状态：name 的初始值为 "ready"。
 
     static {
         System.out.println("load");
@@ -267,16 +249,13 @@ System.out.println(doubleValue(21));
 常量引用指向可变集合时仍能修改内容；公开共享集合应使用 `List.of`、`Set.of` 或不可变视图，并在文档中说明线程安全。
 
 ```java
-// 初始状态：static final ROLES 指向初值为 ["reader"] 的 ArrayList，final 不会阻止 add("writer")。
 import java.util.ArrayList;
 import java.util.List;
 
 static final List<String> ROLES = new ArrayList<>(List.of("reader"));
-// 初始状态：ROLES 的初始值为 new ArrayList<>(List.of("reader"))。
 // 作用：常量引用指向可变集合时仍能修改内容；公开共享集合应使用 List.of、Set.of 或不可变视图，并在文档中说明线程安全。
 
 ROLES.add("writer");
-// 关键变化：ROLES.add("writer") 修改可变列表内容，ROLES 变为 [reader, writer]。
 System.out.println(ROLES);
 // 输出：[reader, writer]
 ```
@@ -286,15 +265,12 @@ System.out.println(ROLES);
 `final` 不阻止引用指向的具体实现执行可变操作；若要限制替换实现、扩展和状态变化，需要分别使用 `final` 类、接口契约和不可变数据结构。
 
 ```java
-// 初始状态：final 引用 values 指向空 ArrayList；引用不能换绑，但 values.add("ok") 仍会修改列表内容。
 import java.util.ArrayList;
 import java.util.List;
 
 final List<String> values = new ArrayList<>();
-// 初始状态：values 的初始值为 new ArrayList<>()。
 // 作用：final 不阻止引用指向的具体实现执行可变操作；若要限制替换实现、扩展和状态变化，需要分别使用 final 类、接口契约和不可变数据结构。
 values.add("ok");
-// 关键变化：values.add("ok") 修改 final 引用指向的列表，values[0] 变为 "ok"。
 System.out.println(values.get(0));
 // 输出：ok
 ```

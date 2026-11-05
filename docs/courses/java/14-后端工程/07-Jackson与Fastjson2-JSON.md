@@ -60,7 +60,6 @@ System.out.println(JSON.toJSONString(new User("Ann")));
 
 ```java
 JSONObject object = JSON.parseObject("{\"enabled\":null}");
-// 初始状态：object = JSON.parseObject("{\"enabled\":null}")。
 // 作用：JSONObject object = JSON.parseObject("{\"enabled\":null}");；判断动态字段是否存在。
 System.out.println(object.containsKey("enabled"));
 // 输出：true
@@ -73,7 +72,6 @@ System.out.println(object.containsKey("enabled"));
 
 ```java
 JSONObject object = JSONObject.parseObject("{\"mode\":\"safe\"}");
-// 初始状态：object = JSONObject.parseObject("{\"mode\":\"safe\"}")。
 // 作用：JSONObject object = JSONObject.parseObject("{\"mode\":\"safe\"}");；把 JSON 文本解析为动态对象。
 System.out.println(object.getString("mode"));
 // 输出：safe
@@ -134,7 +132,6 @@ System.out.println("Contact.phone 使用 MaskSerializer 写出");
 
 ```java
 String token = Jwts.builder().subject("user-7").signWith(signingKey).compact();
-// 初始状态：token = Jwts.builder().subject("user-7").signWith(signingKey).compact()。
 // 作用：String token = Jwts.builder().subject("user-7").signWith(signingKey).compact();；创建待签名 JWT。
 System.out.println(token.split("\\.").length);
 // 输出：3
@@ -148,9 +145,7 @@ System.out.println(token.split("\\.").length);
 ```java
 Claims claims = Jwts.claims().add("tenant", "acme").build();
 // 作用：Claims claims = Jwts.claims().add("tenant", "acme").build();；写入自定义 JWT 声明。
-// 初始状态：claims = Jwts.claims().add("tenant", "acme").build()。
 claims.put("role", "reader");
-// 初始状态：claims.put("role", "reader")。
 // 作用：claims.put("role", "reader");；写入自定义 JWT 声明。
 System.out.println(claims.get("role"));
 // 输出：reader
@@ -168,9 +163,7 @@ record UserView(String name, int age) {}
 
 ObjectMapper mapper = new ObjectMapper();
 // 作用：ObjectMapper mapper = new ObjectMapper();；序列化对象。
-// 初始状态：mapper = new ObjectMapper()。
 String json = mapper.writeValueAsString(new UserView("Ann", 18));
-// 初始状态：json = mapper.writeValueAsString(new UserView("Ann", 18))。
 // 作用：String json = mapper.writeValueAsString(new UserView("Ann", 18));；序列化对象。
 System.out.println(json);
 // 输出：{"name":"Ann","age":18}
@@ -188,7 +181,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 record UserInput(String name, int age) {}
 UserInput input = new ObjectMapper().readValue("{\"name\":\"Ann\",\"age\":18}", UserInput.class);
-// 初始状态：input = new ObjectMapper().readValue("{\"name\":\"Ann\",\"age\":18}", UserInput.class)。
 // 作用：UserInput input = new ObjectMapper().readValue("{\"name\":\"Ann\",\"age\":18}", UserInput.class);；反序列化 JSON，返回读取结果。
 System.out.println(input.name() + "/" + input.age());
 // 输出：Ann/18
@@ -243,7 +235,6 @@ import com.alibaba.fastjson2.JSON;
 record UserView(String name, int age) {}
 
 String json = JSON.toJSONString(new UserView("Ann", 18));
-// 初始状态：json = JSON.toJSONString(new UserView("Ann", 18))。
 // 作用：String json = JSON.toJSONString(new UserView("Ann", 18));；用 Fastjson2 序列化。
 System.out.println(json.contains("\"name\":\"Ann\"") && json.contains("\"age\":18"));
 // 输出：true
@@ -261,7 +252,6 @@ import com.alibaba.fastjson2.JSON;
 
 record UserInput(String name, int age) {}
 UserInput input = JSON.parseObject("{\"name\":\"Ann\",\"age\":18}", UserInput.class);
-// 初始状态：input = JSON.parseObject("{\"name\":\"Ann\",\"age\":18}", UserInput.class)。
 // 作用：UserInput input = JSON.parseObject("{\"name\":\"Ann\",\"age\":18}", UserInput.class);；用 Fastjson2 反序列化，返回读取结果。
 System.out.println(input.name() + "/" + input.age());
 // 输出：Ann/18
@@ -293,21 +283,17 @@ final class MaskedEmailSerializer extends JsonSerializer<String> {
         throws IOException {
         if (value == null) {
             gen.writeNull();
-// 初始状态：gen.writeNull()。
 // 作用：gen.writeNull();；隐藏或重排敏感字段。
             return;
         }
         int at = value.indexOf('@');
-// 初始状态：at = value.indexOf('@')。
 // 作用：int at = value.indexOf('@');；隐藏或重排敏感字段。
         String masked = at > 0 && at < value.length() - 1
             ? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)
             : value;
-// 初始状态：masked = at > 0 && at < value.length() - 1。
 // 作用：String masked = at > 0 && at < value.length() - 1；隐藏或重排敏感字段。
 // 作用：? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)；隐藏或重排敏感字段。
         gen.writeString(masked);
-// 初始状态：gen.writeString(masked)。
 // 作用：gen.writeString(masked);；隐藏或重排敏感字段。
     }
 }
@@ -317,7 +303,6 @@ final class EmailDeserializer extends JsonDeserializer<String> {
     public String deserialize(JsonParser parser, DeserializationContext context)
         throws IOException {
         return parser.getValueAsString().trim();
-// 初始状态：return parser.getValueAsString().trim()。
 // 作用：return parser.getValueAsString().trim();；隐藏或重排敏感字段。
     }
 }
@@ -330,15 +315,12 @@ record PublicUser(
 
 com.fasterxml.jackson.databind.ObjectMapper mapper =
     new com.fasterxml.jackson.databind.ObjectMapper();
-// 初始状态：new com.fasterxml.jackson.databind.ObjectMapper()。
 // 作用：new com.fasterxml.jackson.databind.ObjectMapper();；隐藏或重排敏感字段。
 String json = mapper.writeValueAsString(new PublicUser("ann@example.test", "Ann"));
-// 初始状态：json = mapper.writeValueAsString(new PublicUser("ann@example.test", "Ann"))。
 // 作用：String json = mapper.writeValueAsString(new PublicUser("ann@example.test", "Ann"));；隐藏或重排敏感字段。
 System.out.println(json);
 // 输出：{"email":"a***@example.test","displayName":"Ann"}
 String singleCharLocal = mapper.writeValueAsString(new PublicUser("a@example.test", "Ann"));
-// 初始状态：singleCharLocal = mapper.writeValueAsString(new PublicUser("a@example.test", "Ann"))。
 // 作用：String singleCharLocal = mapper.writeValueAsString(new PublicUser("a@example.test", "Ann"));；隐藏或重排敏感字段。
 System.out.println(singleCharLocal);
 // 输出：{"email":"*@example.test","displayName":"Ann"}
@@ -363,16 +345,13 @@ final class MaskedEmailValueSerializer extends ValueSerializer<String> {
     public void serialize(String value, JsonGenerator gen, SerializationContext ctxt)
             throws JacksonException {
         int at = value.indexOf('@');
-// 初始状态：at = value.indexOf('@')。
 // 作用：int at = value.indexOf('@');；at 为邮箱中 @ 的索引。
         String masked = at > 0 && at < value.length() - 1
                 ? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)
                 : value;
-// 初始状态：masked = at > 0 && at < value.length() - 1。
 // 作用：String masked = at > 0 && at < value.length() - 1；ValueSerializer/ValueDeserializer，返回读取结果。
 // 作用：? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)；at=1 时脱敏为 "*"，否则保留首字符并追加 "***"。
         gen.writeString(masked);
-// 初始状态：gen.writeString(masked)。
 // 作用：gen.writeString(masked);；将 masked 写入 JSON 字符串。
     }
 }
@@ -403,7 +382,6 @@ final class EmailValueDeserializer extends ValueDeserializer<String> {
     public String deserialize(JsonParser parser, DeserializationContext ctxt)
             throws JacksonException {
         return parser.getString().trim();
-// 初始状态：return parser.getString().trim()。
 // 作用：return parser.getString().trim();；ValueDeserializer，返回读取结果。
     }
 }
@@ -434,28 +412,20 @@ class RedisSerializationConfig {
     @Bean
     RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, String> redis = new RedisTemplate<>();
-// 初始状态：redis = new RedisTemplate<>()。
 // 作用：RedisTemplate<String, String> redis = new RedisTemplate<>();；限定缓存值的类型边界。
         redis.setConnectionFactory(connectionFactory);
-// 初始状态：redis.setConnectionFactory(connectionFactory)。
 // 作用：redis.setConnectionFactory(connectionFactory);；限定缓存值的类型边界。
         var strings = new StringRedisSerializer();
-// 初始状态：strings = new StringRedisSerializer()。
 // 作用：var strings = new StringRedisSerializer();；限定缓存值的类型边界。
         redis.setKeySerializer(strings);
-// 初始状态：redis.setKeySerializer(strings)。
 // 作用：redis.setKeySerializer(strings);；限定缓存值的类型边界。
         redis.setValueSerializer(strings);
-// 初始状态：redis.setValueSerializer(strings)。
 // 作用：redis.setValueSerializer(strings);；限定缓存值的类型边界。
         redis.setHashKeySerializer(strings);
-// 初始状态：redis.setHashKeySerializer(strings)。
 // 作用：redis.setHashKeySerializer(strings);；限定缓存值的类型边界。
         redis.setHashValueSerializer(strings);
-// 初始状态：redis.setHashValueSerializer(strings)。
 // 作用：redis.setHashValueSerializer(strings);；限定缓存值的类型边界。
         redis.afterPropertiesSet();
-// 初始状态：redis.afterPropertiesSet()。
 // 作用：redis.afterPropertiesSet();；限定缓存值的类型边界。
         return redis;
     }
@@ -485,10 +455,8 @@ import java.time.OffsetDateTime;
 record CreateEvent(String name, OffsetDateTime occurredAt) {}
 
 ObjectMapper mapper = new ObjectMapper();
-// 初始状态：mapper = new ObjectMapper()。
 // 作用：ObjectMapper mapper = new ObjectMapper();；限定缓存值的类型边界。
 String input = "{\"name\":\"release\",\"occurredAt\":\"2026-10-01T09:00:00+08:00\"}";
-// 初始状态：input = "{\"name\":\"release\",\"occurredAt\":\"2026-10-01T09:00:00+08:00\"}"。
 // 实际项目需注册 Java Time module；这里展示 DTO 与转换边界。
 System.out.println(input.contains("occurredAt") ? "json-boundary=explicit" : "invalid");
 // 输出：json-boundary=explicit

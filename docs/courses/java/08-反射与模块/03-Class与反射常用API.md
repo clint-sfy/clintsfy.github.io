@@ -42,11 +42,8 @@ description: 直接用 Java 案例速查 Class、构造器、方法、字段、�
 public class ClassGetDemo {
     public static void main(String[] args) throws Exception {
         Class<String> literal = String.class;
-// 初始状态：literal = String.class。
         Class<?> object = "java".getClass();
-// 初始状态：object = "java".getClass()。
         Class<?> loaded = Class.forName("java.lang.String");
-// 初始状态：loaded = Class.forName("java.lang.String")。
 // 作用：Class<?> loaded = Class.forName("java.lang.String");；按已知类型、对象或类名选择入口。
         System.out.println(literal == object && object == loaded);
 // 输出：true
@@ -64,7 +61,6 @@ public class ClassNameDemo {
     public static void main(String[] args) {
         Class<?> type = java.util.ArrayList.class;
 // 作用：Class<?> type = java.util.ArrayList.class;；选择完整名、简单名或包名。
-// 初始状态：type = java.util.ArrayList.class。
         System.out.println(type.getName() + " / " + type.getSimpleName() + " / " + type.getPackageName());
 // 输出：java.util.ArrayList / ArrayList / java.util
     }
@@ -83,7 +79,6 @@ public class ClassHierarchyDemo {
     public static void main(String[] args) {
         Class<?> type = ArrayList.class;
 // 作用：Class<?> type = ArrayList.class;；读取父类与接口。
-// 初始状态：type = ArrayList.class。
         System.out.println(type.getSuperclass().getSimpleName());
 // 输出：AbstractList
         System.out.println(type.getInterfaces()[0].getSimpleName());
@@ -104,7 +99,6 @@ class User {
     private final String name;
 
     User(String name) { this.name = name; }
-// 初始状态：name = name; }。
 
     String name() { return name; }
 }
@@ -112,10 +106,8 @@ class User {
 public class ConstructorReflectDemo {
     public static void main(String[] args) throws Exception {
         Constructor<User> constructor = User.class.getDeclaredConstructor(String.class);
-// 初始状态：constructor = User.class.getDeclaredConstructor(String.class)。
 // 作用：Constructor<User> constructor = User.class.getDeclaredConstructor(String.class);；取得构造器后实例化。
         User user = constructor.newInstance("Ann");
-// 初始状态：user = constructor.newInstance("Ann")。
 // 作用：User user = constructor.newInstance("Ann");；取得构造器后实例化。
         System.out.println(user.name());
 // 输出：Ann
@@ -134,10 +126,8 @@ import java.lang.reflect.Method;
 public class MethodInvokeDemo {
     public static void main(String[] args) throws Exception {
         Method method = String.class.getMethod("substring", int.class, int.class);
-// 初始状态：method = String.class.getMethod("substring", int.class, int.class)。
 // 作用：Method method = String.class.getMethod("substring", int.class, int.class);；查找后执行。
         String result = (String) method.invoke("java", 1, 3);
-// 初始状态：result = (String) method.invoke("java", 1, 3)。
 // 作用：String result = (String) method.invoke("java", 1, 3);；查找后执行。
         System.out.println(result);
 // 输出：av
@@ -161,10 +151,8 @@ class Commands {
 public class DeclaredMethodDemo {
     public static void main(String[] args) throws Exception {
         Method hidden = Commands.class.getDeclaredMethod("hidden");
-// 初始状态：hidden = Commands.class.getDeclaredMethod("hidden")。
 // 作用：Method hidden = Commands.class.getDeclaredMethod("hidden");；按签名或批量读取。
         long count = java.util.Arrays.stream(Commands.class.getDeclaredMethods()).count();
-// 初始状态：count = java.util.Arrays.stream(Commands.class.getDeclaredMethods()).count()。
 // 作用：long count = java.util.Arrays.stream(Commands.class.getDeclaredMethods()).count();；按签名或批量读取。
         System.out.println(hidden.getName() + " / " + count);
 // 输出：hidden / 2
@@ -182,24 +170,19 @@ import java.lang.reflect.Field;
 
 class Config {
     private String value = "old";
-// 初始状态：value = "old"。
 }
 
 public class FieldReflectDemo {
     public static void main(String[] args) throws Exception {
         Config config = new Config();
-// 初始状态：config = new Config()。
 // 作用：Config config = new Config();；查找后读取或写入。
         Field field = Config.class.getDeclaredField("value");
-// 初始状态：field = Config.class.getDeclaredField("value")。
 // 作用：Field field = Config.class.getDeclaredField("value");；查找后读取或写入。
         field.setAccessible(true);
-// 初始状态：field.setAccessible(true)。
 // 作用：field.setAccessible(true);；查找后读取或写入。
         System.out.println(field.get(config));
 // 输出：old
         field.set(config, "new");
-// 初始状态：field.set(config, "new")。
 // 作用：field.set(config, "new");；查找后读取或写入。
         System.out.println(field.get(config));
 // 输出：new
@@ -257,7 +240,6 @@ import java.util.List;
 public class InstanceReflectDemo {
     public static void main(String[] args) {
         List<String> list = new ArrayList<>();
-// 初始状态：list = new ArrayList<>()。
 // 作用：List<String> list = new ArrayList<>();；判断对象运行时类型。
         System.out.println(List.class.isInstance(list));
 // 输出：true
@@ -276,12 +258,9 @@ import java.lang.reflect.Array;
 public class ArrayReflectDemo {
     public static void main(String[] args) {
         Class<?> type = String[].class;
-// 初始状态：type = String[].class。
         Object values = Array.newInstance(type.getComponentType(), 2);
-// 初始状态：values = Array.newInstance(type.getComponentType(), 2)。
 // 作用：Object values = Array.newInstance(type.getComponentType(), 2);；识别组件类型并读写元素。
         Array.set(values, 0, "java");
-// 初始状态：Array.set(values, 0, "java")。
 // 作用：Array.set(values, 0, "java");；识别组件类型并读写元素。
         System.out.println(type.isArray() + " / " + Array.get(values, 0));
 // 输出：true / java
@@ -299,12 +278,10 @@ public class ArrayReflectDemo {
 import java.lang.reflect.Field;
 
 class PrivateValue { private int value = 1; }
-// 初始状态：value = 1; }。
 
 public class TryAccessibleDemo {
     public static void main(String[] args) throws Exception {
         Field field = PrivateValue.class.getDeclaredField("value");
-// 初始状态：field = PrivateValue.class.getDeclaredField("value")。
 // 作用：Field field = PrivateValue.class.getDeclaredField("value");；探测访问是否可打开，返回读取结果。
         System.out.println(field.trySetAccessible());
 // 输出：true
@@ -326,7 +303,6 @@ class Names extends ArrayList<String> { }
 public class GenericSuperclassDemo {
     public static void main(String[] args) {
         var type = (ParameterizedType) Names.class.getGenericSuperclass();
-// 初始状态：type = (ParameterizedType) Names.class.getGenericSuperclass()。
 // 作用：var type = (ParameterizedType) Names.class.getGenericSuperclass();；读取部分泛型签名。
         System.out.println(type.getActualTypeArguments()[0].getTypeName());
 // 输出：java.lang.String
@@ -345,7 +321,6 @@ record Point(int x, int y) { }
 public class RecordComponentReflectDemo {
     public static void main(String[] args) {
         var components = Point.class.getRecordComponents();
-// 初始状态：components = Point.class.getRecordComponents()。
 // 作用：var components = Point.class.getRecordComponents();；读取 record 组件。
         System.out.println(components[0].getName() + " / " + components.length);
 // 输出：x / 2
@@ -379,12 +354,10 @@ import java.lang.reflect.Method;
 
 public class InvocationTargetDemo {
     static void fail() { throw new IllegalArgumentException("bad input"); }
-// 初始状态：static void fail() { throw new IllegalArgumentException("bad input"); 。
 // 作用：static void fail() { throw new IllegalArgumentException("bad input"); }；还原目标异常。
 
     public static void main(String[] args) throws Exception {
         Method method = InvocationTargetDemo.class.getDeclaredMethod("fail");
-// 初始状态：method = InvocationTargetDemo.class.getDeclaredMethod("fail")。
 // 作用：Method method = InvocationTargetDemo.class.getDeclaredMethod("fail");；还原目标异常。
         try {
             method.invoke(null);
@@ -417,7 +390,6 @@ public class AnnotatedTypeDemo {
 
     public static void main(String[] args) throws Exception {
         var type = AnnotatedTypeDemo.class.getDeclaredMethod("value").getAnnotatedReturnType();
-// 初始状态：type = AnnotatedTypeDemo.class.getDeclaredMethod("value").getAnnotatedReturnType()。
 // 作用：var type = AnnotatedTypeDemo.class.getDeclaredMethod("value").getAnnotatedReturnType();；读取类型使用位置注解。
         System.out.println(type.isAnnotationPresent(NonNull.class));
 // 输出：true
@@ -434,7 +406,6 @@ class Message {
     private final String text;
 
     public Message(String text) { this.text = text; }
-// 初始状态：text = text; }。
 // 作用：public Message(String text) { this.text = text; }；读取类型使用位置注解。
     public String upper() { return text.toUpperCase(); }
 // 作用：public String upper() { return text.toUpperCase(); }；读取类型使用位置注解。
@@ -444,13 +415,10 @@ public class ClassReflectionDemo {
     public static void main(String[] args) throws Exception {
         Constructor<Message> constructor = Message.class.getDeclaredConstructor(String.class);
 // 作用：Constructor<Message> constructor = Message.class.getDeclaredConstructor(String.class);；读取类型使用位置注解。
-// 初始状态：constructor = Message.class.getDeclaredConstructor(String.class)。
         Message message = constructor.newInstance("java");
 // 作用：Message message = constructor.newInstance("java");；读取类型使用位置注解。
-// 初始状态：message = constructor.newInstance("java")。
         Method method = Message.class.getMethod("upper");
 // 作用：Method method = Message.class.getMethod("upper");；读取类型使用位置注解。
-// 初始状态：method = Message.class.getMethod("upper")。
         System.out.println(method.invoke(message));
 // 输出：JAVA
     }

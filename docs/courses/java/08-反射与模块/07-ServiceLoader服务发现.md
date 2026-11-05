@@ -58,7 +58,6 @@ interface Formatter { String format(String value); }
 public class ServiceLoadDemo {
     public static void main(String[] args) {
         ServiceLoader<Formatter> loader = ServiceLoader.load(Formatter.class);
-// 初始状态：loader = ServiceLoader.load(Formatter.class)。
 // 作用：ServiceLoader<Formatter> loader = ServiceLoader.load(Formatter.class);；查找服务。
         System.out.println(loader != null);
 // 输出：true
@@ -98,9 +97,7 @@ public class ServiceIteratorDemo {
     public static void main(String[] args) {
         ServiceLoader<Encoder> loader = ServiceLoader.load(Encoder.class);
 // 作用：ServiceLoader<Encoder> loader = ServiceLoader.load(Encoder.class);；遍历并实例化提供方。
-// 初始状态：loader = ServiceLoader.load(Encoder.class)。
         int count = 0;
-// 初始状态：count = 0。
 // 作用：int count = 0;；遍历并实例化提供方。
         for (Encoder encoder : loader) {
 // 作用：for (Encoder encoder : loader) {；遍历并实例化提供方。
@@ -127,7 +124,6 @@ interface ClockSource { String now(); }
 public class ServiceFirstDemo {
     public static void main(String[] args) {
         var first = ServiceLoader.load(ClockSource.class).findFirst();
-// 初始状态：first = ServiceLoader.load(ClockSource.class).findFirst()。
 // 作用：var first = ServiceLoader.load(ClockSource.class).findFirst();；选择第一个可用实现。
         System.out.println(first.isPresent());
 // 输出：true 或 false
@@ -151,7 +147,6 @@ public class ServiceProviderDemo {
                 .filter(provider -> provider.type().getSimpleName().endsWith("Parser"))
                 .count();
 // 作用：.count();；先筛选提供方元数据。
-// 初始状态：providers = ServiceLoader.load(Parser.class).stream()。
 // 作用：long providers = ServiceLoader.load(Parser.class).stream()；先筛选提供方元数据。
 // 作用：.filter(provider -> provider.type().getSimpleName().endsWith("Parser"))；先筛选提供方元数据。
         System.out.println(providers >= 0);
@@ -193,10 +188,8 @@ interface Plugin { String name(); }
 public class ServiceClassLoaderDemo {
     public static void main(String[] args) {
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
-// 初始状态：loader = Thread.currentThread().getContextClassLoader()。
 // 作用：ClassLoader loader = Thread.currentThread().getContextClassLoader();；读取当前线程上下文 ClassLoader 到 loader。
         ServiceLoader<Plugin> services = ServiceLoader.load(Plugin.class, loader);
-// 初始状态：services = ServiceLoader.load(Plugin.class, loader)。
 // 作用：ServiceLoader<Plugin> services = ServiceLoader.load(Plugin.class, loader);；按 Plugin.class 和 loader 创建服务加载器，后续检查非 null。
         System.out.println(services != null);
 // 输出：true
@@ -219,9 +212,7 @@ public class ServiceReloadDemo {
     public static void main(String[] args) {
         ServiceLoader<Reloadable> loader = ServiceLoader.load(Reloadable.class);
 // 作用：ServiceLoader<Reloadable> loader = ServiceLoader.load(Reloadable.class);；刷新发现结果。
-// 初始状态：loader = ServiceLoader.load(Reloadable.class)。
         loader.reload();
-// 初始状态：loader.reload()。
 // 作用：loader.reload();；刷新发现结果。
         System.out.println(loader != null);
 // 输出：true
@@ -242,7 +233,6 @@ interface Renderer { String render(); }
 public class ServiceProviderGetDemo {
     public static void main(String[] args) {
         var provider = ServiceLoader.load(Renderer.class).stream().findFirst();
-// 初始状态：provider = ServiceLoader.load(Renderer.class).stream().findFirst()。
 // 作用：var provider = ServiceLoader.load(Renderer.class).stream().findFirst();；按需创建单个实现。
         if (provider.isPresent()) {
             System.out.println(provider.get().getClass().getSimpleName());
@@ -292,7 +282,6 @@ public final class FactoryFormatter implements com.example.spi.Formatter {
 
     public static FactoryFormatter provider() {
         return new FactoryFormatter();
-// 初始状态：return new FactoryFormatter()。
 // 作用：return new FactoryFormatter();；创建 FactoryFormatter，provider() 返回该实例。
     }
 
@@ -313,7 +302,6 @@ interface ThreadService { }
 public class ServiceThreadBoundaryDemo {
     public static void main(String[] args) {
         ServiceLoader<ThreadService> loader = ServiceLoader.load(ThreadService.class);
-// 初始状态：loader = ServiceLoader.load(ThreadService.class)。
 // 作用：ServiceLoader<ThreadService> loader = ServiceLoader.load(ThreadService.class);；按 ThreadService.class 创建加载器，非 null 表示加载器可用。
         System.out.println(loader != null);
 // 输出：true
@@ -333,7 +321,6 @@ import java.util.ServiceLoader;
 public class ModuleLayerServiceDemo {
     public static void main(String[] args) {
         ServiceLoader<Object> loader = ServiceLoader.load(ModuleLayer.boot(), Object.class);
-// 初始状态：loader = ServiceLoader.load(ModuleLayer.boot(), Object.class)。
 // 作用：ServiceLoader<Object> loader = ServiceLoader.load(ModuleLayer.boot(), Object.class);；从模块层加载服务。
         System.out.println(loader != null);
 // 输出：true
@@ -350,11 +337,9 @@ interface Formatter { String format(String value); }
 public class ServiceLoaderDemo {
     public static void main(String[] args) {
         ServiceLoader<Formatter> services = ServiceLoader.load(Formatter.class);
-// 初始状态：services = ServiceLoader.load(Formatter.class)。
 // 作用：ServiceLoader<Formatter> services = ServiceLoader.load(Formatter.class);；从模块层加载服务。
         Formatter formatter = services.findFirst().orElse(value -> "default:" + value);
 // 作用：Formatter formatter = services.findFirst().orElse(value -> "default:" + value);；从模块层加载服务，返回读取结果。
-// 初始状态：formatter = services.findFirst().orElse(value -> "default:" + value)。
         System.out.println(formatter.format("java"));
 // 输出：由配置的实现决定，未配置时为 default:java
     }

@@ -31,6 +31,7 @@ const EXPECTED_CHAPTER_IDS = [
   '13-设计与项目',
   '14-后端工程',
   '15-Redis',
+  '16-Kafka',
 ]
 
 test('Redis inventory activates fifteen articles plus index and a valid legacy target', () => {
@@ -72,6 +73,7 @@ const EXPECTED_CHAPTER_LABELS = [
   '设计与项目',
   '后端工程',
   'Redis',
+  'Kafka',
 ]
 
 function stripMarkup(value) {
@@ -361,6 +363,7 @@ test('Java sidebar uses the migrated canonical inventory', () => {
     ['设计与项目', 1, true],
     ['后端工程', 19, true],
     ['Redis', 15, true],
+    ['Kafka', 11, true],
   ]
 
   assert.deepEqual(

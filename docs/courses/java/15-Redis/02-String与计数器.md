@@ -185,6 +185,30 @@ STRLEN lab:{core}:s
 
 O(1)，长度是字节数，不是 Java String.length 的 UTF-16 code unit 数。 官方参考：[STRLEN](https://redis.io/docs/latest/commands/strlen/)。
 
+#### Java 调用：`StringRedisTemplate.opsForValue()`
+
+在 Spring Boot 引入 `spring-boot-starter-data-redis` 并注入 `StringRedisTemplate` 后，用它操作字符串键；计数值必须是整数文本。
+
+```java
+import java.time.Duration;
+import org.springframework.data.redis.core.StringRedisTemplate;
+
+class StringDemo {
+    private final StringRedisTemplate redis;
+    StringDemo(StringRedisTemplate redis) { this.redis = redis; }
+
+    void run() {
+        redis.opsForValue().set("lab:counter", "1", Duration.ofMinutes(5));
+        System.out.println(redis.opsForValue().get("lab:counter"));
+        // 输出：1
+        System.out.println(redis.opsForValue().increment("lab:counter"));
+        // 输出：2
+    }
+}
+```
+
+`increment` 对不存在的键从 0 开始，但这里先写入了 1；过期时间仍按原键的 TTL 计算。更多序列化与连接配置见[RedisTemplate](./13-RedisTemplate序列化与连接管理)。
+
 ## 易混点
 
 命令返回的整数有的表示数量、有的表示旧值或新值，应按命令解释；nil 与空字符串不同。单命令原子不等于跨命令或跨数据库的业务事务。

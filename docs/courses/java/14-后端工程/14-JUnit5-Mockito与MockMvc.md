@@ -29,7 +29,6 @@ description: 用确定性的单元测试、MVC 切片和真实上下文测试验
 用途：用于为每个测试建立新的可变状态，避免前一个测试污染后一个测试。
 
 ```java
-// 初始状态：JUnit 默认每个测试方法创建新的实例，items 在初始化时为空。
 class ItemsTest {
     java.util.List<String> items;
     @org.junit.jupiter.api.BeforeEach
@@ -37,7 +36,6 @@ class ItemsTest {
     @org.junit.jupiter.api.Test
     void addingOneItemChangesSize() {
         items.add("book");
-        // 关键变化：这个测试独占的 items 从空变成包含 book。
         org.junit.jupiter.api.Assertions.assertEquals(java.util.List.of("book"), items);
     }
 }
@@ -51,14 +49,12 @@ class ItemsTest {
 用途：用于证明非法输入被业务拒绝，防止测试只覆盖正常分支。
 
 ```java
-// 初始状态：金额 -1 不合法，教学函数要求金额非负。
 java.util.function.IntUnaryOperator checked = amount -> {
     if (amount < 0) throw new IllegalArgumentException("NEGATIVE_AMOUNT");
     return amount;
 };
 IllegalArgumentException failure = org.junit.jupiter.api.Assertions.assertThrows(
     IllegalArgumentException.class, () -> checked.applyAsInt(-1));
-// 关键变化：amount=-1 被转换为 IllegalArgumentException，failure 保存拒绝原因。
 org.junit.jupiter.api.Assertions.assertEquals("NEGATIVE_AMOUNT", failure.getMessage());
 // 结果：错误类型和稳定错误码同时受保护；中文展示文案不作为业务分支。
 ```
@@ -70,13 +66,11 @@ org.junit.jupiter.api.Assertions.assertEquals("NEGATIVE_AMOUNT", failure.getMess
 用途：用于让同一业务规则在多个边界输入下运行，减少复制测试造成的漏改。
 
 ```java
-// 初始状态：分页大小允许 1 到 100；这里验证两端和中间值。
 class PageSizeTest {
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(ints = {1, 50, 100})
     void acceptsAllowedSize(int size) {
         int bounded = Math.max(1, Math.min(100, size));
-        // 关键变化：size=1/50/100 经限幅计算返回 bounded，三个合法值保持不变。
         org.junit.jupiter.api.Assertions.assertEquals(size, bounded);
     }
 }
@@ -90,7 +84,6 @@ class PageSizeTest {
 用途：用于让价格服务在隔离外部数据源时仍执行真实的金额计算逻辑。
 
 ```java
-// 初始状态：PriceSource 是外部接口，教学 Checkout 将价格乘数量。
 interface PriceSource { int cents(String sku); }
 record Checkout(PriceSource source) {
     int total(String sku, int count) { return Math.multiplyExact(source.cents(sku), count); }
@@ -99,7 +92,6 @@ PriceSource source = org.mockito.Mockito.mock(PriceSource.class);
 org.mockito.Mockito.when(source.cents("book")).thenReturn(1200);
 Checkout checkout = new Checkout(source);
 int total = checkout.total("book", 2);
-// 关键变化：真实 Checkout 将固定单价 1200 乘以数量 2。
 org.junit.jupiter.api.Assertions.assertEquals(2400, total);
 // 结果：断言业务金额 2400，而不是只证明 mock 能返回 1200。
 ```
@@ -111,12 +103,10 @@ spy 会调用真实方法；`when(spy.call())` 可能触发副作用，必要时
 用途：用于检查扣款后的通知恰好发生一次，防止重复发送或漏发这种真实业务错误。
 
 ```java
-// 初始状态：教学 ReceiptService 的业务要求为每次成功结账发送一次收据。
 interface ReceiptSender { void send(String order); }
 record ReceiptService(ReceiptSender sender) { void paid(String order) { sender.send(order); } }
 ReceiptSender sender = org.mockito.Mockito.mock(ReceiptSender.class);
 new ReceiptService(sender).paid("order-7");
-// 关键变化：真实服务成功路径请求一次发送 order-7。
 org.mockito.Mockito.verify(sender, org.mockito.Mockito.times(1)).send("order-7");
 // 结果：verify 检查 order-7 恰好调用 1 次；漏发、重复发或传错订单使验证失败。
 ```
@@ -128,7 +118,6 @@ org.mockito.Mockito.verify(sender, org.mockito.Mockito.times(1)).send("order-7")
 用途：用于仅加载 Controller、MVC 配置和相关 advice，快速验证输入与响应契约。
 
 ```java
-// 初始状态：导入上一篇 OrderController/OrderErrors；切片不启动数据库。
 @org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest(OrderController.class)
 @org.springframework.context.annotation.Import(OrderErrors.class)
 class OrderSliceTest {
@@ -139,7 +128,6 @@ class OrderSliceTest {
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/orders/8"))
             .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound())
             .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.code").value("ORDER_NOT_FOUND"));
-        // 关键变化：8 进入异常路径，经 advice 变成公开 404/code。
     }
 }
 // 结果：两个断言同时保护状态码与错误结构；完整安全链可能要求认证测试 fixture。
@@ -152,13 +140,11 @@ class OrderSliceTest {
 用途：用于在无真实网络的进程内执行 MVC 请求并校验 JSON 输出。
 
 ```java
-// 初始状态：用 stand-alone 模式注册教学 Controller；此模式不加载整个 Boot 配置。
 org.springframework.test.web.servlet.MockMvc mvc =
     org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup(new OrderController()).build();
 mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/orders/7"))
     .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
     .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.state").value("PAID"));
-// 关键变化：MVC 绑定 id=7，Controller 生成 PAID 的 JSON。
 // 结果：状态 200 和 state=PAID 被断言；stand-alone 不能证明应用的真实安全配置。
 ```
 
@@ -167,7 +153,6 @@ mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.
 用途：用于加载完整 Boot 上下文，验证服务、配置与框架自动配置能够共同工作。
 
 ```java
-// 初始状态：应用主配置可发现，测试 profile 必须指向隔离数据库或容器。
 @org.springframework.boot.test.context.SpringBootTest
 @org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 class FullOrderTest {
@@ -177,7 +162,6 @@ class FullOrderTest {
     void applicationRoutesOrder() throws Exception {
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/orders/7"))
             .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk());
-        // 关键变化：请求经过应用实际注册的 MVC 组件与过滤器。
     }
 }
 // 结果：GET /orders/7 的状态必须为 200；测试前置数据及认证身份需按工程补齐。
@@ -190,11 +174,9 @@ class FullOrderTest {
 用途：用于把时间作为显式依赖注入，避免等待午夜或使用 sleep 验证到期规则。
 
 ```java
-// 初始状态：固定 UTC 时间为 2026-10-05T00:00:00Z，订单在一分钟后到期。
 java.time.Clock clock = java.time.Clock.fixed(java.time.Instant.parse("2026-10-05T00:00:00Z"), java.time.ZoneOffset.UTC);
 java.time.Instant expiry = java.time.Instant.parse("2026-10-05T00:01:00Z");
 boolean expired = !java.time.Instant.now(clock).isBefore(expiry);
-// 关键变化：判断只读取传入 clock，真实系统时钟不影响测试。
 org.junit.jupiter.api.Assertions.assertFalse(expired);
 // 结果：当前时间早于到期时间，expired=false；另测恰好到期为 true。
 ```

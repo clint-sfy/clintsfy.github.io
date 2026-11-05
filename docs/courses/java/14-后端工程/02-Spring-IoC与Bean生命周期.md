@@ -97,7 +97,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 class ClientConfiguration {
     @Bean
-// 初始状态：@Bean。
 // 作用：@Bean；注册工厂方法结果。
     String endpoint() {
         return "https://api.example.test";
@@ -126,12 +125,10 @@ class UserService {
 
     UserService(UserGateway gateway) {
         this.gateway = gateway;
-// 初始状态：gateway = gateway。
     }
 
     String endpoint() {
         return gateway.endpoint();
-// 初始状态：return gateway.endpoint()。
 // 作用：return gateway.endpoint();；表达必需依赖。
     }
 }
@@ -161,7 +158,6 @@ class TokenRules {
 // 作用：@PostConstruct；完成初始化校验。
     void initialize() {
         prefix = "Bearer ";
-// 初始状态：prefix = "Bearer "。
         System.out.println(prefix.strip());
 // 输出：Bearer
     }
@@ -190,10 +186,8 @@ class RequestDraft {
 }
 
 var first = new RequestDraft();
-// 初始状态：first = new RequestDraft()。
 // 作用：var first = new RequestDraft();；选择实例复用边界。
 var second = new RequestDraft();
-// 初始状态：second = new RequestDraft()。
 // 作用：var second = new RequestDraft();；选择实例复用边界。
 System.out.println(first.next() + "/" + second.next());
 // 输出：1/1
@@ -222,13 +216,10 @@ class GreetingTarget implements Greeting {
 }
 
 var factory = new ProxyFactory(new GreetingTarget());
-// 初始状态：factory = new ProxyFactory(new GreetingTarget())。
 // 作用：var factory = new ProxyFactory(new GreetingTarget());；识别被包装的 Bean。
 factory.addAdvice((MethodInterceptor) invocation -> invocation.proceed());
-// 初始状态：factory.addAdvice((MethodInterceptor) invocation -> invocation.proceed())。
 // 作用：factory.addAdvice((MethodInterceptor) invocation -> invocation.proceed());；识别被包装的 Bean。
 Greeting proxy = (Greeting) factory.getProxy();
-// 初始状态：proxy = (Greeting) factory.getProxy()。
 // 作用：Greeting proxy = (Greeting) factory.getProxy();；识别被包装的 Bean，返回读取结果。
 System.out.println(AopUtils.isAopProxy(proxy) + "/" + proxy.text());
 // 输出：true/hello
@@ -252,7 +243,6 @@ class OptionalReporter {
 // 输出：fallback
         task.run();
 // 作用：task.run();；延迟获取与可选依赖。
-// 初始状态：task.run()。
     }
 }
 // 作用：ObjectProvider.getIfAvailable 在 provider 缺少 Runnable 时返回 fallback
@@ -285,18 +275,15 @@ class ExpensiveCatalog {
 class LazyConfiguration {
     @Bean
     @Lazy
-// 初始状态：@Lazy。
 // 作用：@Lazy；延迟创建 Bean。
     ExpensiveCatalog catalog() {
         return new ExpensiveCatalog();
-// 初始状态：return new ExpensiveCatalog()。
 // 作用：return new ExpensiveCatalog();；延迟创建 Bean。
     }
 }
 
 try (var context = new AnnotationConfigApplicationContext()) {
 // 作用：try (var context = new AnnotationConfigApplicationContext()) {；延迟创建 Bean。
-// 初始状态：context = new AnnotationConfigApplicationContext())。
     context.register(LazyConfiguration.class);
 // 作用：context.register(LazyConfiguration.class);；延迟创建 Bean。
     context.refresh();
@@ -316,7 +303,6 @@ try (var context = new AnnotationConfigApplicationContext()) {
 用途：用于同一接口存在多个实现时指定默认注入对象；只有一个候选需要时才使用，复杂场景改用限定符更清晰。
 
 ```java
-// 初始状态：@Primary 标记 systemClockNotifier，容器中另有 backupClockNotifier
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -331,7 +317,6 @@ class AlertService {
 
     AlertService(Notifier notifier) {
         this.notifier = notifier;
-// 初始状态：notifier = notifier。
     }
 
     String selectedChannel() {
@@ -358,13 +343,11 @@ class PrimaryConfiguration {
     AlertService alertService(Notifier notifier) {
         return new AlertService(notifier);
 // 作用：return new AlertService(notifier);；声明默认候选。
-// 初始状态：return new AlertService(notifier)。
     }
 }
 
 try (var context = new AnnotationConfigApplicationContext(PrimaryConfiguration.class)) {
 // 作用：try (var context = new AnnotationConfigApplicationContext(PrimaryConfiguration.class)) {；声明默认候选。
-// 初始状态：context = new AnnotationConfigApplicationContext(PrimaryConfiguration.class))。
     System.out.println(context.getBean(Notifier.class).channel());
 // 输出：system-clock
     System.out.println(context.getBean(AlertService.class).selectedChannel());
@@ -390,11 +373,9 @@ class BillingService {
 // 作用：@Autowired；旧代码的按类型注入。
     BillingService(Clock clock) {
         this.clock = clock;
-// 初始状态：clock = clock。
     }
     Instant now() { return clock.instant(); }
 // 作用：Instant now() { return clock.instant(); }；旧代码的按类型注入。
-// 初始状态：Instant now() { return clock.instant(); 。
 }
 ```
 
@@ -413,7 +394,6 @@ class UploadLimits {
     UploadLimits(@Value("${app.upload.max-bytes:10485760}") long maxBytes) {
 // 作用：UploadLimits(@Value("${app.upload.max-bytes:10485760}") long maxBytes) {；注入单个配置值。
         this.maxBytes = maxBytes;
-// 初始状态：maxBytes = maxBytes。
     }
     boolean accepts(long size) {
         return size <= maxBytes;
@@ -433,7 +413,6 @@ class UploadLimits {
 class AuditConfiguration {
     @Bean
     @ConditionalOnProperty(name = "app.audit.enabled", havingValue = "true")
-// 初始状态：name = "app.audit.enabled", havingValue = "true")。
 // 作用：@ConditionalOnProperty(name = "app.audit.enabled", havingValue = "true")；按开关装配 Bean。
     AuditSink auditSink() {
         return event -> System.out.println(event);
@@ -456,11 +435,9 @@ public class DemoApplication {
     public static void main(String[] args) {
         ConfigurableApplicationContext context =
             SpringApplication.run(DemoApplication.class, args);
-// 初始状态：SpringApplication.run(DemoApplication.class, args)。
 // 作用：SpringApplication.run(DemoApplication.class, args);；启动并取得容器。
         String id = context.getId();
 // 作用：String id = context.getId();；启动并取得容器。
-// 初始状态：id = context.getId()。
         System.out.println(id);
 // 输出：打印已启动容器的 ID，例如 `application`。
     }
@@ -482,7 +459,6 @@ class FilterConfiguration {
     FilterRegistrationBean<RequestIdFilter> requestIdFilter() {
         FilterRegistrationBean<RequestIdFilter> bean =
             new FilterRegistrationBean<>(new RequestIdFilter());
-// 初始状态：new FilterRegistrationBean<>(new RequestIdFilter())。
 // 作用：new FilterRegistrationBean<>(new RequestIdFilter());；以 Bean 方式注册 Servlet Filter。
         bean.setOrder(10);
 // 作用：bean.setOrder(10);；以 Bean 方式注册 Servlet Filter。
@@ -505,12 +481,9 @@ FilterRegistrationBean<RequestIdFilter> apiFilter() {
     FilterRegistrationBean<RequestIdFilter> bean =
         new FilterRegistrationBean<>();
 // 作用：new FilterRegistrationBean<>();；限制 Filter 映射。
-// 初始状态：new FilterRegistrationBean<>()。
     bean.setFilter(new RequestIdFilter());
 // 作用：bean.setFilter(new RequestIdFilter());；限制 Filter 映射。
-// 初始状态：bean.setFilter(new RequestIdFilter())。
     bean.addUrlPatterns("/api/*");
-// 初始状态：bean.addUrlPatterns("/api/*")。
 // 作用：bean.addUrlPatterns("/api/*");；限制 Filter 映射。
     bean.setName("requestIdFilter");
 // 作用：bean.setName("requestIdFilter");；限制 Filter 映射。
@@ -534,7 +507,6 @@ class CacheConfiguration {
     @Bean
     CacheManager cacheManager() {
         return new ConcurrentMapCacheManager("users");
-// 初始状态：return new ConcurrentMapCacheManager("users")。
 // 作用：return new ConcurrentMapCacheManager("users");；开启 Spring 缓存代理。
     }
     String configuredCache() { return "users"; }
@@ -557,11 +529,9 @@ class GeneratorConfiguration {
     private final Environment environment;
     GeneratorConfiguration(Environment environment) {
         this.environment = environment;
-// 初始状态：environment = environment。
     }
     String author() { return environment.getProperty("gen.author", "team"); }
 // 作用：String author() { return environment.getProperty("gen.author", "team"); }；引入额外 properties 资源。
-// 初始状态：String author() { return environment.getProperty("gen.author", "team"); 。
 }
 ```
 
@@ -577,7 +547,6 @@ class GeneratorConfiguration {
 @Component
 class CaptchaFacade {
     @Resource(name = "stringRedisTemplate")
-// 初始状态：name = "stringRedisTemplate")。
 // 作用：@Resource(name = "stringRedisTemplate")；按名称优先注入。
     private StringRedisTemplate redis;
     void save(String key, String value) {
@@ -611,7 +580,6 @@ class ProfileService {
 
     ProfileService(Profile profile) {
         this.profile = profile;
-// 初始状态：profile = profile。
 // 作用：this.profile = profile;；按名称优先注入。
     }
 
@@ -619,7 +587,6 @@ class ProfileService {
     void check() {
         if (profile.name().isBlank()) {
             throw new IllegalStateException("profile name is blank");
-// 初始状态：throw new IllegalStateException("profile name is blank")。
 // 作用：throw new IllegalStateException("profile name is blank");；按名称优先注入。
         }
     }

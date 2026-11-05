@@ -212,6 +212,19 @@ export const JAVA_COURSE_CHAPTERS: readonly JavaCourseChapter[] = [
     article('14-主从哨兵与Cluster.md', '主从、哨兵与 Cluster'),
     article('15-性能诊断监控与生产清单.md', '性能诊断、监控与生产清单'),
   ]),
+  createChapter('16-Kafka', 'Kafka', [
+    article('01-学习路线与目标.md', '学习路线与目标'),
+    article('02-消息队列与MQ核心知识.md', '消息队列与 MQ 核心知识'),
+    article('03-Kafka快速入门与安装.md', 'Kafka 快速入门与安装'),
+    article('04-命令行生产消费与消息模型.md', '命令行生产消费与消息模型'),
+    article('05-Spring-Boot集成与Admin-API.md', 'Spring Boot 集成与 Admin API'),
+    article('06-Producer-API与发送实践.md', 'Producer API 与发送实践'),
+    article('07-Consumer-API与消费实践.md', 'Consumer API 与消费实践'),
+    article('08-存储复制与可靠性.md', '存储、复制与可靠性'),
+    article('09-高可用与性能.md', '高可用与性能'),
+    article('10-Spring-Kafka项目整合.md', 'Spring Kafka 项目整合'),
+    article('11-总结与选型.md', '总结与选型'),
+  ]),
 ];
 
 function addOrderNumber(groups: DefaultTheme.SidebarItem[]): void {

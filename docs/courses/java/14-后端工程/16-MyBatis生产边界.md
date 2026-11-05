@@ -175,14 +175,12 @@ resultMap 把行转换为对象图，association 表示单对象，collection �
 用途：用于在连接数据库前解析 Mapper 文件，及早发现映射引用、重复 ID 和类型错误。
 
 ```java
-// 初始状态：src/test/resources/OrderMapper.xml 是下方 Mapper，类名用 java.util.Map 便于独立解析。
 org.apache.ibatis.session.Configuration configuration = new org.apache.ibatis.session.Configuration();
 try (java.io.InputStream stream = java.nio.file.Files.newInputStream(
         java.nio.file.Path.of("src/test/resources/OrderMapper.xml"))) {
     org.apache.ibatis.builder.xml.XMLMapperBuilder parser = new org.apache.ibatis.builder.xml.XMLMapperBuilder(
         stream, configuration, "OrderMapper.xml", configuration.getSqlFragments());
     parser.parse();
-    // 关键变化：文件中的订单对象图映射进入 configuration，尚未执行查询。
     org.junit.jupiter.api.Assertions.assertTrue(configuration.hasResultMap("lesson.OrderMapper.order"));
     // 结果：resultMap 可解析；行合并与 SQL 正确性还需真实 MySQL 测试。
 }
@@ -228,14 +226,12 @@ try (java.io.InputStream stream = java.nio.file.Files.newInputStream(
 用途：用于检查 Mapper 渲染出的 SQL 和参数映射，防止空条件、空集合或输入拼接改变查询范围。
 
 ```java
-// 初始状态：configuration 已解析下方 SearchMapper.xml，测试参数只请求 PAID 状态和 ID 7/8。
 org.apache.ibatis.session.Configuration configuration = new org.apache.ibatis.session.Configuration();
 try (java.io.InputStream stream = java.nio.file.Files.newInputStream(java.nio.file.Path.of("src/test/resources/SearchMapper.xml"))) {
     new org.apache.ibatis.builder.xml.XMLMapperBuilder(stream, configuration, "SearchMapper.xml", configuration.getSqlFragments()).parse();
 }
 java.util.Map<String, Object> parameters = java.util.Map.of("state", "PAID", "ids", java.util.List.of(7L, 8L));
 org.apache.ibatis.mapping.BoundSql bound = configuration.getMappedStatement("lesson.SearchMapper.search").getBoundSql(parameters);
-// 关键变化：where/foreach 根据固定参数产生条件与三个占位符，没有拼入 PAID 文本。
 org.junit.jupiter.api.Assertions.assertEquals(3, bound.getParameterMappings().size());
 org.junit.jupiter.api.Assertions.assertFalse(bound.getSql().contains("PAID"));
 // 结果：state 和两个 ID 经 #{...} 绑定；仍应执行真实查询验证行结果。
@@ -271,13 +267,11 @@ org.junit.jupiter.api.Assertions.assertFalse(bound.getSql().contains("PAID"));
 用途：用于把 BATCH 缓冲的语句发送到数据库，并检查计数后决定提交或回滚。
 
 ```java
-// 初始状态：factory 已配置隔离 MySQL，lesson.Writer.insert 为明确的测试插入映射。
 org.apache.ibatis.session.SqlSessionFactory factory = testFactory;
 try (org.apache.ibatis.session.SqlSession session = factory.openSession(org.apache.ibatis.session.ExecutorType.BATCH, false)) {
     session.insert("lesson.Writer.insert", java.util.Map.of("id", 701L, "state", "PAID"));
     session.insert("lesson.Writer.insert", java.util.Map.of("id", 702L, "state", "PAID"));
     java.util.List<org.apache.ibatis.executor.BatchResult> batches = session.flushStatements();
-    // 关键变化：两次写入已发送到事务连接；尚未 commit，对外未承诺持久化。
     org.junit.jupiter.api.Assertions.assertFalse(batches.isEmpty());
     session.rollback();
     // 结果：本例主动回滚；另一个连接必须查不到 701/702，不能把非空 batches 当提交成功。
@@ -291,12 +285,10 @@ try (org.apache.ibatis.session.SqlSession session = factory.openSession(org.apac
 用途：用于清除当前 SqlSession 的查询缓存，以便在同一 session 内显式重新读取。
 
 ```java
-// 初始状态：factory 对应测试数据库；selectOne lesson.OrderMapper.find 的订单 7 存在。
 org.apache.ibatis.session.SqlSessionFactory factory = testFactory;
 try (org.apache.ibatis.session.SqlSession session = factory.openSession()) {
     Object first = session.selectOne("lesson.OrderMapper.find", java.util.Map.of("id", 7L));
     session.clearCache();
-    // 关键变化：当前 session 的一级缓存被清除；数据库隔离快照并未因此改变。
     Object second = session.selectOne("lesson.OrderMapper.find", java.util.Map.of("id", 7L));
     org.junit.jupiter.api.Assertions.assertNotNull(first);
     org.junit.jupiter.api.Assertions.assertNotNull(second);
@@ -311,14 +303,12 @@ try (org.apache.ibatis.session.SqlSession session = factory.openSession()) {
 用途：用于让 MyBatis-Plus 按页执行有限查询，并把分页行为纳入可测试配置。
 
 ```java
-// 初始状态：MySQL 8.0，分页大小教学上限为 100，插件在配置中只注册一次。
 com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor pagination =
     new com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor(com.baomidou.mybatisplus.annotation.DbType.MYSQL);
 pagination.setMaxLimit(100L);
 com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor plugins =
     new com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor();
 plugins.addInnerInterceptor(pagination);
-// 关键变化：配置集合增加分页插件；最终 SQL、count 和 JOIN 优化必须在真实查询中观察。
 org.junit.jupiter.api.Assertions.assertEquals(1, plugins.getInterceptors().size());
 // 结果：插件数量为 1；请求层仍须验证页码/大小和排序白名单。
 ```
@@ -330,7 +320,6 @@ org.junit.jupiter.api.Assertions.assertEquals(1, plugins.getInterceptors().size(
 用途：用于以实体方法引用构造条件，避免把外部输入直接当列名或 SQL 片段。
 
 ```java
-// 初始状态：实体 User 拥有 id/state getter；请求 state 只能来自业务允许值。
 class User {
     private Long id;
     private String state;
@@ -340,7 +329,6 @@ class User {
 com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<User> wrapper =
     new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
 wrapper.eq(User::getState, "ACTIVE").orderByAsc(User::getId);
-// 关键变化：只接受固定字段与 ACTIVE 参数，包装器不携带任意外部 SQL。
 org.junit.jupiter.api.Assertions.assertFalse(wrapper.isEmptyOfWhere());
 // 结果：存在 WHERE 条件；完整列解析需 MP 实体元数据和 Mapper 测试。
 ```
@@ -352,13 +340,11 @@ org.junit.jupiter.api.Assertions.assertFalse(wrapper.isEmptyOfWhere());
 用途：用于在更新带版本字段的实体时追加版本条件，发现并发修改而非静默覆盖。
 
 ```java
-// 初始状态：工程实体用 @Version 标记 version，数据库行 id=7/version=2。
 com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor optimistic =
     new com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor();
 com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor plugins =
     new com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor();
 plugins.addInnerInterceptor(optimistic);
-// 关键变化：更新拦截器被注册；两份 version=2 的更新应只有第一份影响 1 行。
 org.junit.jupiter.api.Assertions.assertEquals(1, plugins.getInterceptors().size());
 // 结果：配置注册可验证；冲突测试必须检查第二次影响 0 行并转成业务冲突。
 ```
@@ -370,7 +356,6 @@ org.junit.jupiter.api.Assertions.assertEquals(1, plugins.getInterceptors().size(
 用途：用于把 Java 状态枚举映射为数据库字符串，并在 NULL 读取时保留空值语义。
 
 ```java
-// 初始状态：数据库 state 保存 PAID/CANCELLED；SQL NULL 对应 Java null。
 enum OrderState { PAID, CANCELLED }
 class StateHandler extends org.apache.ibatis.type.BaseTypeHandler<OrderState> {
     public void setNonNullParameter(java.sql.PreparedStatement ps, int i, OrderState value, org.apache.ibatis.type.JdbcType type) throws java.sql.SQLException { ps.setString(i, value.name()); }
@@ -379,7 +364,6 @@ class StateHandler extends org.apache.ibatis.type.BaseTypeHandler<OrderState> {
     public OrderState getNullableResult(java.sql.CallableStatement cs, int column) throws java.sql.SQLException { return decode(cs.getString(column)); }
     static OrderState decode(String value) { return value == null ? null : OrderState.valueOf(value); }
 }
-// 关键变化：PAID 可逆转换，未知数据库值明确失败而非悄悄变成 PAID。
 org.junit.jupiter.api.Assertions.assertNull(StateHandler.decode(null));
 org.junit.jupiter.api.Assertions.assertEquals(OrderState.PAID, StateHandler.decode("PAID"));
 // 结果：两个解码分支确定；还需注册 handler 并执行 JDBC 读写验证。
@@ -390,7 +374,6 @@ org.junit.jupiter.api.Assertions.assertEquals(OrderState.PAID, StateHandler.deco
 用途：用于声明 MyBatis 插件只拦截指定签名，避免把所有调用当作 SQL 执行入口。
 
 ```java
-// 初始状态：教学插件只计数 StatementHandler.prepare，不打印 SQL 或参数。
 @org.apache.ibatis.plugin.Intercepts(@org.apache.ibatis.plugin.Signature(
     type=org.apache.ibatis.executor.statement.StatementHandler.class,
     method="prepare", args={java.sql.Connection.class, Integer.class}))
@@ -398,7 +381,6 @@ class PrepareCounter implements org.apache.ibatis.plugin.Interceptor {
     final java.util.concurrent.atomic.AtomicInteger calls = new java.util.concurrent.atomic.AtomicInteger();
     public Object intercept(org.apache.ibatis.plugin.Invocation invocation) throws Throwable {
         calls.incrementAndGet();
-        // 关键变化：每次真实 prepare 增加计数，然后保留原调用和异常传播。
         return invocation.proceed();
     }
 }
@@ -412,7 +394,6 @@ class PrepareCounter implements org.apache.ibatis.plugin.Interceptor {
 用途：用于检查参数占位符与文本替换的不同生成结果，防止把用户输入拼接进 SQL。
 
 ```java
-// 初始状态：name 含单引号；教学替换片段只用于离线渲染，不执行 SQL。
 org.apache.ibatis.session.Configuration config = new org.apache.ibatis.session.Configuration();
 org.apache.ibatis.scripting.xmltags.XMLLanguageDriver driver = new org.apache.ibatis.scripting.xmltags.XMLLanguageDriver();
 java.util.Map<String,Object> input = java.util.Map.of("name", "O'Reilly");
@@ -420,7 +401,6 @@ org.apache.ibatis.mapping.BoundSql bound = driver.createSqlSource(config,
     "SELECT id FROM buyers WHERE name=#{name}", java.util.Map.class).getBoundSql(input);
 org.apache.ibatis.mapping.BoundSql unsafe = driver.createSqlSource(config,
     "SELECT id FROM buyers WHERE name='${name}'", java.util.Map.class).getBoundSql(input);
-// 关键变化：#{} 生成一个 JDBC 占位符；${} 将 O'Reilly 原样插入文本并破坏引号结构。
 org.junit.jupiter.api.Assertions.assertEquals(1, bound.getParameterMappings().size());
 org.junit.jupiter.api.Assertions.assertFalse(bound.getSql().contains("O'Reilly"));
 org.junit.jupiter.api.Assertions.assertTrue(unsafe.getSql().contains("O'Reilly"));
@@ -434,12 +414,10 @@ org.junit.jupiter.api.Assertions.assertTrue(unsafe.getSql().contains("O'Reilly")
 用途：用于把客户端排序标识映射为固定 SQL 常量，拒绝任意字段和表达式输入。
 
 ```java
-// 初始状态：API 只公开 created/id 两种排序；恶意输入包含 SQL 片段。
 java.util.Map<String,String> columns = java.util.Map.of("created", "created_at", "id", "id");
 String requested = "created";
 String column = columns.get(requested);
 String sqlOrder = column == null ? null : "ORDER BY " + column + " ASC, id ASC";
-// 关键变化：外部 created 被转换为受控 created_at 常量，追加 id 保证并列时稳定排序。
 org.junit.jupiter.api.Assertions.assertEquals("ORDER BY created_at ASC, id ASC", sqlOrder);
 org.junit.jupiter.api.Assertions.assertNull(columns.get("created_at DESC; DROP TABLE orders"));
 // 结果：合法排序固定为 created_at/id，注入输入找不到映射，调用层应返回 400。
@@ -452,7 +430,6 @@ org.junit.jupiter.api.Assertions.assertNull(columns.get("created_at DESC; DROP T
 用途：用于确认 Mapper 已显式声明二级缓存，并检查它的 namespace 身份而不误认为全库缓存。
 
 ```java
-// 初始状态：教学 Mapper 只有 cache 声明，没有执行数据库查询。
 String xml = """
     <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -462,7 +439,6 @@ org.apache.ibatis.session.Configuration config = new org.apache.ibatis.session.C
 new org.apache.ibatis.builder.xml.XMLMapperBuilder(new java.io.StringReader(xml), config,
     "CachedOrders.xml", config.getSqlFragments()).parse();
 org.apache.ibatis.cache.Cache cache = config.getCache("lesson.CachedOrders");
-// 关键变化：声明的 cache 注册到 lesson.CachedOrders，不是所有 Mapper 共用一个自动缓存。
 org.junit.jupiter.api.Assertions.assertEquals("lesson.CachedOrders", cache.getId());
 // 结果：namespace 身份被断言；这里没有声称缓存命中或跨 namespace 失效已执行。
 ```
@@ -474,13 +450,11 @@ MyBatis 在事务完成时把结果传播到二级缓存，同 namespace 写操�
 用途：用于先分页获得根 ID，再用一次集合查询取得明细，避免每个根对象追加一次查询。
 
 ```java
-// 初始状态：testFactory 配置下方 PageIds/Lines 映射；隔离库有订单 7/8 与三条明细。
 org.apache.ibatis.session.SqlSessionFactory factory = testFactory;
 try (org.apache.ibatis.session.SqlSession session = factory.openSession()) {
     java.util.List<Long> ids = session.selectList("lesson.BatchReads.pageIds");
     java.util.List<java.util.Map<String,Object>> lines = ids.isEmpty() ? java.util.List.of()
         : session.selectList("lesson.BatchReads.lines", java.util.Map.of("ids", ids));
-    // 关键变化：非空页只触发 pageIds 和 lines 两次查询，不循环调用单订单明细 Mapper。
     org.junit.jupiter.api.Assertions.assertEquals(java.util.List.of(7L, 8L), ids);
     org.junit.jupiter.api.Assertions.assertEquals(3, lines.size());
     // 结果：fixture 断言 2 个 ID/3 条明细；SQL 日志还必须确认准备语句数为 2。

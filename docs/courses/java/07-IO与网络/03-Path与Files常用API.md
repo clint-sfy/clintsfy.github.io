@@ -46,7 +46,6 @@ public class PathCreateDemo {
     public static void main(String[] args) {
         Path first = Path.of("logs", "app.log");
         Path second = Paths.get("logs", "app.log");
-        // 关键变化：Path second = Paths.get("logs", "app.log");；把路径片段 "logs" 和 "app.log" 组合为 Path 并写入 second；路径对象创建完成。
         System.out.println(first.equals(second));
         // 输出：true
     }
@@ -140,7 +139,6 @@ public class FilesCheckDemo {
         System.out.println(Files.exists(file) + ", " + Files.isRegularFile(file) + ", " + Files.isReadable(file));
         // 输出：true, true, true
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -159,18 +157,13 @@ public class FilesCreateDemo {
         Path directory = Files.createTempDirectory("java-dir-");
         Path nested = directory.resolve("a").resolve("b");
         Files.createDirectories(nested);
-        // 关键变化：Files.createDirectories(nested);；调用 createDirectories，实参为 nested；创建 nested 及缺失的父目录；返回创建后的 Path。
         Path file = Files.createFile(nested.resolve("app.txt"));
         System.out.println(Files.isRegularFile(file));
         // 输出：true
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(nested);
-        // 关键变化：Files.deleteIfExists(nested);；删除路径 nested；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(nested.getParent());
-        // 关键变化：Files.deleteIfExists(nested.getParent());；删除路径 nested.getParent()；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(directory);
-        // 关键变化：Files.deleteIfExists(directory);；删除路径 directory；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -191,11 +184,9 @@ public class FilesTextDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-text-", ".txt");
         Files.writeString(file, "你好 Java", StandardCharsets.UTF_8);
-        // 关键变化：Files.writeString(file, "你好 Java", StandardCharsets.UTF_8);；将 "你好 Java"，字符集为 StandardCharsets.UTF_8 写入路径 file；writeString 返回目标 Path，文件内容更新。
         System.out.println(Files.readString(file, StandardCharsets.UTF_8));
         // 输出：你好 Java
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -216,11 +207,9 @@ public class FilesBytesDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-bytes-", ".bin");
         Files.write(file, new byte[]{1, 2, 3});
-        // 关键变化：Files.write(file, new byte[]{1, 2, 3});；将 new byte[]{1, 2, 3} 写入路径 file；write 返回目标 Path，文件内容更新。
         System.out.println(Arrays.toString(Files.readAllBytes(file)));
         // 输出：[1, 2, 3]
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -241,20 +230,16 @@ public class FilesBufferedTextDemo {
         Path file = Files.createTempFile("java-buffered-", ".txt");
         try (var writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
         // 输入：try (var writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {；资源变量 writer 接收 Files.newBufferedWriter(file, StandardCharsets.UTF_8)，try 结束时自动关闭。
-        // 关键变化：try (var writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {；创建资源 writer，构造表达式为 Files.newBufferedWriter(file, StandardCharsets.UTF_8)；try 结束时关闭该资源。
             writer.write("first");
             writer.newLine();
-            // 关键变化：writer.newLine();；调用 newLine，实参为 无显式参数；向 writer 写入平台换行符；文本内容追加换行。
             writer.write("second");
         }
         try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
         // 输入：try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {；资源变量 reader 接收 Files.newBufferedReader(file, StandardCharsets.UTF_8)，try 结束时自动关闭。
-        // 关键变化：try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {；创建资源 reader，构造表达式为 Files.newBufferedReader(file, StandardCharsets.UTF_8)；try 结束时关闭该资源。
             System.out.println(reader.readLine());
             // 输出：first
         }
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -274,13 +259,10 @@ public class FilesCopyDemo {
         Path source = Files.createTempFile("java-source-", ".txt");
         Path target = source.resolveSibling("java-copy.txt");
         Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-        // 关键变化：Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);；将 source 复制到 target，返回目标 Path；目标文件更新。
         System.out.println(Files.exists(target));
         // 输出：true
         Files.deleteIfExists(source);
-        // 关键变化：Files.deleteIfExists(source);；删除路径 source；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(target);
-        // 关键变化：Files.deleteIfExists(target);；删除路径 target；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -300,11 +282,9 @@ public class FilesMoveDemo {
         Path source = Files.createTempFile("java-before-", ".txt");
         Path target = source.resolveSibling("java-after.txt");
         Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-        // 关键变化：Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);；调用 move，实参为 source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING；将 source 移至 target；返回目标 Path。
         System.out.println(Files.exists(target));
         // 输出：true
         Files.deleteIfExists(target);
-        // 关键变化：Files.deleteIfExists(target);；删除路径 target；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -322,7 +302,6 @@ public class FilesDeleteDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-delete-", ".txt");
         Files.delete(file);
-        // 关键变化：Files.delete(file);；删除存在的路径 file，返回 void；路径不存在时抛出 NoSuchFileException。
         System.out.println(Files.deleteIfExists(file));
         // 输出：false
     }
@@ -342,15 +321,12 @@ public class FilesLinesDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-lines-", ".txt");
         Files.writeString(file, "java\nsql\njava\n");
-        // 关键变化：Files.writeString(file, "java\nsql\njava\n");；将 "java\nsql\njava\n" 写入路径 file；writeString 返回目标 Path，文件内容更新。
         try (var lines = Files.lines(file)) {
         // 输入：try (var lines = Files.lines(file)) {；资源变量 lines 接收 Files.lines(file)，try 结束时自动关闭。
-        // 关键变化：try (var lines = Files.lines(file)) {；创建资源 lines，构造表达式为 Files.lines(file)；try 结束时关闭该资源。
             System.out.println(lines.filter("java"::equals).count());
             // 输出：2
         }
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -368,21 +344,15 @@ public class FilesWalkDemo {
     public static void main(String[] args) throws Exception {
         Path directory = Files.createTempDirectory("java-walk-");
         Files.writeString(directory.resolve("a.txt"), "a");
-        // 关键变化：Files.writeString(directory.resolve("a.txt"), "a");；将 "a" 写入路径 directory.resolve("a.txt")；writeString 返回目标 Path，文件内容更新。
         Files.createDirectory(directory.resolve("sub"));
-        // 关键变化：Files.createDirectory(directory.resolve("sub"));；向 directory 追加路径片段 "sub"，返回新的 Path；原路径不变。
         try (var paths = Files.walk(directory)) {
         // 输入：try (var paths = Files.walk(directory)) {；资源变量 paths 接收 Files.walk(directory)，try 结束时自动关闭。
-        // 关键变化：try (var paths = Files.walk(directory)) {；创建资源 paths，构造表达式为 Files.walk(directory)；try 结束时关闭该资源。
             System.out.println(paths.filter(Files::isRegularFile).count());
             // 输出：1
         }
         Files.deleteIfExists(directory.resolve("a.txt"));
-        // 关键变化：Files.deleteIfExists(directory.resolve("a.txt"));；删除路径 directory.resolve("a.txt")；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(directory.resolve("sub"));
-        // 关键变化：Files.deleteIfExists(directory.resolve("sub"));；删除路径 directory.resolve("sub")；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(directory);
-        // 关键变化：Files.deleteIfExists(directory);；删除路径 directory；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -404,7 +374,6 @@ public class FilesAttributesDemo {
         System.out.println(size == (long) attributes.get("size"));
         // 输出：true
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -442,7 +411,6 @@ public class SameFileDemo {
         System.out.println(Files.isSameFile(file, file.toAbsolutePath()));
         // 输出：true
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -460,15 +428,11 @@ public class FilesMismatchDemo {
         Path left = Files.createTempFile("java-left-", ".bin");
         Path right = Files.createTempFile("java-right-", ".bin");
         Files.write(left, new byte[]{1, 2, 3});
-        // 关键变化：Files.write(left, new byte[]{1, 2, 3});；将 new byte[]{1, 2, 3} 写入路径 left；write 返回目标 Path，文件内容更新。
         Files.write(right, new byte[]{1, 9, 3});
-        // 关键变化：Files.write(right, new byte[]{1, 9, 3});；将 new byte[]{1, 9, 3} 写入路径 right；write 返回目标 Path，文件内容更新。
         System.out.println(Files.mismatch(left, right));
         // 输出：1
         Files.deleteIfExists(left);
-        // 关键变化：Files.deleteIfExists(left);；删除路径 left；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(right);
-        // 关键变化：Files.deleteIfExists(right);；删除路径 right；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -487,11 +451,9 @@ public class FileTimeDemo {
         Path file = Files.createTempFile("java-time-", ".txt");
         FileTime now = FileTime.fromMillis(0);
         Files.setLastModifiedTime(file, now);
-        // 关键变化：Files.setLastModifiedTime(file, now);；调用 setLastModifiedTime，实参为 file, now；把 file 的最后修改时间设为 now；返回目标 Path。
         System.out.println(Files.getLastModifiedTime(file).toMillis());
         // 输出：0
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -513,17 +475,13 @@ public class ZipFileSystemDemo {
     public static void main(String[] args) throws Exception {
         Path zip = Files.createTempFile("java-zip-", ".zip");
         URI uri = URI.create("jar:" + zip.toUri());
-        // 关键变化：URI uri = URI.create("jar:" + zip.toUri());；按 "jar:" + zip.toUri() 调用 create 创建值，结果写入 uri。
         try (FileSystem fs = FileSystems.newFileSystem(uri, Map.of("create", "true"))) {
         // 输入：try (FileSystem fs = FileSystems.newFileSystem(uri, Map.of("create", "true"))) {；资源变量 fs 接收 FileSystems.newFileSystem(uri, Map.of("create", "true"))，try 结束时自动关闭。
-        // 关键变化：try (FileSystem fs = FileSystems.newFileSystem(uri, Map.of("create", "true"))) {；创建资源 fs，构造表达式为 FileSystems.newFileSystem(uri, Map.of("create", "true"))；try 结束时关闭该资源。
             Files.writeString(fs.getPath("/inside.txt"), "zip");
-            // 关键变化：Files.writeString(fs.getPath("/inside.txt"), "zip");；将 "zip" 写入路径 fs.getPath("/inside.txt")；writeString 返回目标 Path，文件内容更新。
             System.out.println(Files.exists(fs.getPath("/inside.txt")));
             // 输出：true
         }
         Files.deleteIfExists(zip);
-        // 关键变化：Files.deleteIfExists(zip);；删除路径 zip；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -540,23 +498,17 @@ public class PathFilesDemo {
         Path source = directory.resolve("source.txt");
         Path copy = directory.resolve("copy.txt");
         Files.writeString(source, "Path + Files", StandardCharsets.UTF_8);
-        // 关键变化：Files.writeString(source, "Path + Files", StandardCharsets.UTF_8);；将 "Path + Files"，字符集为 StandardCharsets.UTF_8 写入路径 source；writeString 返回目标 Path，文件内容更新。
         Files.copy(source, copy);
-        // 关键变化：Files.copy(source, copy);；将 source 复制到 copy，返回目标 Path；目标文件更新。
         try (var paths = Files.list(directory)) {
         // 输入：try (var paths = Files.list(directory)) {；资源变量 paths 接收 Files.list(directory)，try 结束时自动关闭。
-        // 关键变化：try (var paths = Files.list(directory)) {；创建资源 paths，构造表达式为 Files.list(directory)；try 结束时关闭该资源。
             System.out.println(paths.map(Path::getFileName).count());
             // 输出：2
         }
         System.out.println(Files.readString(copy, StandardCharsets.UTF_8));
         // 输出：Path + Files
         Files.deleteIfExists(copy);
-        // 关键变化：Files.deleteIfExists(copy);；删除路径 copy；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(source);
-        // 关键变化：Files.deleteIfExists(source);；删除路径 source；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(directory);
-        // 关键变化：Files.deleteIfExists(directory);；删除路径 directory；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```

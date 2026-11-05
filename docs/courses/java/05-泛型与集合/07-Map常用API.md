@@ -40,7 +40,6 @@ Map 的键放入后必须保持 equals/hashCode 或比较关系稳定；修改�
 put 会新增或替换键对应的值，并返回该键原来的值。
 
 ```java
-// 语义：put 会新增或替换键对应的值，并返回该键原来的值。
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -59,7 +58,6 @@ public class MapPutDemo {
 get 返回键对应的值，键不存在时返回 null。
 
 ```java
-// 语义：get 返回键对应的值，键不存在时返回 null。
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -80,7 +78,6 @@ public class MapGetDemo {
 getOrDefault 只提供读取时的兜底，不会把默认值写回 Map。
 
 ```java
-// 语义：getOrDefault 只提供读取时的兜底，不会把默认值写回 Map。
 import java.util.Map;
 
 public class MapDefaultDemo {
@@ -97,7 +94,6 @@ public class MapDefaultDemo {
 containsKey 能区分“键缺失”和“键存在但映射到 null”。
 
 ```java
-// 语义：containsKey 能区分“键缺失”和“键存在但映射到 null”。
 import java.util.Map;
 
 public class MapContainsKeyDemo {
@@ -114,7 +110,6 @@ public class MapContainsKeyDemo {
 containsValue 通常需要扫描全部值，不适合放在高频热点循环中。
 
 ```java
-// 语义：containsValue 通常需要扫描全部值，不适合放在高频热点循环中。
 import java.util.Map;
 
 public class MapContainsValueDemo {
@@ -133,7 +128,6 @@ public class MapContainsValueDemo {
 remove(key) 按键删除；remove(key, value) 只有键和值同时匹配才删除，适合避免覆盖他人更新后的值。
 
 ```java
-// 语义：remove(key) 按键删除。
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -153,7 +147,6 @@ public class MapRemoveDemo {
 同时需要键和值时优先 entrySet；entrySet、keySet、values 都是源 Map 的视图。
 
 ```java
-// 语义：同时需要键和值时优先 entrySet。
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -175,7 +168,6 @@ public class MapEntrySetDemo {
 键不存在或映射值为 null 时写入，已有非 null 值不覆盖；并发 Map 中它还是单键原子更新工具。
 
 ```java
-// 语义：键不存在或映射值为 null 时写入，已有非 null 值不覆盖。
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -184,7 +176,6 @@ public class MapPutIfAbsentDemo {
         Map<String, Integer> map = new LinkedHashMap<>();
         map.putIfAbsent("java", 95);
         map.putIfAbsent("java", 100);
-        // 关键变化：map.putIfAbsent("java", 100);；已有 "java"=95，因此不写入 100，返回旧映射值 95；映射保持不变。
         System.out.println(map);
         // 输出：{java=95}
     }
@@ -196,7 +187,6 @@ public class MapPutIfAbsentDemo {
 缺失键直接放入给定值，已有值才执行合并函数；合并结果为 null 时会删除该键。
 
 ```java
-// 语义：缺失键直接放入给定值，已有值才执行合并函数。
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -204,9 +194,7 @@ public class MapMergeDemo {
     public static void main(String[] args) {
         Map<String, Integer> count = new LinkedHashMap<>();
         count.merge("java", 1, Integer::sum);
-        // 关键变化：count.merge("java", 1, Integer::sum);；向 count 合并 "java", 1, Integer::sum，返回合并后的值；映射内容更新。
         count.merge("java", 1, Integer::sum);
-        // 关键变化：count.merge("java", 1, Integer::sum);；向 count 合并 "java", 1, Integer::sum，返回合并后的值；映射内容更新。
         System.out.println(count);
         // 输出：{java=2}
     }
@@ -218,7 +206,6 @@ public class MapMergeDemo {
 已有非 null 值时不执行计算；计算结果为 null 时不写入，常用于按键创建列表或集合。
 
 ```java
-// 语义：已有非 null 值时不执行计算。
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -228,7 +215,6 @@ public class MapComputeIfAbsentDemo {
     public static void main(String[] args) {
         Map<String, List<String>> tags = new LinkedHashMap<>();
         tags.computeIfAbsent("java", key -> new ArrayList<>()).add("String");
-        // 关键变化：tags.computeIfAbsent("java", key -> new ArrayList<>()).add("String");；按 "java", key -> new ArrayList<>() 计算 tags 的映射值，返回新值或 null；映射内容更新。
         System.out.println(tags);
         // 输出：{java=[String]}
     }
@@ -240,7 +226,6 @@ public class MapComputeIfAbsentDemo {
 replace(key, value) 不新增键；三参数版本还要求旧值相等，适合避免覆盖别人已更新的值。
 
 ```java
-// 语义：replace(key, value) 不新增键。
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -260,7 +245,6 @@ public class MapReplaceDemo {
 keySet 返回与源 Map 联动的键视图，需要独立结果时显式复制。
 
 ```java
-// 语义：keySet 返回与源 Map 联动的键视图，需要独立结果时显式复制。
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -270,7 +254,6 @@ public class MapKeySetDemo {
         map.put("java", 95);
         map.put("sql", 88);
         map.keySet().remove("sql");
-        // 关键变化：map.keySet().remove("sql");；从键集合删除 sql，返回 true；关联 map 条目 sql=88 同步移除。
         System.out.println(map);
         // 输出：{java=95}
     }
@@ -282,7 +265,6 @@ public class MapKeySetDemo {
 values 返回与源 Map 联动的值视图，并允许出现重复值。
 
 ```java
-// 语义：values 返回与源 Map 联动的值视图，并允许出现重复值。
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -302,7 +284,6 @@ public class MapValuesDemo {
 entrySet 适合同时读取键和值，条目视图也会与源 Map 联动。
 
 ```java
-// 语义：entrySet 适合同时读取键和值，条目视图也会与源 Map 联动。
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -321,7 +302,6 @@ public class MapEntrySetViewDemo {
 HashMap 提供通用的快速键值查找，但不承诺遍历顺序。
 
 ```java
-// 语义：HashMap 提供通用的快速键值查找，但不承诺遍历顺序。
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -341,7 +321,6 @@ public class HashMapDemo {
 LinkedHashMap 默认保留插入顺序，也可以配置为按访问顺序排列。
 
 ```java
-// 语义：LinkedHashMap 默认保留插入顺序，也可以配置为按访问顺序排列。
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -361,7 +340,6 @@ public class LinkedHashMapDemo {
 TreeMap 按键的自然顺序或比较器排序，并支持范围查询。
 
 ```java
-// 语义：TreeMap 按键的自然顺序或比较器排序，并支持范围查询。
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -390,7 +368,6 @@ public class MapComputeDemo {
         Map<String, Integer> map = new LinkedHashMap<>();
         map.compute("sql", (key, old) -> old == null ? 1 : old + 1);
         // 输入：map.compute("sql", (key, old) -> old == null ? 1 : old + 1);；当前 map 没有 "sql"，回调把 old=null 计算为 1。
-        // 关键变化：compute 返回 1 并把 map 更新为 {sql=1}；回调参数 old 不是接收结果变量。
         System.out.println(map);
         // 输出：{sql=1}
     }
@@ -410,7 +387,6 @@ public class MapComputeIfPresentDemo {
         Map<String, Integer> map = new LinkedHashMap<>();
         map.put("java", 1);
         map.computeIfPresent("java", (key, old) -> old + 1);
-        // 关键变化：map.computeIfPresent("java", (key, old) -> old + 1);；按 "java", (key, old) -> old + 1 计算 map 的映射值，返回新值或 null；映射内容更新。
         System.out.println(map);
         // 输出：{java=2}
     }
@@ -431,7 +407,6 @@ public class MapReplaceAllDemo {
         scores.put("java", 90);
         scores.put("sql", 80);
         scores.replaceAll((key, value) -> value + 5);
-        // 关键变化：scores.replaceAll((key, value) -> value + 5);；调用 replaceAll，实参为 (key, value) -> value + 5；按 (key, value) -> value + 5 更新 scores 中每个映射值；映射内容更新。
         System.out.println(scores);
         // 输出：{java=95, sql=85}
     }
@@ -466,8 +441,6 @@ public class MapOfEntriesDemo {
         Map<String, Integer> codes = Map.ofEntries(
             Map.entry("created", 201),
             Map.entry("badRequest", 400));
-            // 关键变化：Map.entry("created", 201) 创建键为 "created"、值为 201 的不可变 Map.Entry。
-            // 关键变化：Map.entry("badRequest", 400) 创建键为 "badRequest"、值为 400 的不可变 Map.Entry。
         System.out.println(codes.get("created"));
         // 输出：201
     }
@@ -506,11 +479,9 @@ public class AccessOrderMapDemo {
         LinkedHashMap<String, Integer> map =
             new LinkedHashMap<>(16, 0.75f, true);
 
-            // 关键变化：new LinkedHashMap<>(16, 0.75f, true);；使用初始容量 16、负载因子 0.75 和 accessOrder=true 创建按访问顺序迭代的 LinkedHashMap。
         map.put("A", 1);
         map.put("B", 2);
         map.get("A");
-        // 关键变化：map.get("A");；从 map 按 "A" 读取值，返回值不修改映射内容。
         System.out.println(map.keySet());
         // 输出：[B, A]
     }
@@ -587,9 +558,7 @@ public class ConcurrentMapDemo {
     public static void main(String[] args) {
         ConcurrentMap<String, Integer> counts = new ConcurrentHashMap<>();
         counts.merge("java", 1, Integer::sum);
-        // 关键变化：counts.merge("java", 1, Integer::sum);；向 counts 合并 "java", 1, Integer::sum，返回合并后的值；映射内容更新。
         counts.merge("java", 1, Integer::sum);
-        // 关键变化：counts.merge("java", 1, Integer::sum);；向 counts 合并 "java", 1, Integer::sum，返回合并后的值；映射内容更新。
         System.out.println(counts.get("java"));
         // 输出：2
     }
@@ -609,7 +578,6 @@ public class SynchronizedMapDemo {
     public static void main(String[] args) {
         Map<String, Integer> map =
             Collections.synchronizedMap(new HashMap<>());
-            // 关键变化：Collections.synchronizedMap(new HashMap<>());；调用 synchronizedMap，实参为 new HashMap<>()；返回对底层 Map 访问加同步包装的 Map。
         map.put("java", 95);
         synchronized (map) {
             System.out.println(map.get("java"));
@@ -642,7 +610,6 @@ public class MapSummaryDemo {
     public static void main(String[] args) {
         Map<String, Integer> count = new HashMap<>();
         count.merge("java", 1, Integer::sum);
-        // 关键变化：count.merge("java", 1, Integer::sum);；向 count 合并 "java", 1, Integer::sum，返回合并后的值；映射内容更新。
         System.out.println(count);
         // 输出：{java=1}
     }

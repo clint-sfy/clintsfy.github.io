@@ -33,13 +33,11 @@ Spring Cache 是方法调用缓存的抽象，不规定存储、TTL 或一致性
 用途：用于给本地缓存设置容量、写后过期和统计，避免缓存无限增长。
 
 ```java
-// 初始状态：教学缓存为空，最多 1000 个条目，写后 30 秒过期。
 com.github.benmanes.caffeine.cache.Cache<String, String> cache =
     com.github.benmanes.caffeine.cache.Caffeine.newBuilder()
         .maximumSize(1000).expireAfterWrite(java.time.Duration.ofSeconds(30)).recordStats().build();
 cache.put("tenant-a:7", "PAID");
 String state = cache.getIfPresent("tenant-a:7");
-// 关键变化：只有本进程缓存 tenant-a:7；另一应用实例没有同步得到该条目。
 org.junit.jupiter.api.Assertions.assertEquals("PAID", state);
 org.junit.jupiter.api.Assertions.assertEquals(1L, cache.stats().hitCount());
 // 结果：确定的立即读取命中一次；过期测试应用受控 Ticker，不用 sleep。
@@ -52,7 +50,6 @@ maximumSize 是条目数，不是精确内存上限；大对象可使用 maximum
 用途：用于异步重新加载已有键，降低集中到期重建压力并明确刷新失败时的旧值语义。
 
 ```java
-// 初始状态：教学加载器第一次返回 PAID，第二次返回 CANCELLED。
 java.util.concurrent.atomic.AtomicInteger loads = new java.util.concurrent.atomic.AtomicInteger();
 com.github.benmanes.caffeine.cache.LoadingCache<String, String> cache =
     com.github.benmanes.caffeine.cache.Caffeine.newBuilder()
@@ -61,7 +58,6 @@ com.github.benmanes.caffeine.cache.LoadingCache<String, String> cache =
         .build(key -> loads.incrementAndGet() == 1 ? "PAID" : "CANCELLED");
 org.junit.jupiter.api.Assertions.assertEquals("PAID", cache.get("tenant-a:7"));
 cache.refresh("tenant-a:7").join();
-// 关键变化：显式 refresh 的 future 完成后新值替代 PAID；等待前可能仍读到旧值。
 org.junit.jupiter.api.Assertions.assertEquals("CANCELLED", cache.getIfPresent("tenant-a:7"));
 // 结果：教学刷新成功后为 CANCELLED；生产刷新失败仍需监控与过期兜底。
 ```
@@ -75,7 +71,6 @@ refreshAfterWrite 让条目在被读取时具备刷新资格，不是周期性�
 用途：用于演示多个 L1 的失效丢失和延迟事件处理，把允许陈旧窗口与修复行为变成可观察状态。
 
 ```java
-// 初始状态：内存模型代表两个实例的 L1；shared 仅模拟 L2，不声称已连接 Redis。
 record Versioned(long version, String state) {}
 String key = "tenant-a:7";
 com.github.benmanes.caffeine.cache.Cache<String,Versioned> first = com.github.benmanes.caffeine.cache.Caffeine.newBuilder().build();
@@ -85,14 +80,12 @@ Versioned old = new Versioned(1, "PAID");
 first.put(key, old); second.put(key, old); shared.put(key, old);
 Versioned committed = new Versioned(2, "CANCELLED");
 shared.remove(key); first.invalidate(key);
-// 关键变化：数据库提交 v2 后 L2/A 失效；B 丢失事件，仍返回 v1=PAID。
 org.junit.jupiter.api.Assertions.assertEquals("PAID", second.getIfPresent(key).state());
 second.invalidate(key);
 second.put(key, committed);
 first.put(key, committed);
 long delayedEventVersion = 1;
 first.asMap().computeIfPresent(key, (k, value) -> value.version() <= delayedEventVersion ? null : value);
-// 关键变化：重试事件使 B 重新加载 v2；晚到的 v1 失效不能删除 A 已有的 v2。
 org.junit.jupiter.api.Assertions.assertEquals(2L, second.getIfPresent(key).version());
 org.junit.jupiter.api.Assertions.assertEquals(2L, first.getIfPresent(key).version());
 // 结果：两个 L1 最终均为 v2；丢失事件后的旧值 PAID 是模型明确展示的故障。

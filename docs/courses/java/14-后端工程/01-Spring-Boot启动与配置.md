@@ -54,7 +54,6 @@ public class BackendApplication {
     public static void main(String[] args) {
         var context = SpringApplication.run(BackendApplication.class, args);
 // 作用：var context = SpringApplication.run(BackendApplication.class, args);；声明启动入口。
-// 初始状态：context = SpringApplication.run(BackendApplication.class, args)。
         System.out.println(context != null);
 // 输出：true
     }
@@ -82,7 +81,6 @@ class TimeConfiguration {
     Clock systemClock() {
         return Clock.system(ZoneOffset.UTC);
 // 作用：return Clock.system(ZoneOffset.UTC);；声明配置类。
-// 初始状态：return Clock.system(ZoneOffset.UTC)。
     }
 }
 // 结果：容器中存在名为 systemClock、时区为 Z 的 Clock Bean
@@ -96,11 +94,9 @@ class TimeConfiguration {
 
 ```java
 String yml = "server:\n  port: 8080\nclient:\n  timeout: 2s\n";
-// 初始状态：yml = "server:\n port: 8080\nclient:\n timeout: 2s\n"。
 // 作用：String yml = "server:\n port: 8080\nclient:\n timeout: 2s\n";；声明外部配置。
 boolean hasPort = yml.contains("port: 8080");
 // 作用：boolean hasPort = yml.contains("port: 8080");；声明外部配置。
-// 初始状态：hasPort = yml.contains("port: 8080")。
 System.out.println(hasPort);
 // 输出：true
 // 说明：这段 application.yml 文本声明 server.port=8080、client.timeout=2s；这里只用 contains 验证文本，未启动 Spring，因此没有加载 Environment 或绑定配置。
@@ -116,13 +112,11 @@ System.out.println(hasPort);
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "client")
-// 初始状态：prefix = "client")。
 // 作用：@ConfigurationProperties(prefix = "client")；实现类型安全绑定。
 public record ClientProperties(String baseUrl, int timeoutSeconds) {
     public ClientProperties {
         if (timeoutSeconds <= 0) {
             throw new IllegalArgumentException("timeoutSeconds must be positive");
-// 初始状态：throw new IllegalArgumentException("timeoutSeconds must be positive")。
 // 作用：throw new IllegalArgumentException("timeoutSeconds must be positive");；实现类型安全绑定。
         }
     }
@@ -172,7 +166,6 @@ import org.springframework.boot.diagnostics.FailureAnalysis;
 
 FailureAnalysis analysis = new FailureAnalysis(
     "端口已被占用", "server.port", new IllegalStateException("bind failed"));
-// 初始状态：analysis = new FailureAnalysis(。
 // 作用：FailureAnalysis analysis = new FailureAnalysis(；先看根因与条件报告。
 // 作用："端口已被占用", "server.port", new IllegalStateException("bind failed"));；先看根因与条件报告。
 System.out.println(analysis.getDescription());
@@ -216,7 +209,6 @@ import org.springframework.stereotype.Component;
 class PropertyProbe {
     PropertyProbe(Environment environment) {
         String port = environment.getProperty("server.port", "8080");
-// 初始状态：port = environment.getProperty("server.port", "8080")。
 // 作用：String port = environment.getProperty("server.port", "8080");；读取最终属性视图。
         System.out.println(port);
 // 输出：8080
@@ -246,7 +238,6 @@ record FeatureProperties(boolean enabled, int retryLimit) {
     FeatureProperties {
         if (retryLimit < 0 || retryLimit > 10) {
             throw new IllegalArgumentException("retryLimit must be 0..10");
-// 初始状态：throw new IllegalArgumentException("retryLimit must be 0..10")。
 // 作用：throw new IllegalArgumentException("retryLimit must be 0..10");；读取最终属性视图。
         }
     }

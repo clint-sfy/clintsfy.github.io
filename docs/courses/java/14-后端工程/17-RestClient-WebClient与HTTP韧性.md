@@ -29,14 +29,12 @@ RestClient 是同步客户端（Framework 6.1+），适合普通 MVC 调用；We
 用途：用于构建共享的 JDK HTTP 客户端并限定连接建立时间，减少每个请求重新建连接的开销。
 
 ```java
-// 初始状态：教学连接预算 2 秒，客户端作为应用级对象复用。
 java.net.http.HttpClient transport = java.net.http.HttpClient.newBuilder()
     .connectTimeout(java.time.Duration.ofSeconds(2))
     .followRedirects(java.net.http.HttpClient.Redirect.NEVER).build();
 org.springframework.http.client.JdkClientHttpRequestFactory factory =
     new org.springframework.http.client.JdkClientHttpRequestFactory(transport);
 factory.setReadTimeout(java.time.Duration.ofSeconds(3));
-// 关键变化：Spring 请求工厂复用 transport，并有独立 3 秒读取预算。
 org.junit.jupiter.api.Assertions.assertEquals(java.time.Duration.ofSeconds(2), transport.connectTimeout().orElseThrow());
 // 结果：连接预算可检查；该配置不是端到端总耗时 3 秒的保证。
 ```
@@ -48,14 +46,12 @@ org.junit.jupiter.api.Assertions.assertEquals(java.time.Duration.ofSeconds(2), t
 用途：用于在有明确超时预算的同步调用中读取订单，并把已知 HTTP 拒绝转换为业务异常。
 
 ```java
-// 初始状态：factory 是上节的请求工厂；测试服务器约定订单 7 返回 {"state":"PAID"}。
 org.springframework.web.client.RestClient client = org.springframework.web.client.RestClient.builder()
     .requestFactory(factory).baseUrl("http://127.0.0.1:18080").build();
 String body = client.get().uri(builder -> builder.path("/orders/{id}").build(7))
     .retrieve().onStatus(status -> status.value() == 404,
         (request, response) -> { throw new IllegalStateException("ORDER_NOT_FOUND"); })
     .body(String.class);
-// 关键变化：7 按 URI 模板展开；404 进入固定业务异常，其他错误保留默认错误处理。
 org.junit.jupiter.api.Assertions.assertNotNull(body);
 org.junit.jupiter.api.Assertions.assertTrue(body.contains("PAID"));
 // 结果：受控测试服务器必须返回 PAID；本文未声称真实网络执行成功。
@@ -68,14 +64,12 @@ URI 变量或 `queryParam` 交给 builder 编码，避免字符串拼接和重�
 用途：用于为 Reactor Netty 限定连接数量和排队等待，防止调用高峰无限占用资源。
 
 ```java
-// 初始状态：教学池最多 20 条连接、40 个等待者、等待不超过 1 秒。
 reactor.netty.resources.ConnectionProvider pool = reactor.netty.resources.ConnectionProvider.builder("orders")
     .maxConnections(20).pendingAcquireMaxCount(40)
     .pendingAcquireTimeout(java.time.Duration.ofSeconds(1)).build();
 reactor.netty.http.client.HttpClient transport = reactor.netty.http.client.HttpClient.create(pool)
     .option(io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS, 2000)
     .responseTimeout(java.time.Duration.ofSeconds(3));
-// 关键变化：pool 的 20 条连接用满后最多排队 40 个请求，超过 1 秒等待预算失败。
 org.junit.jupiter.api.Assertions.assertNotNull(transport);
 pool.dispose();
 // 结果：这里只构建/释放池；应用中池应共享并在停机时释放，不能请求后立即 dispose。
@@ -88,7 +82,6 @@ pool.dispose();
 用途：用于把响应式请求组合成有限预算的链，并在错误分支释放响应体资源。
 
 ```java
-// 初始状态：transport 是上节共享 Reactor 客户端，教学响应最多 256 KiB。
 org.springframework.web.reactive.function.client.WebClient client =
     org.springframework.web.reactive.function.client.WebClient.builder()
         .baseUrl("http://127.0.0.1:18080")
@@ -99,7 +92,6 @@ reactor.core.publisher.Mono<String> result = client.get().uri("/orders/{id}", 7)
         ? response.bodyToMono(String.class)
         : response.createException().flatMap(reactor.core.publisher.Mono::error))
     .timeout(java.time.Duration.ofSeconds(4));
-// 关键变化：请求尚未订阅；订阅后错误体被消费，整体链超过 4 秒发出超时并取消上游。
 org.junit.jupiter.api.Assertions.assertNotNull(result);
 // 结果：需要 StepVerifier/受控 HTTP 服务器断言 PAID、错误、超时、过大 body 和取消分支。
 ```
@@ -111,14 +103,12 @@ org.junit.jupiter.api.Assertions.assertNotNull(result);
 用途：用于对明确的临时传输故障有限重试，通过退避与抖动降低同时恢复造成的冲击。
 
 ```java
-// 初始状态：教学读取第一次发出 IOException，第二次成功；输入没有副作用。
 java.util.concurrent.atomic.AtomicInteger attempts = new java.util.concurrent.atomic.AtomicInteger();
 reactor.core.publisher.Mono<String> read = reactor.core.publisher.Mono.defer(() ->
     attempts.incrementAndGet() == 1 ? reactor.core.publisher.Mono.error(new java.io.IOException("temporary"))
         : reactor.core.publisher.Mono.just("PAID"));
 reactor.core.publisher.Mono<String> retried = read.retryWhen(reactor.util.retry.Retry.backoff(1, java.time.Duration.ofMillis(20))
     .jitter(0.5).filter(error -> error instanceof java.io.IOException));
-// 关键变化：attempts 从 1 递增为 2 后返回 PAID；最多重试 1 次，业务拒绝不重试。
 org.junit.jupiter.api.Assertions.assertEquals("PAID", retried.block(java.time.Duration.ofSeconds(2)));
 org.junit.jupiter.api.Assertions.assertEquals(2, attempts.get());
 // 结果：教学同步测试中两次尝试；生产响应式线程不使用 block。
@@ -131,13 +121,11 @@ org.junit.jupiter.api.Assertions.assertEquals(2, attempts.get());
 用途：用于在下游持续失败时熔断调用，限制故障传播而非替代请求超时。
 
 ```java
-// 初始状态：新断路器状态 CLOSED，教学代码验证状态机初值。
 io.github.resilience4j.circuitbreaker.CircuitBreaker breaker =
     io.github.resilience4j.circuitbreaker.CircuitBreaker.ofDefaults("orders");
 java.util.function.Supplier<String> guarded = io.github.resilience4j.circuitbreaker.CircuitBreaker.decorateSupplier(
     breaker, () -> "PAID");
 String state = guarded.get();
-// 关键变化：成功结果被断路器记录；尚未达到最小样本，不会因一条失败立刻 OPEN。
 org.junit.jupiter.api.Assertions.assertEquals("PAID", state);
 org.junit.jupiter.api.Assertions.assertEquals(io.github.resilience4j.circuitbreaker.CircuitBreaker.State.CLOSED, breaker.getState());
 // 结果：正常分支通过；失败率、半开探测和恢复需用自定义窗口测试。
@@ -150,11 +138,9 @@ org.junit.jupiter.api.Assertions.assertEquals(io.github.resilience4j.circuitbrea
 用途：用于把某个下游的并发量限定在预算内，避免故障调用占满全部应用资源。
 
 ```java
-// 初始状态：教学 semaphore bulkhead 默认配置，执行一个短同步查询。
 io.github.resilience4j.bulkhead.Bulkhead bulkhead = io.github.resilience4j.bulkhead.Bulkhead.ofDefaults("orders");
 java.util.function.Supplier<String> call = io.github.resilience4j.bulkhead.Bulkhead.decorateSupplier(bulkhead, () -> "PAID");
 String result = call.get();
-// 关键变化：bulkhead 为 PAID 查询获取许可，返回后释放；饱和路径拒绝或有限等待。
 org.junit.jupiter.api.Assertions.assertEquals("PAID", result);
 // 结果：成功路径返回 PAID；真实并发预算需按线程数和连接池容量配置。
 ```
@@ -166,11 +152,9 @@ semaphore 隔离并发，线程池 bulkhead 还涉及线程和队列；它们不
 用途：用于在调用入口控制许可发放速度，避免单实例持续超过下游约定的配额。
 
 ```java
-// 初始状态：limiter 名为 orders，采用库默认许可配置；生产按配额显式设置。
 io.github.resilience4j.ratelimiter.RateLimiter limiter = io.github.resilience4j.ratelimiter.RateLimiter.ofDefaults("orders");
 java.util.function.Supplier<String> call = io.github.resilience4j.ratelimiter.RateLimiter.decorateSupplier(limiter, () -> "PAID");
 String result = call.get();
-// 关键变化：许可允许一次本地调用；拒绝分支由 RequestNotPermitted 表示。
 org.junit.jupiter.api.Assertions.assertEquals("PAID", result);
 // 结果：单次成功受保护；多实例总配额需要网关或共享协调，不能简单复制本地配额。
 ```

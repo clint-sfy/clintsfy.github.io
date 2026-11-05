@@ -39,7 +39,6 @@ Stream 管道应尽量保持无副作用。收集器会管理结果容器和合�
 空子列表自然产生空子流；如果子列表可能为 `null`，应先转换为 `List.of()` 或 `Stream.empty()`。
 
 ```java
-// 语义：空子列表自然产生空子流。
 import java.util.List;
 
 var nested = List.of(List.of("Java", "SQL"), List.of("HTTP", "JVM"));
@@ -53,14 +52,12 @@ System.out.println(flat);
 展开后会丢失订单边界；需要保留订单信息时先映射成包含订单 ID 的记录，而不是只收集字符串。
 
 ```java
-// 语义：展开后会丢失订单边界。
 import java.util.List;
 
 record Order(String id, List<String> items) { }
 
 var orders = List.of(new Order("A", List.of("book", "pen")), new Order("B", List.of("cup")));
 var items = orders.stream().flatMap(order -> order.items().stream()).toList();
-// 关键变化：var items = orders.stream().flatMap(order -> order.items().stream()).toList();；在流上调用 flatMap 处理元素，结果写入 items。
 System.out.println(items);
 // 输出：[book, pen, cup]
 ```
@@ -70,7 +67,6 @@ System.out.println(items);
 `distinct` 依赖元素的 `equals`/`hashCode`；自定义对象应先正确实现值相等语义。
 
 ```java
-// 语义：distinct 依赖元素的 equals/hashCode。
 import java.util.List;
 
 var tags = List.of(List.of("java", "sql"), List.of("java", "http"));
@@ -84,7 +80,6 @@ System.out.println(unique);
 默认结果是 `Map<User, List<Order>>`；只需要汇总值时可以直接指定下游收集器，避免保留整组对象。
 
 ```java
-// 语义：默认结果是 Map<User, List<Order>>。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -101,7 +96,6 @@ System.out.println(groups.get("ann").size());
 `mapping` 让结果只保留需要的字段；需要去重时替换下游为 `Collectors.toSet()`。
 
 ```java
-// 语义：mapping 让结果只保留需要的字段。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -110,7 +104,6 @@ record Order(String user, String item, int amount) { }
 var orders = List.of(new Order("ann", "book", 20), new Order("ann", "cup", 35));
 var items = orders.stream().collect(Collectors.groupingBy(
         Order::user, Collectors.mapping(Order::item, Collectors.toList())));
-        // 关键变化：Order::user, Collectors.mapping(Order::item, Collectors.toList())));；终止当前流管道并把元素收集为 List；返回列表结果。
 System.out.println(items);
 // 输出：{ann=[book, cup]}
 ```
@@ -120,7 +113,6 @@ System.out.println(items);
 用数值下游收集器比先分组 List 再循环求和更直接，也减少中间对象。
 
 ```java
-// 语义：用数值下游收集器比先分组 List 再循环求和更直接，也减少中间对象。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -129,7 +121,6 @@ record Order(String user, int amount) { }
 var orders = List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8));
 var totals = orders.stream().collect(Collectors.groupingBy(
         Order::user, Collectors.summingInt(Order::amount)));
-        // 关键变化：Order::user, Collectors.summingInt(Order::amount)));；调用 summingInt，实参为 Order::amount))；返回按 Order::amount 求和的 Collector。
 System.out.println(totals);
 // 输出：{ann=55, bob=8}
 ```
@@ -139,7 +130,6 @@ System.out.println(totals);
 摘要同时提供数量、总和、最小、最大和平均值，适合报表或诊断数据。
 
 ```java
-// 语义：摘要同时提供数量、总和、最小、最大和平均值，适合报表或诊断数据。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -148,7 +138,6 @@ record Order(String user, int amount) { }
 var orders = List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8));
 var stats = orders.stream().collect(Collectors.groupingBy(
         Order::user, Collectors.summarizingInt(Order::amount)));
-        // 关键变化：Order::user, Collectors.summarizingInt(Order::amount)));；调用 summarizingInt，实参为 Order::amount))；返回按 Order::amount 生成 IntSummaryStatistics 的 Collector。
 System.out.println(stats.get("ann").getAverage());
 // 输出：27.5
 ```
@@ -158,7 +147,6 @@ System.out.println(stats.get("ann").getAverage());
 归约函数要明确初始值和结合规则；如果只是求和、最大值等常见统计，优先使用对应的专用收集器。
 
 ```java
-// 语义：归约函数要明确初始值和结合规则。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -167,7 +155,6 @@ record Order(String user, int amount) { }
 var orders = List.of(new Order("ann", 20), new Order("ann", 35), new Order("bob", 8));
 var max = orders.stream().collect(Collectors.groupingBy(
         Order::user, Collectors.reducing(0, Order::amount, Integer::max)));
-        // 关键变化：Order::user, Collectors.reducing(0, Order::amount, Integer::max)));；调用 reducing，实参为 0, Order::amount, Integer::max))；返回按给定初值和二元操作聚合的 Collector。
 System.out.println(max);
 // 输出：{ann=35, bob=8}
 ```
@@ -177,13 +164,11 @@ System.out.println(max);
 二分条件用 `partitioningBy` 更清晰；多个分类值不要把复杂条件硬塞成真假。
 
 ```java
-// 语义：二分条件用 partitioningBy 更清晰。
 import java.util.List;
 import java.util.stream.Collectors;
 
 var parts = List.of(10, 25, 80, 5).stream().collect(
         Collectors.partitioningBy(amount -> amount >= 20));
-        // 关键变化：var parts = List.of(10, 25, 80, 5).stream().collect( Collectors.partitioningBy(amount -> amount >= 20));；在流上调用 collect 处理元素，结果写入 parts。
 
 System.out.println(parts);
 // 输出：{false=[10, 5], true=[25, 80]}
@@ -194,7 +179,6 @@ System.out.println(parts);
 没有合并策略的重复键会抛异常；覆盖、相加、取最大或收集列表都应在代码中明确表达。
 
 ```java
-// 语义：没有合并策略的重复键会抛异常。
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -212,17 +196,13 @@ System.out.println(best);
 `collect` 适合可变结果容器或复杂聚合；只需要不可变 List 时直接使用 `toList()` 更简洁。
 
 ```java
-// 语义：collect 适合可变结果容器或复杂聚合。
 import java.util.List;
 import java.util.stream.Collectors;
 
 var result = List.of("java", "stream", "api").stream()
         .filter(text -> text.length() >= 4)
         .collect(Collectors.joining("/"));
-        // 关键变化：var result = List.of("java", "stream", "api").stream() .filter(text -> text.length() >= 4) .collect(Collectors.joining("/"));；在流上调用 filter 处理元素，结果写入 result。
         // 输入：filter(text -> text.length() >= 4)；从 "java"、"stream"、"api" 中保留前两项。
-        // 关键变化：joining("/") 把 "java"、"stream" 拼为 "java/stream" 并写入 result。
-        // 关键变化：.collect(Collectors.joining("/"));；使用指定 Collector 聚合当前元素；返回该 Collector 的结果。
 System.out.println(result);
 // 输出：java/stream
 ```
@@ -232,7 +212,6 @@ System.out.println(result);
 `reduce` 的累加器应满足结合律，才能安全地考虑并行；需要同时保留多个字段时使用 `collect` 或记录类型。
 
 ```java
-// 语义：reduce 的累加器应满足结合律，才能安全地考虑并行。
 import java.util.List;
 
 int total = List.of(20, 35, 8).stream().reduce(0, Integer::sum);
@@ -250,14 +229,10 @@ import java.util.List;
 
 var result = List.of("java", "sql").stream()
         .<String>mapMulti((text, sink) -> {
-        // 关键变化：.<String>mapMulti((text, sink) -> {；对每个 text 调用 sink 两次，分别发出原文和大写文本；返回的流继续收集到 result。
             sink.accept(text);
-            // 关键变化：sink.accept(text);；把 text 交给 sink 消费，Consumer 无返回值；副作用状态更新。
             sink.accept(text.toUpperCase());
-            // 关键变化：sink.accept(text.toUpperCase());；把 text.toUpperCase() 交给 sink 消费，Consumer 无返回值；副作用状态更新。
         })
         .toList();
-        // 关键变化：.toList();；终止当前流管道并把元素收集为 List；返回列表结果。
 System.out.println(result);
 // 输出：[java, JAVA, sql, SQL]
 ```
@@ -272,7 +247,6 @@ import java.util.stream.Collectors;
 
 var result = List.of("java", "sql").stream().collect(
         Collectors.collectingAndThen(Collectors.toList(), List::copyOf));
-        // 关键变化：Collectors.collectingAndThen(Collectors.toList(), List::copyOf));；终止当前流管道并把元素收集为 List；返回列表结果。
 System.out.println(result);
 // 输出：[java, sql]
 ```
@@ -286,8 +260,6 @@ import java.util.List;
 
 long count = List.of("java", "sql", "java").parallelStream()
         .unordered().distinct().count();
-        // 关键变化：long count = List.of("java", "sql", "java").parallelStream() .unordered().distinct().count();；统计 上一个链式结果 的元素数量，计数结果写入 count。
-        // 关键变化：.unordered().distinct().count();；统计 上一个链式结果 中的元素数量，返回 long 计数值；源流内容不变。
 System.out.println(count);
 // 输出：2
 ```
@@ -302,7 +274,6 @@ import java.util.List;
 
 List<Integer> result = new ArrayList<>();
 List.of(1, 2, 3, 4).parallelStream().forEach(result::add);
-// 关键变化：List.of(1, 2, 3, 4).parallelStream().forEach(result::add);；把 上一个链式结果 的每个元素交给 result::add，无返回值；遍历动作完成。
 System.out.println(result.size());
 // 输出：0
 ```
@@ -324,10 +295,8 @@ public class StreamGroupDemo {
 
 
         var items = orders.stream().flatMap(order -> order.items().stream()).distinct().sorted().toList();
-        // 关键变化：var items = orders.stream().flatMap(order -> order.items().stream()).distinct().sorted().toList();；在流上调用 flatMap 处理元素，结果写入 items。
         var totals = orders.stream().collect(Collectors.groupingBy(
                 Order::user, Collectors.summingInt(Order::amount)));
-                // 关键变化：Order::user, Collectors.summingInt(Order::amount)));；调用 summingInt，实参为 Order::amount))；返回按 Order::amount 求和的 Collector。
         System.out.println(items);
         // 输出：[book
         System.out.println(totals);

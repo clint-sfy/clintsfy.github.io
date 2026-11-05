@@ -41,7 +41,6 @@ Map 的键必须保持 equals/hashCode 或比较器关系稳定；修改可变 k
 需要新增或覆盖键对应的值时使用 `put`，返回值是旧值。
 
 ```java
-// 语义：需要新增或覆盖键对应的值时使用 put，返回值是旧值。
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -60,7 +59,6 @@ public class MapBasicOverviewDemo {
 需要读取键对应的值时使用 `get`，键缺失时返回 `null`。
 
 ```java
-// 语义：需要读取键对应的值时使用 get，键缺失时返回 null。
 import java.util.Map;
 
 Map<String, Integer> scores = Map.of("java", 95);
@@ -73,7 +71,6 @@ System.out.println(scores.get("java"));
 需要区分“键不存在”和“键映射到 null”时使用 `containsKey`。
 
 ```java
-// 语义：需要区分“键不存在”和“键映射到 null”时使用 containsKey。
 import java.util.HashMap;
 import java.util.Map;
 
@@ -88,7 +85,6 @@ System.out.println(scores.containsKey("java"));
 需要累加计数或按规则合并新旧值时使用 `merge`。
 
 ```java
-// 语义：需要累加计数或按规则合并新旧值时使用 merge。
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -98,7 +94,6 @@ public class MapCompoundOverviewDemo {
     public static void main(String[] args) {
         Map<String, Integer> count = new HashMap<>();
         count.merge("java", 1, Integer::sum);
-        // 关键变化：count.merge("java", 1, Integer::sum);；向 count 合并 "java", 1, Integer::sum，返回合并后的值；映射内容更新。
         System.out.println(count);
         // 输出：{java=1}
     }
@@ -110,7 +105,6 @@ public class MapCompoundOverviewDemo {
 需要按键延迟创建集合或昂贵对象时使用 `computeIfAbsent`。
 
 ```java
-// 语义：需要按键延迟创建集合或昂贵对象时使用 computeIfAbsent。
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -118,7 +112,6 @@ import java.util.Map;
 
 Map<String, List<String>> groups = new HashMap<>();
 groups.computeIfAbsent("java", key -> new ArrayList<>()).add("String");
-// 关键变化：groups.computeIfAbsent("java", key -> new ArrayList<>()).add("String");；按 "java", key -> new ArrayList<>() 计算 groups 的映射值，返回新值或 null；映射内容更新。
 System.out.println(groups);
 // 输出：{java=[String]}
 ```
@@ -128,7 +121,6 @@ System.out.println(groups);
 不需要稳定迭代顺序或按键排序时，通常使用 `HashMap`。
 
 ```java
-// 语义：不需要稳定迭代顺序或按键排序时，通常使用 HashMap。
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -149,7 +141,6 @@ public class MapChoiceOverviewDemo {
 需要稳定地按插入顺序遍历键值时使用 `LinkedHashMap`。
 
 ```java
-// 语义：需要稳定地按插入顺序遍历键值时使用 LinkedHashMap。
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -165,7 +156,6 @@ System.out.println(map.keySet());
 需要键的有序遍历或范围查询时使用 `TreeMap`。
 
 ```java
-// 语义：需要键的有序遍历或范围查询时使用 TreeMap。
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -181,7 +171,6 @@ System.out.println(map.keySet());
 优先使用 String、数字或 record 作为 key；可变 key 放入后不要修改参与 equals/hashCode 的字段。
 
 ```java
-// 语义：优先使用 String、数字或 record 作为 key。
 import java.util.HashMap;
 import java.util.Map;
 
@@ -202,7 +191,6 @@ public class MapStableKeyDemo {
 entrySet 同时提供 key 和 value；只需要键或值时才使用 keySet 或 values。
 
 ```java
-// 语义：entrySet 同时提供 key 和 value。
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -247,11 +235,9 @@ public class MapAccessOrderOverviewDemo {
         LinkedHashMap<String, Integer> map =
             new LinkedHashMap<>(16, 0.75f, true);
 
-            // 关键变化：new LinkedHashMap<>(16, 0.75f, true);；使用初始容量 16、负载因子 0.75 和 accessOrder=true 创建按访问顺序迭代的 LinkedHashMap。
         map.put("A", 1);
         map.put("B", 2);
         map.get("A");
-        // 关键变化：map.get("A");；从 map 按 "A" 读取值，返回值不修改映射内容。
         System.out.println(map.keySet());
         // 输出：[B, A]
     }
@@ -269,7 +255,6 @@ public class ConcurrentMapOverviewDemo {
     public static void main(String[] args) {
         ConcurrentHashMap<String, Integer> count = new ConcurrentHashMap<>();
         count.merge("java", 1, Integer::sum);
-        // 关键变化：count.merge("java", 1, Integer::sum);；向 count 合并 "java", 1, Integer::sum，返回合并后的值；映射内容更新。
         System.out.println(count.get("java"));
         // 输出：1
     }
@@ -285,7 +270,6 @@ public class MapSelectionDemo {
     public static void main(String[] args) {
         Map<String, Integer> scores = new LinkedHashMap<>();
         scores.merge("java", 1, Integer::sum);
-        // 关键变化：scores.merge("java", 1, Integer::sum);；向 scores 合并 "java", 1, Integer::sum，返回合并后的值；映射内容更新。
         System.out.println(scores);
         // 输出：{java=1}
     }

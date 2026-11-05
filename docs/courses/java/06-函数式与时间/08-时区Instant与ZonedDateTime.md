@@ -41,11 +41,9 @@ description: 速查 UTC 时间线、区域时区、时区转换、Duration、Per
 解析带 `Z` 或偏移的外部时间时得到唯一时刻；时间戳单位要在接口文档中明确是秒还是毫秒。
 
 ```java
-// 语义：解析带 Z 或偏移的外部时间时得到唯一时刻。
 import java.time.Instant;
 
 Instant parsed = Instant.parse("2026-09-27T01:30:00Z");
-// 关键变化：Instant parsed = Instant.parse("2026-09-27T01:30:00Z");；按 "2026-09-27T01:30:00Z" 调用 parse，解析结果写入 parsed。
 Instant fromMillis = Instant.ofEpochMilli(0);
 System.out.println(parsed);
 // 输出：2026-09-27T01:30:00Z
@@ -67,12 +65,10 @@ Instant epoch = Instant.ofEpochMilli(0);
 转换不会改变时间线上的瞬间，只改变它的地区展示方式。
 
 ```java
-// 语义：转换不会改变时间线上的瞬间，只改变它的地区展示方式。
 import java.time.Instant;
 import java.time.ZoneId;
 
 Instant event = Instant.parse("2026-09-27T01:30:00Z");
-// 关键变化：Instant event = Instant.parse("2026-09-27T01:30:00Z");；按 "2026-09-27T01:30:00Z" 调用 parse，解析结果写入 event。
 var shanghai = event.atZone(ZoneId.of("Asia/Shanghai"));
 System.out.println(shanghai);
 // 输出：2026-09-27T09:30+08:00[Asia/Shanghai]
@@ -83,7 +79,6 @@ System.out.println(shanghai);
 `withZoneSameInstant` 保持同一时间点，只改变本地显示；这是把会议时间展示给另一地区用户的常用操作。
 
 ```java
-// 语义：withZoneSameInstant 保持同一时间点，只改变本地显示。
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
@@ -98,7 +93,6 @@ System.out.println(newYork.toLocalDateTime());
 它改变的是事件发生的时间点，只适合“把同一墙上时间应用到另一个地区”的业务；不要把它误当成时区转换。
 
 ```java
-// 语义：它改变的是事件发生的时间点，只适合“把同一墙上时间应用到另一个地区”的业务。
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
@@ -113,7 +107,6 @@ System.out.println(sameClock.toLocalDateTime());
 优先使用 IANA 区域名；`UTC` 是稳定区域，`+08:00` 则是固定偏移，不包含夏令时规则。
 
 ```java
-// 语义：优先使用 IANA 区域名。
 import java.time.ZoneId;
 
 ZoneId zone = ZoneId.of("Asia/Shanghai");
@@ -126,12 +119,10 @@ System.out.println(zone.getId());
 `Duration` 适合超时、耗时和倒计时；跨时区计算时先转换到 `Instant` 更不容易误判。
 
 ```java
-// 语义：Duration 适合超时、耗时和倒计时。
 import java.time.Duration;
 import java.time.Instant;
 
 Instant start = Instant.parse("2026-09-27T01:30:00Z");
-// 关键变化：Instant start = Instant.parse("2026-09-27T01:30:00Z");；按 "2026-09-27T01:30:00Z" 调用 parse，解析结果写入 start。
 Instant end = start.plusSeconds(90);
 System.out.println(Duration.between(start, end).toSeconds());
 // 输出：90
@@ -142,7 +133,6 @@ System.out.println(Duration.between(start, end).toSeconds());
 `Period` 按年、月、日计算生日、账期等日历语义；不要用它替代精确耗时。
 
 ```java
-// 语义：Period 按年、月、日计算生日、账期等日历语义。
 import java.time.LocalDate;
 import java.time.Period;
 
@@ -157,13 +147,11 @@ System.out.println(Period.between(birth, date).getYears());
 需要让依赖当前时间的测试可重复执行时注入 `Clock.fixed`，避免在业务深层直接调用 `Instant.now()`。
 
 ```java
-// 语义：需要让依赖当前时间的测试可重复执行时注入 Clock.fixed，避免在业务深层直接调用 Instant.now()。
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 
 Clock clock = Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC);
-// 关键变化：Clock clock = Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC);；按 "2026-09-27T00:00:00Z" 调用 parse，解析结果写入 clock。
 System.out.println(Instant.now(clock));
 // 输出：2026-09-27T00:00:00Z
 ```
@@ -173,7 +161,6 @@ System.out.println(Instant.now(clock));
 需要在生产代码中以 UTC 时区读取系统当前时间时注入 `Clock.systemUTC`，调用方仍可在测试中替换该依赖。
 
 ```java
-// 语义：需要在生产代码中以 UTC 时区读取系统当前时间时注入 Clock.systemUTC，调用方仍可在测试中替换该依赖。
 import java.time.Clock;
 
 Clock clock = Clock.systemUTC();
@@ -186,7 +173,6 @@ System.out.println(clock.getZone());
 转换前必须知道用户或业务所属时区；没有区域信息的本地文本不能可靠地变成 `Instant`。
 
 ```java
-// 语义：转换前必须知道用户或业务所属时区。
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
@@ -205,7 +191,6 @@ System.out.println(instant);
 import java.time.OffsetDateTime;
 
 var value = OffsetDateTime.parse("2026-09-27T09:30:00+08:00");
-// 关键变化：var value = OffsetDateTime.parse("2026-09-27T09:30:00+08:00");；按 "2026-09-27T09:30:00+08:00" 调用 parse，解析结果写入 value。
 System.out.println(value.toInstant());
 // 输出：2026-09-27T01:30:00Z
 ```
@@ -234,7 +219,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 
 Clock base = Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC);
-// 关键变化：Clock base = Clock.fixed(Instant.parse("2026-09-27T00:00:00Z"), ZoneOffset.UTC);；按 "2026-09-27T00:00:00Z" 调用 parse，解析结果写入 base。
 Clock shifted = Clock.offset(base, Duration.ofHours(8));
 System.out.println(Instant.now(shifted));
 // 输出：2026-09-27T08:00:00Z
@@ -286,9 +270,7 @@ import java.time.format.DateTimeFormatter;
 public class ZoneDemo {
     public static void main(String[] args) {
         Instant event = Instant.parse("2026-09-27T01:30:00Z");
-        // 关键变化：Instant event = Instant.parse("2026-09-27T01:30:00Z");；按 "2026-09-27T01:30:00Z" 调用 parse，解析结果写入 event。
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm z");
-        // 关键变化：DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm z");；按 "uuuu-MM-dd HH:mm z" 调用 ofPattern 创建值，结果写入 formatter。
         ZonedDateTime shanghai = event.atZone(ZoneId.of("Asia/Shanghai"));
         ZonedDateTime newYork = event.atZone(ZoneId.of("America/New_York"));
         System.out.println(formatter.format(shanghai));

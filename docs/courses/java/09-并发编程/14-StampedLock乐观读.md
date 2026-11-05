@@ -50,7 +50,6 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedLockCreateDemo {
     public static void main(String[] args) {
         var lock = new StampedLock();
-// 初始状态：lock = new StampedLock()。
 // 作用：var lock = new StampedLock();；创建锁。
         System.out.println("created=" + (lock != null));
 // 输出：created=true
@@ -70,29 +69,24 @@ import java.util.concurrent.locks.StampedLock;
 
 public class StampedWriteLockDemo {
     private final StampedLock lock = new StampedLock();
-// 初始状态：lock = new StampedLock()。
 // 作用：private final StampedLock lock = new StampedLock();；按戳记获得并释放写锁。
     private int value;
 
     void add(int delta) {
         long stamp = lock.writeLock();
-// 初始状态：stamp = lock.writeLock()。
 // 作用：long stamp = lock.writeLock();；按戳记获得并释放写锁。
         try {
             value += delta;
         } finally {
             lock.unlockWrite(stamp);
-// 初始状态：lock.unlockWrite(stamp)。
 // 作用：lock.unlockWrite(stamp);；按戳记获得并释放写锁。
         }
     }
 
     public static void main(String[] args) {
         var state = new StampedWriteLockDemo();
-// 初始状态：state = new StampedWriteLockDemo()。
 // 作用：var state = new StampedWriteLockDemo();；按戳记获得并释放写锁。
         state.add(3);
-// 初始状态：state.add(3)。
 // 作用：state.add(3);；按戳记获得并释放写锁。
         System.out.println("write complete");
 // 输出：write complete
@@ -112,27 +106,22 @@ import java.util.concurrent.locks.StampedLock;
 
 public class StampedReadLockDemo {
     private final StampedLock lock = new StampedLock();
-// 初始状态：lock = new StampedLock()。
 // 作用：private final StampedLock lock = new StampedLock();；按戳记获得并释放读锁。
     private int value = 42;
-// 初始状态：value = 42。
 
     int read() {
         long stamp = lock.readLock();
-// 初始状态：stamp = lock.readLock()。
 // 作用：long stamp = lock.readLock();；按戳记获得并释放读锁。
         try {
             return value;
         } finally {
             lock.unlockRead(stamp);
-// 初始状态：lock.unlockRead(stamp)。
 // 作用：lock.unlockRead(stamp);；按戳记获得并释放读锁。
         }
     }
 
     public static void main(String[] args) {
         var state = new StampedReadLockDemo();
-// 初始状态：state = new StampedReadLockDemo()。
 // 作用：var state = new StampedReadLockDemo();；按戳记获得并释放读锁。
         System.out.println(state.read());
 // 输出：42
@@ -152,33 +141,23 @@ import java.util.concurrent.locks.StampedLock;
 
 public class OptimisticReadDemo {
     private final StampedLock lock = new StampedLock();
-// 初始状态：lock = new StampedLock()。
 // 作用：private final StampedLock lock = new StampedLock();；复制状态后校验戳记。
     private int x = 3;
-// 初始状态：x = 3。
     private int y = 4;
-// 初始状态：y = 4。
 
     int distanceSquared() {
         long stamp = lock.tryOptimisticRead();
-// 初始状态：stamp = lock.tryOptimisticRead()。
 // 作用：long stamp = lock.tryOptimisticRead();；复制状态后校验戳记。
         int localX = x;
-// 初始状态：localX = x。
         int localY = y;
-// 初始状态：localY = y。
         if (!lock.validate(stamp)) {
             stamp = lock.readLock();
-// 初始状态：stamp = lock.readLock()。
 // 作用：stamp = lock.readLock();；复制状态后校验戳记。
             try {
                 localX = x;
-// 初始状态：localX = x。
                 localY = y;
-// 初始状态：localY = y。
             } finally {
                 lock.unlockRead(stamp);
-// 初始状态：lock.unlockRead(stamp)。
 // 作用：lock.unlockRead(stamp);；复制状态后校验戳记。
             }
         }
@@ -187,7 +166,6 @@ public class OptimisticReadDemo {
 
     public static void main(String[] args) {
         var point = new OptimisticReadDemo();
-// 初始状态：point = new OptimisticReadDemo()。
 // 作用：var point = new OptimisticReadDemo();；复制状态后校验戳记。
         System.out.println(point.distanceSquared());
 // 输出：25
@@ -209,9 +187,7 @@ public class OptimisticStampDemo {
     public static void main(String[] args) {
         var lock = new StampedLock();
 // 作用：var lock = new StampedLock();；检查是否有可用的乐观凭证。
-// 初始状态：lock = new StampedLock()。
         long stamp = lock.tryOptimisticRead();
-// 初始状态：stamp = lock.tryOptimisticRead()。
 // 作用：long stamp = lock.tryOptimisticRead();；检查是否有可用的乐观凭证。
         System.out.println("valid=" + lock.validate(stamp));
 // 输出：valid=true（校验期间没有写入时）
@@ -235,16 +211,13 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedReadTimeoutDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new StampedLock();
-// 初始状态：lock = new StampedLock()。
 // 作用：var lock = new StampedLock();；带超时的真实读锁。
         long stamp = lock.tryReadLock(1, TimeUnit.MILLISECONDS);
-// 初始状态：stamp = lock.tryReadLock(1, TimeUnit.MILLISECONDS)。
 // 作用：long stamp = lock.tryReadLock(1, TimeUnit.MILLISECONDS);；带超时的真实读锁。
         System.out.println("stampAvailable=" + (stamp != 0L));
 // 输出：stampAvailable=true（没有写者占用时）
         if (stamp != 0L) {
             lock.unlockRead(stamp);
-// 初始状态：lock.unlockRead(stamp)。
 // 作用：lock.unlockRead(stamp);；带超时的真实读锁。
         }
     }
@@ -265,16 +238,13 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedWriteTimeoutDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new StampedLock();
-// 初始状态：lock = new StampedLock()。
 // 作用：var lock = new StampedLock();；可被中断的有界写锁等待。
         long stamp = lock.tryWriteLock(1, TimeUnit.MILLISECONDS);
-// 初始状态：stamp = lock.tryWriteLock(1, TimeUnit.MILLISECONDS)。
 // 作用：long stamp = lock.tryWriteLock(1, TimeUnit.MILLISECONDS);；可被中断的有界写锁等待。
         System.out.println("stampAvailable=" + (stamp != 0L));
 // 输出：stampAvailable=true（没有读者或写者占用时）
         if (stamp != 0L) {
             lock.unlockWrite(stamp);
-// 初始状态：lock.unlockWrite(stamp)。
 // 作用：lock.unlockWrite(stamp);；可被中断的有界写锁等待。
         }
     }
@@ -293,17 +263,14 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedInterruptibleLockDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new StampedLock();
-// 初始状态：lock = new StampedLock()。
 // 作用：var lock = new StampedLock();；按访问模式选择读锁或写锁。
         long stamp = lock.writeLockInterruptibly();
-// 初始状态：stamp = lock.writeLockInterruptibly()。
 // 作用：long stamp = lock.writeLockInterruptibly();；按访问模式选择读锁或写锁。
         try {
             System.out.println("interruptible write acquired");
 // 输出：interruptible write acquired
         } finally {
             lock.unlockWrite(stamp);
-// 初始状态：lock.unlockWrite(stamp)。
 // 作用：lock.unlockWrite(stamp);；按访问模式选择读锁或写锁。
         }
     }
@@ -322,37 +289,28 @@ import java.util.concurrent.locks.StampedLock;
 
 public class StampedConvertWriteDemo {
     private final StampedLock lock = new StampedLock();
-// 初始状态：lock = new StampedLock()。
 // 作用：private final StampedLock lock = new StampedLock();；尝试读锁转写锁。
     private int value;
 
     void increment() {
         long stamp = lock.readLock();
-// 初始状态：stamp = lock.readLock()。
 // 作用：long stamp = lock.readLock();；尝试读锁转写锁。
         try {
             long converted = lock.tryConvertToWriteLock(stamp);
-// 初始状态：converted = lock.tryConvertToWriteLock(stamp)。
 // 作用：long converted = lock.tryConvertToWriteLock(stamp);；尝试读锁转写锁。
             if (converted != 0L) {
                 stamp = converted;
-// 初始状态：stamp = converted。
                 value++;
                 System.out.println("converted=true");
 // 输出：converted=true
                 lock.unlockWrite(stamp);
-// 初始状态：lock.unlockWrite(stamp)。
 // 作用：lock.unlockWrite(stamp);；尝试读锁转写锁。
                 stamp = 0L;
-// 初始状态：stamp = 0L。
             } else {
                 lock.unlockRead(stamp);
-// 初始状态：lock.unlockRead(stamp)。
 // 作用：lock.unlockRead(stamp);；尝试读锁转写锁。
                 stamp = 0L;
-// 初始状态：stamp = 0L。
                 long writeStamp = lock.writeLock();
-// 初始状态：writeStamp = lock.writeLock()。
 // 作用：long writeStamp = lock.writeLock();；尝试读锁转写锁。
                 try {
                     value++;
@@ -360,14 +318,12 @@ public class StampedConvertWriteDemo {
 // 输出：converted=false, write acquired
                 } finally {
                     lock.unlockWrite(writeStamp);
-// 初始状态：lock.unlockWrite(writeStamp)。
 // 作用：lock.unlockWrite(writeStamp);；尝试读锁转写锁。
                 }
             }
         } finally {
             if (stamp != 0L) {
                 lock.unlockRead(stamp);
-// 初始状态：lock.unlockRead(stamp)。
 // 作用：lock.unlockRead(stamp);；尝试读锁转写锁。
             }
         }
@@ -375,7 +331,6 @@ public class StampedConvertWriteDemo {
 
     public static void main(String[] args) {
         new StampedConvertWriteDemo().increment();
-// 初始状态：new StampedConvertWriteDemo().increment()。
 // 作用：new StampedConvertWriteDemo().increment();；尝试读锁转写锁。
     }
 }
@@ -394,38 +349,29 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedConvertReadDemo {
     public static void main(String[] args) {
         var lock = new StampedLock();
-// 初始状态：lock = new StampedLock()。
 // 作用：var lock = new StampedLock();；写锁降级为读锁。
         long stamp = lock.writeLock();
-// 初始状态：stamp = lock.writeLock()。
 // 作用：long stamp = lock.writeLock();；写锁降级为读锁。
         try {
             long readStamp = lock.tryConvertToReadLock(stamp);
-// 初始状态：readStamp = lock.tryConvertToReadLock(stamp)。
 // 作用：long readStamp = lock.tryConvertToReadLock(stamp);；写锁降级为读锁。
             if (readStamp != 0L) {
                 stamp = readStamp;
-// 初始状态：stamp = readStamp。
                 System.out.println("downgraded=true");
 // 输出：downgraded=true
                 lock.unlockRead(stamp);
-// 初始状态：lock.unlockRead(stamp)。
 // 作用：lock.unlockRead(stamp);；写锁降级为读锁。
                 stamp = 0L;
-// 初始状态：stamp = 0L。
             } else {
                 System.out.println("downgraded=false");
 // 输出：downgraded=false
                 lock.unlockWrite(stamp);
-// 初始状态：lock.unlockWrite(stamp)。
 // 作用：lock.unlockWrite(stamp);；写锁降级为读锁。
                 stamp = 0L;
-// 初始状态：stamp = 0L。
             }
         } finally {
             if (stamp != 0L) {
                 lock.unlockWrite(stamp);
-// 初始状态：lock.unlockWrite(stamp)。
 // 作用：lock.unlockWrite(stamp);；写锁降级为读锁。
             }
         }
@@ -445,25 +391,20 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedNonReentrantDemo {
     public static void main(String[] args) {
         var lock = new StampedLock();
-// 初始状态：lock = new StampedLock()。
 // 作用：var lock = new StampedLock();；同一线程不能重复获得写锁。
         long stamp = lock.writeLock();
-// 初始状态：stamp = lock.writeLock()。
 // 作用：long stamp = lock.writeLock();；同一线程不能重复获得写锁。
         try {
             long nested = lock.tryWriteLock();
-// 初始状态：nested = lock.tryWriteLock()。
 // 作用：long nested = lock.tryWriteLock();；同一线程不能重复获得写锁。
             System.out.println("reentered=" + (nested != 0L));
 // 输出：reentered=false
             if (nested != 0L) {
                 lock.unlockWrite(nested);
-// 初始状态：lock.unlockWrite(nested)。
 // 作用：lock.unlockWrite(nested);；同一线程不能重复获得写锁。
             }
         } finally {
             lock.unlockWrite(stamp);
-// 初始状态：lock.unlockWrite(stamp)。
 // 作用：lock.unlockWrite(stamp);；同一线程不能重复获得写锁。
         }
     }
@@ -484,14 +425,11 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedInterruptBoundaryDemo {
     public static void main(String[] args) {
         var lock = new StampedLock();
-// 初始状态：lock = new StampedLock()。
 // 作用：var lock = new StampedLock();；用超时获取响应中断。
         Thread.currentThread().interrupt();
-// 初始状态：Thread.currentThread().interrupt()。
 // 作用：Thread.currentThread().interrupt();；用超时获取响应中断。
         try {
             lock.tryWriteLock(1, TimeUnit.MILLISECONDS);
-// 初始状态：lock.tryWriteLock(1, TimeUnit.MILLISECONDS)。
 // 作用：lock.tryWriteLock(1, TimeUnit.MILLISECONDS);；用超时获取响应中断。
             System.out.println("not interrupted");
 // 输出：不会执行到这里
@@ -500,7 +438,6 @@ public class StampedInterruptBoundaryDemo {
 // 输出：interrupted
         } finally {
             Thread.interrupted();
-// 初始状态：Thread.interrupted()。
 // 作用：Thread.interrupted();；用超时获取响应中断。
         }
     }
@@ -518,45 +455,35 @@ import java.util.concurrent.locks.StampedLock;
 
 public class PointSnapshotDemo {
     private final StampedLock lock = new StampedLock();
-// 初始状态：lock = new StampedLock()。
 // 作用：private final StampedLock lock = new StampedLock();；乐观读失败后回退。
     private int x;
     private int y;
 
     void move(int deltaX, int deltaY) {
         long stamp = lock.writeLock();
-// 初始状态：stamp = lock.writeLock()。
 // 作用：long stamp = lock.writeLock();；乐观读失败后回退。
         try {
             x += deltaX;
             y += deltaY;
         } finally {
             lock.unlockWrite(stamp);
-// 初始状态：lock.unlockWrite(stamp)。
 // 作用：lock.unlockWrite(stamp);；乐观读失败后回退。
         }
     }
 
     String snapshot() {
         long stamp = lock.tryOptimisticRead();
-// 初始状态：stamp = lock.tryOptimisticRead()。
 // 作用：long stamp = lock.tryOptimisticRead();；乐观读失败后回退。
         int localX = x;
-// 初始状态：localX = x。
         int localY = y;
-// 初始状态：localY = y。
         if (!lock.validate(stamp)) {
             stamp = lock.readLock();
-// 初始状态：stamp = lock.readLock()。
 // 作用：stamp = lock.readLock();；乐观读失败后回退。
             try {
                 localX = x;
-// 初始状态：localX = x。
                 localY = y;
-// 初始状态：localY = y。
             } finally {
                 lock.unlockRead(stamp);
-// 初始状态：lock.unlockRead(stamp)。
 // 作用：lock.unlockRead(stamp);；乐观读失败后回退。
             }
         }
@@ -565,10 +492,8 @@ public class PointSnapshotDemo {
 
     public static void main(String[] args) {
         var point = new PointSnapshotDemo();
-// 初始状态：point = new PointSnapshotDemo()。
 // 作用：var point = new PointSnapshotDemo();；乐观读失败后回退。
         point.move(2, 3);
-// 初始状态：point.move(2, 3)。
 // 作用：point.move(2, 3);；乐观读失败后回退。
         System.out.println(point.snapshot());
 // 输出：(2,3)

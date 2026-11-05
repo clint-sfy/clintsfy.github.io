@@ -48,11 +48,8 @@ import java.util.concurrent.Executors;
 public class CallableFutureDemo {
     public static void main(String[] args) throws Exception {
         try (var executor = Executors.newSingleThreadExecutor()) {
-// 初始状态：executor = Executors.newSingleThreadExecutor())。
             Callable<Integer> task = () -> 20 + 22;
-// 初始状态：task = () -> 20 + 22。
             var future = executor.submit(task);
-// 初始状态：future = executor.submit(task)。
 // 作用：var future = executor.submit(task);；提交 Callable 并持有 Future。
             System.out.println(future.get());
 // 输出：42
@@ -74,19 +71,14 @@ import java.util.concurrent.Executors;
 public class FutureExceptionDemo {
     public static void main(String[] args) {
         try (var executor = Executors.newSingleThreadExecutor()) {
-// 初始状态：executor = Executors.newSingleThreadExecutor())。
             Callable<Void> task = () -> {
-// 初始状态：task = () ->。
                 throw new IllegalArgumentException("bad input");
 // 作用：throw new IllegalArgumentException("bad input");；观察任务异常。
-// 初始状态：throw new IllegalArgumentException("bad input")。
             };
             var future = executor.submit(task);
 // 作用：var future = executor.submit(task);；观察任务异常。
-// 初始状态：future = executor.submit(task)。
             try {
                 future.get();
-// 初始状态：future.get()。
 // 作用：future.get();；观察任务异常。
             } catch (ExecutionException ex) {
                 System.out.println(ex.getCause().getClass().getSimpleName());
@@ -115,7 +107,6 @@ import java.util.concurrent.TimeoutException;
 public class FutureTimeoutDemo {
     public static void main(String[] args) {
         FutureTask<String> future = new FutureTask<>(() -> "ready");
-// 初始状态：future = new FutureTask<>(() -> "ready")。
 // 作用：FutureTask<String> future = new FutureTask<>(() -> "ready");；有界等待。
         try {
             System.out.println(future.get(1, TimeUnit.MILLISECONDS));
@@ -124,11 +115,9 @@ public class FutureTimeoutDemo {
             System.out.println("timed out");
 // 输出：timed out
             future.cancel(false);
-// 初始状态：future.cancel(false)。
 // 作用：future.cancel(false);；有界等待。
         } catch (Exception ex) {
             throw new RuntimeException(ex);
-// 初始状态：throw new RuntimeException(ex)。
 // 作用：throw new RuntimeException(ex);；有界等待。
         }
     }
@@ -149,9 +138,7 @@ public class FutureTaskCancelDemo {
     public static void main(String[] args) {
         FutureTask<String> future = new FutureTask<>(() -> "not run");
 // 作用：FutureTask<String> future = new FutureTask<>(() -> "not run");；请求取消。
-// 初始状态：future = new FutureTask<>(() -> "not run")。
         boolean cancelled = future.cancel(false);
-// 初始状态：cancelled = future.cancel(false)。
 // 作用：boolean cancelled = future.cancel(false);；请求取消。
         System.out.println(cancelled + ", done=" + future.isDone());
 // 输出：true, done=true
@@ -172,11 +159,9 @@ import java.util.concurrent.FutureTask;
 public class FutureTaskDemo {
     public static void main(String[] args) throws Exception {
         FutureTask<Integer> task = new FutureTask<>(() -> 6 * 7);
-// 初始状态：task = new FutureTask<>(() -> 6 * 7)。
 // 作用：FutureTask<Integer> task = new FutureTask<>(() -> 6 * 7);；把任务当作 Runnable 执行。
         Thread worker = new Thread(task, "calculator");
 // 作用：Thread worker = new Thread(task, "calculator");；把任务当作 Runnable 执行。
-// 初始状态：worker = new Thread(task, "calculator")。
         worker.start();
 // 作用：worker.start();；把任务当作 Runnable 执行。
         System.out.println(task.get());
@@ -201,13 +186,11 @@ public class ThreadPoolConfigDemo {
                 1, 2, 10, TimeUnit.SECONDS,
                 new ArrayBlockingQueue<>(2),
                 new ThreadPoolExecutor.AbortPolicy());
-// 初始状态：executor = new ThreadPoolExecutor(。
 // 作用：var executor = new ThreadPoolExecutor(；显式配置边界。
 // 作用：new ThreadPoolExecutor.AbortPolicy());；显式配置边界。
         try {
             var future = executor.submit(() -> "bounded");
 // 作用：var future = executor.submit(() -> "bounded");；显式配置边界。
-// 初始状态：future = executor.submit(() -> "bounded")。
             System.out.println(future.get());
 // 输出：bounded
         } finally {
@@ -235,8 +218,6 @@ public class AbortPolicyDemo {
                 1, 1, 0, java.util.concurrent.TimeUnit.SECONDS,
                 new java.util.concurrent.SynchronousQueue<>(),
                 new ThreadPoolExecutor.AbortPolicy());
-// 初始状态：new java.util.concurrent.SynchronousQueue<>(),。
-// 初始状态：executor = new ThreadPoolExecutor(。
 // 作用：var executor = new ThreadPoolExecutor(；AbortPolicy 拒绝。
         executor.shutdown();
 // 作用：executor.shutdown();；AbortPolicy 拒绝。
@@ -265,21 +246,17 @@ import java.util.concurrent.ThreadFactory;
 public class ThreadFactoryDemo {
     public static void main(String[] args) throws Exception {
         ThreadFactory factory = new ThreadFactory() {
-// 初始状态：factory = new ThreadFactory()。
 // 作用：ThreadFactory factory = new ThreadFactory() {；统一名称和异常策略。
             private int nextId;
 
             @Override
             public Thread newThread(Runnable task) {
                 return new Thread(task, "worker-" + nextId++);
-// 初始状态：return new Thread(task, "worker-" + nextId++)。
 // 作用：return new Thread(task, "worker-" + nextId++);；统一名称和异常策略。
             }
         };
         try (var executor = Executors.newFixedThreadPool(1, factory)) {
-// 初始状态：executor = Executors.newFixedThreadPool(1, factory))。
             var future = executor.submit(() -> Thread.currentThread().getName());
-// 初始状态：future = executor.submit(() -> Thread.currentThread().getName())。
 // 作用：var future = executor.submit(() -> Thread.currentThread().getName());；统一名称和异常策略。
             System.out.println(future.get());
 // 输出：worker-0
@@ -300,11 +277,9 @@ import java.util.concurrent.Executors;
 public class InvokeAllDemo {
     public static void main(String[] args) throws Exception {
         try (var executor = Executors.newFixedThreadPool(2)) {
-// 初始状态：executor = Executors.newFixedThreadPool(2))。
             var futures = executor.invokeAll(List.of(
                     () -> "first",
                     () -> "second"));
-// 初始状态：futures = executor.invokeAll(List.of(。
 // 作用：var futures = executor.invokeAll(List.of(；等待一批 Callable。
             System.out.println(futures.get(0).get() + "," + futures.get(1).get());
 // 输出：first,second
@@ -326,11 +301,9 @@ import java.util.concurrent.Executors;
 public class CompletionServiceDemo {
     public static void main(String[] args) throws Exception {
         try (var executor = Executors.newFixedThreadPool(2)) {
-// 初始状态：executor = Executors.newFixedThreadPool(2))。
 // 作用：try (var executor = Executors.newFixedThreadPool(2)) {；按完成顺序消费结果。
             var completion = new ExecutorCompletionService<String>(executor);
 // 作用：var completion = new ExecutorCompletionService<String>(executor);；按完成顺序消费结果。
-// 初始状态：completion = new ExecutorCompletionService<String>(executor)。
             completion.submit(() -> "done-1");
 // 作用：completion.submit(() -> "done-1");；按完成顺序消费结果。
             completion.submit(() -> "done-2");
@@ -356,11 +329,9 @@ import java.util.concurrent.Executors;
 public class InvokeAnyDemo {
     public static void main(String[] args) throws Exception {
         try (var executor = Executors.newFixedThreadPool(2)) {
-// 初始状态：executor = Executors.newFixedThreadPool(2))。
             String result = executor.invokeAny(List.of(
                     () -> "replica-a",
                     () -> "replica-b"));
-// 初始状态：result = executor.invokeAny(List.of(。
 // 作用：String result = executor.invokeAny(List.of(；只取最快成功结果。
             System.out.println(result);
 // 输出：可能是 replica-a，也可能是 replica-b
@@ -384,15 +355,11 @@ public class CallerRunsPolicyDemo {
                 1, 1, 0, java.util.concurrent.TimeUnit.SECONDS,
                 new java.util.concurrent.SynchronousQueue<>(),
                 new ThreadPoolExecutor.CallerRunsPolicy());
-// 初始状态：new java.util.concurrent.SynchronousQueue<>(),。
-// 初始状态：executor = new ThreadPoolExecutor(。
 // 作用：new ThreadPoolExecutor.CallerRunsPolicy());；提交者承担背压。
         var workerStarted = new CountDownLatch(1);
 // 作用：var workerStarted = new CountDownLatch(1);；提交者承担背压。
-// 初始状态：workerStarted = new CountDownLatch(1)。
         var releaseWorker = new CountDownLatch(1);
 // 作用：var releaseWorker = new CountDownLatch(1);；提交者承担背压。
-// 初始状态：releaseWorker = new CountDownLatch(1)。
         try {
             executor.execute(() -> {
 // 作用：executor.execute(() -> {；提交者承担背压。
@@ -438,10 +405,8 @@ public class PrestartThreadsDemo {
         var executor = (java.util.concurrent.ThreadPoolExecutor)
                 Executors.newFixedThreadPool(2);
 // 作用：Executors.newFixedThreadPool(2);；提前创建核心线程。
-// 初始状态：executor = (java.util.concurrent.ThreadPoolExecutor)。
         try {
             int started = executor.prestartAllCoreThreads();
-// 初始状态：started = executor.prestartAllCoreThreads()。
 // 作用：int started = executor.prestartAllCoreThreads();；提前创建核心线程。
             System.out.println("started=" + started);
 // 输出：started=2
@@ -465,13 +430,10 @@ public class BoundedPoolDemo {
                 1, 1, 0, TimeUnit.SECONDS,
                 new ArrayBlockingQueue<>(1),
                 new ThreadPoolExecutor.AbortPolicy());
-// 初始状态：new ArrayBlockingQueue<>(1),。
-// 初始状态：executor = new ThreadPoolExecutor(。
 // 作用：var executor = new ThreadPoolExecutor(；提前创建核心线程。
         try {
             var future = executor.submit(() -> 40 + 2);
 // 作用：var future = executor.submit(() -> 40 + 2);；提前创建核心线程。
-// 初始状态：future = executor.submit(() -> 40 + 2)。
             System.out.println("result=" + future.get());
 // 输出：result=42
         } finally {

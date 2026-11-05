@@ -88,7 +88,6 @@ class NoteController {
 // 作用：String create(@Valid @RequestBody CreateNote request) {；触发对象校验。
         return "accepted:" + request.title();
 // 作用：return "accepted:" + request.title();；触发对象校验。
-// 初始状态：return "accepted:" + request.title()。
     }
 }
 
@@ -188,7 +187,6 @@ class StrongCodeValidator implements ConstraintValidator<StrongCode, String> {
     @Override public boolean isValid(String value, ConstraintValidatorContext context) {
         return value == null || value.matches("[A-Z]{2}-\\d{4}");
 // 作用：return value == null || value.matches("[A-Z]{2}-\\d{4}");；实现自定义约束。
-// 初始状态：return value == null || value.matches("[A-Z]{2}-\\d{4}")。
     }
 }
 
@@ -214,7 +212,6 @@ List<FieldViolation> fieldErrors(BindingResult result) {
         .map(error -> new FieldViolation(error.getField(), error.getDefaultMessage()))
         .toList();
 // 作用：.toList();；稳定输出 FieldError。
-// 初始状态：errors = result.getFieldErrors().stream()。
 // 作用：List<FieldViolation> errors = result.getFieldErrors().stream()；稳定输出 FieldError，返回读取结果。
 // 作用：.map(error -> new FieldViolation(error.getField(), error.getDefaultMessage()))；稳定输出 FieldError。
     return errors;
@@ -235,10 +232,8 @@ System.out.println(List.of(new FieldViolation("title", "must not be blank")));
 record RequestBoundary(String rawJson, boolean valid, boolean authorized) {}
 
 RequestBoundary boundary = new RequestBoundary("{...}", true, false);
-// 初始状态：boundary = new RequestBoundary("{...}", true, false)。
 // 作用：RequestBoundary boundary = new RequestBoundary("{...}", true, false);；分离请求边界。
 String result = boundary.authorized() ? "service-call" : "403";
-// 初始状态：result = boundary.authorized() ? "service-call" : "403"。
 // 作用：String result = boundary.authorized() ? "service-call" : "403";；分离请求边界。
 System.out.println(result);
 // 输出：403
@@ -286,13 +281,11 @@ System.out.println("7/0");
 record CreateTask(
     @NotNull LocalDate dueDate,
     @NotBlank String title) {}
-// 初始状态：@NotNull LocalDate dueDate,。
 // 作用：@NotNull LocalDate dueDate,；拒绝 null 值。
 
 class TaskFactory {
     CreateTask valid() {
         return new CreateTask(LocalDate.of(2030, 1, 1), "ship");
-// 初始状态：return new CreateTask(LocalDate.of(2030, 1, 1), "ship")。
 // 作用：return new CreateTask(LocalDate.of(2030, 1, 1), "ship");；拒绝 null 值。
     }
 }
@@ -310,14 +303,12 @@ class TaskFactory {
 record SignupRequest(
     @NotBlank
     @Email
-// 初始状态：@Email。
 // 作用：@Email；检查邮箱形式。
     String email) {}
 
 class SignupExample {
     SignupRequest sample() {
         return new SignupRequest("dev@example.com");
-// 初始状态：return new SignupRequest("dev@example.com")。
 // 作用：return new SignupRequest("dev@example.com");；检查邮箱形式。
     }
 }
@@ -336,15 +327,11 @@ record LocaleRequest(
     @Pattern(
         regexp = "[a-z]{2}(-[A-Z]{2})?",
         message = "must be ll or ll-CC")
-// 初始状态：@Pattern(。
 // 作用：@Pattern(；限制文本格式。
     String locale) {}
-// 初始状态：regexp = "[a-z]{2}(-[A-Z]{2})?",。
-// 初始状态：message = "must be ll or ll-CC")。
 
 class LocaleExample {
     LocaleRequest sample() { return new LocaleRequest("zh-CN"); }
-// 初始状态：LocaleRequest sample() { return new LocaleRequest("zh-CN"); 。
 // 作用：LocaleRequest sample() { return new LocaleRequest("zh-CN"); }；限制文本格式。
 }
 ```
@@ -360,7 +347,6 @@ class LocaleExample {
 // 结果：标注 `@Slug` 的值由 `SlugValidator` 检查，失败时输出 `invalid slug`。
 @Documented
 @Constraint(validatedBy = SlugValidator.class)
-// 初始状态：validatedBy = SlugValidator.class)。
 // 作用：@Constraint(validatedBy = SlugValidator.class)；声明自定义约束。
 @Target({ ElementType.FIELD, ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
@@ -397,7 +383,6 @@ class RegistrationService {
     String accept(@Valid RegisterRequest request) {
         return "created:" + request.name();
 // 作用：return "created:" + request.name();；声明自定义约束，返回读取结果。
-// 初始状态：return "created:" + request.name()。
     }
 }
 

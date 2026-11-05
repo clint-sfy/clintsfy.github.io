@@ -47,16 +47,12 @@ import java.util.concurrent.CountDownLatch;
 public class LatchInitDemo {
     public static void main(String[] args) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(2);
-// 初始状态：latch = new CountDownLatch(2)。
 // 作用：CountDownLatch latch = new CountDownLatch(2);；递减计数并放行等待者。
         latch.countDown();
-// 初始状态：latch.countDown()。
 // 作用：latch.countDown();；递减计数并放行等待者。
         latch.countDown();
-// 初始状态：latch.countDown()。
 // 作用：latch.countDown();；递减计数并放行等待者。
         latch.await();
-// 初始状态：latch.await()。
 // 作用：latch.await();；递减计数并放行等待者。
         System.out.println("started");
 // 输出：started
@@ -78,10 +74,8 @@ import java.util.concurrent.TimeUnit;
 public class LatchTimeoutDemo {
     public static void main(String[] args) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-// 初始状态：latch = new CountDownLatch(1)。
 // 作用：CountDownLatch latch = new CountDownLatch(1);；有界等待。
         boolean ready = latch.await(1, TimeUnit.MILLISECONDS);
-// 初始状态：ready = latch.await(1, TimeUnit.MILLISECONDS)。
 // 作用：boolean ready = latch.await(1, TimeUnit.MILLISECONDS);；有界等待。
         System.out.println("ready=" + ready);
 // 输出：ready=false
@@ -100,17 +94,14 @@ import java.util.concurrent.Semaphore;
 public class SemaphoreDemo {
     public static void main(String[] args) throws InterruptedException {
         Semaphore semaphore = new Semaphore(1);
-// 初始状态：semaphore = new Semaphore(1)。
 // 作用：Semaphore semaphore = new Semaphore(1);；获取后归还许可证。
         semaphore.acquire();
-// 初始状态：semaphore.acquire()。
 // 作用：semaphore.acquire();；获取后归还许可证。
         try {
             System.out.println("permit acquired");
 // 输出：permit acquired
         } finally {
             semaphore.release();
-// 初始状态：semaphore.release()。
 // 作用：semaphore.release();；获取后归还许可证。
         }
     }
@@ -128,7 +119,6 @@ import java.util.concurrent.Semaphore;
 public class SemaphoreTryDemo {
     public static void main(String[] args) {
         Semaphore semaphore = new Semaphore(1);
-// 初始状态：semaphore = new Semaphore(1)。
 // 作用：Semaphore semaphore = new Semaphore(1);；拒绝或降级。
         if (semaphore.tryAcquire()) {
 // 作用：if (semaphore.tryAcquire()) {；拒绝或降级。
@@ -162,12 +152,10 @@ public class BarrierDemo {
         CyclicBarrier barrier = new CyclicBarrier(1,
                 () -> {
 // 作用：CyclicBarrier barrier = new CyclicBarrier(1,；阶段汇合。
-// 初始状态：barrier = new CyclicBarrier(1,。
                     System.out.println("phase complete");
 // 输出：phase complete
                 });
         barrier.await();
-// 初始状态：barrier.await()。
 // 作用：barrier.await();；阶段汇合。
     }
 }
@@ -187,9 +175,7 @@ public class BarrierResetDemo {
     public static void main(String[] args) {
         CyclicBarrier barrier = new CyclicBarrier(2);
 // 作用：CyclicBarrier barrier = new CyclicBarrier(2);；重置破坏的屏障。
-// 初始状态：barrier = new CyclicBarrier(2)。
         barrier.reset();
-// 初始状态：barrier.reset()。
 // 作用：barrier.reset();；重置破坏的屏障。
         System.out.println("parties=" + barrier.getParties());
 // 输出：parties=2
@@ -210,15 +196,12 @@ import java.util.concurrent.Phaser;
 public class PhaserDemo {
     public static void main(String[] args) {
         Phaser phaser = new Phaser(1);
-// 初始状态：phaser = new Phaser(1)。
 // 作用：Phaser phaser = new Phaser(1);；注册参与者并推进阶段。
         int phase = phaser.arriveAndAwaitAdvance();
-// 初始状态：phase = phaser.arriveAndAwaitAdvance()。
 // 作用：int phase = phaser.arriveAndAwaitAdvance();；注册参与者并推进阶段。
         System.out.println("next phase=" + phase);
 // 输出：next phase=1
         phaser.arriveAndDeregister();
-// 初始状态：phaser.arriveAndDeregister()。
 // 作用：phaser.arriveAndDeregister();；注册参与者并推进阶段。
     }
 }
@@ -234,18 +217,14 @@ import java.util.concurrent.Phaser;
 public class PhaserRegisterDemo {
     public static void main(String[] args) {
         Phaser phaser = new Phaser();
-// 初始状态：phaser = new Phaser()。
 // 作用：Phaser phaser = new Phaser();；添加单个或多个任务。
         phaser.bulkRegister(2);
-// 初始状态：phaser.bulkRegister(2)。
 // 作用：phaser.bulkRegister(2);；添加单个或多个任务。
         System.out.println(phaser.getRegisteredParties());
 // 输出：2
         phaser.arriveAndDeregister();
-// 初始状态：phaser.arriveAndDeregister()。
 // 作用：phaser.arriveAndDeregister();；添加单个或多个任务。
         phaser.arriveAndDeregister();
-// 初始状态：phaser.arriveAndDeregister()。
 // 作用：phaser.arriveAndDeregister();；添加单个或多个任务。
     }
 }
@@ -262,11 +241,9 @@ import java.util.concurrent.Exchanger;
 public class ExchangerDemo {
     public static void main(String[] args) throws Exception {
         var exchanger = new Exchanger<String>();
-// 初始状态：exchanger = new Exchanger<String>()。
 // 作用：var exchanger = new Exchanger<String>();；交换两个线程的缓冲区。
         Thread peer = new Thread(() -> {
 // 作用：Thread peer = new Thread(() -> {；交换两个线程的缓冲区。
-// 初始状态：peer = new Thread(() ->。
             try {
                 exchanger.exchange("peer-data");
 // 作用：exchanger.exchange("peer-data");；交换两个线程的缓冲区。
@@ -279,7 +256,6 @@ public class ExchangerDemo {
 // 作用：peer.start();；交换两个线程的缓冲区。
         String received = exchanger.exchange("main-data");
 // 作用：String received = exchanger.exchange("main-data");；交换两个线程的缓冲区。
-// 初始状态：received = exchanger.exchange("main-data")。
         peer.join();
 // 作用：peer.join();；交换两个线程的缓冲区。
         System.out.println(received);
@@ -299,17 +275,14 @@ import java.util.concurrent.Semaphore;
 public class FairSemaphoreDemo {
     public static void main(String[] args) throws InterruptedException {
         Semaphore semaphore = new Semaphore(1, true);
-// 初始状态：semaphore = new Semaphore(1, true)。
 // 作用：Semaphore semaphore = new Semaphore(1, true);；公平许可证队列。
         semaphore.acquire();
-// 初始状态：semaphore.acquire()。
 // 作用：semaphore.acquire();；公平许可证队列。
         try {
             System.out.println("fair=" + semaphore.isFair());
 // 输出：fair=true
         } finally {
             semaphore.release();
-// 初始状态：semaphore.release()。
 // 作用：semaphore.release();；公平许可证队列。
         }
     }
@@ -324,26 +297,20 @@ import java.util.concurrent.Semaphore;
 public class SynchronizerChoiceDemo {
     public static void main(String[] args) throws InterruptedException {
         CountDownLatch ready = new CountDownLatch(1);
-// 初始状态：ready = new CountDownLatch(1)。
 // 作用：CountDownLatch ready = new CountDownLatch(1);；公平许可证队列。
         Semaphore permits = new Semaphore(1);
-// 初始状态：permits = new Semaphore(1)。
 // 作用：Semaphore permits = new Semaphore(1);；公平许可证队列。
         ready.countDown();
-// 初始状态：ready.countDown()。
 // 作用：ready.countDown();；公平许可证队列。
         ready.await();
-// 初始状态：ready.await()。
 // 作用：ready.await();；公平许可证队列。
         permits.acquire();
-// 初始状态：permits.acquire()。
 // 作用：permits.acquire();；公平许可证队列。
         try {
             System.out.println("ready and limited");
 // 输出：ready and limited
         } finally {
             permits.release();
-// 初始状态：permits.release()。
 // 作用：permits.release();；公平许可证队列。
         }
     }

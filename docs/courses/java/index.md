@@ -6,7 +6,7 @@ tags:
   - Java
   - 学习路线
   - 后端开发
-description: 以 JDK 20 为基准，按依赖关系学习 Java 语言、标准库、并发、JVM、MySQL、工程实践、后端开发与 Redis。
+description: 以 JDK 20 为基准，按依赖关系学习 Java 语言、标准库、并发、JVM、MySQL、工程实践、后端开发、Redis 与 Kafka。
 showArticleMetadata: false
 editLink: false
 lastUpdated: false
@@ -15,7 +15,7 @@ showComment: false
 
 # Java基础快速入门
 
-这套笔记按依赖关系组织为 15 章、128 篇文章。可以从基础顺序学习，也可以用侧栏标题查找 API 和可观察的示例。数据库语义先读 MySQL，之后进入 JDBC、MyBatis 和 Spring；Redis 放在后端工程之后。
+这套笔记按依赖关系组织。可以从基础顺序学习，也可以用侧栏标题查找 API 和示例。数据库先读 MySQL，之后进入 JDBC、MyBatis 和 Spring；再学习 Redis 与 Kafka。
 
 ## 阶段路线
 
@@ -30,6 +30,7 @@ showComment: false
 | 7. 工程实践 | [工程实践](/courses/java/12-工程实践/01-Maven与测试工程)、[设计与项目](/courses/java/13-设计与项目/01-设计原则模式与综合复习) | Maven、JDBC、Flyway迁移、Hikari连接池、多数据源、代码生成与设计原则 |
 | 8. 后端工程 | [后端工程](/courses/java/14-后端工程/01-Spring-Boot启动与配置) | Spring、MyBatis、Web 安全、测试、可观测性与缓存选型 |
 | 9. Redis | [Redis](/courses/java/15-Redis/) | 数据结构、缓存一致性、消费组、锁、持久化与集群运维 |
+| 10. Kafka | [Kafka](/courses/java/16-Kafka/) | 从消息模型到 Java 生产消费、可靠性与 Spring Kafka |
 
 ## 工程实践路由
 

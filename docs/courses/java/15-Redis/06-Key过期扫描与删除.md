@@ -159,6 +159,30 @@ DBSIZE
 
 FLUSHDB 清空当前库，FLUSHALL 清空所有库；两者都没有业务前缀边界。ASYNC 只异步释放，不是安全删除或撤销功能；Cluster 的库与节点作用域还需确认。生产误操作没有命令级回滚，只能走事先演练的备份恢复。[FLUSHDB](https://redis.io/docs/latest/commands/flushdb/)。
 
+#### Java 调用：TTL、查询和删除
+
+过期时间用 `Duration` 表示；删除时指定完整键名，批量遍历不要用 `keys("*")`。
+
+```java
+import java.time.Duration;
+import org.springframework.data.redis.core.StringRedisTemplate;
+
+class KeyDemo {
+    private final StringRedisTemplate redis;
+    KeyDemo(StringRedisTemplate redis) { this.redis = redis; }
+
+    void run() {
+        redis.opsForValue().set("lab:session:7", "active", Duration.ofMinutes(5));
+        System.out.println(redis.getExpire("lab:session:7"));
+        // 输出：小于等于 300 的剩余秒数
+        System.out.println(redis.delete("lab:session:7"));
+        // 输出：true（该键存在时）
+    }
+}
+```
+
+`getExpire` 返回负值时需区分永久键与不存在的键；上述结果依赖示例期间没有其他客户端修改该实验键。
+
 ## 易混点
 
 TTL 到期与物理回收存在时间差；SCAN 返回游标是继续令牌，不能当作偏移页码。

@@ -131,7 +131,6 @@ class CreateUserController {
 // 作用：String create(@RequestBody CreateUser request) {；读取 JSON 请求体。
         return "created:" + request.name();
 // 作用：return "created:" + request.name();；读取 JSON 请求体。
-// 初始状态：return "created:" + request.name()。
     }
 }
 
@@ -152,13 +151,11 @@ System.out.println(new CreateUserController().create(new CreateUser("Ann")));
 record ApiResponse<T>(String code, T data) {
     static <T> ApiResponse<T> ok(T data) {
         return new ApiResponse<>("OK", data);
-// 初始状态：return new ApiResponse<>("OK", data)。
 // 作用：return new ApiResponse<>("OK", data);；让返回值表达协议。
     }
 }
 
 ApiResponse<String> response = ApiResponse.ok("ready");
-// 初始状态：response = ApiResponse.ok("ready")。
 // 作用：ApiResponse<String> response = ApiResponse.ok("ready");；让返回值表达协议。
 System.out.println(response.code() + "/" + response.data());
 // 输出：OK/ready
@@ -183,7 +180,6 @@ class ApiErrors {
     @ExceptionHandler(IllegalArgumentException.class)
     String badRequest(IllegalArgumentException ex) {
         return ex.getMessage();
-// 初始状态：return ex.getMessage()。
 // 作用：return ex.getMessage();；统一错误边界，返回读取结果。
     }
 }
@@ -202,7 +198,6 @@ System.out.println(new ApiErrors().badRequest(new IllegalArgumentException("inva
 ```java
 import jakarta.servlet.Filter;
 Filter servletFilter = (request, response, chain) -> chain.doFilter(request, response);
-// 初始状态：servletFilter = (request, response, chain) -> chain.doFilter(request, response)。
 // 作用：Filter servletFilter = (request, response, chain) -> chain.doFilter(request, response);；拦截 Servlet 请求。
 System.out.println(servletFilter != null);
 // 输出：true
@@ -219,7 +214,6 @@ Filter 必须通过 `FilterChain` 继续请求，否则会短路；它不知道�
 import org.springframework.web.servlet.HandlerInterceptor;
 
 HandlerInterceptor interceptor = new HandlerInterceptor() {};
-// 初始状态：interceptor = new HandlerInterceptor() {}。
 // 作用：HandlerInterceptor interceptor = new HandlerInterceptor() {};；拦截 MVC Handler。
 System.out.println(interceptor.preHandle(null, null, new Object()));
 // 输出：true
@@ -242,7 +236,6 @@ ResponseEntity<String> response = ResponseEntity
     .header("X-Request-Id", "req-7")
     .body("created");
 // 作用：.status(201)；显式设置状态和响应头。
-// 初始状态：response = ResponseEntity。
 // 作用：ResponseEntity<String> response = ResponseEntity；显式设置状态和响应头。
 System.out.println(response.getStatusCode().value() + "/" + response.getBody());
 // 输出：201/created
@@ -270,7 +263,6 @@ class RequestIdFilter extends OncePerRequestFilter {
         throws ServletException, IOException {
         response.setHeader("X-Request-Id", "generated");
 // 作用：response.setHeader("X-Request-Id", "generated");；每次请求一次的 Servlet Filter。
-// 初始状态：response.setHeader("X-Request-Id", "generated")。
         chain.doFilter(request, response);
 // 作用：chain.doFilter(request, response);；每次请求一次的 Servlet Filter。
         System.out.println("filter-finished");
@@ -294,7 +286,6 @@ class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new RequestTraceInterceptor()).order(10);
-// 初始状态：registry.addInterceptor(new RequestTraceInterceptor()).order(10)。
 // 作用：registry.addInterceptor(new RequestTraceInterceptor()).order(10);；注册与执行方向。
         System.out.println("trace-order=10");
 // 输出：trace-order=10
@@ -323,7 +314,6 @@ void inspect(HttpServletRequest request, HttpServletResponse response) throws Ex
     response.getWriter().write("ok");
 // 作用：response.getWriter().write("ok");；理解响应提交边界。
     response.flushBuffer();
-// 初始状态：response.flushBuffer()。
 // 作用：response.flushBuffer();；理解响应提交边界。
     System.out.println(request.getAttribute("trace") + "/" + response.isCommitted());
 // 输出：req-7/true
@@ -349,7 +339,6 @@ class OrderController {
 // 作用：@PostMapping；接收创建命令。
     ResponseEntity<Long> create(@RequestBody CreateOrder body) {
         long id = 42L;
-// 初始状态：id = 42L。
         return ResponseEntity.status(201).body(id);
 // 作用：return ResponseEntity.status(201).body(id);；接收创建命令。
     }
@@ -372,7 +361,6 @@ class ProfileController {
 // 作用：@PutMapping("/profiles/{id}")；处理可幂等更新。
     Profile replace(@PathVariable long id, @RequestBody Profile body) {
         return new Profile(id, body.name());
-// 初始状态：return new Profile(id, body.name())。
 // 作用：return new Profile(id, body.name());；处理可幂等更新。
     }
     record Profile(long id, String name) {}
@@ -397,7 +385,6 @@ class SessionController {
 // 输出：DELETE `/sessions/a1` 打印 `delete a1` 并返回 `204`。
         return ResponseEntity.noContent().build();
 // 作用：return ResponseEntity.noContent().build();；处理删除命令。
-// 初始状态：return ResponseEntity.noContent().build()。
     }
     String route() { return "DELETE /sessions/{id}"; }
 }
@@ -418,7 +405,6 @@ class UserController {
     String find(@PathVariable("id") long userId) {
 // 作用：String find(@PathVariable("id") long userId) {；读取路径变量。
         if (userId <= 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-// 初始状态：if (userId <= 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST)。
         return "user:" + userId;
     }
     String example() { return find(7); }
@@ -439,14 +425,11 @@ class SearchController {
     @GetMapping("/search")
     List<String> search(
             @RequestParam(defaultValue = "10") int limit) {
-// 初始状态：defaultValue = "10") int limit)。
 // 作用：@RequestParam(defaultValue = "10") int limit) {；读取查询或表单参数。
         int safeLimit = Math.min(limit, 100);
 // 作用：int safeLimit = Math.min(limit, 100);；读取查询或表单参数。
-// 初始状态：safeLimit = Math.min(limit, 100)。
         return List.of("limit=" + safeLimit);
 // 作用：return List.of("limit=" + safeLimit);；读取查询或表单参数。
-// 初始状态：limit = " + safeLimit)。
     }
 }
 ```
@@ -468,7 +451,6 @@ class HealthController {
     Map<String, String> health() {
         return Map.of("status", "UP");
 // 作用：return Map.of("status", "UP");；将返回值写入响应体。
-// 初始状态：return Map.of("status", "UP")。
     }
     String mediaType() { return "application/json"; }
 }
@@ -492,7 +474,6 @@ class ApiErrors {
             .body(Map.of("code", "BAD_INPUT"));
 // 作用：return ResponseEntity.badRequest()；映射已知异常。
 // 作用：.body(Map.of("code", "BAD_INPUT"));；映射已知异常。
-// 初始状态：return ResponseEntity.badRequest()。
     }
     String boundary() { return "validation"; }
 }
@@ -514,7 +495,6 @@ class GlobalErrors {
     ProblemDetail notFound(NoSuchElementException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(404);
 // 作用：ProblemDetail detail = ProblemDetail.forStatus(404);；集中处理 REST 异常。
-// 初始状态：detail = ProblemDetail.forStatus(404)。
         detail.setTitle("resource not found");
 // 作用：detail.setTitle("resource not found");；集中处理 REST 异常。
         return detail;
@@ -535,12 +515,10 @@ final class RequestIdFilter implements Filter {
     public void doFilter(ServletRequest request,
                          ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
-// 初始状态：public void doFilter(ServletRequest request,。
 // 作用：public void doFilter(ServletRequest request,；放行到下一个过滤器。
         request.setAttribute("requestId", UUID.randomUUID().toString());
 // 作用：request.setAttribute("requestId", UUID.randomUUID().toString());；放行到下一个过滤器。
         chain.doFilter(request, response);
-// 初始状态：chain.doFilter(request, response)。
 // 作用：chain.doFilter(request, response);；放行到下一个过滤器。
         System.out.println("response completed");
 // 输出：下游处理完成后打印 `response completed`。
@@ -563,7 +541,6 @@ class WebConfiguration implements WebMvcConfigurer {
         registry.addInterceptor(new LocaleInterceptor())
             .addPathPatterns("/api/**")
             .excludePathPatterns("/api/public/**");
-// 初始状态：registry.addInterceptor(new LocaleInterceptor())。
 // 作用：registry.addInterceptor(new LocaleInterceptor())；注册 MVC 拦截器。
     }
     String scope() { return "handler"; }
@@ -585,7 +562,6 @@ class StaticConfiguration implements WebMvcConfigurer {
         registry.addResourceHandler("/assets/**")
             .addResourceLocations("classpath:/public/")
             .setCachePeriod(3600);
-// 初始状态：registry.addResourceHandler("/assets/**")。
 // 作用：registry.addResourceHandler("/assets/**")；注册静态资源 URL。
     }
     String publicPath() { return "/assets/**"; }
@@ -604,7 +580,6 @@ class StaticConfiguration implements WebMvcConfigurer {
 @Bean
 CorsConfiguration apiCors() {
     CorsConfiguration cors = new CorsConfiguration();
-// 初始状态：cors = new CorsConfiguration()。
 // 作用：CorsConfiguration cors = new CorsConfiguration();；声明 CORS 白名单。
     cors.setAllowedOrigins(List.of("https://app.example.com"));
 // 作用：cors.setAllowedOrigins(List.of("https://app.example.com"));；声明 CORS 白名单，只接受来自 https://app.example.com 的请求。
@@ -632,17 +607,13 @@ UrlBasedCorsConfigurationSource corsSource(CorsConfiguration apiCors) {
     UrlBasedCorsConfigurationSource source =
         new UrlBasedCorsConfigurationSource();
 // 作用：new UrlBasedCorsConfigurationSource();；按 URL 注册 CORS。
-// 初始状态：new UrlBasedCorsConfigurationSource()。
     source.registerCorsConfiguration("/api/**", apiCors);
-// 初始状态：source.registerCorsConfiguration("/api/**", apiCors)。
 // 作用：source.registerCorsConfiguration("/api/**", apiCors);；按 URL 注册 CORS。
     CorsConfiguration open = new CorsConfiguration();
 // 作用：CorsConfiguration open = new CorsConfiguration();；按 URL 注册 CORS。
-// 初始状态：open = new CorsConfiguration()。
     open.setAllowedOrigins(List.of("https://docs.example.com"));
 // 作用：open.setAllowedOrigins(List.of("https://docs.example.com"));；按 URL 注册 CORS，只接受来自 https://docs.example.com 的请求。
     source.registerCorsConfiguration("/docs/**", open);
-// 初始状态：source.registerCorsConfiguration("/docs/**", open)。
 // 作用：source.registerCorsConfiguration("/docs/**", open);；按 URL 注册 CORS。
     return source;
 }
@@ -660,7 +631,6 @@ UrlBasedCorsConfigurationSource corsSource(CorsConfiguration apiCors) {
 @Bean
 CorsFilter corsFilter(UrlBasedCorsConfigurationSource source) {
     CorsFilter filter = new CorsFilter(source);
-// 初始状态：filter = new CorsFilter(source)。
 // 作用：CorsFilter filter = new CorsFilter(source);；在 Servlet 链前置处理 CORS。
     return filter;
 }
@@ -683,10 +653,8 @@ void writeDownloadHeaders(HttpServletResponse response) {
     response.setContentType("application/octet-stream");
 // 作用：response.setContentType("application/octet-stream");；追加可重复响应头。
     response.addHeader("Vary", "Origin");
-// 初始状态：response.addHeader("Vary", "Origin")。
 // 作用：response.addHeader("Vary", "Origin");；追加可重复响应头。
     response.addHeader("Vary", "Access-Control-Request-Method");
-// 初始状态：response.addHeader("Vary", "Access-Control-Request-Method")。
 // 作用：response.addHeader("Vary", "Access-Control-Request-Method");；追加可重复响应头。
     response.setHeader(
         "Content-Disposition",
@@ -708,10 +676,8 @@ void requireApiKey(HttpServletRequest request,
                    HttpServletResponse response) throws IOException {
     String apiKey = request.getHeader("X-Api-Key");
 // 作用：String apiKey = request.getHeader("X-Api-Key");；交给容器生成错误响应。
-// 初始状态：apiKey = request.getHeader("X-Api-Key")。
     if (apiKey == null) {
         response.sendError(401, "missing api key");
-// 初始状态：response.sendError(401, "missing api key")。
 // 作用：response.sendError(401, "missing api key");；交给容器生成错误响应。
         return;
     }
@@ -733,14 +699,12 @@ final class ByteArrayServletInputStream extends ServletInputStream {
     private final ByteArrayInputStream delegate;
     ByteArrayServletInputStream(byte[] body) {
         this.delegate = new ByteArrayInputStream(body);
-// 初始状态：delegate = new ByteArrayInputStream(body)。
 // 作用：this.delegate = new ByteArrayInputStream(body);；适配 Servlet 请求体字节流。
     }
     public int read() { return delegate.read(); }
 // 作用：public int read() { return delegate.read(); }；适配 Servlet 请求体字节流。
     public boolean isFinished() { return delegate.available() == 0; }
 // 作用：public boolean isFinished() { return delegate.available() == 0; }；适配 Servlet 请求体字节流。
-// 初始状态：public boolean isFinished() { return delegate.available() == 0; 。
     public boolean isReady() { return true; }
     public void setReadListener(ReadListener listener) {}
 }
@@ -773,7 +737,6 @@ class NoteController {
     @PostMapping("/notes")
     ResponseEntity<NoteView> create(@Valid @RequestBody CreateNote request) {
         var view = new NoteView(1L, request.title().strip());
-// 初始状态：view = new NoteView(1L, request.title().strip())。
 // 作用：var view = new NoteView(1L, request.title().strip());；适配 Servlet 请求体字节流。
         System.out.println("note=" + view.id());
 // 输出：note=1

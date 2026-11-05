@@ -187,7 +187,6 @@ import java.nio.file.Path;
 public class JfrApiDemo {
     public static void main(String[] args) throws Exception {
         try (Recording recording = new Recording()) {
-// 初始状态：recording = new Recording())。
 // 作用：try (Recording recording = new Recording()) {；在代码中控制 JFR。
             recording.start();
 // 作用：recording.start();；在代码中控制 JFR。
@@ -245,7 +244,6 @@ import jdk.jfr.Recording;
 public class JfrEventSettingDemo {
     public static void main(String[] args) throws Exception {
         try (Recording recording = new Recording()) {
-// 初始状态：recording = new Recording())。
 // 作用：try (Recording recording = new Recording()) {；按事件降低噪声。
             recording.enable("jdk.CPULoad").withPeriod(java.time.Duration.ofSeconds(1));
 // 作用：recording.enable("jdk.CPULoad").withPeriod(java.time.Duration.ofSeconds(1));；按事件降低噪声。

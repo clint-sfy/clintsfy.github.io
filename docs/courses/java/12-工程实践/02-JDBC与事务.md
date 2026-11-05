@@ -35,7 +35,6 @@ properties.setProperty("user",System.getenv("MYSQL_USER"));
 properties.setProperty("password",System.getenv("MYSQL_PASSWORD"));
 String url = System.getenv("MYSQL_JDBC_URL");
 try (Connection connection = DriverManager.getConnection(url,properties)) {
-    // 关键变化：握手成功后得到Connection，退出块自动关闭。
     System.out.println(connection.isValid(2));
     // 输出：连接健康时true，认证失败时抛SQLException。
 }
@@ -54,7 +53,6 @@ try (Connection connection = source.getConnection();
      PreparedStatement statement = connection.prepareStatement("SELECT 1");
      ResultSet result = statement.executeQuery()) {
     result.next();
-    // 关键变化：读取SELECT 1后依次关闭ResultSet、Statement、Connection。
     System.out.println(result.getInt(1));
     // 输出：1；池代理close通常归还连接。
 }
@@ -72,7 +70,6 @@ String input = "x' OR 1=1 --";
 try (PreparedStatement statement = connection.prepareStatement(
         "SELECT id FROM learning_lab.users WHERE name=? ORDER BY id")) {
     statement.setString(1,input);
-    // 关键变化：绑定一个完整字符串，不会改变WHERE条件。
     try (ResultSet result = statement.executeQuery()) {
         while (result.next()) System.out.println(result.getLong(1));
         // 输出：匹配的id；只返回name精确等于input的行，不会因输入返回全表。
@@ -93,7 +90,6 @@ try (PreparedStatement statement = connection.prepareStatement("SELECT NULL AS s
     result.next();
     int score = result.getInt("score");
     boolean scoreNull = result.wasNull();
-    // 关键变化：getInt(NULL)返回0，记录该列的NULL状态后再读取下一列。
     int zero = result.getInt("zero_value");
     System.out.println(score + "/" + scoreNull + "/" + zero + "/" + result.wasNull());
     // 输出：0/true/0/false。
@@ -131,7 +127,6 @@ try (PreparedStatement statement = connection.prepareStatement(
         "INSERT INTO learning_lab.lab_jdbc(name) VALUES(?)",Statement.RETURN_GENERATED_KEYS)) {
     statement.setString(1,"first");
     if (statement.executeUpdate() != 1) throw new SQLException("insert count");
-    // 关键变化：确认插入1行，再读取同一语句的生成键。
     try (ResultSet keys = statement.getGeneratedKeys()) {
         if (!keys.next()) throw new SQLException("missing generated key");
         System.out.println(keys.getLong(1));
@@ -155,7 +150,6 @@ try (PreparedStatement statement = connection.prepareStatement(
         statement.setString(1,name);
         statement.addBatch();
     }
-    // 关键变化：两项参数一起执行，但执行批次不等于commit。
     try {
         int[] counts = statement.executeBatch();
         for (int count : counts) {
@@ -200,7 +194,6 @@ try (Connection connection = DriverManager.getConnection(
             statement.executeUpdate();
             connection.rollback(point);
             connection.releaseSavepoint(point);
-            // 关键变化：after-savepoint撤销，before-savepoint仍未提交。
         }
         connection.rollback();
         ended = true;
@@ -241,7 +234,6 @@ try (Connection connection = DriverManager.getConnection(
 try (PreparedStatement statement = connection.prepareStatement(
         "SELECT id FROM learning_lab.users ORDER BY id",ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY)) {
     statement.setFetchSize(100);
-    // 关键变化：在Connector/J游标模式下每批抓取100行，并不是LIMIT 100。
     int count = 0;
     try (ResultSet result = statement.executeQuery()) {
         while (result.next()) count++;
@@ -261,7 +253,6 @@ try (PreparedStatement statement = connection.prepareStatement(
 // 初始：方法参数Connection connection，运行正常SELECT 1。
 try (PreparedStatement statement = connection.prepareStatement("SELECT 1")) {
     statement.setQueryTimeout(2);
-    // 关键变化：设置2秒语句预算，不包括池等待等全部端到端阶段。
     try (ResultSet result = statement.executeQuery()) {
         result.next();
         System.out.println(result.getInt(1));
@@ -284,11 +275,9 @@ int originalTimeout = 0;
 boolean timeoutRead = false;
 SQLException failure = null;
 try {
-    // 初始状态：网络超时getter本身也可能失败；先进入try，确保Executor最终关闭。
     originalTimeout = owned.getNetworkTimeout();
     timeoutRead = true;
     owned.setNetworkTimeout(executor,5000);
-    // 关键变化：网络响应预算变为5000毫秒，不替代语句或池等待超时。
     System.out.println(owned.getNetworkTimeout());
     // 输出：驱动支持并成功设置时5000；不支持时抛SQLFeatureNotSupportedException。
 } catch (SQLException error) {
@@ -316,7 +305,6 @@ JDBC网络超时触发时连接按契约关闭；驱动socketTimeout是另一个
 // 初始：方法参数Statement runningStatement，由同一测试的查询线程执行只读长查询。
 Statement statement = runningStatement;
 statement.cancel();
-// 关键变化：发送cancel请求，不能据此判定数据库事务已结束。
 System.out.println("cancel requested");
 // 输出：正常返回时cancel requested；查询线程须记录实际异常/完成状态。
 ```
@@ -330,7 +318,6 @@ System.out.println("cancel requested");
 ```java
 // 初始：方法参数SQLException error来自真实失败，日志不打印密码和绑定值。
 for (SQLException item = error; item != null; item = item.getNextException()) {
-    // 关键变化：遍历SQLException链，保留SQLState和vendor code。
     System.out.println(item.getSQLState() + "/" + item.getErrorCode());
     // 输出：实际状态/错误码；死锁常见40001/1213，需以实际异常为准。
 }

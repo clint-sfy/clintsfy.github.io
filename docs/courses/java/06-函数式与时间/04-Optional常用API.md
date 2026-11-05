@@ -39,7 +39,6 @@ description: 用 Optional 表达可能缺失的返回值，掌握转换、兜底
 接收外部输入或旧 API 返回值时优先使用 `ofNullable`；它只包装非空值，不能替代业务校验。
 
 ```java
-// 语义：接收外部输入或旧 API 返回值时优先使用 ofNullable。
 import java.util.Optional;
 
 String input = null;
@@ -54,7 +53,6 @@ System.out.println(value.isEmpty());
 只有已经确认非空时才用 `of`；不确定时使用 `ofNullable`，否则 `null` 会在创建处抛异常。
 
 ```java
-// 语义：只有已经确认非空时才用 of。
 import java.util.Optional;
 
 Optional<String> value = Optional.of("Java");
@@ -67,7 +65,6 @@ System.out.println(value.get());
 `map` 会在有值时执行函数，函数返回 `null` 时结果变为空 Optional；多个转换可以串联。
 
 ```java
-// 语义：map 会在有值时执行函数，函数返回 null 时结果变为空 Optional。
 import java.util.Optional;
 
 Optional<String> name = Optional.of(" java ");
@@ -81,22 +78,18 @@ System.out.println(length.orElse(0));
 `flatMap` 避免出现 `Optional<Optional<T>>`；如果转换函数返回普通值，使用 `map`。
 
 ```java
-// 语义：flatMap 避免出现 Optional<Optional<T>>。
 import java.util.Optional;
 
 Optional<String> text = Optional.of("42");
 Optional<Integer> number = text.flatMap(value -> parseInt(value));
-// 关键变化：Optional<Integer> number = text.flatMap(value -> parseInt(value));；在流上调用 flatMap 处理元素，结果写入 number。
 System.out.println(number.orElse(-1));
 // 输出：42
 
 static Optional<Integer> parseInt(String value) {
     try {
         return Optional.of(Integer.parseInt(value));
-        // 关键变化：return Optional.of(Integer.parseInt(value));；按 Integer.parseInt(value) 调用 of 创建值，返回新实例。
     } catch (NumberFormatException ex) {
         return Optional.empty();
-        // 关键变化：return Optional.empty();；调用 empty，实参为 无显式参数；返回空 Optional。
     }
 }
 ```
@@ -106,13 +99,10 @@ static Optional<Integer> parseInt(String value) {
 条件不满足时得到空 Optional，适合把校验接到查询或转换链中；复杂校验应提取成有名字的方法。
 
 ```java
-// 语义：条件不满足时得到空 Optional，适合把校验接到查询或转换链中。
 import java.util.Optional;
 
 Optional<String> code = Optional.of("JAVA-20")
         .filter(value -> value.startsWith("JAVA-"));
-        // 关键变化：Optional<String> code = Optional.of("JAVA-20") .filter(value -> value.startsWith("JAVA-"));；在流上调用 filter 处理元素，结果写入 code。
-        // 关键变化：.filter(value -> value.startsWith("JAVA-"));；按 predicate 筛选元素，只保留满足条件的元素。
 System.out.println(code.orElse("invalid"));
 // 输出：JAVA-20
 ```
@@ -122,7 +112,6 @@ System.out.println(code.orElse("invalid"));
 默认值表达式会立即求值；默认值很简单或已经准备好时使用它。
 
 ```java
-// 语义：默认值表达式会立即求值。
 import java.util.Optional;
 
 String label = Optional.<String>empty().orElse("unknown");
@@ -135,7 +124,6 @@ System.out.println(label);
 默认值需要计算、查询或创建对象时使用 `orElseGet`，避免值已经存在时做无用工作。
 
 ```java
-// 语义：默认值需要计算、查询或创建对象时使用 orElseGet，避免值已经存在时做无用工作。
 import java.util.Optional;
 
 String label = Optional.<String>empty().orElseGet(() -> "generated-20");
@@ -148,12 +136,10 @@ System.out.println(label);
 把“找不到就是错误”的边界明确转换为异常；异常类型和消息应符合调用方契约。
 
 ```java
-// 语义：把“找不到就是错误”的边界明确转换为异常。
 import java.util.Optional;
 
 String user = Optional.<String>empty()
         .orElseThrow(() -> new IllegalArgumentException("user not found"));
-        // 关键变化：.orElseThrow(() -> new IllegalArgumentException("user not found"));；调用 orElseThrow，实参为 () -> new IllegalArgumentException("user not found")；Optional 为空时执行 () -> new IllegalArgumentException("user not found") 抛出异常；有值时返回值。
 System.out.println(user);
 // 输出：缺失时抛出 IllegalArgumentException
 ```
@@ -164,7 +150,6 @@ System.out.println(user);
 
 ```java
 // 作用：Optional.of("saved").ifPresent 在值存在时执行打印动作。
-// 语义：适合末端通知或记录日志，不要用多个嵌套 ifPresent 代替有清晰返回值的业务流程。
 import java.util.Optional;
 
 Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));
@@ -176,17 +161,14 @@ Optional.of("saved").ifPresent(value -> System.out.println("status=" + value));
 当有值和无值都需要末端动作时使用；如果两个分支还要继续返回结果，应优先考虑 `map` 与兜底。
 
 ```java
-// 语义：当有值和无值都需要末端动作时使用。
 import java.util.Optional;
 
 StringBuilder output = new StringBuilder();
 Optional.<String>empty().ifPresentOrElse(
         value -> output.append("value=").append(value),
         // 输入：value -> output.append("value=").append(value);；有值分支会追加 value= 和具体值。
-        // 关键变化：本例 Optional 为空，因此该分支不执行；output 不追加 value 文本。
         () -> output.append("missing"));
         // 输入：Optional.<String>empty().ifPresentOrElse( value -> output.append("value=").append(value), () -> output.append("missing"));；Optional 为空，实参提供有值与缺失两个分支。
-        // 关键变化：Optional.empty() 跳过 value 分支并执行缺失分支，向 output 追加 "missing"；最终文本为 missing。
 System.out.println(output);
 // 输出：missing
 ```
@@ -228,9 +210,6 @@ List<String> values = List.of("java", "", "sql").stream()
         .map(text -> text.isBlank() ? java.util.Optional.<String>empty() : java.util.Optional.of(text))
         .flatMap(java.util.Optional::stream)
         .toList();
-        // 关键变化：.map(text -> text.isBlank() ? java.util.Optional.<String>empty() : java.util.Optional.of(text)) .flatMap(java.util.Optional::stream) .toList();；把每个元素映射成子流并展开为一个连续流。
-        // 关键变化：.flatMap(java.util.Optional::stream) .toList();；把每个元素映射成子流并展开为一个连续流。
-        // 关键变化：.toList();；终止当前流管道并把元素收集为 List；返回列表结果。
 System.out.println(values);
 // 输出：[java, sql]
 ```
@@ -270,15 +249,12 @@ public class OptionalDemo {
         String email = findEmail(users, "ann")
                 .filter(value -> value.contains("@"))
                 .orElseThrow(() -> new IllegalArgumentException("email missing"));
-                // 关键变化：.filter(value -> value.contains("@")) .orElseThrow(() -> new IllegalArgumentException("email missing"));；按 predicate 筛选元素，只保留满足条件的元素。
-                // 关键变化：.orElseThrow(() -> new IllegalArgumentException("email missing"));；调用 orElseThrow，实参为 () -> new IllegalArgumentException("email missing")；Optional 为空时执行 () -> new IllegalArgumentException("email missing") 抛出异常；有值时返回值。
         System.out.println(email);
         // 输出：ann@example.com
     }
 
     static Optional<String> findEmail(Map<String, String> users, String user) {
         return Optional.ofNullable(users.get(user));
-        // 关键变化：return Optional.ofNullable(users.get(user));；从 users 按 user 读取值，返回值不修改映射内容。
     }
 }
 ```

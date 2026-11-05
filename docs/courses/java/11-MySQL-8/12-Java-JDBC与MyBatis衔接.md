@@ -31,7 +31,6 @@ MySQL 8.0 / InnoDB负责SQL执行、约束、隔离与锁；Connector/J把JDBC�
 String url = System.getenv("MYSQL_JDBC_URL");
 try (java.sql.Connection connection = java.sql.DriverManager.getConnection(
         url,System.getenv("MYSQL_USER"),System.getenv("MYSQL_PASSWORD"))) {
-    // 关键变化：直接验证连接，不经过Mapper或连接池。
     System.out.println(connection.getMetaData().getDatabaseProductName());
     // 输出：成功连接MySQL时为MySQL；认证或TLS失败抛SQLException。
 }
@@ -48,7 +47,6 @@ try (java.sql.Connection connection = java.sql.DriverManager.getConnection(
 try (java.sql.PreparedStatement statement = connection.prepareStatement(
         "SELECT id,name FROM learning_lab.users WHERE id=?")) {
     statement.setLong(1,1L);
-    // 关键变化：只有参数值变化，SQL结构固定。
     try (java.sql.ResultSet result = statement.executeQuery()) {
         if (result.next()) System.out.println(result.getLong("id"));
         // 输出：基础数据未更改时1；不存在时无行，不伪造对象。
@@ -67,7 +65,6 @@ MyBatis的`${}`是文本替换，不能用它接收外部排序/表名；标识�
 java.sql.ResultSet generatedKeys = keys;
 if (!generatedKeys.next()) throw new java.sql.SQLException("missing generated key");
 long generatedId = generatedKeys.getLong(1);
-// 关键变化：读取generatedId作为本次INSERT实际返回键，用于后续关联。
 System.out.println(generatedId > 0);
 // 输出：正数自增键时true，实际id不承诺连续。
 ```
@@ -93,7 +90,6 @@ try (org.apache.ibatis.session.SqlSession session = sessionFactory.openSession(
         session.insert("example.UserMapper.insert",first);
         session.insert("example.UserMapper.insert",second);
         java.util.List<org.apache.ibatis.executor.BatchResult> results = session.flushStatements();
-        // 关键变化：flush执行两次缓冲INSERT，仍不等于commit。
         int items = 0;
         for (org.apache.ibatis.executor.BatchResult result : results) {
             for (int count : result.getUpdateCounts()) {
@@ -138,7 +134,6 @@ TypeHandler负责Java/JDBC类型转换，必须覆盖NULL、边界值、JSON及�
 javax.sql.DataSource source = dataSource;
 try (java.sql.Connection connection = source.getConnection()) {
     boolean autoCommit = connection.getAutoCommit();
-    // 关键变化：取得autoCommit实际借出状态，不猜池默认配置。
     System.out.println(autoCommit);
     // 输出：实际true/false；此处不修改或提交任何业务数据。
 }

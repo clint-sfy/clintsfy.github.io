@@ -60,7 +60,6 @@ String second = java.util.UUID.randomUUID().toString();
 System.out.println(first.equals(second));
 // 输出：通常 false
 // 初始：两个不同的锁申请，输出具体 UUID 不固定。
-// 关键变化：两次申请分别生成随机 owner，冲突概率极低但不是数学零。
 ```
 
 所有重试必须明确是恢复同一次申请还是新的申请；新申请使用新 token，不用时间戳单独充当唯一值。
@@ -116,7 +115,6 @@ else {
     finally { if (lock.isHeldByCurrentThread()) lock.unlock(); }
 }
 // 初始：已注入连接隔离 Redis 的 redissonClient，调用线程允许 InterruptedException 上抛。
-// 关键变化：最多等待 200ms，成功后显式 5 秒租约到期可被别人取得。
 ```
 
 显式 leaseTime 路径不依赖 watchdog 自动延长。未传 leaseTime 的获取方式可使用 watchdog，默认 lockWatchdogTimeout 常为 30 秒，须按版本配置确认。两条路径都不保证工作能及时停止，锁不是外部事务。[Redisson RLock](https://redisson.pro/docs/data-and-services/locks-and-synchronizers/)。
@@ -138,7 +136,6 @@ if (acquired) {
     }
 }
 // 初始：同线程执行，未指定 leaseTime；watchdog 也可能因暂停或断网失败。
-// 关键变化：finally 尝试释放，但检查和 unlock 之间仍存在竞态。
 ```
 
 生产还需处理 Redis 网络异常、保留原业务异常（追加 suppressed 或结构化记录），不能让解锁错误覆盖根因，也不盲重试外部写。可重入次数须匹配释放次数；异步任务不能把普通线程所有权直接转给其他线程。普通 RLock 不生成 fencing token。
@@ -165,7 +162,6 @@ boolean stale = resource.write(41, "PAID");
 System.out.println(fresh + "/" + stale + "/" + resource.state());
 // 输出：true/false/CANCELLED
 // 初始：资源 lastToken=40；42 是新持有者，41 是暂停后恢复的旧持有者。
-// 关键变化：同一资源同步方法原子比较并更新，旧 41 被拒绝。
 ```
 
 这是资源端内存模型，未连接数据库。生产数据库应在同一原子条件 UPDATE 中检查 `last_token < token` 并更新 state/last_token，检查影响行数；不能先 SELECT 再无条件 UPDATE。严格递增拒绝同 token 重试，多次操作需额外定义幂等协议。token 分配必须单调且恢复后不回退；Redis INCR 在异步故障转移/备份回退后不能单独证明该条件。Redisson RFencedLock 可提供 token API，但仍必须让受保护资源验证并审计恢复假设。owner 随机值、fencing 顺序号和用户授权分别负责不同问题。[Redisson Fenced Lock](https://redisson.pro/docs/data-and-services/locks-and-synchronizers/#fenced-lock)。
@@ -175,14 +171,12 @@ System.out.println(fresh + "/" + stale + "/" + resource.state());
 用途：用于把递增 token 放进数据库的原子条件更新，让过期锁持有者无法覆盖新持有者已完成的写入。
 
 ```java
-// 初始状态：隔离 MySQL 表 fenced_orders 有 id=7/state=PAID/last_token=40；token 由可靠递增协议分配。
 // 风险：UPDATE 仅限主键 WHERE id=7，额外比较 last_token，必须检查影响行数。
 String sql = "UPDATE fenced_orders SET state=?,last_token=? WHERE id=? AND last_token<?";
 java.sql.Connection connection = testConnection;
 try (java.sql.PreparedStatement update = connection.prepareStatement(sql)) {
     update.setString(1, "CANCELLED"); update.setLong(2, 42); update.setLong(3, 7); update.setLong(4, 42);
     int accepted = update.executeUpdate();
-    // 关键变化：新持有者 42 将数据库 last_token 从 40 提升到 42。
     update.setString(1, "PAID"); update.setLong(2, 41); update.setLong(3, 7); update.setLong(4, 41);
     int stale = update.executeUpdate();
     org.junit.jupiter.api.Assertions.assertEquals(1, accepted);

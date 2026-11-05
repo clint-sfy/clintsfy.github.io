@@ -43,8 +43,6 @@ enum 表达“只能从这几个值中选一个”，record 表达“这些字�
 需要表达订单状态或权限级别等固定集合时使用 enum，并应使用稳定业务字段而不是 `ordinal` 进行持久化。
 
 ```java
-// 语义：需要表达订单状态或权限级别等固定集合时使用 enum，并应使用稳定业务字段而不是 ordinal 进行持久化。
-// 初始状态：status 初始为 OrderStatus.PAID。
 enum OrderStatus {
     CREATED, PAID, CANCELLED
 }
@@ -52,7 +50,6 @@ enum OrderStatus {
 public class EnumOverviewDemo {
     public static void main(String[] args) {
         OrderStatus status = OrderStatus.PAID;
-// 初始状态：status 保存枚举常量 PAID，name() 返回 "PAID"，ordinal() 返回 1。
         System.out.println(status.name() + ", " + status.ordinal());
         // 输出：PAID, 1
     }
@@ -64,13 +61,11 @@ public class EnumOverviewDemo {
 需要校验、规范化或保护可变组件时，跳转到 record 数据载体页面查看完整写法。
 
 ```java
-// 语义：需要校验、规范化或保护可变组件时，跳转到 record 数据载体页面查看完整写法。
 record Money(String currency, long cents) {}
 
 public class RecordOverviewDemo {
     public static void main(String[] args) {
         Money money = new Money("CNY", 1999);
-// 初始状态：money.currency() 为 "CNY"，money.cents() 为 1999。
         System.out.println(money.currency());
 // 输出：CNY
     }
@@ -82,8 +77,6 @@ public class RecordOverviewDemo {
 sealed 让新增结果分支变成显式的类型变更，适合编译器帮助检查有限状态模型。
 
 ```java
-// 语义：sealed 让新增结果分支变成显式的类型变更，适合编译器帮助检查有限状态模型。
-// 初始状态：result 初始为 new LoginSuccess("u-1")。
 sealed interface LoginResult permits LoginSuccess, LoginFailure {}
 record LoginSuccess(String userId) implements LoginResult {}
 record LoginFailure(String reason) implements LoginResult {}
@@ -91,8 +84,6 @@ record LoginFailure(String reason) implements LoginResult {}
 public class SealedOverviewDemo {
     public static void main(String[] args) {
         LoginResult result = new LoginSuccess("u-1");
-// 关键变化：result 接收表达式 new LoginSuccess("u-1") 的计算结果。
-// 初始状态：result 的初始值为 new LoginSuccess("u-1")。
         System.out.println(result instanceof LoginSuccess);
         // 输出：true
     }
@@ -104,7 +95,6 @@ public class SealedOverviewDemo {
 需要在 JDK 20 中直接拆出 record 组件时可使用预览版 record pattern，并为编译与运行同时启用预览特性。
 
 ```java
-// 语义：需要在 JDK 20 中直接拆出 record 组件时可使用预览版 record pattern，并为编译与运行同时启用预览特性。
 record User(String name, int age) {}
 
 public class PatternOverviewDemo {
@@ -117,7 +107,6 @@ public class PatternOverviewDemo {
 
     public static void main(String[] args) {
         User user = new User("Alice", 20);
-// 初始状态：user.name() 为 "Alice"，user.age() 为 20。
         System.out.println(label(user));
 // 输出：Alice:20
     }
@@ -153,7 +142,6 @@ enum Level {
 public class EnumFieldDemo {
     public static void main(String[] args) {
         Level level = Level.HIGH;
-// 初始状态：level 为 HIGH，level.code() 返回 2。
         System.out.println(level.code());
         // 输出：2
     }
@@ -173,7 +161,6 @@ class VendorEvent extends ExtensionEvent {}
 public class SealedExtensionOverviewDemo {
     public static void main(String[] args) {
         VendorEvent event = new VendorEvent();
-// 初始状态：event 是 ExtensionEvent 的 VendorEvent 实例，因此兼容 Event。
         System.out.println(event instanceof Event);
 // 输出：true
     }
@@ -188,7 +175,6 @@ record Task(String id, Status status) {}
 public class ModernTypesOverviewDemo {
     public static void main(String[] args) {
         Task task = new Task("t-1", Status.DONE);
-// 初始状态：task.id() 为 "t-1"，task.status() 为 DONE。
         System.out.println(task);
         // 输出：Task[id=t-1, status=DONE]
     }

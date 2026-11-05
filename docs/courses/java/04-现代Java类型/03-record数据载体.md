@@ -40,17 +40,12 @@ record 不能继承普通类，只能隐式继承 java.lang.Record，但可以�
 需要声明小型值对象时使用 record 组件，编译器会生成同名访问器、规范构造器以及 `equals`、`hashCode` 和 `toString`。
 
 ```java
-// 语义：需要声明小型值对象时使用 record 组件，编译器会生成同名访问器、规范构造器以及 equals、hashCode 和 toString。
-// 初始状态：left 初始为 new Point(3, 4)；right 初始为 new Point(3, 4)。
 record Point(int x, int y) {}
 
 public class RecordBasicDemo {
     public static void main(String[] args) {
         Point left = new Point(3, 4);
-// 关键变化：left 接收表达式 new Point(3, 4) 的计算结果。
-// 初始状态：left 的初始值为 new Point(3, 4)。
         Point right = new Point(3, 4);
-// 初始状态：right 也保存 x=3、y=4，用于与 left 比较。
         System.out.println(left.x() + ", " + left.y());
         // 输出：3, 4
         System.out.println(left.equals(right) + ", " + left);
@@ -64,14 +59,11 @@ public class RecordBasicDemo {
 紧凑构造器的参数名就是组件名，可以在隐式赋值前校验和规范化；不要在其中再次给字段赋值，record 组件字段由编译器完成赋值。
 
 ```java
-// 语义：紧凑构造器的参数名就是组件名，可以在隐式赋值前校验和规范化。
-// 初始状态：name 初始为 new UserName(" Alice ")。
 record UserName(String value) {
     public UserName {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("name must not be blank");
 // 异常：throw new IllegalArgumentException("name must not be blank") 立即进入异常路径。
-// 初始状态：表达式为 throw new IllegalArgumentException("name must not be blank")。
         }
         value = value.trim();
     }
@@ -80,7 +72,6 @@ record UserName(String value) {
 public class RecordCompactConstructorDemo {
     public static void main(String[] args) {
         UserName name = new UserName("  Alice  ");
-// 初始状态：构造器去除两端空白后，name.value() 为 "Alice"。
         System.out.println(name.value());
         // 输出：Alice
     }
@@ -92,13 +83,11 @@ public class RecordCompactConstructorDemo {
 显式规范构造器的参数必须与组件一一对应，并且要明确给每个组件赋值；大多数校验场景用紧凑构造器更简洁。
 
 ```java
-// 语义：显式规范构造器的参数必须与组件一一对应，并且要明确给每个组件赋值。
 record Port(int value) {
     public Port(int value) {
         if (value < 1 || value > 65535) {
             throw new IllegalArgumentException("port out of range");
 // 异常：throw new IllegalArgumentException("port out of range") 立即进入异常路径。
-// 初始状态：表达式为 throw new IllegalArgumentException("port out of range")。
         }
         this.value = value;
     }
@@ -107,7 +96,6 @@ record Port(int value) {
 public class RecordCanonicalConstructorDemo {
     public static void main(String[] args) {
         Port port = new Port(8080);
-// 初始状态：port.value() 通过范围校验并保存 8080。
         System.out.println(port.value());
         // 输出：8080
     }
@@ -119,15 +107,11 @@ public class RecordCanonicalConstructorDemo {
 访问器名就是组件名；如果框架要求 getName()，可以额外定义方法，但不要误以为 record 自动生成 JavaBean getter。
 
 ```java
-// 语义：访问器名就是组件名。
-// 初始状态：user 初始为 new User("Alice", 20)。
 record User(String name, int age) {}
 
 public class RecordAccessorDemo {
     public static void main(String[] args) {
         User user = new User("Alice", 20);
-// 关键变化：user 接收表达式 new User("Alice", 20) 的计算结果。
-// 初始状态：user 的初始值为 new User("Alice", 20)。
         System.out.println(user.name() + ", " + user.age());
         // 输出：Alice, 20
     }
@@ -139,8 +123,6 @@ public class RecordAccessorDemo {
 需要隔离 record 的可变列表组件时使用 `List.copyOf`，它会复制列表结构并拒绝 `null`，但不会复制可变元素本身。
 
 ```java
-// 语义：需要隔离 record 的可变列表组件时使用 List.copyOf，它会复制列表结构并拒绝 null，但不会复制可变元素本身。
-// 初始状态：source 初始为 new ArrayList<>(List.of("book"))；order 初始为 new Order(source)。
 import java.util.ArrayList;
 import java.util.List;
 
@@ -153,12 +135,9 @@ record Order(List<String> items) {
 public class RecordShallowImmutableDemo {
     public static void main(String[] args) {
         List<String> source = new ArrayList<>(List.of("book"));
-// 关键变化：source 接收表达式 new ArrayList<>(List.of("book")) 的计算结果。
-// 初始状态：source 的初始值为 new ArrayList<>(List.of("book"))。
         Order order = new Order(source);
 // 返回：new Order(source) 通过 List.copyOf 复制列表结构，order.items() 初始为 [book]。
         source.add("pen");
-// 关键变化：source.add("pen") 只修改外部 source，source 变为 [book, pen]，order.items() 仍为 [book]。
         System.out.println(order.items());
         // 输出：[book]
     }
@@ -170,7 +149,6 @@ public class RecordShallowImmutableDemo {
 record 可以实现一个或多个接口，适合让不同数据载体遵守同一读取契约；它不能通过 extends SomeClass 继承普通类。
 
 ```java
-// 语义：record 可以实现一个或多个接口，适合让不同数据载体遵守同一读取契约。
 interface Identified {
     String id();
 }
@@ -184,7 +162,6 @@ public class RecordInterfaceDemo {
 
     public static void main(String[] args) {
         Product product = new Product("p-1", "Book");
-// 初始状态：product.id() 为 "p-1"，product.name() 为 "Book"。
         System.out.println(show(product));
 // 输出：p-1
     }
@@ -196,7 +173,6 @@ public class RecordInterfaceDemo {
 需要在 JDK 20 中合并类型判断、转换和组件读取时可使用预览版 record pattern，并为编译与运行配套启用预览特性。
 
 ```java
-// 语义：需要在 JDK 20 中合并类型判断、转换和组件读取时可使用预览版 record pattern，并为编译与运行配套启用预览特性。
 record Point(int x, int y) {}
 
 public class RecordPatternDemo {
@@ -209,7 +185,6 @@ public class RecordPatternDemo {
 
     public static void main(String[] args) {
         Point point = new Point(2, 5);
-// 初始状态：point.x() 为 2，point.y() 为 5。
         System.out.println(locate(point));
 // 输出：x=2, y=5
     }
@@ -226,7 +201,6 @@ java --enable-preview RecordPatternDemo
 嵌套模式适合小型、结构稳定的数据树；当校验逻辑复杂或需要多处复用时，先显式转换为局部变量通常更容易调试。
 
 ```java
-// 语义：javac --release 20 --enable-preview RecordPatternDemo.java java --enable-preview RecordPatternDemo。
 record Address(String city) {}
 record User(String name, Address address) {}
 
@@ -240,7 +214,6 @@ public class NestedRecordPatternDemo {
 
     public static void main(String[] args) {
         User user = new User("Alice", new Address("Shanghai"));
-// 初始状态：user.name() 为 "Alice"，user.address().city() 为 "Shanghai"。
         System.out.println(cityOf(user));
 // 输出：Alice@Shanghai
     }
@@ -258,8 +231,6 @@ record Pair<L, R>(L left, R right) {}
 public class GenericRecordDemo {
     public static void main(String[] args) {
         Pair<String, Integer> pair = new Pair<>("age", 20);
-// 关键变化：pair 接收表达式 new Pair<>("age", 20) 的计算结果。
-// 初始状态：pair 的初始值为 new Pair<>("age", 20)。
         System.out.println(pair.left() + "=" + pair.right());
         // 输出：age=20
     }
@@ -317,9 +288,7 @@ record CaseInsensitiveName(String value) {
 public class RecordEqualityDemo {
     public static void main(String[] args) {
         CaseInsensitiveName upper = new CaseInsensitiveName("JAVA");
-// 初始状态：upper.value() 为 "JAVA"。
         CaseInsensitiveName lower = new CaseInsensitiveName("java");
-// 初始状态：lower.value() 为 "java"。
         boolean same = upper.equals(lower);
 // 返回：upper.equals(lower) 忽略大小写比较，same 为 true。
         System.out.println(same);
@@ -340,7 +309,6 @@ record UserSnapshot(String id) implements Serializable {}
 public class RecordSerializableDemo {
     public static void main(String[] args) {
         UserSnapshot snapshot = new UserSnapshot("u-1");
-// 初始状态：snapshot.id() 为 "u-1"，并实现 Serializable。
         System.out.println(snapshot instanceof Serializable);
 // 输出：true
     }
@@ -354,7 +322,6 @@ record Book(String title, int pages) {}
 public class RecordSummaryDemo {
     public static void main(String[] args) {
         Book book = new Book("Java", 300);
-// 初始状态：book.title() 为 "Java"，book.pages() 为 300。
         System.out.println(book.title());
         // 输出：Java
     }

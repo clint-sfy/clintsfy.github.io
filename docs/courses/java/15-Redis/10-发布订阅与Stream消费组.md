@@ -177,6 +177,33 @@ XREADGROUP GROUP workers c1 COUNT 1 STREAMS lab:{reliability}:events 0
 
 本节是消费组裁剪引用的规范位置；基础 MAXLEN/= 与 ~ 示例仍见 [特殊结构的 XTRIM](./05-Bitmap-HyperLogLog-GEO与Stream.md#xtrim-按精确最大条数修剪实验日志并观察残留事件)，不重复其命令教程。显式 KEEPREF/DELREF/ACKED 自 Redis 8.2 提供：KEEPREF 为默认行为，仅留引用，不能恢复载荷；DELREF 同时清除所有组对应 PEL 引用，可能丢失待处理任务；ACKED 只裁剪已被所有组读取且确认的条目，因此不能保证达到 MAXLEN。早期版本使用无选项裁剪也会留下 pending 引用，本例的显式参数不可在 8.0 使用。修剪 O(删除数量)，~ 可能多保留，LIMIT 限制扫描工作且只与近似模式使用。保留窗口应覆盖最慢消费者、最大故障与重放需求；监控组 lag、pending 年龄与载荷缺失，不能只看 XLEN。三种策略都不能替代备份与可靠消息处理。[XTRIM 引用策略](https://redis.io/docs/latest/commands/xtrim/)。
 
+#### Java 调用：发布消息与追加 Stream 事件
+
+Pub/Sub 适合在线订阅者即时接收；Stream 保存事件以供后续读取。下面只演示生产端，消费组的确认仍按本篇原生命令流程学习。
+
+```java
+import java.util.Map;
+import org.springframework.data.redis.connection.stream.StreamRecords;
+import org.springframework.data.redis.core.StringRedisTemplate;
+
+class MessageDemo {
+    private final StringRedisTemplate redis;
+    MessageDemo(StringRedisTemplate redis) { this.redis = redis; }
+
+    void send() {
+        Long subscribers = redis.convertAndSend("lab:notice", "created");
+        // 返回当前收到消息的订阅客户端数量；没有订阅者时为 0。
+
+        var id = redis.opsForStream().add(StreamRecords.newRecord()
+            .in("lab:events").ofMap(Map.of("type", "created")));
+        System.out.println(id);
+        // 输出：新事件的 RecordId，例如 1730000000000-0
+    }
+}
+```
+
+`convertAndSend` 不会为离线订阅者保存消息；需要重放、确认和失败恢复时使用 Stream。
+
 ## 易混点
 
 XACK 移除待确认引用而不删除日志；XTRIM 可能删除日志却保留引用；PEL 存在不代表载荷完整。

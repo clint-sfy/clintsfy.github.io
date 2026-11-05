@@ -37,7 +37,6 @@ config.setPassword(System.getenv("MYSQL_PASSWORD"));
 config.setPoolName("orders-primary");
 config.setMaximumPoolSize(12); // 仅示例值，须按压测和数据库总连接预算调整。
 config.setRegisterMbeans(true); // 启用本页后文演示的 JMX 可观察项。
-// 关键变化：使用配置创建DataSource，池启动并向调用者提供连接。
 try (HikariDataSource dataSource = new HikariDataSource(config);
      Connection connection = dataSource.getConnection()) {
     // 初始：池启动且 URL 指向隔离实验库。
@@ -57,14 +56,12 @@ Spring Boot 应用一般通过配置属性和自动配置创建池，不要又�
 用于限制池内空闲与借出连接总数，形成清楚的数据库并发预算。
 
 ```java
-// 初始状态：显式给本地实验配置maximumPoolSize=8；该数字仅用于观察配置状态。
 config.setMaximumPoolSize(8);
 System.out.println(config.getMaximumPoolSize());
 // 输出：8，读取的是显式设定值，不依赖库的默认值。
 config.setMaximumPoolSize(12);
 System.out.println(config.getMaximumPoolSize());
 // 输出：12。
-// 关键变化：配置上限从8增至12；启动DataSource后实际连接数按负载建立。
 // 可观察结果：maximumPoolSize getter返回12；压测记录活跃/空闲/等待线程和吞吐延迟。
 ```
 
@@ -75,13 +72,11 @@ System.out.println(config.getMaximumPoolSize());
 用于在弹性池中表达期望保留的空闲连接数；默认与最大连接数相同会形成固定尺寸池。
 
 ```java
-// 初始状态：maximumPoolSize=12，因此minimumIdle默认也是12；已有测量显示可尝试弹性池。
 config.setMaximumPoolSize(12);
 config.setMinimumIdle(12);
 config.setMinimumIdle(3);
 System.out.println(config.getMinimumIdle());
 // 输出：3。
-// 关键变化：低峰期池尽力保留3条空闲连接；需求上升时仍可增长到12。
 // 可观察结果：minimumIdle getter返回3；监控低峰空闲数、建连耗时和高峰等待。
 ```
 
@@ -92,10 +87,8 @@ System.out.println(config.getMinimumIdle());
 用于限制没有可用池连接时调用 `getConnection()` 的等待时间。
 
 ```java
-// 初始状态：maximumPoolSize已测量为12；设置一个显式的实验起点。
 config.setConnectionTimeout(2500);
 config.setConnectionTimeout(1500);
-// 关键变化：配置预算从2500毫秒缩短为1500毫秒，均不低于250毫秒。
 // 可观察结果：DataSource启动后，12条连接全忙时，新借用最多等待1500毫秒；这不取消已运行SQL。
 System.out.println(config.getConnectionTimeout());
 // 输出：1500。
@@ -108,10 +101,8 @@ HikariCP 5.1.0 的最低允许值为 250 毫秒；池满且没有空闲连接时
 用于限制连接健康验证时间。
 
 ```java
-// 初始状态：connectionTimeout=2500毫秒；实验初始validationTimeout显式为500毫秒。
 config.setValidationTimeout(500);
 config.setValidationTimeout(700);
-// 关键变化：validationTimeout从500毫秒增至700毫秒，仍小于connectionTimeout且不低于250毫秒。
 // 可观察结果：记录验证失败与连接创建失败，结合数据库握手告警区分网络和池排队。
 System.out.println(config.getValidationTimeout());
 // 输出：700。
@@ -124,10 +115,8 @@ HikariCP 5.1.0 最小值为 250 毫秒，且必须小于 `connectionTimeout`；�
 用于允许弹性池在空闲一段时间后收缩，不作用于正在使用的连接。
 
 ```java
-// 初始状态：minimumIdle=3、maximumPoolSize=12；实验初始idleTimeout显式为600000毫秒。
 config.setIdleTimeout(600_000);
 config.setIdleTimeout(420_000);
-// 关键变化：idleTimeout从600000毫秒调整为420000毫秒，池可回收超过minimumIdle的连接。
 // 可观察结果：低峰监控空闲连接数与之后的重新建连延迟。
 System.out.println(config.getIdleTimeout());
 // 输出：420000。
@@ -140,10 +129,8 @@ HikariCP 5.1.0 的最小值为 10,000 毫秒；只有 `minimumIdle < maximumPool
 用于让连接在配置寿命后逐步退出连接池，避免复用已接近基础设施上限的连接。
 
 ```java
-// 初始状态：代理设备连接寿命上限已由运维确认，实验起始值显式设置为1800000毫秒。
 config.setMaxLifetime(1_800_000);
 config.setMaxLifetime(1_500_000);
-// 关键变化：maxLifetime设置为1500000毫秒，低于已核实的代理上限。
 // 可观察结果：记录连接轮换；若连接仍被借出，超时并不会立刻关闭它，只会在归还时淘汰。
 System.out.println(config.getMaxLifetime());
 // 输出：1500000。
@@ -156,10 +143,8 @@ HikariCP 5.1.0 的最小非零值为 30,000 毫秒；在用连接不会被强制
 用于探测空闲连接，降低网络中间设备默默清理导致下次借用失败的概率。
 
 ```java
-// 初始状态：maxLifetime=1500000毫秒，实验起始keepalive显式设为0（关闭）。
 config.setKeepaliveTime(0);
 config.setKeepaliveTime(120_000);
-// 关键变化：keepaliveTime设置为120000毫秒，且小于maxLifetime。
 // 可观察结果：比较借用时首次失败率和探测日志，确认额外探测成本可接受。
 System.out.println(config.getKeepaliveTime());
 // 输出：120000。
@@ -172,10 +157,8 @@ HikariCP 5.1.0 仅对空闲连接执行 keepalive；设置为 0 表示关闭，�
 用于在连接借出超过阈值时记录疑似泄漏线索。
 
 ```java
-// 初始状态：测试池显式设置leakDetectionThreshold=0，即未启用检测。
 config.setLeakDetectionThreshold(0);
 config.setLeakDetectionThreshold(30_000);
-// 关键变化：leakDetectionThreshold从0改为30000毫秒。
 // 可观察结果：核对线程栈与业务追踪；日志报告连接稍后归还时应重新判断是否只是长事务。
 System.out.println(config.getLeakDetectionThreshold());
 // 输出：30000。
@@ -188,19 +171,16 @@ HikariCP 5.1.0 中 0 表示关闭，启用阈值至少为 2,000 毫秒；日志�
 用于读取活动、空闲、总连接和等待线程等运行状态，并配合指标系统告警。
 
 ```java
-// 初始状态：构造池前执行 config.setPoolName("orders-primary") 和 config.setRegisterMbeans(true)。
 // dataSource 已启动；用平台 MBeanServer 确认 JMX 项存在。
 MBeanServer server = ManagementFactory.getPlatformMBeanServer();
 ObjectName objectName = new ObjectName("com.zaxxer.hikari:type=Pool (orders-primary)");
 System.out.println(server.isRegistered(objectName));
 // 输出：true，证明此进程中注册了命名池的 Pool MBean。
 HikariPoolMXBean pool = dataSource.getHikariPoolMXBean();
-// 关键变化：读取4项实际池计数，形成一次瞬时观测。
 System.out.printf("active=%d idle=%d total=%d waiting=%d%n",
     pool.getActiveConnections(), pool.getIdleConnections(),
     pool.getTotalConnections(), pool.getThreadsAwaitingConnection());
 // 输出：实际活动数、空闲数、总数、等待线程数。
-// 关键变化：观测池当前快照，不修改池和数据库。
 ```
 
 快照可能在读取后立即变化，不能用于精确并发控制。为每个池配置稳定名称，通过 Spring Boot Actuator/Micrometer 或 JMX 采集等待、活跃、空闲、超时和建连情况，并结合数据库侧连接数观察。[HikariCP JMX MBean monitoring](https://github.com/brettwooldridge/HikariCP/wiki/MBean-%28JMX%29-Monitoring-and-Management)。
@@ -210,7 +190,6 @@ System.out.printf("active=%d idle=%d total=%d waiting=%d%n",
 用于在借用期间结束事务并还原应用改变的 JDBC 状态。
 
 ```java
-// 初始状态：应用拥有借出的Connection，autoCommit为true，业务确认归自己管理。
 boolean originalAutoCommit = connection.getAutoCommit();
 boolean ended = false;
 SQLException failure = null;
@@ -235,7 +214,6 @@ try {
             else throw resetError;
         }
     }
-    // 关键变化：结束状态不确定时不复位；Hikari集成须在归还前淘汰该连接。
 }
 ```
 
@@ -268,13 +246,11 @@ final class ReadWriteDataSource extends AbstractRoutingDataSource {
 路由上下文应在 `try/finally` 清理：
 
 ```java
-// 初始状态：请求线程尚无路由键。
 assert DbRouteContext.current() == null;
 DbRouteContext.set(DbRoute.REPLICA);
 try {
     return repository.findForDisplay();
 } finally {
-    // 关键变化：即使查询抛错也移除ThreadLocal，避免线程池复用串到下一请求。
     DbRouteContext.clear();
 }
 // 输出：成功/异常分支退出后，DbRouteContext.current()均为null。
@@ -287,7 +263,6 @@ try {
 用于理解为什么当前事务里修改路由键不会安全切换到另一个库。
 
 ```java
-// 初始状态：事务拦截器进入方法，事务管理器绑定了primary DataSource连接；
 // 本例故意展示错误时机，但仍用finally恢复ThreadLocal。
 @Transactional(readOnly = true)
 public Account loadAccount(long id) {
@@ -295,7 +270,6 @@ public Account loadAccount(long id) {
     DbRouteContext.set(DbRoute.REPLICA);
     try {
         // 事务已开始后再设REPLICA，后续仍可能复用已绑定的primary连接。
-        // 关键变化：lookup key改变，但当前线程绑定的Connection目标不随之改变。
         Account account = repository.findById(id);
         System.out.println(connectionProbe.ownerOfBoundConnection());
         // 输出：primary。
@@ -344,13 +318,11 @@ echo "primary and analytics migrations recorded separately"
 用于结合应用健康端点和池指标发现数据库连接故障及容量压力。
 
 ```java
-// 初始状态：dataSource已启动，Actuator/Micrometer注册orders-primary池指标。
 HikariPoolMXBean pool = dataSource.getHikariPoolMXBean();
 System.out.printf("active=%d idle=%d total=%d waiting=%d%n",
     pool.getActiveConnections(), pool.getIdleConnections(),
     pool.getTotalConnections(), pool.getThreadsAwaitingConnection());
 // 输出：实际活动/空闲/总连接/等待线程计数。
-// 关键变化：采集池快照供Actuator/Micrometer指标采样，不修改数据库。
 ```
 
 不要把深度 SQL 探针放进每个健康请求，也不要把指标标签设成 SQL、用户 ID 等高基数字段。为主库和副本分别命名并配置健康、延迟、连接数与错误告警；Actuator 暴露范围受安全边界控制。

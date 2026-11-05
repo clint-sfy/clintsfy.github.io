@@ -45,13 +45,11 @@ description: 建立 JVM 运行时内存区、对象生命周期和类加载初�
 public class HeapStackDemo {
     static int add(int left, int right) {
         int sum = left + right;
-// 初始状态：sum = left + right。
         return sum;
     }
 
     public static void main(String[] args) {
         String value = new String("heap");
-// 初始状态：value = new String("heap")。
 // 作用：String value = new String("heap");；区分堆对象和线程调用状态。
         System.out.println(add(value.length(), 1));
 // 输出：5
@@ -68,7 +66,6 @@ Runtime 的数值受启动参数和容器限制影响，适合做运行时观测
 public class RuntimeMemoryDemo {
     public static void main(String[] args) {
         Runtime runtime = Runtime.getRuntime();
-// 初始状态：runtime = Runtime.getRuntime()。
 // 作用：Runtime runtime = Runtime.getRuntime();；观察当前进程的内存上限，返回读取结果。
         System.out.println("processors>0=" + (runtime.availableProcessors() > 0));
 // 输出：processors>0=true
@@ -95,7 +92,6 @@ public class ClassLiteralDemo {
     public static void main(String[] args) {
         Class<Service> type = Service.class;
 // 作用：Class<Service> type = Service.class;；获取 Class 而不初始化。
-// 初始状态：type = Service.class。
         System.out.println(type.getSimpleName());
 // 输出：Service
     }
@@ -118,7 +114,6 @@ public class ClassForNameDemo {
 
     public static void main(String[] args) throws ClassNotFoundException {
         Class.forName(Plugin.class.getName(), false, Plugin.class.getClassLoader());
-// 初始状态：Class.forName(Plugin.class.getName(), false, Plugin.class.getClassLoader())。
 // 作用：Class.forName(Plugin.class.getName(), false, Plugin.class.getClassLoader());；选择是否初始化。
         System.out.println("loaded only");
 // 输出：loaded only
@@ -137,7 +132,6 @@ public class ClassForNameDemo {
 public class ClassLoaderDemo {
     public static void main(String[] args) {
         ClassLoader loader = String.class.getClassLoader();
-// 初始状态：loader = String.class.getClassLoader()。
 // 作用：ClassLoader loader = String.class.getClassLoader();；查看类的定义加载器，返回读取结果。
         System.out.println(loader == null ? "bootstrap" : loader.getClass().getSimpleName());
 // 输出：bootstrap
@@ -156,7 +150,6 @@ public class ClassLoaderDemo {
 public class ClassInitializationDemo {
     static class Config {
         static final String VALUE = new String("ready");
-// 初始状态：VALUE = new String("ready")。
 // 作用：static final String VALUE = new String("ready");；类首次主动使用时执行。
 
         static {
@@ -183,7 +176,6 @@ import java.nio.ByteBuffer;
 public class DirectMemoryDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(4);
-// 初始状态：buffer = ByteBuffer.allocateDirect(4)。
 // 作用：ByteBuffer buffer = ByteBuffer.allocateDirect(4);；堆外缓冲的边界。
         buffer.putInt(42).flip();
 // 作用：buffer.putInt(42).flip();；堆外缓冲的边界。
@@ -202,17 +194,14 @@ public class DirectMemoryDemo {
 public class ClassInitializationFlagDemo {
     static class Feature {
         static int value = 42;
-// 初始状态：value = 42。
     }
 
     public static void main(String[] args) throws Exception {
         Class.forName(Feature.class.getName(), false, Feature.class.getClassLoader());
-// 初始状态：Class.forName(Feature.class.getName(), false, Feature.class.getClassLoader())。
 // 作用：Class.forName(Feature.class.getName(), false, Feature.class.getClassLoader());；选择只加载或立即初始化。
         System.out.println("class prepared");
 // 输出：class prepared
         Class.forName(Feature.class.getName(), true, Feature.class.getClassLoader());
-// 初始状态：Class.forName(Feature.class.getName(), true, Feature.class.getClassLoader())。
 // 作用：Class.forName(Feature.class.getName(), true, Feature.class.getClassLoader());；选择只加载或立即初始化。
         System.out.println(Feature.value);
 // 输出：42
@@ -230,13 +219,10 @@ import java.lang.ref.WeakReference;
 public class ClassUnloadHintDemo {
     public static void main(String[] args) {
         Object plugin = new Object();
-// 初始状态：plugin = new Object()。
 // 作用：Object plugin = new Object();；创建待弱引用跟踪的 plugin 对象。
         WeakReference<Object> reference = new WeakReference<>(plugin);
-// 初始状态：reference = new WeakReference<>(plugin)。
 // 作用：WeakReference<Object> reference = new WeakReference<>(plugin);；调用返回本次结果。
         plugin = null;
-// 初始状态：plugin = null。
         System.out.println(reference.get() != null);
 // 输出：true（GC 尚未发生时可能）
     }
@@ -284,7 +270,6 @@ public class JvmMemoryBoundaryDemo {
 
         Message(String text) {
             this.text = text;
-// 初始状态：text = text。
         }
 
         String text() {
@@ -294,7 +279,6 @@ public class JvmMemoryBoundaryDemo {
 
     public static void main(String[] args) {
         Message message = new Message("hello JVM");
-// 初始状态：message = new Message("hello JVM")。
 // 作用：Message message = new Message("hello JVM");；类元数据不是普通堆对象。
         System.out.println(message.text());
 // 输出：hello JVM

@@ -155,6 +155,30 @@ HGET lab:{core}:h visits
 
 缺失字段从 0 开始；有符号 64 位整数且不自动提供库存下限约束。 官方参考：[HINCRBY](https://redis.io/docs/latest/commands/hincrby/)。
 
+#### Java 调用：`StringRedisTemplate.opsForHash()`
+
+Hash 适合独立更新对象字段；下面的模板由 Spring 注入，读取不存在的字段会得到 `null`。
+
+```java
+import org.springframework.data.redis.core.StringRedisTemplate;
+
+class HashDemo {
+    private final StringRedisTemplate redis;
+    HashDemo(StringRedisTemplate redis) { this.redis = redis; }
+
+    void run() {
+        redis.opsForHash().put("lab:user:7", "name", "Alice");
+        redis.opsForHash().put("lab:user:7", "city", "Shanghai");
+        System.out.println(redis.opsForHash().get("lab:user:7", "name"));
+        // 输出：Alice
+        System.out.println(redis.opsForHash().entries("lab:user:7"));
+        // 输出：{name=Alice, city=Shanghai}（Map 的显示顺序不保证）
+    }
+}
+```
+
+`put` 更新单个字段，`entries` 读取整个 Hash；大对象只查一个字段时用 `get`，避免取回全部字段。
+
 ## 易混点
 
 命令返回的整数有的表示数量、有的表示旧值或新值，应按命令解释；nil 与空字符串不同。单命令原子不等于跨命令或跨数据库的业务事务。

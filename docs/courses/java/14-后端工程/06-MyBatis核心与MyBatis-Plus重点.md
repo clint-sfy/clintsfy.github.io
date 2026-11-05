@@ -63,7 +63,6 @@ import org.apache.ibatis.annotations.Param;
 
 interface UserMapper {
     User find(@Param("tenantId") long tenantId, @Param("userId") long userId);
-// 初始状态：User find(@Param("tenantId") long tenantId, @Param("userId") long userId)。
 // 作用：User find(@Param("tenantId") long tenantId, @Param("userId") long userId);；命名 Mapper 方法参数，返回读取结果。
 }
 // 输出：XML 可分别使用 #{tenantId} 与 #{userId}。
@@ -76,11 +75,9 @@ interface UserMapper {
 
 ```java
 PageHelper.startPage(2, 20);
-// 初始状态：PageHelper.startPage(2, 20)。
 // 作用：PageHelper.startPage(2, 20);；开启一次分页查询。
 List<User> users = userMapper.selectAll();
 // 作用：List<User> users = userMapper.selectAll();；开启一次分页查询。
-// 初始状态：users = userMapper.selectAll()。
 System.out.println(users.size() <= 20);
 // 输出：true
 // 说明：PageHelper.startPage(2, 20) 把当前线程随后第一条 SELECT 改写为第 2 页、每页 20 行并查询总数；它不会永久修改 Mapper。
@@ -92,12 +89,10 @@ System.out.println(users.size() <= 20);
 
 ```java
 String orderBy = switch (sortKey) {
-// 初始状态：orderBy = switch (sortKey)。
     case "createdAt" -> "created_at DESC";
     default -> "id ASC";
 };
 PageHelper.orderBy(orderBy);
-// 初始状态：PageHelper.orderBy(orderBy)。
 // 作用：PageHelper.orderBy(orderBy);；设置受控排序。
 // 输出：排序字段只能来自代码白名单。
 // 说明：白名单把请求 sort=name 映射为数据库表达式 user_name asc，再交给 PageHelper.orderBy；原始请求参数不能直接拼入 ORDER BY。
@@ -115,7 +110,6 @@ try {
 // 作用：userMapper.selectAll();；清理线程分页状态。
 } finally {
     PageHelper.clearPage();
-// 初始状态：PageHelper.clearPage()。
 // 作用：PageHelper.clearPage();；清理线程分页状态。
 }
 // 输出：当前线程不再保留本次分页参数。
@@ -128,7 +122,6 @@ try {
 
 ```java
 PageInfo<User> page = new PageInfo<>(users);
-// 初始状态：page = new PageInfo<>(users)。
 // 作用：PageInfo<User> page = new PageInfo<>(users);；构造分页元数据。
 System.out.println(page.getPageNum() + "/" + page.getTotal());
 // 输出：当前页码/符合条件的总记录数。
@@ -257,14 +250,11 @@ class User {
     public void setId(Long id) { this.id = id; }
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
-// 初始状态：username = username; }。
 // 作用：public void setUsername(String username) { this.username = username; }；复用通用 CRUD。
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-// 初始状态：status = status; }。
     public java.time.Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(java.time.Instant createdAt) { this.createdAt = createdAt; }
-// 初始状态：createdAt = createdAt; }。
 }
 
 interface UserMapper extends BaseMapper<User> {}
@@ -274,13 +264,11 @@ class UserReader {
 
     UserReader(UserMapper mapper) {
         this.mapper = mapper;
-// 初始状态：mapper = mapper。
     }
 
     void showName() {
         User user = mapper.selectById(7L);
 // 作用：User user = mapper.selectById(7L);；复用通用 CRUD。
-// 初始状态：user = mapper.selectById(7L)。
         System.out.println(user.getUsername());
 // 输出：ann
     }
@@ -304,13 +292,11 @@ class UserFacade {
 
     UserFacade(UserService service) {
         this.service = service;
-// 初始状态：service = service。
 // 作用：this.service = service;；组织服务层 CRUD。
     }
 
     boolean create() {
         User entity = new User();
-// 初始状态：entity = new User()。
 // 作用：User entity = new User();；组织服务层 CRUD。
         entity.setUsername("ann");
 // 作用：entity.setUsername("ann");；组织服务层 CRUD。
@@ -318,7 +304,6 @@ class UserFacade {
 // 作用：entity.setStatus("ACTIVE");；组织服务层 CRUD。
         boolean saved = service.save(entity);
 // 作用：boolean saved = service.save(entity);；组织服务层 CRUD。
-// 初始状态：saved = service.save(entity)。
         System.out.println(saved + "/" + entity.getId());
 // 输出：true/42
         return saved;
@@ -339,7 +324,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 LambdaQueryWrapper<User> query = new LambdaQueryWrapper<User>()
     .eq(User::getStatus, "ACTIVE")
     .orderByDesc(User::getCreatedAt);
-// 初始状态：query = new LambdaQueryWrapper<User>()。
 // 作用：LambdaQueryWrapper<User> query = new LambdaQueryWrapper<User>()；表达类型安全的条件查询。
 System.out.println(query.getSqlSegment().contains("status"));
 // 输出：true
@@ -362,15 +346,12 @@ class UserPager {
 
     UserPager(UserMapper mapper) {
         this.mapper = mapper;
-// 初始状态：mapper = mapper。
     }
 
     void show() {
         Page<User> page = new Page<>(2, 20);
-// 初始状态：page = new Page<>(2, 20)。
 // 作用：Page<User> page = new Page<>(2, 20);；配合拦截器控制结果集。
         IPage<User> result = mapper.selectPage(page, new QueryWrapper<>());
-// 初始状态：result = mapper.selectPage(page, new QueryWrapper<>())。
 // 作用：IPage<User> result = mapper.selectPage(page, new QueryWrapper<>());；配合拦截器控制结果集。
         System.out.println(result.getCurrent() + "/" + result.getSize());
 // 输出：2/20
@@ -423,27 +404,21 @@ class TransferService {
 
     TransferService(AccountMapper mapper) {
         this.mapper = mapper;
-// 初始状态：mapper = mapper。
     }
 
     @Transactional
     void transfer(long from, long to, int amount) {
         Account source = mapper.findForUpdate(from);
-// 初始状态：source = mapper.findForUpdate(from)。
 // 作用：Account source = mapper.findForUpdate(from);；在复杂 SQL 处保留显式查询。
         Account target = mapper.findForUpdate(to);
-// 初始状态：target = mapper.findForUpdate(to)。
 // 作用：Account target = mapper.findForUpdate(to);；在复杂 SQL 处保留显式查询。
         if (source.balance() < amount) {
             throw new IllegalStateException("insufficient balance");
-// 初始状态：throw new IllegalStateException("insufficient balance")。
 // 作用：throw new IllegalStateException("insufficient balance");；在复杂 SQL 处保留显式查询。
         }
         mapper.debit(from, amount);
-// 初始状态：mapper.debit(from, amount)。
 // 作用：mapper.debit(from, amount);；在复杂 SQL 处保留显式查询。
         mapper.credit(to, amount);
-// 初始状态：mapper.credit(to, amount)。
 // 作用：mapper.credit(to, amount);；在复杂 SQL 处保留显式查询。
         System.out.println("transfer=" + from + "->" + to);
 // 输出：transfer=1->2

@@ -45,7 +45,6 @@ public class ByteBufferPutDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.allocate(4);
         buffer.put((byte) 10).put((byte) 20);
-// 关键变化：buffer.put((byte) 10).put((byte) 20);；依次写入 (byte) 10 和 (byte) 20，两个 put 都返回同一 ByteBuffer，position 前进到 2。
         System.out.println(buffer.position() + "/" + buffer.limit() + "/" + buffer.capacity());
         // 输出：2/4/4
     }
@@ -64,9 +63,7 @@ public class ByteBufferFlipDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.allocate(4);
         buffer.put((byte) 10).put((byte) 20);
-// 关键变化：buffer.put((byte) 10).put((byte) 20);；依次写入 (byte) 10 和 (byte) 20，两个 put 都返回同一 ByteBuffer，position 前进到 2。
         buffer.flip();
-        // 关键变化：buffer.flip();；调用 flip，实参为 无显式参数；将 buffer 切换到读模式，position 置 0、limit 设为此前写入长度；缓冲状态更新。
         System.out.println(buffer.get() + "," + buffer.get());
         // 输出：10,20
     }
@@ -104,15 +101,11 @@ public class ByteBufferReuseDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.allocate(4);
         buffer.put((byte) 1).put((byte) 2);
-// 关键变化：buffer.put((byte) 1).put((byte) 2);；依次写入 (byte) 1 和 (byte) 2，两个 put 都返回同一 ByteBuffer，position 前进到 2。
         buffer.flip();
-        // 关键变化：buffer.flip();；调用 flip，实参为 无显式参数；将 buffer 切换到读模式，position 置 0、limit 设为此前写入长度；缓冲状态更新。
         System.out.println(buffer.get());
         // 输出：1
         buffer.compact();
-        // 关键变化：buffer.compact();；调用 compact，实参为 无显式参数；保留 buffer 的未读字节并切回写模式；position 移到剩余数据末端。
         buffer.put((byte) 3).flip();
-// 关键变化：buffer.put((byte) 3).flip();；compact 后 position 为 1，写入 3 后 position 为 2；flip 将 position 置 0、limit 置 2。
         System.out.println(buffer.get() + "," + buffer.get());
         // 输出：2,3
     }
@@ -131,13 +124,9 @@ public class ByteBufferMarkDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.wrap(new byte[]{1, 2, 3});
         buffer.get();
-        // 关键变化：buffer.get();；读取 buffer 当前 position 的字节并推进 position；缓冲内容本身不变。
         buffer.mark();
-        // 关键变化：buffer.mark();；调用 mark，实参为 无显式参数；记录 buffer 当前 position 作为 mark；后续 reset 可回到该位置。
         int second = buffer.get();
-        // 关键变化：int second = buffer.get();；读取 buffer 当前 position 的字节 2 并写入 second；position 前进，缓冲内容不变。
         buffer.reset();
-        // 关键变化：buffer.reset();；调用 reset，实参为 无显式参数；将 buffer 的 position 恢复到最近 mark。
         System.out.println(second + "," + buffer.get());
         // 输出：2,2
     }
@@ -160,18 +149,14 @@ public class FileChannelReadDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("channel-read-", ".txt");
         Files.writeString(file, "java");
-        // 关键变化：Files.writeString(file, "java");；将 "java" 写入路径 file；writeString 返回目标 Path，文件内容更新。
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
         // 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.READ)，try 结束时自动关闭。
-        // 关键变化：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {；创建资源 channel，构造表达式为 FileChannel.open(file, StandardOpenOption.READ)；try 结束时关闭该资源。
             ByteBuffer buffer = ByteBuffer.allocate(8);
             int count = channel.read(buffer);
-// 关键变化：int count = channel.read(buffer);；从文件读取 4 个字节“java”到 buffer，返回字节数 4 并写入 count；EOF 时才返回 -1。
             System.out.println(count);
             // 输出：4
         }
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -193,17 +178,14 @@ public class FileChannelWriteDemo {
         Path file = Files.createTempFile("channel-write-", ".txt");
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {
         // 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.WRITE)，try 结束时自动关闭。
-        // 关键变化：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {；创建资源 channel，构造表达式为 FileChannel.open(file, StandardOpenOption.WRITE)；try 结束时关闭该资源。
             ByteBuffer buffer = ByteBuffer.wrap("java".getBytes());
             while (buffer.hasRemaining()) {
                 channel.write(buffer);
-                // 关键变化：channel.write(buffer);；向 channel 写入 buffer 的剩余字节，返回本次写入字节数；buffer position 前进。
             }
         }
         System.out.println(Files.size(file));
         // 输出：4
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -226,22 +208,16 @@ public class FileChannelPositionDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("channel-position-", ".bin");
         Files.write(file, new byte[]{10, 20, 30});
-        // 关键变化：Files.write(file, new byte[]{10, 20, 30});；将 new byte[]{10, 20, 30} 写入路径 file；write 返回目标 Path，文件内容更新。
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
         // 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.READ)，try 结束时自动关闭。
-        // 关键变化：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {；创建资源 channel，构造表达式为 FileChannel.open(file, StandardOpenOption.READ)；try 结束时关闭该资源。
             channel.position(1);
-            // 关键变化：channel.position(1);；调用 position，实参为 1；将 channel 的 position 设置为 1；位置状态更新。
             ByteBuffer buffer = ByteBuffer.allocate(1);
             channel.read(buffer);
-// 关键变化：channel.read(buffer);；从 position=1 读取 1 个字节 20 到 buffer，返回 1；EOF 时才返回 -1。
             buffer.flip();
-            // 关键变化：buffer.flip();；调用 flip，实参为 无显式参数；将 buffer 切换到读模式，position 置 0、limit 设为此前写入长度；缓冲状态更新。
             System.out.println(buffer.get());
             // 输出：20
         }
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -262,20 +238,15 @@ public class FileChannelTransferDemo {
         Path source = Files.createTempFile("channel-source-", ".bin");
         Path target = Files.createTempFile("channel-target-", ".bin");
         Files.write(source, new byte[]{1, 2, 3});
-        // 关键变化：Files.write(source, new byte[]{1, 2, 3});；将 new byte[]{1, 2, 3} 写入路径 source；write 返回目标 Path，文件内容更新。
         try (var in = FileChannel.open(source, StandardOpenOption.READ);
         // 输入：try (var in = FileChannel.open(source, StandardOpenOption.READ);；资源变量 in 接收 FileChannel.open(source, StandardOpenOption.READ，try 结束时自动关闭。
-        // 关键变化：try (var in = FileChannel.open(source, StandardOpenOption.READ);；创建资源 in，构造表达式为 FileChannel.open(source, StandardOpenOption.READ；try 结束时关闭该资源。
              var out = FileChannel.open(target, StandardOpenOption.WRITE)) {
             long copied = in.transferTo(0, in.size(), out);
-            // 关键变化：long copied = in.transferTo(0, in.size(), out);；把 source 文件从位置 0 开始的全部字节传给 out，返回复制字节数 3 并写入 copied。
             System.out.println(copied);
             // 输出：3
         }
         Files.deleteIfExists(source);
-        // 关键变化：Files.deleteIfExists(source);；删除路径 source；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
         Files.deleteIfExists(target);
-        // 关键变化：Files.deleteIfExists(target);；删除路径 target；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -295,17 +266,13 @@ public class MappedByteBufferDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("channel-map-", ".bin");
         Files.write(file, new byte[]{7});
-        // 关键变化：Files.write(file, new byte[]{7});；将 new byte[]{7} 写入路径 file；write 返回目标 Path，文件内容更新。
         try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {
         // 输入：try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.READ)，try 结束时自动关闭。
-        // 关键变化：try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {；创建资源 channel，构造表达式为 FileChannel.open(file, StandardOpenOption.READ)；try 结束时关闭该资源。
             var mapped = channel.map(FileChannel.MapMode.READ_ONLY, 0, 1);
-            // 关键变化：var mapped = channel.map(FileChannel.MapMode.READ_ONLY, 0, 1);；在流上调用 map 处理元素，结果写入 mapped。
             System.out.println(mapped.get(0));
             // 输出：7
         }
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -324,11 +291,8 @@ public class SelectorRegisterDemo {
     public static void main(String[] args) throws Exception {
         try (Selector selector = Selector.open(); SocketChannel channel = SocketChannel.open()) {
         // 输入：try (Selector selector = Selector.open(); SocketChannel channel = SocketChannel.open()) {；资源变量 selector 接收 Selector.open(); SocketChannel channel = SocketChannel.open()，try 结束时自动关闭。
-        // 关键变化：try (Selector selector = Selector.open(); SocketChannel channel = SocketChannel.open()) {；创建资源 selector，构造表达式为 Selector.open(); SocketChannel channel = SocketChannel.open()；try 结束时关闭该资源。
             channel.configureBlocking(false);
-            // 关键变化：channel.configureBlocking(false);；把 channel 的阻塞模式设置为 false，通道状态更新。
             channel.register(selector, SelectionKey.OP_CONNECT);
-            // 关键变化：channel.register(selector, SelectionKey.OP_CONNECT);；调用 register，实参为 selector, SelectionKey.OP_CONNECT；向 selector 注册 channel 的事件 SelectionKey.OP_CONNECT，返回 SelectionKey。
             System.out.println(selector.keys().size());
             // 输出：1
         }
@@ -348,7 +312,6 @@ public class DirectBufferDemo {
     public static void main(String[] args) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(4);
         buffer.put((byte) 1).flip();
-// 关键变化：buffer.put((byte) 1).flip();；put 写入 (byte) 1 后返回同一 ByteBuffer，flip 将 position 置 0、limit 置 1。
         System.out.println(buffer.get());
         // 输出：1
     }
@@ -366,10 +329,8 @@ public class BufferViewDemo {
     public static void main(String[] args) {
         ByteBuffer source = ByteBuffer.wrap(new byte[]{1, 2, 3});
         source.position(1);
-        // 关键变化：source.position(1);；调用 position，实参为 1；将 source 的 position 设置为 1；位置状态更新。
         ByteBuffer slice = source.slice();
         slice.put(0, (byte) 9);
-        // 关键变化：slice.put(0, (byte) 9);；按索引 0 向 slice 写入 (byte) 9；绝对写入不改变 position。
         System.out.println(source.get(1));
         // 输出：9
     }
@@ -408,14 +369,11 @@ public class ScatterGatherDemo {
         Path file = Files.createTempFile("scatter-gather-", ".bin");
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {
         // 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.WRITE)，try 结束时自动关闭。
-        // 关键变化：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {；创建资源 channel，构造表达式为 FileChannel.open(file, StandardOpenOption.WRITE)；try 结束时关闭该资源。
             long count = channel.write(new ByteBuffer[]{ByteBuffer.wrap(new byte[]{1}), ByteBuffer.wrap(new byte[]{2})});
-            // 关键变化：long count = channel.write(new ByteBuffer[]{ByteBuffer.wrap(new byte[]{1}), ByteBuffer.wrap(new byte[]{2})});；按顺序写入两个各含 1 字节的 ByteBuffer，返回写入字节总数 2 并写入 count。
             System.out.println(count);
             // 输出：2
         }
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -435,17 +393,13 @@ public class AsyncFileChannelDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("async-channel-", ".txt");
         Files.writeString(file, "java");
-        // 关键变化：Files.writeString(file, "java");；将 "java" 写入路径 file；writeString 返回目标 Path，文件内容更新。
         try (var channel = AsynchronousFileChannel.open(file, StandardOpenOption.READ)) {
         // 输入：try (var channel = AsynchronousFileChannel.open(file, StandardOpenOption.READ)) {；资源变量 channel 接收 AsynchronousFileChannel.open(file, StandardOpenOption.READ)，try 结束时自动关闭。
-        // 关键变化：try (var channel = AsynchronousFileChannel.open(file, StandardOpenOption.READ)) {；创建资源 channel，构造表达式为 AsynchronousFileChannel.open(file, StandardOpenOption.READ)；try 结束时关闭该资源。
             var result = channel.read(ByteBuffer.allocate(4), 0).get();
-            // 关键变化：var result = channel.read(ByteBuffer.allocate(4), 0).get();；异步读取从位置 0 开始的 4 个字节，get 等待完成并把读取字节数 4 写入 result。
             System.out.println(result);
             // 输出：4
         }
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```
@@ -463,24 +417,18 @@ public class BufferChannelDemo {
         Path file = Files.createTempFile("buffer-channel-", ".txt");
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
         // 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.READ)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.READ)，try 结束时自动关闭。
-        // 关键变化：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.READ)) {；创建资源 channel，构造表达式为 FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.READ)；try 结束时关闭该资源。
             ByteBuffer write = ByteBuffer.wrap("NIO".getBytes());
             while (write.hasRemaining()) {
                 channel.write(write);
-                // 关键变化：channel.write(write);；向 channel 写入 write 的剩余字节，返回本次写入字节数；write position 前进。
             }
             channel.position(0);
-            // 关键变化：channel.position(0);；调用 position，实参为 0；将 channel 的 position 设置为 0；位置状态更新。
             ByteBuffer read = ByteBuffer.allocate(3);
             channel.read(read);
-// 关键变化：channel.read(read);；从文件读取 3 个字节“NIO”到 read，返回 3；EOF 时才返回 -1。
             read.flip();
-            // 关键变化：read.flip();；调用 flip，实参为 无显式参数；将 read 切换到读模式，position 置 0、limit 设为此前写入长度；缓冲状态更新。
             System.out.println((char) read.get() + "" + (char) read.get() + (char) read.get());
             // 输出：NIO
         }
         Files.deleteIfExists(file);
-        // 关键变化：Files.deleteIfExists(file);；删除路径 file；路径存在时返回 true，不存在时返回 false；文件系统状态更新。
     }
 }
 ```

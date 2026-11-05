@@ -344,6 +344,35 @@ ZSCORE lab:{core}:z Ann
 
 GEO 索引也使用 ZREM 删除地点，但不要对 GEO 索引任意改写 score。 官方参考：[ZREM](https://redis.io/docs/latest/commands/zrem/)。
 
+#### Java 调用：List、Set 与 Sorted Set
+
+列表保留顺序，Set 去重，Sorted Set 按分数排序；示例使用 Spring 注入的 `StringRedisTemplate`。
+
+```java
+import org.springframework.data.redis.core.StringRedisTemplate;
+
+class CollectionDemo {
+    private final StringRedisTemplate redis;
+    CollectionDemo(StringRedisTemplate redis) { this.redis = redis; }
+
+    void run() {
+        redis.opsForList().rightPush("lab:queue", "task-1");
+        System.out.println(redis.opsForList().leftPop("lab:queue"));
+        // 输出：task-1
+
+        redis.opsForSet().add("lab:tags", "java", "redis", "java");
+        System.out.println(redis.opsForSet().isMember("lab:tags", "java"));
+        // 输出：true
+
+        redis.opsForZSet().add("lab:scores", "Alice", 90);
+        System.out.println(redis.opsForZSet().score("lab:scores", "Alice"));
+        // 输出：90.0
+    }
+}
+```
+
+实验键以 `lab:` 开头；队列消费用 `leftPop` 会删除元素，生产任务需另行设计失败重试。
+
 ## 易混点
 
 队列的顺序、成功处理和可靠交付是三个独立契约；弹出不等于完成任务。集合没有固定返回顺序，同分排名也需解释 member 的字典序。

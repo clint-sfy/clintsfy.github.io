@@ -43,13 +43,8 @@ description: 速查 Object、Objects、equals、hashCode、toString 和对象身
 `==` 对引用比较对象身份，对基本类型比较数值；字符串、包装类型和值对象的内容比较不要依赖它。
 
 ```java
-// 语义：== 对引用比较对象身份，对基本类型比较数值。
-// 初始状态：first 初始为 new String("Java")；second 初始为 new String("Java")。
 String first = new String("Java");
-// 关键变化：first 接收表达式 new String("Java") 的计算结果。
-// 初始状态：first 的初始值为 new String("Java")。
 String second = new String("Java");
-// 初始状态：second 也保存内容为 "Java" 的独立 String 对象。
 System.out.println(first == second);
 // 输出：false
 ```
@@ -59,7 +54,6 @@ System.out.println(first == second);
 重写时先判断类型，再比较参与身份的字段；允许 `null` 的字段用 `Objects.equals`，不要为了方便把所有字段都纳入相等规则。
 
 ```java
-// 语义：重写时先判断类型，再比较参与身份的字段。
 import java.util.Objects;
 
 class UserId {
@@ -75,7 +69,6 @@ class UserId {
         return other instanceof UserId id && Objects.equals(value, id.value);
 // 返回：比较两个 UserId("U-1") 时类型检查和 value 比较都为 true，因此 equals 返回 true。
 // 输入：other 为 UserId("U-1")，value 与 id.value 都是 "U-1"，作为 equals 的比较输入。
-// 关键变化：Objects.equals(value, id.value) 比较两个 "U-1" 后让 equals 返回 true。
     }
 }
 
@@ -96,7 +89,6 @@ class UserId {
     private final String value;
 
     UserId(String value) { this.value = value; }
-    // 初始状态：构造 UserId("U-1") 时，字段 value 保存传入文本 "U-1"。
 
     @Override
     public boolean equals(Object other) {
@@ -111,9 +103,7 @@ class UserId {
 }
 
 Set<UserId> ids = new HashSet<>();
-// 初始状态：ids 当前为 new HashSet<>()。
 ids.add(new UserId("U-1"));
-// 关键变化：ids.add(new UserId("U-1")) 把 value="U-1" 的 UserId 放入集合，集合大小变为 1。
 System.out.println(ids.contains(new UserId("U-1")));
 // 输出：true
 ```
@@ -123,12 +113,10 @@ System.out.println(ids.contains(new UserId("U-1")));
 `toString` 适合日志、调试和错误信息；不要拼出密码、令牌、身份证号等敏感字段，也不要让日志格式承担协议稳定性。
 
 ```java
-// 语义：toString 适合日志、调试和错误信息。
 class User {
     private final String name;
 
     User(String name) { this.name = name; }
-    // 初始状态：构造 User("Ann") 时，字段 name 保存传入文本 "Ann"。
 
     @Override
     public String toString() {
@@ -147,9 +135,7 @@ System.out.println(new User("Ann"));
 
 ```java
 String left = null;
-// 初始状态：left 当前为 null。
 String right = "Java";
-// 初始状态：right 当前为 "Java"。
 System.out.println(Objects.equals(left, right));
 // 输出：false
 // 作用：一方或双方为 null 时不会抛异常。
@@ -161,7 +147,6 @@ System.out.println(Objects.equals(left, right));
 
 ```java
 int hash = Objects.hash("U-1", "Ann");
-// 初始状态：hash 当前为 Objects.hash("U-1", "Ann")。
 // 作用：适合实现值对象 hashCode。
 System.out.println(hash != 0);
 // 输出：true
@@ -173,7 +158,6 @@ System.out.println(hash != 0);
 
 ```java
 String value = null;
-// 初始状态：value 当前为 null。
 System.out.println(Objects.toString(value, "(missing)"));
 // 输出：(missing)
 // 作用：适合日志或展示的轻量默认值。
@@ -185,7 +169,6 @@ System.out.println(Objects.toString(value, "(missing)"));
 
 ```java
 String name = Objects.requireNonNull("Ann", "name");
-// 初始状态：name 当前为 Objects.requireNonNull("Ann", "name")。
 // 作用：传入 null 会立即抛 NullPointerException，适合构造器和方法入口。
 System.out.println(name);
 // 输出：Ann
@@ -197,7 +180,6 @@ System.out.println(name);
 
 ```java
 Object value = "Java";
-// 初始状态：value 当前为 "Java"。
 System.out.println(value.getClass().getSimpleName());
 // 输出：String
 // 作用：getClass() 返回精确运行时类，不能替代多态。
@@ -210,7 +192,6 @@ System.out.println(value.getClass().getSimpleName());
 
 ```java
 int[][] left = {{1, 2}};
-// 初始状态：left 当前为 {{1, 2}}。
 int[][] right = {{1, 2}};
 System.out.println(Objects.deepEquals(left, right));
 // 输出：true
@@ -223,7 +204,6 @@ System.out.println(Objects.deepEquals(left, right));
 
 ```java
 Comparator<String> byLength = Comparator.comparingInt(String::length);
-// 初始状态：byLength 当前为 Comparator.comparingInt(String::length)。
 int order = Objects.compare("Java", "API", byLength);
 // 作用：通过 Objects.compare 带比较器的空值边界。
 System.out.println(order > 0);
@@ -237,7 +217,6 @@ System.out.println(order > 0);
 ```java
 class Box implements Cloneable {
     int value = 7;
-    // 初始状态：value 当前为 7。
 
     @Override
     public Box clone() {
@@ -245,7 +224,6 @@ class Box implements Cloneable {
         try {
             return (Box) super.clone();
 // 返回：super.clone() 创建 Box 的浅复制；本例返回的新对象 value=7。
-// 关键变化：super.clone() 复制当前 value=7 的 Box，返回一个 value 仍为 7 的新对象。
         } catch (CloneNotSupportedException error) {
             throw new AssertionError(error);
         }
@@ -254,7 +232,6 @@ class Box implements Cloneable {
 
 Box copy = new Box().clone();
 // 返回：copy 接收 new Box().clone() 的返回值。
-// 关键变化：new Box().clone() 创建浅复制并写入 copy，copy.value 保持为 7。
 System.out.println(copy.value);
 // 输出：7
 ```
@@ -267,7 +244,6 @@ System.out.println(copy.value);
 // 前置条件：当前线程已经持有 lock 的监视器
 synchronized (lock) {
     while (!ready) lock.wait();
-    // 关键变化：ready 为 false 时，lock.wait() 释放 lock 监视器并等待通知；唤醒后循环重新检查 ready。
 }
 // 结果：被唤醒并重新取得监视器后才继续执行
 ```
@@ -278,10 +254,8 @@ synchronized (lock) {
 
 ```java
 Object lock = new Object();
-// 初始状态：lock 当前为 new Object()。
 synchronized (lock) {
     lock.notifyAll();
-    // 关键变化：lock.notifyAll() 唤醒所有等待 lock 的线程，线程仍需重新检查 ready 条件。
     // 作用：通过 Object.notifyAll 唤醒同一监视器上的等待线程。
     System.out.println("notified");
     // 输出：notified
@@ -294,7 +268,6 @@ synchronized (lock) {
 
 ```java
 Object value = new Object();
-// 初始状态：value 当前为 new Object()。
 // 作用：通过 finalize 不要依赖对象终结。
 System.out.println(value.getClass().getSimpleName());
 // 输出：Object
@@ -315,12 +288,8 @@ Apache Commons Lang 的构造器按字段追加对象摘要；敏感字段仍需
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 var builder = new ToStringBuilder(new Object(), ToStringStyle.NO_CLASS_NAME_STYLE);
-// 初始状态：builder 使用空对象和 NO_CLASS_NAME_STYLE 创建，当前内容为空。
-// 关键变化：new ToStringBuilder(new Object(), ToStringStyle.NO_CLASS_NAME_STYLE) 创建空摘要 builder。
 builder.append("id", 7);
-// 关键变化：builder.append("id", 7) 写入 id=7，当前摘要为 "id=7"。
 builder.append("name", "job");
-// 关键变化：builder.append("name", "job") 再写入 name=job，当前摘要为 "id=7,name=job"。
 String text = builder.toString();
 // 返回：builder.toString() 生成不可变文本 "[id=7,name=job]"。
 // 作用：Apache Commons Lang 的构造器按字段追加对象摘要；敏感字段仍需主动排除。
@@ -343,9 +312,7 @@ public class ValueObjectDemo {
 
     public static void main(String[] args) {
         Map<UserKey, String> names = new HashMap<>();
-// 初始状态：names 的初始值为 new HashMap<>()。
         names.put(new UserKey("acme", "U-1"), "Ann");
-        // 关键变化：names.put(new UserKey("acme", "U-1"), "Ann") 写入键 UserKey[tenant=acme, id=U-1] 对应的值 Ann。
 
         System.out.println(names.get(new UserKey("acme", "U-1")));
         // 输出：Ann

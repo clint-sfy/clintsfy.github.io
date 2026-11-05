@@ -29,11 +29,9 @@ OpenAPI 是接口的机器可读描述，springdoc 根据 Spring MVC 映射和�
 用途：用于把订单接口组成独立文档组，减少客户端在无关接口中查找的成本。
 
 ```java
-// 初始状态：MVC 工程已有 /orders/{id} 和 /admin/users 两类路径。
 org.springdoc.core.models.GroupedOpenApi group =
     org.springdoc.core.models.GroupedOpenApi.builder()
         .group("orders").pathsToMatch("/orders/**").build();
-// 关键变化：orders 组仅扫描订单路径；Bean 注册后提供 /v3/api-docs/orders。
 org.junit.jupiter.api.Assertions.assertEquals("orders", group.getGroup());
 // 结果：分组名是 orders；还要用集成测试检查生成 paths 不含 /admin/users。
 ```
@@ -45,7 +43,6 @@ org.junit.jupiter.api.Assertions.assertEquals("orders", group.getGroup());
 用途：用于给订单查询标注稳定 operationId 和成功结构，方便生成客户端并核对契约。
 
 ```java
-// 初始状态：教学订单 7 存在，真实项目将固定返回替换为服务查询。
 @org.springframework.web.bind.annotation.RestController
 class OrderController {
     record OrderView(long id, String state) {}
@@ -54,7 +51,6 @@ class OrderController {
     @org.springframework.web.bind.annotation.GetMapping("/orders/{id}")
     OrderView find(@org.springframework.web.bind.annotation.PathVariable("id") long id) {
         if (id != 7) throw new IllegalArgumentException("ORDER_NOT_FOUND");
-        // 关键变化：只有 id=7 分支产生成功数据；其他 ID 进入异常契约。
         return new OrderView(id, "PAID");
     }
 }
@@ -68,12 +64,10 @@ class OrderController {
 用途：用于对生成的 OpenAPI 文档补充版本信息，而不在每个 Controller 重复维护。
 
 ```java
-// 初始状态：新 OpenAPI 没有 info，定制器将为 v1 订单契约设置元数据。
 io.swagger.v3.oas.models.OpenAPI document = new io.swagger.v3.oas.models.OpenAPI();
 org.springdoc.core.customizers.OpenApiCustomizer customizer = api ->
     api.info(new io.swagger.v3.oas.models.info.Info().title("Order API").version("v1"));
 customizer.customise(document);
-// 关键变化：info 从空变成 Order API/v1；Bean 注册后作用于生成文档。
 org.junit.jupiter.api.Assertions.assertEquals("v1", document.getInfo().getVersion());
 // 结果：版本字段为 v1；它是契约版本，不是依赖或数据库版本。
 ```
@@ -83,7 +77,6 @@ org.junit.jupiter.api.Assertions.assertEquals("v1", document.getInfo().getVersio
 用途：用于将已分类的业务失败转换为统一结构，同时保留稳定错误码和安全关联 ID。
 
 ```java
-// 初始状态：订单 7 已取消，客户端请求支付；外部关联 ID 已经过长度/字符白名单校验。
 org.springframework.http.ProblemDetail problem =
     org.springframework.http.ProblemDetail.forStatusAndDetail(
         org.springframework.http.HttpStatus.CONFLICT, "订单已取消，不能支付");
@@ -91,7 +84,6 @@ problem.setType(java.net.URI.create("https://api.example.com/problems/order-stat
 problem.setTitle("订单状态冲突");
 problem.setProperty("code", "ORDER_STATE_CONFLICT");
 problem.setProperty("correlationId", "req-7");
-// 关键变化：错误同时携带 409 和稳定 code；detail 没有异常类名或 SQL。
 org.junit.jupiter.api.Assertions.assertEquals(409, problem.getStatus());
 org.junit.jupiter.api.Assertions.assertEquals("ORDER_STATE_CONFLICT", problem.getProperties().get("code"));
 // 结果：Spring MVC 按 problem.status 输出 HTTP 409，Jackson 扩展字段输出在顶层。
@@ -102,7 +94,6 @@ org.junit.jupiter.api.Assertions.assertEquals("ORDER_STATE_CONFLICT", problem.ge
 用途：用于把已知异常映射为公开错误，避免直接把异常 message、堆栈或数据库信息返回客户端。
 
 ```java
-// 初始状态：前面的 Controller 对非 7 ID 抛出教学用 IllegalArgumentException。
 @org.springframework.web.bind.annotation.RestControllerAdvice
 class OrderErrors {
     @org.springframework.web.bind.annotation.ExceptionHandler(IllegalArgumentException.class)
@@ -110,7 +101,6 @@ class OrderErrors {
         org.springframework.http.ProblemDetail p = org.springframework.http.ProblemDetail
             .forStatusAndDetail(org.springframework.http.HttpStatus.NOT_FOUND, "订单不存在");
         p.setProperty("code", "ORDER_NOT_FOUND");
-        // 关键变化：内部异常被映射为固定公开描述，不回显 failure.getMessage()。
         return p;
     }
 }
@@ -124,14 +114,12 @@ class OrderErrors {
 用途：用于在 MVC 参数绑定后验证订单输入，并把字段拒绝映射为明确的 400 契约。
 
 ```java
-// 初始状态：工程包含 jakarta.validation provider，name="" 违反 @NotBlank。
 record CreateOrder(@jakarta.validation.constraints.NotBlank String name) {}
 @org.springframework.web.bind.annotation.RestController
 class CreateOrders {
     @org.springframework.web.bind.annotation.PostMapping("/orders")
     org.springframework.http.ResponseEntity<CreateOrder> create(
         @jakarta.validation.Valid @org.springframework.web.bind.annotation.RequestBody CreateOrder input) {
-        // 关键变化：合法输入进入方法；空 name 在调用方法前成为校验失败。
         return org.springframework.http.ResponseEntity.created(java.net.URI.create("/orders/7")).body(input);
     }
 }

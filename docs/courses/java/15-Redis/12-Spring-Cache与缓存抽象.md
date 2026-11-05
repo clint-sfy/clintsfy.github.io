@@ -53,7 +53,6 @@ try (var context = new org.springframework.context.annotation.AnnotationConfigAp
 // 输出：1 次实际加载
 }
 // 初始：orders 区域为空，事实源只模拟返回 PAID。
-// 关键变化：两次从 Bean 代理调用，实际方法只加载一次。
 ```
 
 默认 proxy 模式应从代理调用 public 可拦截方法；直接 new 对象或自调用绕过代理。示例类和方法不能 final。统一方法声明与代理策略，避免在接口和实现混用注解产生误解。
@@ -70,9 +69,10 @@ class TenantReads {
     public String internal(String tenant, long id) { return this.find(tenant, id); }
 }
 // 初始：TenantReads 注册为 Bean，orders 空；经代理调用 tenant-a/7。
-// 关键变化：condition 先于调用、unless 在结果后；internal 的自调用绕过缓存。
 // 输出：find(tenant-a,7) 为 PAID，再次命中；find(tenant-a,8) 为 null 且不缓存。
 ```
+
+`condition` 在调用前判断，`unless` 在得到结果后判断；`this.find(...)` 自调用绕过代理，不会触发缓存切面。
 
 使用 #p0/#p1 不依赖编译参数名；租户、权限视图、语言和模式版本应成为键的一部分，分隔符须转义或使用规范编码防碰撞。null 不缓存可能反复访问事实源，短期空值缓存要单独定义 TTL 和业务空值类型。`sync=true` 请求 provider 同步同键加载，不能与 unless 一起使用，也受单缓存等限制；不自动成为跨 JVM 锁。默认 RedisCacheWriter 非锁写入不是集群防击穿承诺。[注解条件](https://docs.spring.io/spring-framework/reference/integration/cache/annotations.html)。
 
@@ -86,7 +86,6 @@ class TenantWrites {
     public String cancel(String tenant, long id) { return "CANCELLED"; }
 }
 // 初始：Bean 由代理调用；cancel 只模拟事实源更新，未执行 SQL。
-// 关键变化：即使已有 PAID 缓存，方法也会执行并替换该键。
 // 输出：cancel(tenant-a,7) 为 CANCELLED，随后 orders 中对应值为 CANCELLED。
 ```
 
@@ -102,7 +101,6 @@ class TenantEvictions {
     public void invalidate(String tenant, long id) { }
 }
 // 初始：orders 存在 tenant-a:7 和 tenant-b:7，调用来自代理。
-// 关键变化：tenant-a/7 正常返回后删除 tenant-a:7，不触及 tenant-b:7。
 // 输出：orders.get("tenant-a:7") 为 null，tenant-b:7 仍有值。
 ```
 
@@ -118,7 +116,6 @@ Object same = org.springframework.cache.interceptor.SimpleKeyGenerator.generateK
 System.out.println(key.equals(same));
 // 输出：true
 // 初始：两个不同方法输入均为 tenant-a 与 7L，使用同一个 orders 区域。
-// 关键变化：tenant-a/7 的两个键相等，生成器不会添加方法名。
 ```
 
 无参数返回 SimpleKey.EMPTY，单参数通常返回该参数，多参数返回 SimpleKey；参数必须有稳定 equals/hashCode。可变实体作为键可能导致无法命中；Redis key 的最终字节还受键转换/序列化影响。[默认键](https://docs.spring.io/spring-framework/reference/integration/cache/annotations.html)。
@@ -135,7 +132,6 @@ defaults = defaults.entryTtl(java.time.Duration.ofMinutes(1))
 System.out.println(defaults.getTtl().getSeconds() + "/" + defaults.getAllowCacheNullValues());
 // 输出：60/false
 // 初始：defaultCacheConfig 默认无过期 TTL，允许 null，使用区域前缀。
-// 关键变化：设置一分钟写入 TTL、禁止 null，加入实验及模式版本前缀。
 ```
 
 默认 TTL 是 provider 配置；普通命中不刷新写入 TTL。Boot 属性 `spring.cache.redis.time-to-live=60s` 可设默认值，自定义 CacheManager 时要确认是否接入 Boot customizer。禁用 null 时须配合 unless/非 null 返回，否则 provider 可抛异常。默认 value 采用 JDK 序列化，生产要明确可信数据与格式，参见[序列化](./13-RedisTemplate序列化与连接管理)。Data Redis 3.2+ 支持 TtlFunction 动态 TTL；TTI 的 enableTimeToIdle 使用 GETEX、要求 Redis 6.2+ 且所有读取路径遵循同协议，不是一般 Redis 默认行为。[TTL/TTI](https://github.com/spring-projects/spring-data-redis/blob/3.4.13/src/main/antora/modules/ROOT/pages/redis/redis-cache.adoc)。
@@ -157,7 +153,6 @@ manager.afterPropertiesSet();
 System.out.println(manager.getCacheNames().contains("missing"));
 // 输出：true
 // 初始：注入已配置工厂，orders 默认寿命 60 秒；没有业务缓存读取。
-// 关键变化：missing 覆盖默认 60 秒为 5 秒，统计在本实例采集。
 ```
 
 RedisCacheWriter 默认非锁，批量清理/putIfAbsent 可包含多个命令；locking writer 是缓存级锁及额外往返，不能混同业务级 fencing。默认清理使用 KEYS，生产大区域可选择 BatchStrategies.scan 的有界批量并核对驱动/Cluster 支持；统计是本地 hit/miss 快照，不是全节点总量。[CacheManager 默认行为](https://github.com/spring-projects/spring-data-redis/blob/3.4.13/src/main/antora/modules/ROOT/pages/redis/redis-cache.adoc)。
@@ -174,7 +169,6 @@ String second = cache.get("tenant-a:7", () -> { loads.incrementAndGet(); return 
 System.out.println(first + "/" + second + "/" + loads.get());
 // 输出：PAID/PAID/1
 // 初始：本地缓存为空，加载器只是内存模拟。
-// 关键变化：第一次填入 PAID，第二次已有值而不执行加载器。
 ```
 
 生产命中、加载失败和同键并发行为由 provider 决定；必须用两实例并发与断网验证，不把 sync 或本地演示当分布式防击穿。结合有界互斥重建、过期 jitter、短期空值与降级；失效异常通过 CacheErrorHandler 决定 fail-open/fail-closed，但吞异常可能持续暴露旧值，必须记录指标和修复事件。[Cache API](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/cache/Cache.html)。
@@ -190,7 +184,6 @@ org.springframework.data.redis.cache.RedisCacheManager manager = builder.transac
 System.out.println(manager.isTransactionAware());
 // 输出：true
 // 初始：配置层注入工厂；业务必须实际运行在 Spring 管理的事务内。
-// 关键变化：启用事务同步装饰，而非把 Redis 加入数据库事务。
 ```
 
 提交后缓存写入仍可失败，不形成数据库和 Redis 原子提交。即时 putIfAbsent/evictIfPresent 等操作不能都被延迟；代理顺序、无事务调用及异步线程需另查。Cacheable 读写也不提供数据库快照，避免从未提交状态构造缓存。需要可靠失效可用 AFTER_COMMIT/outbox、重试与版本判断；缓存旧读回填仍可能发生，强一致读取应使用事实数据库。[TransactionAwareCacheDecorator](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/cache/transaction/TransactionAwareCacheDecorator.html)。

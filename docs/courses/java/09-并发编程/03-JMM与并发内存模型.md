@@ -46,10 +46,8 @@ public class VolatileFlagDemo {
 
     public static void main(String[] args) {
         stopped = false;
-// 初始状态：stopped = false。
 // 作用：stopped = false;；发布状态标志。
         stopped = true;
-// 初始状态：stopped = true。
         if (stopped) {
             System.out.println("stop requested");
 // 输出：stop requested
@@ -71,7 +69,6 @@ public class SynchronizedVisibilityDemo {
 
     synchronized void set(int value) {
         this.value = value;
-// 初始状态：value = value。
 // 作用：this.value = value;；用锁建立可见性与互斥。
     }
 
@@ -82,7 +79,6 @@ public class SynchronizedVisibilityDemo {
     public static void main(String[] args) {
         var box = new SynchronizedVisibilityDemo();
 // 作用：var box = new SynchronizedVisibilityDemo();；用锁建立可见性与互斥。
-// 初始状态：box = new SynchronizedVisibilityDemo()。
         box.set(42);
 // 作用：box.set(42);；用锁建立可见性与互斥。
         System.out.println(box.get());
@@ -104,15 +100,11 @@ public class ThreadHappensBeforeDemo {
 
     public static void main(String[] args) throws InterruptedException {
         value = 41;
-// 初始状态：value = 41。
         Thread worker = new Thread(() -> value++);
-// 初始状态：worker = new Thread(() -> value++)。
 // 作用：Thread worker = new Thread(() -> value++);；启动后等待完成。
         worker.start();
-// 初始状态：worker.start()。
 // 作用：worker.start();；启动后等待完成。
         worker.join();
-// 初始状态：worker.join()。
 // 作用：worker.join();；启动后等待完成。
         System.out.println(value);
 // 输出：42
@@ -133,11 +125,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicCasDemo {
     public static void main(String[] args) {
         AtomicInteger version = new AtomicInteger(1);
-// 初始状态：version = new AtomicInteger(1)。
 // 作用：AtomicInteger version = new AtomicInteger(1);；CAS 保证单变量更新。
         boolean updated = version.compareAndSet(1, 2);
 // 作用：boolean updated = version.compareAndSet(1, 2);；CAS 保证单变量更新。
-// 初始状态：updated = version.compareAndSet(1, 2)。
         System.out.println(updated + ", version=" + version.get());
 // 输出：true, version=2
     }
@@ -155,12 +145,10 @@ CAS 适合无锁更新独立状态，不代表任意多字段操作都能无锁�
 public class SafePublicationDemo {
     record Config(String host, int port) { }
     private static volatile Config config = new Config("localhost", 8080);
-// 初始状态：config = new Config("localhost", 8080)。
 // 作用：private static volatile Config config = new Config("localhost", 8080);；用不可变对象传递快照。
 
     public static void main(String[] args) {
         Config snapshot = config;
-// 初始状态：snapshot = config。
         System.out.println(snapshot.host() + ":" + snapshot.port());
 // 输出：localhost:8080
     }
@@ -180,11 +168,9 @@ import java.util.concurrent.Executors;
 public class FutureHappensBeforeDemo {
     public static void main(String[] args) throws Exception {
         try (var executor = Executors.newSingleThreadExecutor()) {
-// 初始状态：executor = Executors.newSingleThreadExecutor())。
 // 作用：try (var executor = Executors.newSingleThreadExecutor()) {；等待完成并取得可见结果。
             var future = executor.submit(() -> "ready");
 // 作用：var future = executor.submit(() -> "ready");；等待完成并取得可见结果。
-// 初始状态：future = executor.submit(() -> "ready")。
             System.out.println(future.get());
 // 输出：ready
         }
@@ -205,7 +191,6 @@ public class FinalFieldDemo {
 
         User(String name) {
             this.name = name;
-// 初始状态：name = name。
         }
 
         String name() {
@@ -235,10 +220,8 @@ public class VarHandleDemo {
     public static void main(String[] args) throws Exception {
         VarHandle handle = MethodHandles.lookup().findVarHandle(
                 VarHandleDemo.class, "value", int.class);
-// 初始状态：handle = MethodHandles.lookup().findVarHandle(。
 // 作用：VarHandle handle = MethodHandles.lookup().findVarHandle(；低层次内存访问工具，返回读取结果。
         var box = new VarHandleDemo();
-// 初始状态：box = new VarHandleDemo()。
 // 作用：var box = new VarHandleDemo();；低层次内存访问工具。
         handle.set(box, 42);
 // 作用：handle.set(box, 42);；低层次内存访问工具。
@@ -260,9 +243,7 @@ public class LazySetDemo {
     public static void main(String[] args) {
         AtomicInteger state = new AtomicInteger();
 // 作用：AtomicInteger state = new AtomicInteger();；较弱的最终发布。
-// 初始状态：state = new AtomicInteger()。
         state.lazySet(1);
-// 初始状态：state.lazySet(1)。
 // 作用：state.lazySet(1);；较弱的最终发布。
         System.out.println(state.get());
 // 输出：1
@@ -293,10 +274,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class StopSignalDemo {
     public static void main(String[] args) {
         AtomicBoolean running = new AtomicBoolean(true);
-// 初始状态：running = new AtomicBoolean(true)。
 // 作用：AtomicBoolean running = new AtomicBoolean(true);；没有同步就没有可靠推理。
         running.set(false);
-// 初始状态：running.set(false)。
 // 作用：running.set(false);；没有同步就没有可靠推理。
         System.out.println("running=" + running.get());
 // 输出：running=false

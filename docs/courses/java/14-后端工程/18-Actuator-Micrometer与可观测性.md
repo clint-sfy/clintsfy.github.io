@@ -29,10 +29,8 @@ Actuator 提供管理端点，Micrometer 给指标/观测接口，registry 或 t
 用途：用于在已完成实际检查后构造健康结果，为健康组提供可分类的组件状态。
 
 ```java
-// 初始状态：教学检查确认 order-store 的磁盘预算足够，组件名不携带敏感路径。
 org.springframework.boot.actuate.health.Health health =
     org.springframework.boot.actuate.health.Health.up().withDetail("component", "order-store").build();
-// 关键变化：组件结果成为 UP，可被 HealthIndicator 返回并参与健康组聚合。
 org.junit.jupiter.api.Assertions.assertEquals(org.springframework.boot.actuate.health.Status.UP, health.getStatus());
 // 结果：状态为 UP；不能据此证明每笔订单可成功，真实检查需限时且避免副作用。
 ```
@@ -68,13 +66,11 @@ liveness 判断进程是否必须重启，不应把外部数据库失败放入�
 用途：用于记录可聚合的订单结果次数，标签仅采用有限的业务分类。
 
 ```java
-// 初始状态：内存 registry 没有订单计数器，outcome 只允许 success/failure 两类。
 io.micrometer.core.instrument.simple.SimpleMeterRegistry registry =
     new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
 io.micrometer.core.instrument.Counter counter = io.micrometer.core.instrument.Counter
     .builder("orders.created").tag("outcome", "success").register(registry);
 counter.increment();
-// 关键变化：累计成功次数由 0 变为 1；counter 只能增加，不能表示当前队列长度。
 org.junit.jupiter.api.Assertions.assertEquals(1.0, counter.count());
 registry.close();
 // 结果：本地 count=1；生产 registry 在应用停机时统一释放。
@@ -87,13 +83,11 @@ registry.close();
 用途：用于在成功和失败路径都记录订单处理耗时，帮助定位尾部延迟。
 
 ```java
-// 初始状态：教学 timer 未记录事件，使用固定 duration 避免伪造业务运行速度。
 io.micrometer.core.instrument.simple.SimpleMeterRegistry registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
 io.micrometer.core.instrument.Timer timer = io.micrometer.core.instrument.Timer.builder("orders.processing")
     .tag("outcome", "success").serviceLevelObjectives(java.time.Duration.ofMillis(100), java.time.Duration.ofMillis(500))
     .register(registry);
 timer.record(java.time.Duration.ofMillis(120));
-// 关键变化：样本数从 0 变为 1，总时间增加教学输入 120ms。
 org.junit.jupiter.api.Assertions.assertEquals(1L, timer.count());
 org.junit.jupiter.api.Assertions.assertEquals(120.0, timer.totalTime(java.util.concurrent.TimeUnit.MILLISECONDS));
 registry.close();
@@ -107,13 +101,11 @@ registry.close();
 用途：用于读取当前队列长度等瞬时值，而不把累计事件数当成实时占用。
 
 ```java
-// 初始状态：应用持有 queueDepth 强引用，当前积压 2 个任务。
 java.util.concurrent.atomic.AtomicInteger queueDepth = new java.util.concurrent.atomic.AtomicInteger(2);
 io.micrometer.core.instrument.simple.SimpleMeterRegistry registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
 io.micrometer.core.instrument.Gauge gauge = io.micrometer.core.instrument.Gauge.builder("orders.queue.depth", queueDepth, java.util.concurrent.atomic.AtomicInteger::get)
     .register(registry);
 queueDepth.set(1);
-// 关键变化：一次任务完成后积压从 2 变为 1，采集读取最新值。
 org.junit.jupiter.api.Assertions.assertEquals(1.0, gauge.value());
 registry.close();
 // 结果：value=1；两次采集之间的峰值可能丢失。
@@ -126,12 +118,10 @@ Gauge 通常持弱引用，业务必须保留被观测对象。回调必须廉�
 用途：用于把业务操作的开始、错误与结束交给已配置的观测处理器，连接指标和追踪。
 
 ```java
-// 初始状态：教学 registry 没有 exporter，固定事件 orders.lookup 不携带敏感标签。
 io.micrometer.observation.ObservationRegistry registry = io.micrometer.observation.ObservationRegistry.create();
 io.micrometer.observation.Observation observation = io.micrometer.observation.Observation
     .createNotStarted("orders.lookup", registry).lowCardinalityKeyValue("outcome", "success");
 String state = observation.observe(() -> "PAID");
-// 关键变化：observe 管理开始/结束和 scope；只有安装 handler 才会生成对应后端数据。
 org.junit.jupiter.api.Assertions.assertEquals("PAID", state);
 // 结果：业务结果保持 PAID；无 exporter 的教学 registry 不会自动上报 trace。
 ```
@@ -143,11 +133,9 @@ org.junit.jupiter.api.Assertions.assertEquals("PAID", state);
 用途：用于在当前线程日志中添加可信关联 ID，并在线程池复用之前恢复上下文。
 
 ```java
-// 初始状态：当前线程可能已有外层 correlationId，req-7 已按白名单校验。
 String previous = org.slf4j.MDC.get("correlationId");
 try {
     org.slf4j.MDC.put("correlationId", "req-7");
-    // 关键变化：本 scope 的日志关联 req-7；不记录密码、令牌、完整请求体。
     org.junit.jupiter.api.Assertions.assertEquals("req-7", org.slf4j.MDC.get("correlationId"));
 } finally {
     if (previous == null) org.slf4j.MDC.remove("correlationId");
@@ -165,7 +153,6 @@ Prometheus 采集 `/actuator/prometheus`，应验证鉴权、抓取状态、标�
 用途：用于在独立安全链中匹配管理端点，公开最小健康状态并对其他已暴露端点要求运维身份。
 
 ```java
-// 初始状态：Boot MVC 工程含 spring-boot-starter-security，管理暴露仅 health/prometheus。
 @org.springframework.context.annotation.Configuration
 class ManagementSecurity {
     @org.springframework.context.annotation.Bean
@@ -177,7 +164,6 @@ class ManagementSecurity {
                 .requestMatchers(org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest.to("health")).permitAll()
                 .anyRequest().hasRole("OPS"))
             .httpBasic(org.springframework.security.config.Customizer.withDefaults());
-        // 关键变化：health 可读状态，prometheus 等其余已暴露端点必须具有 ROLE_OPS。
         return http.build();
     }
     @org.springframework.context.annotation.Bean
@@ -194,7 +180,6 @@ class ManagementSecurity {
 对应完整工程的最小验证（test scope 增加 `spring-security-test`，健康 fixture 为 UP）：
 
 ```java
-// 初始状态：应用加载 ManagementSecurity，测试 profile 不连接生产依赖，prometheus registry 已注册。
 @org.springframework.boot.test.context.SpringBootTest(properties="management.endpoints.web.exposure.include=health,prometheus")
 @org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 class ManagementAccessTest {
@@ -208,7 +193,6 @@ class ManagementAccessTest {
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/actuator/prometheus")
             .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("reader").roles("USER")))
             .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
-        // 关键变化：相同 prometheus 请求只有 OPS 测试身份获得读取许可。
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/actuator/prometheus")
             .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("operator").roles("OPS")))
             .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk());
@@ -224,7 +208,6 @@ Basic 仅通过受控 TLS 管理网络使用，真实凭据由密钥配置。`sh
 用途：用于表达实例暂不接收新请求，让就绪探针反映业务流量接纳状态。
 
 ```java
-// 初始状态：独立事件上下文注册真实 availability bean；不是已启动的 HTTP 服务器。
 try (org.springframework.context.support.GenericApplicationContext context = new org.springframework.context.support.GenericApplicationContext()) {
     context.registerBean(org.springframework.boot.availability.ApplicationAvailabilityBean.class);
     context.refresh();
@@ -234,7 +217,6 @@ try (org.springframework.context.support.GenericApplicationContext context = new
     org.junit.jupiter.api.Assertions.assertEquals(org.springframework.boot.availability.ReadinessState.ACCEPTING_TRAFFIC, availability.getReadinessState());
     org.springframework.boot.availability.AvailabilityChangeEvent.publish(context,
         org.springframework.boot.availability.ReadinessState.REFUSING_TRAFFIC);
-    // 关键变化：状态由 ACCEPTING_TRAFFIC 变为 REFUSING_TRAFFIC，表示应从流量入口摘除。
     org.junit.jupiter.api.Assertions.assertEquals(org.springframework.boot.availability.ReadinessState.REFUSING_TRAFFIC, availability.getReadinessState());
     // 结果：事件状态变化已断言；真实 /actuator/health/readiness 和负载均衡摘流仍需集成验证。
 }
@@ -247,12 +229,10 @@ try (org.springframework.context.support.GenericApplicationContext context = new
 用途：用于读取进程存活状态，避免把可恢复的共享数据库故障错误地当作应用必须重启。
 
 ```java
-// 初始状态：教学 availability 对象尚无启动事件，显式发布正确的进程状态。
 org.springframework.boot.availability.ApplicationAvailabilityBean availability =
     new org.springframework.boot.availability.ApplicationAvailabilityBean();
 availability.onApplicationEvent(new org.springframework.boot.availability.AvailabilityChangeEvent<>(
     availability, org.springframework.boot.availability.LivenessState.CORRECT));
-// 关键变化：进程状态记录为 CORRECT；外部数据库是否连接成功不是此状态的输入。
 org.junit.jupiter.api.Assertions.assertEquals(org.springframework.boot.availability.LivenessState.CORRECT, availability.getLivenessState());
 // 结果：liveness=CORRECT；需要重启的不可恢复内部错误才考虑发布 BROKEN。
 ```
@@ -264,13 +244,11 @@ org.junit.jupiter.api.Assertions.assertEquals(org.springframework.boot.availabil
 用途：用于验证指标注册表能输出可抓取的 Prometheus 文本，再独立确认端点鉴权和后端采集。
 
 ```java
-// 初始状态：依赖 micrometer-registry-prometheus，内存 registry 尚无业务样本。
 io.micrometer.prometheusmetrics.PrometheusMeterRegistry registry =
     new io.micrometer.prometheusmetrics.PrometheusMeterRegistry(io.micrometer.prometheusmetrics.PrometheusConfig.DEFAULT);
 try {
     registry.counter("orders.accepted", "outcome", "success").increment();
     String scraped = registry.scrape();
-    // 关键变化：业务计数转换为 Prometheus 的 orders_accepted_total 时间序列。
     org.junit.jupiter.api.Assertions.assertTrue(scraped.contains("orders_accepted_total"));
     org.junit.jupiter.api.Assertions.assertTrue(scraped.contains("outcome=\"success\""));
     // 结果：文本含计数器名称与有限标签；不是 Prometheus 服务器已经接收到数据的证明。
@@ -284,12 +262,10 @@ Boot 自动配置相应 registry 后，`/actuator/prometheus` 还要在 exposure
 用途：用于在停止接收新流量后拒绝新后台任务，并在有限时间内等待已接收任务结束。
 
 ```java
-// 初始状态：jobs 已接收 1 个短任务，completed 从 0 开始，任务可能尚未调度。
 java.util.concurrent.ExecutorService jobs = java.util.concurrent.Executors.newSingleThreadExecutor();
 java.util.concurrent.atomic.AtomicInteger completed = new java.util.concurrent.atomic.AtomicInteger();
 jobs.submit(completed::incrementAndGet);
 jobs.shutdown();
-// 关键变化：jobs 进入关闭状态，不再接收新任务，保留已接收的 1 个任务。
 boolean drained = jobs.awaitTermination(2, java.util.concurrent.TimeUnit.SECONDS);
 if (!drained) jobs.shutdownNow();
 org.junit.jupiter.api.Assertions.assertTrue(drained);

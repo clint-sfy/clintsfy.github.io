@@ -40,7 +40,6 @@ description: 速查 FIFO 队列、双端队列、栈、优先级队列及并发�
 offer 尝试把元素加入队尾，并用返回值表示是否成功。
 
 ```java
-// 语义：offer 尝试把元素加入队尾，并用返回值表示是否成功。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
@@ -59,7 +58,6 @@ public class QueueOfferDemo {
 poll 返回并删除队首，队列为空时返回 null。
 
 ```java
-// 语义：poll 返回并删除队首，队列为空时返回 null。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
@@ -80,7 +78,6 @@ public class QueuePollDemo {
 peek 返回但不删除队首，队列为空时返回 null。
 
 ```java
-// 语义：peek 返回但不删除队首，队列为空时返回 null。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
@@ -101,7 +98,6 @@ public class QueuePeekDemo {
 add 在无法加入元素时抛异常，适合把失败视为违背程序约束的场景。
 
 ```java
-// 语义：add 在无法加入元素时抛异常，适合把失败视为违背程序约束的场景。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
@@ -120,7 +116,6 @@ public class QueueAddDemo {
 remove 返回并删除队首，空队列调用会抛 NoSuchElementException。
 
 ```java
-// 语义：remove 返回并删除队首，空队列调用会抛 NoSuchElementException。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
@@ -139,7 +134,6 @@ public class QueueRemoveDemo {
 element 返回但不删除队首，空队列调用会抛 NoSuchElementException。
 
 ```java
-// 语义：element 返回但不删除队首，空队列调用会抛 NoSuchElementException。
 import java.util.ArrayDeque;
 import java.util.Queue;
 
@@ -160,7 +154,6 @@ public class QueueElementDemo {
 offerFirst 尝试从双端队列头部加入元素，并返回是否成功。
 
 ```java
-// 语义：offerFirst 尝试从双端队列头部加入元素，并返回是否成功。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -179,7 +172,6 @@ public class DequeOfferFirstDemo {
 offerLast 尝试从双端队列尾部加入元素，并返回是否成功。
 
 ```java
-// 语义：offerLast 尝试从双端队列尾部加入元素，并返回是否成功。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -198,7 +190,6 @@ public class DequeOfferLastDemo {
 pollFirst 返回并删除头部元素，双端队列为空时返回 null。
 
 ```java
-// 语义：pollFirst 返回并删除头部元素，双端队列为空时返回 null。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -206,9 +197,7 @@ public class DequePollFirstDemo {
     public static void main(String[] args) {
         Deque<Integer> deque = new ArrayDeque<>();
         deque.addLast(1);
-        // 关键变化：deque.addLast(1);；调用 addLast，实参为 1；向 deque 末端追加 1；队列顺序更新。
         deque.addLast(2);
-        // 关键变化：deque.addLast(2);；调用 addLast，实参为 2；向 deque 末端追加 2；队列顺序更新。
         System.out.println(deque.pollFirst());
         // 输出：1
         System.out.println(deque);
@@ -222,7 +211,6 @@ public class DequePollFirstDemo {
 pollLast 返回并删除尾部元素，双端队列为空时返回 null。
 
 ```java
-// 语义：pollLast 返回并删除尾部元素，双端队列为空时返回 null。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -230,9 +218,7 @@ public class DequePollLastDemo {
     public static void main(String[] args) {
         Deque<Integer> deque = new ArrayDeque<>();
         deque.addLast(1);
-        // 关键变化：deque.addLast(1);；调用 addLast，实参为 1；向 deque 末端追加 1；队列顺序更新。
         deque.addLast(2);
-        // 关键变化：deque.addLast(2);；调用 addLast，实参为 2；向 deque 末端追加 2；队列顺序更新。
         System.out.println(deque.pollLast());
         // 输出：2
         System.out.println(deque);
@@ -246,7 +232,6 @@ public class DequePollLastDemo {
 peekFirst 返回但不删除头部元素，双端队列为空时返回 null。
 
 ```java
-// 语义：peekFirst 返回但不删除头部元素，双端队列为空时返回 null。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -254,9 +239,7 @@ public class DequePeekFirstDemo {
     public static void main(String[] args) {
         Deque<Integer> deque = new ArrayDeque<>();
         deque.addLast(1);
-        // 关键变化：deque.addLast(1);；调用 addLast，实参为 1；向 deque 末端追加 1；队列顺序更新。
         deque.addLast(2);
-        // 关键变化：deque.addLast(2);；调用 addLast，实参为 2；向 deque 末端追加 2；队列顺序更新。
         System.out.println(deque.peekFirst());
         // 输出：1
         System.out.println(deque);
@@ -270,7 +253,6 @@ public class DequePeekFirstDemo {
 peekLast 返回但不删除尾部元素，双端队列为空时返回 null。
 
 ```java
-// 语义：peekLast 返回但不删除尾部元素，双端队列为空时返回 null。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -278,9 +260,7 @@ public class DequePeekLastDemo {
     public static void main(String[] args) {
         Deque<Integer> deque = new ArrayDeque<>();
         deque.addLast(1);
-        // 关键变化：deque.addLast(1);；调用 addLast，实参为 1；向 deque 末端追加 1；队列顺序更新。
         deque.addLast(2);
-        // 关键变化：deque.addLast(2);；调用 addLast，实参为 2；向 deque 末端追加 2；队列顺序更新。
         System.out.println(deque.peekLast());
         // 输出：2
         System.out.println(deque);
@@ -294,7 +274,6 @@ public class DequePeekLastDemo {
 push 从头部压入元素，普通栈场景优先 Deque 而不是遗留 Stack。
 
 ```java
-// 语义：push 从头部压入元素，普通栈场景优先 Deque 而不是遗留 Stack。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -302,7 +281,6 @@ public class DequePushDemo {
     public static void main(String[] args) {
         Deque<String> stack = new ArrayDeque<>();
         stack.push("page-1");
-        // 关键变化：stack.push("page-1");；调用 push，实参为 "page-1"；将 "page-1" 压入 stack 栈顶；栈状态更新。
         System.out.println(stack);
         // 输出：[page-1]
     }
@@ -314,7 +292,6 @@ public class DequePushDemo {
 pop 返回并删除头部元素，空栈调用会抛 NoSuchElementException。
 
 ```java
-// 语义：pop 返回并删除头部元素，空栈调用会抛 NoSuchElementException。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -322,9 +299,7 @@ public class DequePopDemo {
     public static void main(String[] args) {
         Deque<String> stack = new ArrayDeque<>();
         stack.push("page-1");
-        // 关键变化：stack.push("page-1");；调用 push，实参为 "page-1"；将 "page-1" 压入 stack 栈顶；栈状态更新。
         stack.push("page-2");
-        // 关键变化：stack.push("page-2");；调用 push，实参为 "page-2"；将 "page-2" 压入 stack 栈顶；栈状态更新。
         System.out.println(stack.pop());
         // 输出：page-2
     }
@@ -336,7 +311,6 @@ public class DequePopDemo {
 peek 返回但不删除头部元素，空栈时返回 null。
 
 ```java
-// 语义：peek 返回但不删除头部元素，空栈时返回 null。
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -344,7 +318,6 @@ public class DequeStackPeekDemo {
     public static void main(String[] args) {
         Deque<String> stack = new ArrayDeque<>();
         stack.push("page-1");
-        // 关键变化：stack.push("page-1");；调用 push，实参为 "page-1"；将 "page-1" 压入 stack 栈顶；栈状态更新。
         System.out.println(stack.peek());
         // 输出：page-1
         System.out.println(stack.size());
@@ -358,7 +331,6 @@ public class DequeStackPeekDemo {
 offer 把元素加入优先级队列，默认由自然顺序决定队首。
 
 ```java
-// 语义：offer 把元素加入优先级队列，默认由自然顺序决定队首。
 import java.util.PriorityQueue;
 import java.util.Queue;
 
@@ -381,7 +353,6 @@ public class PriorityQueueDemo {
 poll 删除当前最小元素，遍历顺序本身不代表完整排序结果。
 
 ```java
-// 语义：poll 删除当前最小元素，遍历顺序本身不代表完整排序结果。
 import java.util.PriorityQueue;
 
 public class PriorityQueuePollDemo {
@@ -401,7 +372,6 @@ public class PriorityQueuePollDemo {
 peek 查看但不删除当前最高优先级元素，空队列时返回 null。
 
 ```java
-// 语义：peek 查看但不删除当前最高优先级元素，空队列时返回 null。
 import java.util.PriorityQueue;
 
 public class PriorityQueuePeekDemo {
@@ -422,7 +392,6 @@ public class PriorityQueuePeekDemo {
 构造器传 Comparator 后，poll 按比较器取出元素；比较器要稳定，否则优先级变化会破坏预期。
 
 ```java
-// 语义：构造器传 Comparator 后，poll 按比较器取出元素。
 import java.util.Comparator;
 import java.util.PriorityQueue;
 
@@ -430,7 +399,6 @@ public class CustomPriorityQueueDemo {
     public static void main(String[] args) {
         PriorityQueue<String> queue =
             new PriorityQueue<>(Comparator.comparingInt(String::length).reversed());
-            // 关键变化：Comparator.comparingInt(String::length).reversed() 让长度更长的字符串优先，PriorityQueue 使用该 Comparator。
         queue.offer("a");
         queue.offer("long");
         System.out.println(queue.poll());
@@ -452,7 +420,6 @@ public class BlockingQueueDemo {
     public static void main(String[] args) throws InterruptedException {
         BlockingQueue<String> queue = new ArrayBlockingQueue<>(2);
         queue.put("task-1");
-        // 关键变化：queue.put("task-1");；阻塞等待容量后把 "task-1" 放入 queue，成功返回 void；队列内容更新。
         System.out.println(queue.take());
         // 输出：task-1
     }
@@ -528,13 +495,9 @@ public class DequeRemoveFirstOccurrenceDemo {
     public static void main(String[] args) {
         Deque<String> deque = new ArrayDeque<>();
         deque.addLast("a");
-        // 关键变化：deque.addLast("a");；调用 addLast，实参为 "a"；向 deque 末端追加 "a"；队列顺序更新。
         deque.addLast("b");
-        // 关键变化：deque.addLast("b");；调用 addLast，实参为 "b"；向 deque 末端追加 "b"；队列顺序更新。
         deque.addLast("a");
-        // 关键变化：deque.addLast("a");；调用 addLast，实参为 "a"；向 deque 末端追加 "a"；队列顺序更新。
         deque.removeFirstOccurrence("a");
-        // 关键变化：deque.removeFirstOccurrence("a");；调用 removeFirstOccurrence，实参为 "a"；从 deque 删除首个等于 "a" 的元素；返回是否删除。
         System.out.println(deque);
         // 输出：[b, a]
     }
@@ -553,13 +516,9 @@ public class DequeRemoveLastOccurrenceDemo {
     public static void main(String[] args) {
         Deque<String> deque = new ArrayDeque<>();
         deque.addLast("a");
-        // 关键变化：deque.addLast("a");；调用 addLast，实参为 "a"；向 deque 末端追加 "a"；队列顺序更新。
         deque.addLast("b");
-        // 关键变化：deque.addLast("b");；调用 addLast，实参为 "b"；向 deque 末端追加 "b"；队列顺序更新。
         deque.addLast("a");
-        // 关键变化：deque.addLast("a");；调用 addLast，实参为 "a"；向 deque 末端追加 "a"；队列顺序更新。
         deque.removeLastOccurrence("a");
-        // 关键变化：deque.removeLastOccurrence("a");；调用 removeLastOccurrence，实参为 "a"；从 deque 删除末个等于 "a" 的元素；返回是否删除。
         System.out.println(deque);
         // 输出：[a, b]
     }

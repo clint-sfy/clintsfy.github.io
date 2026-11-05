@@ -40,7 +40,6 @@ Lambda 不是“自动多线程”，只是把一段行为交给一个有唯一�
 `test` 返回布尔值，适合过滤、校验和权限判断；不要在谓词里偷偷修改共享状态。
 
 ```java
-// 语义：test 返回布尔值，适合过滤、校验和权限判断。
 import java.util.function.Predicate;
 
 Predicate<String> longName = name -> name.length() >= 4;
@@ -53,7 +52,6 @@ System.out.println(longName.test("Java"));
 `and` 会先检查左侧条件，左侧为 `false` 时短路，不再执行右侧条件。
 
 ```java
-// 语义：and 会先检查左侧条件，左侧为 false 时短路，不再执行右侧条件。
 import java.util.function.Predicate;
 
 Predicate<String> notBlank = text -> !text.isBlank();
@@ -69,7 +67,6 @@ System.out.println(valid.test("Java 21"));
 `or` 适合表达候选条件，左侧为 `true` 时会短路，不再执行右侧条件。
 
 ```java
-// 语义：or 适合表达候选条件，左侧为 true 时会短路，不再执行右侧条件。
 import java.util.function.Predicate;
 
 Predicate<String> isJava = "Java"::equals;
@@ -85,7 +82,6 @@ System.out.println(supported.test("Kotlin"));
 `negate` 用于复用已有条件的反义逻辑，避免再写一份容易漂移的判断。
 
 ```java
-// 语义：negate 用于复用已有条件的反义逻辑，避免再写一份容易漂移的判断。
 import java.util.function.Predicate;
 
 Predicate<String> blank = String::isBlank;
@@ -102,7 +98,6 @@ System.out.println(notBlank.test(input));
 `Function` 适合 `map`、字段提取和格式转换；转换失败时要明确是返回默认值还是抛出异常。
 
 ```java
-// 语义：Function 适合 map、字段提取和格式转换。
 import java.util.function.Function;
 
 Function<String, Integer> length = String::length;
@@ -115,7 +110,6 @@ System.out.println(length.apply("Java"));
 `compose` 先把输入交给参数函数，再把中间结果交给当前函数。
 
 ```java
-// 语义：compose 先把输入交给参数函数，再把中间结果交给当前函数。
 import java.util.function.Function;
 
 Function<String, String> trim = String::trim;
@@ -131,7 +125,6 @@ System.out.println(trimmedLength.apply(" Java "));
 `andThen` 先执行当前函数，再把结果传给参数函数，适合按阅读顺序组织转换。
 
 ```java
-// 语义：andThen 先执行当前函数，再把结果传给参数函数，适合按阅读顺序组织转换。
 import java.util.function.Function;
 
 Function<String, String> trim = String::trim;
@@ -147,7 +140,6 @@ System.out.println(normalize.apply(" java "));
 `Consumer` 没有返回值，常用于日志、通知和写入；并行流中使用它修改普通集合通常不安全。
 
 ```java
-// 语义：Consumer 没有返回值，常用于日志、通知和写入。
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -155,7 +147,6 @@ import java.util.function.Consumer;
 List<String> log = new ArrayList<>();
 Consumer<String> record = log::add;
 record.accept("saved");
-// 关键变化：record.accept("saved");；把 "saved" 交给 record 消费，Consumer 无返回值；副作用状态更新。
 System.out.println(log);
 // 输出：[saved]
 ```
@@ -165,18 +156,14 @@ System.out.println(log);
 组合的两个动作按顺序执行；前一个动作抛异常时，后一个动作不会执行。
 
 ```java
-// 语义：组合的两个动作按顺序执行。
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 List<String> output = new ArrayList<>();
 Consumer<String> print = text -> output.add("value=" + text);
-// 关键变化：Consumer<String> print = text -> output.add("value=" + text);；Consumer 收到文本后向 output 追加 value= 前缀，lambda 本身返回 void。
 Consumer<String> count = text -> output.add("length=" + text.length());
-// 关键变化：Consumer<String> count = text -> output.add("length=" + text.length());；Consumer 收到文本后追加长度文本，lambda 本身返回 void。
 print.andThen(count).accept("Java");
-// 关键变化：print.andThen(count).accept("Java");；把 "Java" 交给 上一个链式结果 消费，Consumer 无返回值；副作用状态更新。
 System.out.println(output);
 // 输出：[value=Java, length=4]
 ```
@@ -186,7 +173,6 @@ System.out.println(output);
 `Supplier` 不接收参数，可用于延迟构造默认值；只有调用 `get()` 才会计算。
 
 ```java
-// 语义：Supplier 不接收参数，可用于延迟构造默认值。
 import java.util.function.Supplier;
 
 Supplier<String> requestId = () -> "REQ-20";
@@ -200,7 +186,6 @@ System.out.println(requestId.get());
 它是 `Function<T, T>` 的语义别名，适合原类型变换，如规范化、递增和复制。
 
 ```java
-// 语义：它是 Function<T, T> 的语义别名，适合原类型变换，如规范化、递增和复制。
 import java.util.function.UnaryOperator;
 
 UnaryOperator<String> normalize = String::trim;
@@ -213,7 +198,6 @@ System.out.println(normalize.apply(" Java "));
 它是 `BiFunction<T, T, T>` 的语义别名，常用于 `reduce`；合并操作最好满足结合律，便于并行处理。
 
 ```java
-// 语义：它是 BiFunction<T, T, T> 的语义别名，常用于 reduce。
 import java.util.function.BinaryOperator;
 
 BinaryOperator<Integer> add = Integer::sum;
@@ -226,12 +210,10 @@ System.out.println(add.apply(20, 22));
 方法引用必须放在目标函数式接口的上下文中；有重载或额外分支时，显式 Lambda 往往更清楚。
 
 ```java
-// 语义：方法引用必须放在目标函数式接口的上下文中。
 import java.util.List;
 
 List<String> names = List.of("Bob", "Ann");
 names.stream().map(String::toUpperCase).forEach(System.out::println);
-// 关键变化：names.stream().map(String::toUpperCase).forEach(System.out::println);；把 上一个链式结果 的每个元素交给 System.out::println，无返回值；遍历动作完成。
 // 输出：BOB、ANN
 ```
 ## 不常用但需要知道
@@ -269,13 +251,11 @@ String text = join.apply("id", 20);
 `BiConsumer` 没有返回值，适合把键和值一起交给日志、填充或输出操作。
 
 ```java
-// 语义：printer.accept 把键 "id" 和值 20 交给同一个无返回值动作。
 import java.util.function.BiConsumer;
 
 BiConsumer<String, Integer> printer = (key, value) -> System.out.println(key + "=" + value);
 // 输出：id=20
 printer.accept("id", 20);
-// 关键变化：printer.accept("id", 20);；把 "id", 20 交给 printer 消费，Consumer 无返回值；副作用状态更新。
 ```
 
 ### `Function.identity()`：原样返回元素
@@ -290,7 +270,6 @@ import java.util.stream.Collectors;
 List<String> names = List.of("Ann", "Bob");
 var same = names.stream().collect(
         Collectors.toMap(Function.identity(), String::length));
-        // 关键变化：Collectors.toMap(Function.identity(), String::length) 接收两个函数参数，按字符串自身作键、按长度作值；返回映射 Collector。
 System.out.println(same);
 // 输出：{Ann=3, Bob=3}
 ```
@@ -342,7 +321,6 @@ public class LambdaDemo {
                                Predicate<Product> filter,
                                Function<Product, String> mapper) {
         return products.stream().filter(filter).map(mapper).toList();
-        // 关键变化：return products.stream().filter(filter).map(mapper).toList();；按 predicate 筛选元素，只保留满足条件的元素。
     }
 
     public static void main(String[] args) {

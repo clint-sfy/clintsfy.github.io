@@ -173,6 +173,34 @@ EVALSHA e0e1f9fabfc9d4800c877a703b823ac0578ff8db 0
 
 危险：SCRIPT LOAD/EVALSHA 只演示本机经审查短脚本，生产需控制脚本权限和执行耗时。SHA 与脚本字节精确对应；重启、切节点或缓存变动可能得到 NOSCRIPT，要在实际执行节点重新加载/按客户端规范回退。Pipeline 中收到 NOSCRIPT 已不能把回退插入原批次，先加载或按可靠客户端策略处理。Redis 7+ Functions 是独立的持久化、复制函数库机制，并非 EVAL 缓存同义词；本篇不提供 FUNCTION LOAD 部署流程。[EVALSHA](https://redis.io/docs/latest/commands/evalsha/)、[SCRIPT LOAD](https://redis.io/docs/latest/commands/script-load/)。
 
+#### Java 调用：`executePipelined()`
+
+Pipeline 减少网络往返，但命令之间不具备事务原子性；回调内按顺序发送，结果在回调结束后读取。
+
+```java
+import java.util.List;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.StringRedisTemplate;
+
+class PipelineDemo {
+    private final StringRedisTemplate redis;
+    PipelineDemo(StringRedisTemplate redis) { this.redis = redis; }
+
+    void run() {
+        List<Object> results = redis.executePipelined((RedisCallback<Object>) connection -> {
+            var text = (org.springframework.data.redis.connection.StringRedisConnection) connection;
+            text.set("lab:pipe", "1");
+            text.incr("lab:pipe");
+            return null;
+        });
+        System.out.println(results);
+        // 输出：[true, 2]（具体解码值以模板序列化配置为准）
+    }
+}
+```
+
+回调返回 `null`，命令回复在 `results` 中按发送顺序排列。连接断开时可能已有部分写入，不能直接重试整批 `INCR`。
+
 ## 易混点
 
 事务、Lua 的无穿插执行不意味着失败回滚，Pipeline 只是减少网络往返。

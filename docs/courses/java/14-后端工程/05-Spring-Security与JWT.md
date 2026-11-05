@@ -87,17 +87,13 @@ import io.jsonwebtoken.Jwts;
 import java.util.Base64;
 
 String encodedSecret = System.getenv("JWT_SECRET");
-// 初始状态：encodedSecret = System.getenv("JWT_SECRET")。
 // 作用：String encodedSecret = System.getenv("JWT_SECRET");；读取 JWT_SECRET 环境变量作为 Base64URL 密钥文本。
 String compactToken = System.getenv("JWT_COMPACT_TOKEN");
-// 初始状态：compactToken = System.getenv("JWT_COMPACT_TOKEN")。
 // 作用：String compactToken = System.getenv("JWT_COMPACT_TOKEN");；读取 JWT_COMPACT_TOKEN 作为待解析 compact JWT。
 byte[] signingKey = Base64.getUrlDecoder().decode(encodedSecret);
-// 初始状态：signingKey = Base64.getUrlDecoder().decode(encodedSecret)。
 // 作用：byte[] signingKey = Base64.getUrlDecoder().decode(encodedSecret);；按 Base64URL 解码 encodedSecret，得到签名字节。
 Claims claims = Jwts.parser().setSigningKey(signingKey)
     .parseClaimsJws(compactToken).getBody();
-// 初始状态：claims = Jwts.parser().setSigningKey(signingKey)。
 // 作用：.parseClaimsJws(compactToken).getBody();；按 signingKey 验证 compactToken 并提取 Claims。
 // 作用：Claims claims = Jwts.parser().setSigningKey(signingKey)；claims.subject 最终为 user-7。
 System.out.println(claims.getSubject());
@@ -140,7 +136,6 @@ SecurityFilterChain apiSecurity(HttpSecurity http) throws Exception {
 // 作用：.authorizeHttpRequests(auth -> auth；建立认证授权过滤链。
 // 作用：.requestMatchers("/health", "/login").permitAll()；建立认证授权过滤链。
 // 作用：.anyRequest().authenticated());；建立认证授权过滤链。
-// 初始状态：.csrf(csrf -> csrf.disable())。
     return http.build();
 // 作用：return http.build();；建立认证授权过滤链。
 }
@@ -164,7 +159,6 @@ void configure(HttpSecurity http) throws Exception {
         .requestMatchers("/reports/**").hasAuthority("report:read")
         .requestMatchers("/admin/**").hasRole("ADMIN")
         .anyRequest().authenticated());
-// 初始状态：http.authorizeHttpRequests(auth -> auth。
 // 作用：http.authorizeHttpRequests(auth -> auth；表达 URL 授权规则。
     System.out.println("/admin requires ROLE_ADMIN");
 // 输出：/admin requires ROLE_ADMIN
@@ -194,7 +188,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class MethodSecurityConfig {
     @Bean ReportService reportService() {
         return new ReportService();
-// 初始状态：return new ReportService()。
 // 作用：return new ReportService();；在方法边界做授权。
     }
 }
@@ -209,22 +202,18 @@ class ReportService {
 
 try (var context = new AnnotationConfigApplicationContext(MethodSecurityConfig.class)) {
 // 作用：try (var context = new AnnotationConfigApplicationContext(MethodSecurityConfig.class)) {；在方法边界做授权。
-// 初始状态：context = new AnnotationConfigApplicationContext(MethodSecurityConfig.class))。
     ReportService service = context.getBean(ReportService.class);
 // 作用：ReportService service = context.getBean(ReportService.class);；在方法边界做授权，返回读取结果。
-// 初始状态：service = context.getBean(ReportService.class)。
     SecurityContextHolder.getContext().setAuthentication(
         new TestingAuthenticationToken("user-7", "n/a", "report:read"));
 // 作用：SecurityContextHolder.getContext().setAuthentication(；在方法边界做授权，返回读取结果。
 // 作用：new TestingAuthenticationToken("user-7", "n/a", "report:read"));；在方法边界做授权，返回读取结果。
-// 初始状态：new TestingAuthenticationToken("user-7", "n/a", "report:read"))。
     System.out.println("授权成功=" + service.read("user-7"));
 // 输出：授权成功=report-for-user-7
     SecurityContextHolder.getContext().setAuthentication(
         new TestingAuthenticationToken("user-8", "n/a"));
 // 作用：SecurityContextHolder.getContext().setAuthentication(；在方法边界做授权，返回读取结果。
 // 作用：new TestingAuthenticationToken("user-8", "n/a"));；在方法边界做授权。
-// 初始状态：new TestingAuthenticationToken("user-8", "n/a"))。
     try {
         service.read("user-7");
 // 作用：service.read("user-7");；在方法边界做授权，返回读取结果。
@@ -248,11 +237,9 @@ try (var context = new AnnotationConfigApplicationContext(MethodSecurityConfig.c
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 var encoder = new BCryptPasswordEncoder();
-// 初始状态：encoder = new BCryptPasswordEncoder()。
 // 作用：var encoder = new BCryptPasswordEncoder();；保存和验证密码哈希。
 String storedHash = encoder.encode("correct-horse");
 // 作用：String storedHash = encoder.encode("correct-horse");；保存和验证密码哈希。
-// 初始状态：storedHash = encoder.encode("correct-horse")。
 System.out.println(encoder.matches("correct-horse", storedHash));
 // 输出：true
 // 作用：用于让密码只以带盐哈希形式持久化，并用 `matches` 验证登录输入；密码哈希不是可逆加密，也不应写入日志。
@@ -266,12 +253,10 @@ System.out.println(encoder.matches("correct-horse", storedHash));
 
 ```java
 String authorization = "Bearer <access-token>";
-// 初始状态：authorization = "Bearer <access-token>"。
 // 作用：String authorization = "Bearer <access-token>";；从请求头携带访问令牌。
 boolean bearer = authorization.regionMatches(true, 0, "Bearer ", 0, 7)
     && authorization.length() > 7;
 // 作用：boolean bearer = authorization.regionMatches(true, 0, "Bearer ", 0, 7)；从请求头携带访问令牌。
-// 初始状态：bearer = authorization.regionMatches(true, 0, "Bearer ", 0, 7)。
 System.out.println("bearer=" + bearer);
 // 输出：bearer=true
 // 说明：客户端发送 Authorization: Bearer eyJ...；认证过滤器提取 Bearer 后的 token。这个字符串示例未验签，不会仅因请求头存在就建立 SecurityContext。
@@ -288,7 +273,6 @@ import java.util.Map;
 
 Map<String, Object> claims = Map.of(
     "sub", "user-7", "jti", "token-7");
-// 初始状态：claims = Map.of(。
 // 作用：Map<String, Object> claims = Map.of(；读取已验签主体。
 System.out.println(claims.get("sub"));
 // 输出：user-7
@@ -305,11 +289,9 @@ System.out.println(claims.get("sub"));
 import java.time.Instant;
 
 long expiresAt = 4_102_444_800L;
-// 初始状态：expiresAt = 4_102_444_800L。
 // 作用：long expiresAt = 4_102_444_800L;；判断令牌过期。
 boolean active = Instant.now().getEpochSecond() < expiresAt;
 // 作用：boolean active = Instant.now().getEpochSecond() < expiresAt;；判断令牌过期。
-// 初始状态：active = Instant.now().getEpochSecond() < expiresAt。
 System.out.println("active=" + active);
 // 输出：active=true
 // 作用：用于把已验签 JWT 的过期时间与统一时钟比较并进入认证失败路径。
@@ -328,7 +310,6 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 
 AuthenticationEntryPoint entryPoint = (request, response, exception) ->
     response.sendError(401, "unauthorized");
-// 初始状态：entryPoint = (request, response, exception) ->。
 // 作用：AuthenticationEntryPoint entryPoint = (request, response, exception) ->；把未认证映射为 401。
 System.out.println("entry-point=401");
 // 输出：entry-point=401
@@ -346,7 +327,6 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 
 AccessDeniedHandler denied = (request, response, exception) ->
     response.sendError(403, "forbidden");
-// 初始状态：denied = (request, response, exception) ->。
 // 作用：AccessDeniedHandler denied = (request, response, exception) ->；把已认证但无权映射为 403。
 System.out.println("access-denied=403");
 // 输出：access-denied=403
@@ -364,7 +344,6 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 
 var request = SecurityMockMvcRequestPostProcessors.jwt()
     .jwt(jwt -> jwt.subject("user-7").claim("scope", "report:read"));
-// 初始状态：request = SecurityMockMvcRequestPostProcessors.jwt()。
 // 作用：var request = SecurityMockMvcRequestPostProcessors.jwt()；为方法授权提供可控身份。
 // 作用：.jwt(jwt -> jwt.subject("user-7").claim("scope", "report:read"));；为方法授权提供可控身份。
 System.out.println(request != null ? "scope=report:read" : "missing");
@@ -390,7 +369,6 @@ class MethodSecurityConfiguration {
     @Bean
     MethodSecurityExpressionHandler expressionHandler() {
         return new DefaultMethodSecurityExpressionHandler();
-// 初始状态：return new DefaultMethodSecurityExpressionHandler()。
 // 作用：return new DefaultMethodSecurityExpressionHandler();；启用方法级授权。
     }
     String layer() { return "service"; }
@@ -408,7 +386,6 @@ class MethodSecurityConfiguration {
 // 结果：声明 `userId=42` 时返回 `42`；缺失或非法时拒绝认证。
 long readUserId(Claims claims) {
     Long userId = claims.get("userId", Long.class);
-// 初始状态：userId = claims.get("userId", Long.class)。
 // 作用：Long userId = claims.get("userId", Long.class);；按类型读取已验签声明。
     if (userId == null || userId <= 0) {
         throw new BadCredentialsException("invalid userId claim");
@@ -436,7 +413,6 @@ Claims parseLegacy(String token, String secret) {
         .setSigningKey(secret)
         .parseClaimsJws(token)
         .getBody();
-// 初始状态：return Jwts.parser()。
 // 作用：return Jwts.parser()；构建 JWT 解析验证器。
 }
 
@@ -454,13 +430,11 @@ String inputKind() { return "signed JWT"; }
 // 结果：`matches` 对正确密码返回 `true`，不正确密码返回 `false`。
 PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder(12);
-// 初始状态：return new BCryptPasswordEncoder(12)。
 // 作用：return new BCryptPasswordEncoder(12);；创建密码哈希器。
 }
 
 boolean verify(String raw, String encoded) {
     PasswordEncoder encoder = passwordEncoder();
-// 初始状态：encoder = passwordEncoder()。
     return encoder.matches(raw, encoded);
 // 作用：return encoder.matches(raw, encoded);；创建密码哈希器。
 }
@@ -489,22 +463,18 @@ class TokenBoundary {
     static AccessDecision authorize(String subject, Set<String> authorities,
                                     long expiresAt, long now) {
         boolean active = now < expiresAt;
-// 初始状态：active = now < expiresAt。
 // 作用：boolean active = now < expiresAt;；创建密码哈希器。
         if (!active || !authorities.contains("report:read")) {
             return new AccessDecision(subject, authorities, false);
-// 初始状态：return new AccessDecision(subject, authorities, false)。
 // 作用：return new AccessDecision(subject, authorities, false);；创建密码哈希器。
         }
         return new AccessDecision(subject, authorities, true);
 // 作用：return new AccessDecision(subject, authorities, true);；创建密码哈希器。
-// 初始状态：return new AccessDecision(subject, authorities, true)。
     }
 }
 
 var decision = TokenBoundary.authorize("user-7", Set.of("report:read"), 200L, 100L);
 // 作用：var decision = TokenBoundary.authorize("user-7", Set.of("report:read"), 200L, 100L);；创建密码哈希器。
-// 初始状态：decision = TokenBoundary.authorize("user-7", Set.of("report:read"), 200L, 100L)。
 System.out.println(decision.subject() + "/allowed=" + decision.active());
 // 输出：user-7/allowed=true
 ```

@@ -29,7 +29,6 @@ Testcontainers 管理 Docker 容器，不提供数据库语义的替身。随机
 用途：用于让扩展自动启动并停止测试容器，避免测试异常后资源无人管理。
 
 ```java
-// 初始状态：Docker engine 可达，测试方法前尚未启动 Redis 容器。
 @org.testcontainers.junit.jupiter.Testcontainers
 class RedisLifecycleTest {
     @org.testcontainers.junit.jupiter.Container
@@ -39,7 +38,6 @@ class RedisLifecycleTest {
             .withExposedPorts(6379);
     @org.junit.jupiter.api.Test
     void extensionStartedRedis() {
-        // 关键变化：static @Container 在测试类前启动，类后停止。
         org.junit.jupiter.api.Assertions.assertTrue(redis.isRunning());
     }
 }
@@ -53,12 +51,10 @@ static 只是在本测试类共享，不等于跨 JVM 复用。共享实例仍�
 用途：用于获得随机端口、JDBC URL 和就绪检测，让测试跑在实际 MySQL 方言上。
 
 ```java
-// 初始状态：测试独占 lesson 数据库，固定密码只用于可丢弃的容器。
 try (org.testcontainers.containers.MySQLContainer<?> mysql =
         new org.testcontainers.containers.MySQLContainer<>("mysql:8.0")
             .withDatabaseName("lesson").withUsername("test").withPassword("test-only")) {
     mysql.start();
-    // 关键变化：容器就绪后 URL 包含实际随机宿主端口，不采用生产凭据。
     try (java.sql.Connection connection = java.sql.DriverManager.getConnection(
             mysql.getJdbcUrl(), mysql.getUsername(), mysql.getPassword());
          java.sql.Statement query = connection.createStatement();
@@ -77,7 +73,6 @@ try (org.testcontainers.containers.MySQLContainer<?> mysql =
 用途：用于启动没有专用模块要求的服务，并把动态连接信息交给真实客户端。
 
 ```java
-// 初始状态：Redis 容器尚未启动，6379 是容器端口而非固定宿主端口。
 try (org.testcontainers.containers.GenericContainer<?> redis =
         new org.testcontainers.containers.GenericContainer<>(
             org.testcontainers.utility.DockerImageName.parse("redis:7"))
@@ -85,7 +80,6 @@ try (org.testcontainers.containers.GenericContainer<?> redis =
     redis.start();
     String host = redis.getHost();
     int port = redis.getMappedPort(6379);
-    // 关键变化：port 由 Docker 分配，客户端必须用 host/port 组合。
     org.junit.jupiter.api.Assertions.assertFalse(host.isBlank());
     org.junit.jupiter.api.Assertions.assertTrue(port > 0);
     // 结果：地址可配置给 Lettuce；这里没有声称验证 PING/序列化成功。
@@ -99,7 +93,6 @@ Redis 测试使用唯一前缀 `test:<run-id>:`，在 finally 中只清理自己
 用途：用于在 Spring 测试上下文刷新前提供容器地址，避免应用抢先连接默认数据库。
 
 ```java
-// 初始状态：@Container 的 static MySQL 在扩展控制下启动，测试不是生产 profile。
 @org.springframework.boot.test.context.SpringBootTest
 @org.testcontainers.junit.jupiter.Testcontainers
 class DatabaseBootTest {
@@ -111,7 +104,6 @@ class DatabaseBootTest {
         registry.add("spring.datasource.url", mysql::getJdbcUrl);
         registry.add("spring.datasource.username", mysql::getUsername);
         registry.add("spring.datasource.password", mysql::getPassword);
-        // 关键变化：属性 supplier 指向这个测试的 MySQL，随后 Boot/Flyway 使用同一资源。
     }
     @org.junit.jupiter.api.Test
     void containerIsAvailable() { org.junit.jupiter.api.Assertions.assertTrue(mysql.isRunning()); }
@@ -126,7 +118,6 @@ class DatabaseBootTest {
 用途：用于在支持的 Boot 版本中由容器类型生成 ConnectionDetails，减少手写属性错误。
 
 ```java
-// 初始状态：工程含 spring-boot-testcontainers，Boot 3.1+ 支持 service connection。
 @org.springframework.boot.test.context.SpringBootTest
 @org.testcontainers.junit.jupiter.Testcontainers
 class ServiceConnectionTest {
@@ -136,7 +127,6 @@ class ServiceConnectionTest {
         new org.testcontainers.containers.MySQLContainer<>("mysql:8.0");
     @org.junit.jupiter.api.Test
     void mysqlWasStarted() { org.junit.jupiter.api.Assertions.assertTrue(mysql.isRunning()); }
-    // 关键变化：Boot 根据 MySQLContainer 创建 JDBC ConnectionDetails。
 }
 // 结果：无需再为同一连接写 DynamicPropertySource；迁移仍由应用配置驱动。
 ```
@@ -148,7 +138,6 @@ GenericContainer 无法仅凭 Java 类型识别服务时需要 `@ServiceConnecti
 用途：用于给通用容器声明端口就绪条件，避免固定 sleep 掩盖启动速度变化。
 
 ```java
-// 初始状态：Docker 可用；端口监听只是网络层条件，不证明 Redis 命令可成功。
 try (org.testcontainers.containers.GenericContainer<?> redis =
         new org.testcontainers.containers.GenericContainer<>(
             org.testcontainers.utility.DockerImageName.parse("redis:7"))
@@ -156,7 +145,6 @@ try (org.testcontainers.containers.GenericContainer<?> redis =
             .waitingFor(org.testcontainers.containers.wait.strategy.Wait.forListeningPort())
             .withStartupTimeout(java.time.Duration.ofSeconds(60))) {
     redis.start();
-    // 关键变化：start 最多等待配置启动预算，超时导致测试失败而非继续连接。
     org.junit.jupiter.api.Assertions.assertTrue(redis.isRunning());
     // 结果：容器运行且端口监听；客户端认证和 PING 仍需单独断言。
 }

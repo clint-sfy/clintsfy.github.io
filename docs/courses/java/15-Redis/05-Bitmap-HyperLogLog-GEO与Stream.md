@@ -262,6 +262,41 @@ XRANGE lab:{core}:stream - +
 
 修剪删除历史数据，确认重放与消费进度后才用于生产；= 精确裁剪，~ 近似裁剪可能保留更多。O(移除条数)。有消费组时，默认 KEEPREF 可删除载荷而留下 PEL 中的 pending 引用，不能靠引用恢复载荷；引用策略只在[消费组 XTRIM 章节](./10-发布订阅与Stream消费组#xtrim-keepref-裁剪载荷与保留-pel-的区别)讲解。官方参考：[XTRIM](https://redis.io/docs/latest/commands/xtrim/)。
 
+#### Java 调用：Bitmap、HyperLogLog、GEO 和 Stream
+
+这几种结构使用不同操作视图；`StringRedisTemplate` 由 Spring 注入，以下实验键相互独立。
+
+```java
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.geo.Point;
+import org.springframework.data.redis.connection.stream.StreamRecords;
+
+class SpecialTypesDemo {
+    private final StringRedisTemplate redis;
+    SpecialTypesDemo(StringRedisTemplate redis) { this.redis = redis; }
+
+    void run() {
+        redis.opsForValue().setBit("lab:visits", 7, true);
+        System.out.println(redis.opsForValue().getBit("lab:visits", 7));
+        // 输出：true
+
+        redis.opsForHyperLogLog().add("lab:unique", "Alice", "Bob");
+        System.out.println(redis.opsForHyperLogLog().size("lab:unique"));
+        // 输出：近似去重数量，少量样本通常为 2
+
+        redis.opsForGeo().add("lab:places", new Point(121.47, 31.23), "Shanghai");
+        System.out.println(redis.opsForGeo().position("lab:places", "Shanghai").size());
+        // 输出：1
+
+        redis.opsForStream().add(StreamRecords.newRecord()
+            .in("lab:events").ofMap(java.util.Map.of("type", "created")));
+        // Stream 返回的 RecordId 可用于后续按 ID 读取。
+    }
+}
+```
+
+Bitmap 位偏移要有上限，HyperLogLog 是近似计数，GEO 经纬度顺序是经度在前。Stream 消费组的确认与重试见[发布订阅与 Stream 消费组](./10-发布订阅与Stream消费组)。
+
 ## 易混点
 
 Bitmap 是精确布尔位，HyperLogLog 是近似去重数，GEO 是空间索引，Stream 是可回读日志；它们不能互相替代。日志存储不等于消费组已确认。
