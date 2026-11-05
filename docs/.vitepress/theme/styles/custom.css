@@ -36,6 +36,19 @@ html.dark .VPHomeHero .image-bg {
   text-wrap: pretty;
 }
 
+/* 手写的居中段落（介绍页 logo、徽章等）：上面的 justify/缩进会盖掉 align="center"，
+   这里按选择器优先级显式恢复居中，避免 logo 被推到左边。 */
+.vp-doc > p[align='center'],
+.vp-doc > div > p[align='center'] {
+  text-align: center;
+  text-indent: 0;
+}
+
+.vp-doc > p[align='center'] img,
+.vp-doc > div > p[align='center'] img {
+  margin-inline: auto;
+}
+
 .vp-doc h1 {
   margin-bottom: 24px;
   font-size: clamp(30px, 4vw, 40px);
