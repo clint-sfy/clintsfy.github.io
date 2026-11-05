@@ -38,6 +38,8 @@ description: 速查 Object、Objects、equals、hashCode、toString 和对象身
 
 ## 常用用法
 
+本页的短代码片段可在 JDK 17 或更高版本的 `jshell` 中逐块尝试：先输入片段中的 import，再输入其余语句；切换示例时可用 `/reset` 清除之前的定义。若放入 `.java` 文件，请将 import 放在类之前、可执行语句放进 `main` 方法，并按需处理受检异常。包含完整类的示例可按类名保存并编译运行；使用第三方库或文件的示例还需准备相应依赖或文件。
+
 ### `==`：比较引用身份
 
 `==` 对引用比较对象身份，对基本类型比较数值；字符串、包装类型和值对象的内容比较不要依赖它。
@@ -134,6 +136,8 @@ System.out.println(new User("Ann"));
 一方或双方为 `null` 时不会抛异常；业务仍要明确大小写、空白和规范化规则。
 
 ```java
+import java.util.Objects;
+
 String left = null;
 String right = "Java";
 System.out.println(Objects.equals(left, right));
@@ -146,6 +150,8 @@ System.out.println(Objects.equals(left, right));
 适合实现值对象 `hashCode`；字段顺序和字段集合要与 `equals` 保持一致。
 
 ```java
+import java.util.Objects;
+
 int hash = Objects.hash("U-1", "Ann");
 // 作用：适合实现值对象 hashCode。
 System.out.println(hash != 0);
@@ -157,6 +163,8 @@ System.out.println(hash != 0);
 适合日志或展示的轻量默认值；不要用它把必填字段的缺失静默变成合法业务值。
 
 ```java
+import java.util.Objects;
+
 String value = null;
 System.out.println(Objects.toString(value, "(missing)"));
 // 输出：(missing)
@@ -168,6 +176,8 @@ System.out.println(Objects.toString(value, "(missing)"));
 传入 `null` 会立即抛 `NullPointerException`，适合构造器和方法入口；延迟到深层调用才失败会丢失上下文。
 
 ```java
+import java.util.Objects;
+
 String name = Objects.requireNonNull("Ann", "name");
 // 作用：传入 null 会立即抛 NullPointerException，适合构造器和方法入口。
 System.out.println(name);
@@ -191,6 +201,8 @@ System.out.println(value.getClass().getSimpleName());
 它会对数组使用深层内容比较；普通对象仍依赖各自的 `equals`，不会自动递归所有字段。
 
 ```java
+import java.util.Objects;
+
 int[][] left = {{1, 2}};
 int[][] right = {{1, 2}};
 System.out.println(Objects.deepEquals(left, right));
@@ -203,6 +215,9 @@ System.out.println(Objects.deepEquals(left, right));
 比较器由调用者决定 `null` 是否可接受；`Objects.compare` 不会自动把 `null` 当作最大或最小值。
 
 ```java
+import java.util.Comparator;
+import java.util.Objects;
+
 Comparator<String> byLength = Comparator.comparingInt(String::length);
 int order = Objects.compare("Java", "API", byLength);
 // 作用：通过 Objects.compare 带比较器的空值边界。
@@ -241,11 +256,21 @@ System.out.println(copy.value);
 `wait` 必须在持有同一对象监视器时调用，它会释放监视器；唤醒后还必须在循环中重新检查条件。
 
 ```java
-// 前置条件：当前线程已经持有 lock 的监视器
+Object lock = new Object();
+boolean[] ready = {false}; // 两个线程都在持有 lock 时访问这个状态
+Thread worker = new Thread(() -> {
+    synchronized (lock) {
+        ready[0] = true;
+        lock.notifyAll();
+    }
+});
+worker.start();
 synchronized (lock) {
-    while (!ready) lock.wait();
+    while (!ready[0]) lock.wait(); // wait 释放 lock，唤醒后重新检查条件
 }
-// 结果：被唤醒并重新取得监视器后才继续执行
+worker.join();
+System.out.println("ready");
+// 输出：ready
 ```
 
 ### `Object.notifyAll`：唤醒同一监视器上的等待线程

@@ -36,6 +36,8 @@ description: 速查 UTC 时间线、区域时区、时区转换、Duration、Per
 
 ## 常用用法
 
+本页的短代码片段可在 JDK 17 或更高版本的 `jshell` 中逐块尝试：先输入片段中的 import，再输入其余语句；切换示例时可用 `/reset` 清除之前的定义。若放入 `.java` 文件，请将 import 放在类之前、可执行语句放进 `main` 方法，并按需处理受检异常。包含完整类的示例可按类名保存并编译运行；使用第三方库或文件的示例还需准备相应依赖或文件。
+
 ### `Instant.parse`：从 ISO-8601 文本创建时刻
 
 解析带 `Z` 或偏移的外部时间时得到唯一时刻；时间戳单位要在接口文档中明确是秒还是毫秒。
@@ -56,7 +58,10 @@ System.out.println(fromMillis);
 `Instant.ofEpochMilli(0)` 明确把参数按毫秒解释，得到 Unix 时间纪元 `1970-01-01T00:00:00Z`。
 
 ```java
+import java.time.Instant;
+
 Instant epoch = Instant.ofEpochMilli(0);
+System.out.println(epoch);
 // 输出：1970-01-01T00:00:00Z
 ```
 
@@ -229,6 +234,9 @@ System.out.println(Instant.now(shifted));
 `Clock.tick(base, Duration.ofMinutes(1))` 使得读取值只在整分钟边界变化，适合模拟低精度时钟；节拍必须满足 `Clock.tick` 的整除约束。
 
 ```java
+import java.time.Clock;
+import java.time.Duration;
+
 Clock minuteClock = Clock.tick(Clock.systemUTC(), Duration.ofMinutes(1));
 // 结果：minuteClock 每次读取都落在整分钟边界。
 ```

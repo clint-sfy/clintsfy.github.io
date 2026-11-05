@@ -35,6 +35,8 @@ Stream 像一条尚未开机的流水线：中间操作只描述步骤，遇到�
 
 ## 常用用法
 
+本页的短代码片段可在 JDK 17 或更高版本的 `jshell` 中逐块尝试：先输入片段中的 import，再输入其余语句；切换示例时可用 `/reset` 清除之前的定义。若放入 `.java` 文件，请将 import 放在类之前、可执行语句放进 `main` 方法，并按需处理受检异常。包含完整类的示例可按类名保存并编译运行；使用第三方库或文件的示例还需准备相应依赖或文件。
+
 ### `Collection.stream`：从集合创建顺序流
 
 流是数据源的处理视图，不会复制或持久化集合；同一条流消费后不能再次使用。
@@ -56,6 +58,8 @@ System.out.println(fromCollection + ", " + fromValues);
 `Stream.of("Java", "SQL")` 把两个给定值作为流元素，不依赖外部集合；上例的 `fromValues` 因此为 2。
 
 ```java
+import java.util.stream.Stream;
+
 long fromValues = Stream.of("Java", "SQL").count();
 // 输出：2
 ```
@@ -434,6 +438,8 @@ System.out.println(count);
 `stream.parallel()` 返回并行模式的流管道，它与 `parallelStream()` 的并行成本和无副作用要求相同；不会自动保证更快。
 
 ```java
+import java.util.stream.Stream;
+
 boolean parallel = Stream.of(1, 2, 3).parallel().isParallel();
 // 结果：true
 ```
@@ -471,9 +477,13 @@ System.out.println(events);
 
 ### `BaseStream.close`：关闭拥有外部资源的流
 
-try-with-resources 在代码块结束时调用 `close()`，因此上例注册的处理器向 `events` 追加 `"closed"`；普通集合流本身不持有需关闭资源。
+try-with-resources 在代码块结束时调用 `close()`，因此上例注册的处理器向 `events` 追加 `"closed"`；普通集合流本身不持有需关闭资源。以下示例需要当前目录下存在 `data.txt`，读取失败会抛出 `IOException`。
 
 ```java
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
+
 try (Stream<String> lines = Files.lines(Path.of("data.txt"))) {
 // 输入：try (Stream<String> lines = Files.lines(Path.of("data.txt"))) {；资源变量 lines 接收 Files.lines(Path.of("data.txt"))，try 结束时自动关闭。
     lines.findFirst();

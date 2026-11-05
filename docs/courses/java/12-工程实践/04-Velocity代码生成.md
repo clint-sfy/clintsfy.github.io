@@ -42,6 +42,8 @@ dependencies {
 
 ## 常用用法
 
+以下第一个片段可逐行输入 JShell；写成 Java 文件时，将 import 放在文件顶部，其他语句放入 `main` 方法。
+
 ### `Properties()`：创建引擎配置集
 
 `Properties` 的空构造器创建可变的字符串键值集；这里的 `config` 专门承载 Velocity 资源加载器和编码选项，然后整体传给 `VelocityEngine`。

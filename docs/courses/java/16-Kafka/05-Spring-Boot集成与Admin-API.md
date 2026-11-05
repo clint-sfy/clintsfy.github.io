@@ -14,14 +14,19 @@ description: 配置 Spring Kafka，创建 Topic，并通过 AdminClient 查询�
 
 ## `NewTopic`：声明实验 Topic
 
-在 Spring 配置类里声明 Topic，启动时由 KafkaAdmin 尝试创建。把下面的类放进 Spring Boot 应用的扫描包；`application.properties` 配置 `spring.kafka.bootstrap-servers=localhost:9092`。
+在 Spring 配置类里声明 Topic，启动时由 KafkaAdmin 尝试创建。把下面保存为 `KafkaTopicConfig.java`，放进 Spring Boot 应用的扫描包；`application.properties` 配置 `spring.kafka.bootstrap-servers=localhost:9092`。
 
 ```java
-@org.springframework.context.annotation.Configuration
+import org.apache.kafka.clients.admin.NewTopic;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.config.TopicBuilder;
+
+@Configuration
 public class KafkaTopicConfig {
-    @org.springframework.context.annotation.Bean
-    org.apache.kafka.clients.admin.NewTopic learningTopic() {
-        return org.springframework.kafka.config.TopicBuilder.name("learning.events")
+    @Bean
+    NewTopic learningTopic() {
+        return TopicBuilder.name("learning.events")
             .partitions(1).replicas(1).build();
     }
 }

@@ -55,12 +55,19 @@ GET lab:{locks}:order
 用于为一次锁申请生成独立令牌而不是复用线程名或业务主键。
 
 ```java
-String first = java.util.UUID.randomUUID().toString();
-String second = java.util.UUID.randomUUID().toString();
-System.out.println(first.equals(second));
-// 输出：通常 false
-// 初始：两个不同的锁申请，输出具体 UUID 不固定。
+import java.util.UUID;
+
+class RedisExample11_1 {
+    public static void main(String[] args) throws Exception {
+        String first = UUID.randomUUID().toString();
+        String second = UUID.randomUUID().toString();
+        System.out.println(first.equals(second));
+        // 输出：通常 false
+    }
+}
 ```
+
+实验前提：两个不同的锁申请，输出具体 UUID 不固定。
 
 所有重试必须明确是恢复同一次申请还是新的申请；新申请使用新 token，不用时间戳单独充当唯一值。
 
@@ -105,17 +112,28 @@ EVAL "if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('PEXPIRE',KEY
 用于通过 Redisson 限制获取等待与持有租约并正确退出竞争。
 
 ```java
-org.redisson.api.RLock lock = redissonClient.getLock("lab:{locks}:redisson");
-boolean acquired = lock.tryLock(200, 5000, java.util.concurrent.TimeUnit.MILLISECONDS);
-if (!acquired) System.out.println("BUSY");
-// 输出：竞争失败时 BUSY
-else {
-    try { System.out.println(lock.isHeldByCurrentThread()); }
-// 输出：持有租约时 true
-    finally { if (lock.isHeldByCurrentThread()) lock.unlock(); }
+import java.util.concurrent.TimeUnit;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+
+class RedisExample11_2 {
+    public static void run(RedissonClient redissonClient) throws Exception {
+        RLock lock = redissonClient.getLock("lab:{locks}:redisson");
+        boolean acquired = lock.tryLock(200, 5000, TimeUnit.MILLISECONDS);
+        if (!acquired) System.out.println("BUSY");
+        // 输出：竞争失败时 BUSY
+        else {
+            try { System.out.println(lock.isHeldByCurrentThread()); }
+            // 输出：持有租约时 true
+            finally { if (lock.isHeldByCurrentThread()) lock.unlock(); }
+        }
+    }
 }
-// 初始：已注入连接隔离 Redis 的 redissonClient，调用线程允许 InterruptedException 上抛。
 ```
+
+在已配置 Redisson 的 Spring Bean 中注入 `RedissonClient client`，然后调用 `RedisExample11_2.run(client)`；锁释放示例同理调用 `RedisExample11_3.run(client)`。
+
+实验前提：已注入连接隔离 Redis 的 redissonClient，调用线程允许 InterruptedException 上抛。
 
 显式 leaseTime 路径不依赖 watchdog 自动延长。未传 leaseTime 的获取方式可使用 watchdog，默认 lockWatchdogTimeout 常为 30 秒，须按版本配置确认。两条路径都不保证工作能及时停止，锁不是外部事务。[Redisson RLock](https://redisson.pro/docs/data-and-services/locks-and-synchronizers/)。
 
@@ -124,19 +142,28 @@ else {
 用于在同一持有线程释放锁并保留所有权丢失的可观察结果。
 
 ```java
-org.redisson.api.RLock lock = redissonClient.getLock("lab:{locks}:watchdog");
-boolean acquired = lock.tryLock(200, java.util.concurrent.TimeUnit.MILLISECONDS);
-if (acquired) {
-    try { System.out.println("ACQUIRED"); }
-// 输出：取得租约时 ACQUIRED
-    finally {
-        try { if (lock.isHeldByCurrentThread()) lock.unlock(); }
-        catch (IllegalMonitorStateException lost) { System.out.println("OWNERSHIP_LOST"); }
-// 输出：竞态丢失所有权时 OWNERSHIP_LOST
+import java.util.concurrent.TimeUnit;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+
+class RedisExample11_3 {
+    public static void run(RedissonClient redissonClient) throws Exception {
+        RLock lock = redissonClient.getLock("lab:{locks}:watchdog");
+        boolean acquired = lock.tryLock(200, TimeUnit.MILLISECONDS);
+        if (acquired) {
+            try { System.out.println("ACQUIRED"); }
+            // 输出：取得租约时 ACQUIRED
+            finally {
+                try { if (lock.isHeldByCurrentThread()) lock.unlock(); }
+                catch (IllegalMonitorStateException lost) { System.out.println("OWNERSHIP_LOST"); }
+                // 输出：竞态丢失所有权时 OWNERSHIP_LOST
+            }
+        }
     }
 }
-// 初始：同线程执行，未指定 leaseTime；watchdog 也可能因暂停或断网失败。
 ```
+
+实验前提：同线程执行，未指定 leaseTime；watchdog 也可能因暂停或断网失败。
 
 生产还需处理 Redis 网络异常、保留原业务异常（追加 suppressed 或结构化记录），不能让解锁错误覆盖根因，也不盲重试外部写。可重入次数须匹配释放次数；异步任务不能把普通线程所有权直接转给其他线程。普通 RLock 不生成 fencing token。
 
@@ -145,24 +172,29 @@ if (acquired) {
 用于用一个可运行资源模型证明新持有者写入后旧持有者无法覆盖状态。
 
 ```java
-class FencingResource {
-    private long lastToken = 40;
-    private String state = "PAID";
-    public synchronized boolean write(long token, String next) {
-        if (token <= lastToken) return false;
-        lastToken = token;
-        state = next;
-        return true;
+class RedisExample11_4 {
+    public static void main(String[] args) throws Exception {
+        class FencingResource {
+            private long lastToken = 40;
+            private String state = "PAID";
+            public synchronized boolean write(long token, String next) {
+                if (token <= lastToken) return false;
+                lastToken = token;
+                state = next;
+                return true;
+            }
+            public synchronized String state() { return state; }
+        }
+        FencingResource resource = new FencingResource();
+        boolean fresh = resource.write(42, "CANCELLED");
+        boolean stale = resource.write(41, "PAID");
+        System.out.println(fresh + "/" + stale + "/" + resource.state());
+        // 输出：true/false/CANCELLED
     }
-    public synchronized String state() { return state; }
 }
-FencingResource resource = new FencingResource();
-boolean fresh = resource.write(42, "CANCELLED");
-boolean stale = resource.write(41, "PAID");
-System.out.println(fresh + "/" + stale + "/" + resource.state());
-// 输出：true/false/CANCELLED
-// 初始：资源 lastToken=40；42 是新持有者，41 是暂停后恢复的旧持有者。
 ```
+
+实验前提：资源 lastToken=40；42 是新持有者，41 是暂停后恢复的旧持有者。
 
 这是资源端内存模型，未连接数据库。生产数据库应在同一原子条件 UPDATE 中检查 `last_token < token` 并更新 state/last_token，检查影响行数；不能先 SELECT 再无条件 UPDATE。严格递增拒绝同 token 重试，多次操作需额外定义幂等协议。token 分配必须单调且恢复后不回退；Redis INCR 在异步故障转移/备份回退后不能单独证明该条件。Redisson RFencedLock 可提供 token API，但仍必须让受保护资源验证并审计恢复假设。owner 随机值、fencing 顺序号和用户授权分别负责不同问题。[Redisson Fenced Lock](https://redisson.pro/docs/data-and-services/locks-and-synchronizers/#fenced-lock)。
 
@@ -171,21 +203,29 @@ System.out.println(fresh + "/" + stale + "/" + resource.state());
 用途：用于把递增 token 放进数据库的原子条件更新，让过期锁持有者无法覆盖新持有者已完成的写入。
 
 ```java
-// 风险：UPDATE 仅限主键 WHERE id=7，额外比较 last_token，必须检查影响行数。
-String sql = "UPDATE fenced_orders SET state=?,last_token=? WHERE id=? AND last_token<?";
-java.sql.Connection connection = testConnection;
-try (java.sql.PreparedStatement update = connection.prepareStatement(sql)) {
-    update.setString(1, "CANCELLED"); update.setLong(2, 42); update.setLong(3, 7); update.setLong(4, 42);
-    int accepted = update.executeUpdate();
-    update.setString(1, "PAID"); update.setLong(2, 41); update.setLong(3, 7); update.setLong(4, 41);
-    int stale = update.executeUpdate();
-    org.junit.jupiter.api.Assertions.assertEquals(1, accepted);
-    org.junit.jupiter.api.Assertions.assertEquals(0, stale);
-    // 结果：42 更新 1 行，暂停后恢复的 41 更新 0 行；需真实数据库 fixture 执行这两个断言。
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+
+class RedisExample11_5 {
+    public static void run(Connection testConnection) throws Exception {
+        // 风险：UPDATE 仅限主键 WHERE id=7，额外比较 last_token，必须检查影响行数。
+        String sql = "UPDATE fenced_orders SET state=?,last_token=? WHERE id=? AND last_token<?";
+        Connection connection = testConnection;
+        try (PreparedStatement update = connection.prepareStatement(sql)) {
+            update.setString(1, "CANCELLED"); update.setLong(2, 42); update.setLong(3, 7); update.setLong(4, 42);
+            int accepted = update.executeUpdate();
+            update.setString(1, "PAID"); update.setLong(2, 41); update.setLong(3, 7); update.setLong(4, 41);
+            int stale = update.executeUpdate();
+            System.out.println("新 token 更新行数：" + accepted);
+            // 输出：新 token 更新行数：1
+            System.out.println("旧 token 更新行数：" + stale);
+            // 输出：旧 token 更新行数：0
+        }
+    }
 }
 ```
 
-`testConnection` 由隔离数据库测试提供；初始建表为 `id BIGINT PRIMARY KEY, state VARCHAR(20), last_token BIGINT NOT NULL`，写入一行 `(7,'PAID',40)`。资源端必须把 token 检查与写入原子化，不能先 SELECT 再无条件 UPDATE；事务未提交前也不应宣布完成。普通 RLock 不发这种 fencing token；递增、故障恢复和同 token 重试语义必须独立设计，上例严格递增条件会拒绝同 token 再写。token 不是身份凭证，授权、唯一约束和幂等仍需要执行；可恢复备份必须避免计数器回退重新发出旧 token。此处未执行真实 SQL，不能将编译或本地锁所有权断言当作 fencing 生效。
+`RedisExample11_5.run(testConnection)` 由隔离数据库测试调用，`testConnection` 由测试提供；初始建表为 `id BIGINT PRIMARY KEY, state VARCHAR(20), last_token BIGINT NOT NULL`，写入一行 `(7,'PAID',40)`。资源端必须把 token 检查与写入原子化，不能先 SELECT 再无条件 UPDATE；事务未提交前也不应宣布完成。普通 RLock 不发这种 fencing token；递增、故障恢复和同 token 重试语义必须独立设计，上例严格递增条件会拒绝同 token 再写。token 不是身份凭证，授权、唯一约束和幂等仍需要执行；可恢复备份必须避免计数器回退重新发出旧 token。此处未执行真实 SQL，不能将编译或本地锁所有权断言当作 fencing 生效。
 
 ## 易混点
 

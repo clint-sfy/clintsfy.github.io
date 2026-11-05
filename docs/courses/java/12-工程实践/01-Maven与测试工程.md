@@ -28,15 +28,13 @@ Maven 坐标由 groupId、artifactId、version 组成，依赖树和 dependencyM
 
 在项目根目录先运行测试，再执行包含集成检查的验证阶段。
 
-```java
-// 说明：Maven 生命周期：运行测试与工程校验 的具体调用为 String[] lifecycle = {"mvn", "test", "&&", "mvn", "verify"};
-String[] lifecycle = {"mvn", "test", "&&", "mvn", "verify"};
-// 作用：String[] lifecycle = {"mvn", "test", "&&", "mvn", "verify"};；运行测试与工程校验。
-System.out.println(String.join(" ", lifecycle));
-// 输出：构建成功时显示 BUILD SUCCESS，失败时进程返回非零退出码。
-// 命令：mvn test
-// 命令：mvn verify
+```shell
+mvn test
+mvn verify
+# 输出：构建成功时显示 BUILD SUCCESS；失败时返回非零退出码。
 ```
+
+`verify` 会依次执行它之前的生命周期阶段，包括 `test`；单独运行 `test` 便于先检查单元测试。成功时 Maven 输出 `BUILD SUCCESS`，失败时返回非零退出码。
 
 ### `@Test`：声明单元测试
 
@@ -62,25 +60,42 @@ class PriceTest {
 用 `assertThrows` 同时验证异常类型并取得异常对象供后续断言。
 
 ```java
-// 说明：assertThrows：验证异常路径 的具体调用为 var error = assertThrows(IllegalArgumentException.class,
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
 
-var error = assertThrows(IllegalArgumentException.class,
-        () -> Integer.parseInt("x"));
-// 作用：var error = assertThrows(IllegalArgumentException.class,；验证异常路径。
-// 输出：error 的类型是 NumberFormatException。
+class ParseTest {
+    @Test
+    void rejectsNonNumericInput() {
+        NumberFormatException error = assertThrows(NumberFormatException.class,
+                () -> Integer.parseInt("x"));
+        assertEquals("For input string: \"x\"", error.getMessage());
+        // 结果：异常类型和消息均符合预期，测试通过。
+    }
+}
 ```
+
+将测试类保存到 Maven 项目的 `src/test/java` 下，并配置 JUnit 5；`mvn test` 会运行它。
 
 ### SLF4J 参数化日志：记录结构化上下文
 
 用占位符记录业务字段，避免不必要的字符串拼接并保留日志上下文。
 
 ```java
-// 说明：SLF4J 参数化日志：记录结构化上下文 的具体调用为 logger.info("order accepted, orderId={}", orderId);
-logger.info("order accepted, orderId={}", orderId);
-// 作用：logger.info("order accepted, orderId={}", orderId);；记录结构化上下文。
-// 输出：INFO order accepted, orderId=42（前提：orderId 为 42 且 INFO 级别已启用）。
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+class OrderService {
+    private static final Logger logger = LoggerFactory.getLogger(OrderService.class);
+
+    void accept(long orderId) {
+        logger.info("order accepted, orderId={}", orderId);
+        // 输出：配置了日志实现且 INFO 启用时，日志包含 order accepted, orderId=42。
+    }
+}
 ```
+
+例如调用 `new OrderService().accept(42)`；配置了日志实现且启用 INFO 时，日志包含 `order accepted, orderId=42`。占位符是参数化日志；是否输出为结构化字段取决于日志实现和配置。
 
 ### `@PreDestroy`：在容器销毁前释放资源
 
@@ -114,6 +129,8 @@ class ReportService {
 }
 // 结果：容器把名为 auditClock 的 Bean 注入 clock
 ```
+
+以下字符集、随机数和 UUID 片段可逐行输入 JShell；也可把导入语句放在 Java 文件顶部，其余语句放入 `main` 方法。
 
 ### `Charset.forName`：按规范名称查找字符集
 

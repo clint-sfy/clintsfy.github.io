@@ -46,6 +46,12 @@ org.junit.jupiter.api.Assertions.assertEquals(java.time.Duration.ofSeconds(2), t
 用途：用于在有明确超时预算的同步调用中读取订单，并把已知 HTTP 拒绝转换为业务异常。
 
 ```java
+// 与上一节相同的连接和读取超时配置；生产中通常复用此 factory。
+java.net.http.HttpClient transport = java.net.http.HttpClient.newBuilder()
+    .connectTimeout(java.time.Duration.ofSeconds(2)).build();
+org.springframework.http.client.JdkClientHttpRequestFactory factory =
+    new org.springframework.http.client.JdkClientHttpRequestFactory(transport);
+factory.setReadTimeout(java.time.Duration.ofSeconds(3));
 org.springframework.web.client.RestClient client = org.springframework.web.client.RestClient.builder()
     .requestFactory(factory).baseUrl("http://127.0.0.1:18080").build();
 String body = client.get().uri(builder -> builder.path("/orders/{id}").build(7))
@@ -82,6 +88,13 @@ pool.dispose();
 用途：用于把响应式请求组合成有限预算的链，并在错误分支释放响应体资源。
 
 ```java
+// 为此示例单独创建池；不要复用上一节已经 dispose 的池。
+reactor.netty.resources.ConnectionProvider pool = reactor.netty.resources.ConnectionProvider.builder("orders")
+    .maxConnections(20).pendingAcquireMaxCount(40)
+    .pendingAcquireTimeout(java.time.Duration.ofSeconds(1)).build();
+reactor.netty.http.client.HttpClient transport = reactor.netty.http.client.HttpClient.create(pool)
+    .option(io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS, 2000)
+    .responseTimeout(java.time.Duration.ofSeconds(3));
 org.springframework.web.reactive.function.client.WebClient client =
     org.springframework.web.reactive.function.client.WebClient.builder()
         .baseUrl("http://127.0.0.1:18080")
@@ -93,6 +106,7 @@ reactor.core.publisher.Mono<String> result = client.get().uri("/orders/{id}", 7)
         : response.createException().flatMap(reactor.core.publisher.Mono::error))
     .timeout(java.time.Duration.ofSeconds(4));
 org.junit.jupiter.api.Assertions.assertNotNull(result);
+pool.dispose(); // 此片段不订阅 result；真正执行请求时应在所有请求结束后释放池。
 // 结果：需要 StepVerifier/受控 HTTP 服务器断言 PAID、错误、超时、过大 body 和取消分支。
 ```
 

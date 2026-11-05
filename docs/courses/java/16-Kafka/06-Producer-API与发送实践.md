@@ -38,7 +38,13 @@ public class ProducerDemo {
                 new ProducerRecord<>("learning.events", "order-7", "created");
             record.headers().add("source", "java-demo".getBytes(StandardCharsets.UTF_8));
 
-            var metadata = producer.send(record).get(10, TimeUnit.SECONDS);
+            var metadata = producer.send(record, (confirmed, error) -> {
+                if (error != null) {
+                    System.err.println("发送失败：" + error.getMessage());
+                    return;
+                }
+                System.out.println("异步确认 partition=" + confirmed.partition());
+            }).get(10, TimeUnit.SECONDS);
             System.out.println("topic=" + metadata.topic()
                 + ", partition=" + metadata.partition()
                 + ", offset=" + metadata.offset());
@@ -52,19 +58,7 @@ public class ProducerDemo {
 
 ### `send(record, callback)`：异步获知结果
 
-在已经创建的 `producer` 上调用回调重载：
-
-```java
-producer.send(record, (metadata, error) -> {
-    if (error != null) {
-        System.err.println("发送失败：" + error.getMessage());
-        return;
-    }
-    System.out.println("确认位置：" + metadata.partition() + ":" + metadata.offset());
-});
-```
-
-回调在客户端线程执行，里面不要做耗时业务；关闭 Producer 前应等待未完成发送。
+上面完整类里的第二个参数就是回调：发送成功时 `confirmed` 包含分区和 offset，失败时 `error` 非空。回调在客户端线程执行，不要在里面做耗时业务；后面的 `get(10, TimeUnit.SECONDS)` 让这个一次性练习等待完成。真实批量发送通常收集 Future 或在回调汇总结果，而不是每条都立即 `get()`。
 
 ## ACK、幂等与重试
 

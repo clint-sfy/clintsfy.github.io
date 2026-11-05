@@ -34,14 +34,27 @@ docker exec kafka-lab /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhos
 
 ## Java 示例需要什么依赖
 
-建立一个普通 Maven 项目，JDK 设为 20。纯 Java 客户端示例使用下面的依赖；Spring Boot 示例改用 Boot 依赖管理的 `spring-kafka`，不要在同一项目硬塞另一版客户端。
+建立一个普通 Maven 项目，JDK 设为 20。把下面保存为项目根目录的 `pom.xml`，后续的 `ProducerDemo.java`、`ConsumerDemo.java` 和 `TopicAdminDemo.java` 放在 `src/main/java/` 下，文件名与类名保持一致。Spring Boot 示例单独使用[第 10 篇的项目](./10-Spring-Kafka项目整合)，由 Boot 管理 `spring-kafka` 版本。
 
 ```xml
-<dependency>
-    <groupId>org.apache.kafka</groupId>
-    <artifactId>kafka-clients</artifactId>
-    <version>4.1.2</version>
-</dependency>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>demo</groupId>
+    <artifactId>kafka-client-lab</artifactId>
+    <version>1.0.0</version>
+    <properties>
+        <maven.compiler.release>20</maven.compiler.release>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>4.1.2</version>
+        </dependency>
+    </dependencies>
+</project>
 ```
 
-后续每个纯 Java 代码块都是完整类：复制到同名 `.java` 文件，启动 Broker 后从 `main` 运行。若 Java 客户端连不上，先确认 `docker ps` 中容器在运行、宿主机 `9092` 未被占用，再查 Broker 返回的 `advertised.listeners` 地址。学完后可运行 `docker stop kafka-lab` 停止这个实验容器，保留其数据以便下次继续。
+在项目根目录运行 `mvn compile` 检查依赖和 JDK。后续每个纯 Java 代码块都是完整类：启动 Broker 后从 IDE 的 `main` 运行。若 Java 客户端连不上，先确认 `docker ps` 中容器在运行、宿主机 `9092` 未被占用，再查 Broker 返回的 `advertised.listeners` 地址。学完后可运行 `docker stop kafka-lab` 停止这个实验容器，保留其数据以便下次继续。
