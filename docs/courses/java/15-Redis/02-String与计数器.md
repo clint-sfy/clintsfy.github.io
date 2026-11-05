@@ -37,7 +37,7 @@ GET lab:{core}:s
 # 输出：两次 SET 为 OK，GET 为 "new"。
 ```
 
-普通 SET 覆盖值并清除原 TTL；需要保留时显式 KEEPTTL，需要生命周期时用 EX/PX。 官方参考：[SET](https://redis.io/docs/latest/commands/set/)。
+`SET key value` 把一整个字符串值写到 key，无论旧值是否存在都会返回 `OK`；它既能存文本，也能存按约定序列化后的字节。普通 SET 覆盖旧值时会清除原 TTL，所以更新会话或缓存时要明确选择 `EX`（秒）、`PX`（毫秒）或 `KEEPTTL`，否则可能把原本会过期的 key 变成永久 key。官方参考：[SET](https://redis.io/docs/latest/commands/set/)。
 
 ### `SET NX`：仅在键缺失时创建值以避免覆盖已有内容
 
@@ -52,7 +52,7 @@ GET lab:{core}:s
 # 输出：依次为 OK、(nil)、"first"。
 ```
 
-NX 是 SET 选项；原子存在性检查不等于完整分布式锁协议。生产临时占位应与 EX/PX 一起设置，避免无期限残留。 官方参考：[SET NX](https://redis.io/docs/latest/commands/set/)。
+`NX` 是 SET 的“仅当不存在”选项：创建成功返回 `OK`，已有 key 时返回空结果，原值不会被覆盖。它适合一次性占位或去重入口；业务要区分“别人已经写入”和“这次写入失败”。原子存在性检查不等于完整分布式锁协议，临时占位通常还要在同一条 SET 中附加 `EX/PX`，避免无期限残留。官方参考：[SET NX](https://redis.io/docs/latest/commands/set/)。
 
 ### `SET XX`：仅在键存在时更新并识别条件写入失败
 
@@ -83,7 +83,7 @@ GET lab:{core}:missing
 # 输出：OK、""、(nil)。
 ```
 
-空字符串不是缺失值，客户端不能把两者统一转换为同一默认值。 官方参考：[GET](https://redis.io/docs/latest/commands/get/)。
+`GET key` 返回字符串内容；不存在时返回空结果，值为 `""` 时返回长度为零的字符串，这是两个不同状态。读缓存时要用返回值是否为 `null` 判断 miss，不能把空字符串也当作缺失；如果 key 实际存的是 Hash/List 等类型，服务器会返回 WRONGTYPE。官方参考：[GET](https://redis.io/docs/latest/commands/get/)。
 
 ### `INCR`：原子增加整数计数并观察缺失键从零开始
 
@@ -98,7 +98,7 @@ GET lab:{core}:s
 # 输出：整数 1、整数 2、"2"。
 ```
 
-适合计数；INCR 不自动设置 TTL，INCR 和 EXPIRE 两条命令存在故障窗口。错误文本和超出 64 位范围都会失败，超时后盲重试可能重复计数。 官方参考：[INCR](https://redis.io/docs/latest/commands/incr/)。
+`INCR key` 把整数值加 1 并返回加完后的整数；缺失 key 当作 0，所以第一次返回 1。适合访问次数等可重复计数，但它不自动设置 TTL，单独再发 `EXPIRE` 存在故障窗口。原值不是整数或超出有符号 64 位范围会报错；请求超时后也不能盲重试，否则可能多加一次。官方参考：[INCR](https://redis.io/docs/latest/commands/incr/)。
 
 ### `DECR`：原子减少整数计数并观察负值语义
 
@@ -126,7 +126,7 @@ MGET lab:{core}:s lab:{core}:missing
 # 输出：OK，数组依次为 "Ann"、(nil)。
 ```
 
-O(N)；限制批次和总字节数。Cluster 多键需同槽，本章 hash tag 已满足。MGET 对非字符串值也返回 nil。 官方参考：[MGET](https://redis.io/docs/latest/commands/mget/)。
+`MGET key1 key2 ...` 返回一个与输入 key 顺序一致的数组，缺失项保留空位置，因此可以按下标对应请求，不要丢弃空项后再配对。它适合一次读取少量相关键，时间复杂度随 key 数增长，还要限制批次和总返回字节数。Cluster 多键需同槽，本章 hash tag 已满足；非字符串类型的项也会返回空值。官方参考：[MGET](https://redis.io/docs/latest/commands/mget/)。
 
 ### `MSET`：一次写入多个字符串并观察原子批量更新
 
@@ -140,7 +140,7 @@ MGET lab:{core}:s lab:{core}:t
 # 输出：OK，数组为 "Ann"、"Bob"。
 ```
 
-O(N)，原子并不意味着支持独立 TTL；Cluster 多键必须同槽。 官方参考：[MSET](https://redis.io/docs/latest/commands/mset/)。
+`MSET key1 value1 key2 value2 ...` 一次写入多对字符串，成功返回 `OK`；它会覆盖已有值，整条命令原子执行。适合一起更新少量相关键，但没有给每个键分别设置 TTL 的参数；需要各键不同寿命时要另做设计。成本随键值对数量增长，Cluster 多键必须同槽。官方参考：[MSET](https://redis.io/docs/latest/commands/mset/)。
 
 ### `GETRANGE`：按字节位置读取字符串的闭区间片段
 

@@ -52,7 +52,7 @@ System.out.println(tags.size());
 
 ### `Set.add`：新增并判断是否重复
 
-add 在元素尚不存在时写入并返回 true，重复元素不会再次加入。
+`add(element)` 在元素尚不存在时加入并返回 true；已有相等元素时返回 false，集合不变。
 
 ```java
 import java.util.HashSet;
@@ -68,6 +68,8 @@ public class SetAddDemo {
     }
 }
 ```
+
+`HashSet` 使用 `hashCode` 与 `equals` 判重，放入后不要修改参与这两项计算的字段。
 
 ### Set.contains：判断元素是否存在
 
@@ -147,7 +149,7 @@ public class SetUnionDemo {
 
 ### Set.retainAll：交集
 
-retainAll 只保留当前集合和参数集合共有的元素，属于原地修改。
+`retainAll(other)` 只保留当前集合与参数集合共有的元素，并返回当前集合是否发生变化。
 
 ```java
 import java.util.LinkedHashSet;
@@ -162,6 +164,8 @@ public class SetIntersectionDemo {
     }
 }
 ```
+
+它会原地修改接收者；若还需要原集合，先用 `new HashSet<>(source)` 创建副本再求交集。
 
 ### Set.removeAll：差集
 
@@ -383,7 +387,7 @@ public class TreeSetHigherDemo {
 
 ### TreeSet.subSet：查询区间视图
 
-subSet 返回指定上下界之间的动态视图，需要独立结果时再复制。
+`subSet(from, to)` 返回左闭右开的有序范围视图；四参数重载可分别指定是否包含上下界。修改视图会影响原集合，向视图加入范围外元素会抛异常；需要独立结果时复制。
 
 ```java
 import java.util.TreeSet;

@@ -360,10 +360,10 @@ test('Java sidebar uses the migrated canonical inventory', () => {
     ['JVM', 5, true],
     ['MySQL 8', 12, true],
     ['工程实践', 5, true],
-    ['设计与项目', 1, true],
+    ['设计与项目', 5, true],
     ['后端工程', 19, true],
     ['Redis', 15, true],
-    ['Kafka', 11, true],
+    ['Kafka', 9, true],
   ]
 
   assert.deepEqual(

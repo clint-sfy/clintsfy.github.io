@@ -75,7 +75,7 @@ public class ListAddDemo {
 
 ### `List.addAll`：批量追加或插入
 
-addAll 返回是否发生变化；批量操作通常比多次手动插入更清晰。
+`addAll(collection)` 按来源集合的迭代顺序追加元素；带索引的重载从指定位置插入并将后续元素后移。
 
 ```java
 import java.util.ArrayList;
@@ -92,6 +92,8 @@ public class ListAddAllDemo {
 }
 ```
 
+返回值表示列表是否发生变化，来源为空时返回 false。
+
 ### `List.get`：按索引读取
 
 需要读取指定位置的元素时使用 `get`，索引必须在 `0` 到 `size - 1` 之间。
@@ -106,7 +108,7 @@ System.out.println(list.get(1));
 
 ### `List.set`：按索引替换
 
-需要替换指定位置的元素并取得旧值时使用 `set`。
+`set(index, element)` 用新元素替换已有位置并返回旧元素，列表长度不变；索引必须小于 `size()`，不能用它在末尾追加。
 
 ```java
 import java.util.ArrayList;
@@ -121,6 +123,8 @@ public class ListGetSetDemo {
     }
 }
 ```
+
+列表不支持修改或索引越界时会抛异常。
 
 ### `List.remove`：按索引或按值删除
 
@@ -211,7 +215,7 @@ java.util.List.of("java").forEach(System.out::println);
 
 ### `Iterator.remove`：遍历时删除当前元素
 
-需要在遍历过程中安全删除当前元素时使用 `Iterator.remove`，不要直接结构性修改列表。
+`Iterator.remove()` 删除最近一次 `next()` 返回的元素，适合边遍历边删除；每次 `next()` 后最多调用一次，否则抛 `IllegalStateException`。
 
 ```java
 import java.util.ArrayList;
@@ -231,6 +235,8 @@ public class ListIterationDemo {
     }
 }
 ```
+
+遍历时直接通过列表结构性修改可能触发并发修改异常。
 
 ### removeIf：按条件批量删除
 
@@ -271,7 +277,7 @@ public class ListSortDemo {
 
 ### subList：获取左闭右开视图
 
-subList 是源列表的视图，区间是 from inclusive、to exclusive；需要独立副本时写 new ArrayList&lt;&gt;(source.subList(...))。
+`subList(from, to)` 返回左闭右开区间的视图，视图和源列表的修改相互可见。
 
 ```java
 import java.util.ArrayList;
@@ -287,6 +293,8 @@ public class ListSubListDemo {
     }
 }
 ```
+
+在视图外直接对源列表增删元素后，视图的行为不再有保证，常见实现会抛 `ConcurrentModificationException`。需要独立容器时使用 `new ArrayList<>(source.subList(from, to))`。
 
 ### `List.of`：创建不可修改列表
 

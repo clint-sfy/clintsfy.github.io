@@ -133,7 +133,7 @@ System.out.println(wordBlank);
 
 ### `charAt`：访问 UTF-16 码元
 
-`charAt` 按 UTF-16 索引返回一个 `char` 码元，可能只取得补充平面字符的一半。
+`charAt(index)` 返回指定 UTF-16 索引处的 `char`，适合访问已知是单码元的字符；索引必须在 `0` 到 `length() - 1`。
 
 ```java
 String text = "A🙂B";
@@ -149,9 +149,11 @@ System.out.println(surrogateValue);
 // 输出：55357
 ```
 
+表情等补充平面字符占两个码元，单次调用可能只取得一半。
+
 ### `codePointAt`：访问 Unicode 码点
 
-`codePointAt` 从指定 UTF-16 索引读取完整码点，适合处理表情等补充平面字符。
+`codePointAt(index)` 从指定 UTF-16 索引读取 Unicode 码点，返回 `int`，适合处理表情等补充平面字符。
 
 ```java
 String text = "A🙂B";
@@ -165,6 +167,8 @@ System.out.println(hex);
 System.out.println(restored);
 // 输出：🙂
 ```
+
+索引仍按码元计数；指向代理对的第二个码元时不会回头合并前一个码元。
 
 ### `codePoints`：遍历 Unicode 码点
 
@@ -236,7 +240,7 @@ System.out.println(missing);
 
 ### `lastIndexOf`：查找最后出现位置
 
-`lastIndexOf` 按字面文本返回最后一次匹配的位置，适合定位最后一个分隔符。
+`lastIndexOf(text)` 按字面文本查找最后一次出现的位置，返回 UTF-16 索引；未找到返回 `-1`。
 
 ```java
 String path = "/api/users/api";
@@ -250,6 +254,8 @@ System.out.println(lastApi);
 System.out.println(lastSlash);
 // 输出：15
 ```
+
+例如从路径或文件名中定位最后一个分隔符时，使用结果前要先检查是否为 `-1`。
 
 ### `contains`：判断是否包含文本
 
@@ -270,7 +276,7 @@ System.out.println(hasPattern);
 
 ### `String.join`：按分隔符拼接
 
-需要用同一分隔符连接多个元素时使用 `String.join`。
+`String.join(delimiter, elements)` 用同一分隔符连接多个字符串或可迭代元素，返回新字符串，适合输出标签列表。
 
 ```java
 String id = "42";
@@ -284,6 +290,8 @@ System.out.println(path);
 System.out.println(csv);
 // 输出：Java,SQL
 ```
+
+空集合得到空字符串；null 元素会变成文本 `"null"`，而 null 分隔符会抛异常。
 
 ### `concat`：拼接一个字符串
 
@@ -469,7 +477,7 @@ System.out.println(builder.length());
 
 ### `StringBuilder.delete`：删除指定区间
 
-使用 `delete` 删除左闭右开的码元区间，调用会直接修改当前构建器。
+`delete(start, end)` 删除左闭右开的 UTF-16 码元区间，直接修改构建器并返回它，便于链式调用。
 
 ```java
 StringBuilder builder = new StringBuilder("Java--速查");
@@ -482,6 +490,8 @@ System.out.println(result);
 System.out.println(builder.length());
 // 输出：6
 ```
+
+end 超过长度时按末尾处理；start 为负、超过长度或大于 end 时抛异常。
 
 ### `length()`：获取 UTF-16 码元长度
 
@@ -572,7 +582,7 @@ System.out.println(xml);
 
 ### `String.substring`：截取字符串区间
 
-`substring` 按左闭右开区间截取文本，索引按 UTF-16 码元计算。
+`substring(begin, end)` 返回从 begin 开始、到 end 之前的文本，原字符串不变；单参数版本一直截到末尾。
 
 ```java
 String text = "Java速查";
@@ -586,6 +596,8 @@ System.out.println(prefix);
 System.out.println(suffix);
 // 输出：速查
 ```
+
+索引按 UTF-16 码元计算，越界或 begin 大于 end 会抛异常，也要避免切开代理对。
 
 ### `replace`：按字面替换
 
@@ -606,7 +618,7 @@ System.out.println(text);
 
 ### `split`：按正则分割文本
 
-`split` 的参数是正则表达式；传负 `limit` 可保留末尾空字段。
+`split(regex, limit)` 按正则分隔并返回字符串数组；例如字面句点要写成 `"\\."`。
 
 ```java
 String csv = "Java,,SQL,";
@@ -619,6 +631,8 @@ System.out.println(java.util.Arrays.toString(fields));
 System.out.println(count);
 // 输出：4
 ```
+
+默认丢弃末尾空字段，传负 limit 保留它们，正 limit 则限制结果数组长度，适合解析固定字段文本。
 
 ### `repeat`：重复字符串
 

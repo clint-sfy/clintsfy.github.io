@@ -27,7 +27,7 @@ showComment: false
 | 4. 标准库 | [函数式与时间](/courses/java/06-函数式与时间/01-Lambda与函数式接口)、[IO与网络](/courses/java/07-IO与网络/01-IO与NIO) | 已完成：函数式、时间、I/O、NIO、HTTP Client 和 Socket |
 | 5. 运行时 | [反射与模块](/courses/java/08-反射与模块/01-反射与注解)、[并发编程](/courses/java/09-并发编程/01-线程基础与执行器)、[JVM](/courses/java/10-JVM/01-JVM内存与类加载) | 已完成：反射、模块、并发工具、线程池、异步编排和 JVM 诊断 |
 | 6. 数据库基础 | [MySQL 8](/courses/java/11-MySQL-8/) | 完成 SQL、事务、索引与执行计划后再学习 Java 数据访问 |
-| 7. 工程实践 | [工程实践](/courses/java/12-工程实践/01-Maven与测试工程)、[设计与项目](/courses/java/13-设计与项目/01-设计原则模式与综合复习) | Maven、JDBC、Flyway迁移、Hikari连接池、多数据源、代码生成与设计原则 |
+| 7. 工程实践 | [工程实践](/courses/java/12-工程实践/01-Maven与测试工程)、[设计与项目](/courses/java/13-设计与项目/01-设计原则模式与综合复习) | Maven、JDBC、Flyway迁移、Hikari连接池、多数据源、代码生成、SOLID、设计模式与订单项目 |
 | 8. 后端工程 | [后端工程](/courses/java/14-后端工程/01-Spring-Boot启动与配置) | Spring、MyBatis、Web 安全、测试、可观测性与缓存选型 |
 | 9. Redis | [Redis](/courses/java/15-Redis/) | 数据结构、缓存一致性、消费组、锁、持久化与集群运维 |
 | 10. Kafka | [Kafka](/courses/java/16-Kafka/) | 从消息模型到 Java 生产消费、可靠性与 Spring Kafka |

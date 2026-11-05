@@ -55,7 +55,7 @@ spring.kafka.consumer.group-id=order-projection
 spring.kafka.consumer.auto-offset-reset=earliest
 ```
 
-## `KafkaTemplate.send()` 与 `@KafkaListener`：完整收发案例
+## 完整收发案例
 
 把下面保存为 `src/main/java/demo/kafka/KafkaLabApplication.java`。启动后 `ApplicationRunner` 发一条 `order-7=created`；监听器消费并打印。`NewTopic` 只负责本地实验 Topic，避免运行前还要手工创建。
 
@@ -105,6 +105,18 @@ public class KafkaLabApplication {
 ```
 
 在项目根目录运行 `mvn spring-boot:run`。正常情况会看到“发送确认 offset=…”和“消费到 order-7=created”；两行出现的先后顺序不固定。再次启动会再发送一条，offset 增加；固定消费组会从上次提交的位置继续读，不会每次重放全部历史。若没看到消费者输出，先检查 Broker、Topic、序列化配置和消费组位移。[发送 API](https://docs.spring.io/spring-kafka/reference/kafka/sending-messages.html)与[监听器 API](https://docs.spring.io/spring-kafka/reference/kafka/receiving-messages/listener-annotation.html)。
+
+### `NewTopic`：启动时准备实验 Topic
+
+`learningTopic()` 返回一个 `NewTopic` Bean，Spring Kafka 的管理组件会在启动时尝试创建 `learning.events`。`.partitions(1)` 指定一个分区，`.replicas(1)` 适合本地单 Broker；它不负责把已有 Topic 的所有配置自动调整为代码里的值，因此排查时仍要用 Admin API 查询实际分区和副本。
+
+### `KafkaTemplate.send()`：发送并取得确认结果
+
+示例的三个参数依次是 Topic、消息 key、消息 value。`send()` 返回 `CompletableFuture<SendResult<String, String>>`，`whenComplete` 在完成时检查错误或读取 `RecordMetadata.offset()`。Future 完成且没有错误，说明这次发送得到 Broker 确认；它不能证明下游已经处理。案例把发送放在 `ApplicationRunner` 中，只为启动后立刻看到一轮结果，业务项目通常在明确的服务方法里调用。[Spring Kafka 发送文档](https://docs.spring.io/spring-kafka/reference/kafka/sending-messages.html)。
+
+### `@KafkaListener`：交给容器持续消费
+
+`@KafkaListener(topics = "learning.events")` 让 Spring 管理消费者循环，方法参数 `ConsumerRecord<String, String>` 提供 key、value、分区与 offset。示例只打印内容，没有模拟数据库写入；真实处理要同时考虑异常、重试、位移提交和重复消息。监听方法不要用无限阻塞操作占住消费线程，具体并发数和确认模式由监听容器配置决定。[Spring Kafka 监听器文档](https://docs.spring.io/spring-kafka/reference/kafka/receiving-messages/listener-annotation.html)。
 
 ## 发送成功不等于业务完成
 

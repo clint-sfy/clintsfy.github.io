@@ -42,91 +42,106 @@ MyBatis-Plus 减少简单 CRUD 的样板，但它仍然需要正确的表映射�
 
 ### `@MapperScan`：批量注册 Mapper 接口
 
-用途：用于指定 Mapper 接口包，让 Spring 批量创建 MyBatis 代理。
+用途：集中声明 Mapper 接口所在包，由 Spring 为接口注册 MyBatis 代理 Bean。
 
 ```java
 import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.context.annotation.Configuration;
 
+@Configuration
 @MapperScan("example.persistence")
-// 作用：@MapperScan("example.persistence")；批量注册 Mapper 接口。
 class PersistenceConfig {}
-// 输出：example.persistence 下的 Mapper 接口可被依赖注入。
-// 说明：@MapperScan("com.example.mapper") 为该包下的 Mapper 接口注册代理 Bean；接口无需实现类，直接 new 配置类不会创建 Mapper 代理。
+// 结果：扫描包内的 Mapper 接口注册为代理 Bean，可在业务类中注入。
 ```
+
+参数是包名，也可以通过 `basePackages` 指定多个包。这是 Spring 配置片段：需要 MyBatis-Spring 集成、数据源，以及由应用扫描到的配置类。`example.persistence` 下的接口还需要对应 SQL 映射；直接 `new PersistenceConfig()` 不会创建代理。扫描范围过宽可能把无关接口也注册成 Mapper。
 
 ### `@Param`：命名 Mapper 方法参数
 
-用途：用于给多个 Mapper 参数提供稳定名称，供 XML 中的 `#{}` 引用。
+用途：给参数指定 XML 中可引用的名称，多参数查询必须显式命名才能稳定绑定。
 
 ```java
 import org.apache.ibatis.annotations.Param;
 
 interface UserMapper {
     User find(@Param("tenantId") long tenantId, @Param("userId") long userId);
-// 作用：User find(@Param("tenantId") long tenantId, @Param("userId") long userId);；命名 Mapper 方法参数，返回读取结果。
 }
-// 输出：XML 可分别使用 #{tenantId} 与 #{userId}。
-// 说明：@Param("status") 与 @Param("limit") 让 XML 用 #{status}、#{limit} 取值；二者作为 PreparedStatement 参数绑定，不是字符串拼接。
+// 结果：XML 中的 #{tenantId}、#{userId} 分别绑定到两个参数。
 ```
+
+名称必须与 SQL 中的 `#{...}` 一致。在对应 mapper XML 中使用 `WHERE tenant_id = #{tenantId} AND id = #{userId}`。参数值作为 JDBC 预编译参数绑定，而不是拼接 SQL 文本；`User` 是项目自己的结果类型。查不到行时返回值的处理应由接口和调用方明确约定。
 
 ### `PageHelper.startPage`：开启一次分页查询
 
-用途：用于在当前线程的下一条查询前设置页码和每页条数。
+用途：为当前线程紧接着执行的那一次分页查询设置页码和每页数量。
 
 ```java
+import com.github.pagehelper.PageHelper;
+import java.util.List;
+
 PageHelper.startPage(2, 20);
-// 作用：PageHelper.startPage(2, 20);；开启一次分页查询。
 List<User> users = userMapper.selectAll();
-// 作用：List<User> users = userMapper.selectAll();；开启一次分页查询。
 System.out.println(users.size() <= 20);
 // 输出：true
-// 说明：PageHelper.startPage(2, 20) 把当前线程随后第一条 SELECT 改写为第 2 页、每页 20 行并查询总数；它不会永久修改 Mapper。
 ```
+
+页码从 1 开始，先确保安装并配置兼容的 PageHelper 插件，再执行 Mapper 查询。这是 Spring Service 中的片段，`userMapper` 是注入的 Mapper，`User` 是项目实体；数据库需有对应表。分页状态只用于随后被插件拦截的查询，不会永久改变 Mapper，因此不要在设置和目标查询之间插入其他 SELECT。示例默认执行总数查询；数据变化时不同页之间不保证快照一致，应使用稳定排序。
 
 ### `PageHelper.orderBy`：设置受控排序
 
-用途：用于给分页查询附加经过白名单选择的排序表达式。
+用途：为当前分页上下文设置排序表达式，字段与方向必须来自固定白名单。
 
 ```java
+import com.github.pagehelper.PageHelper;
+
+String sortKey = "createdAt"; // 示例：实际来自已校验的请求
 String orderBy = switch (sortKey) {
-    case "createdAt" -> "created_at DESC";
+    case "createdAt" -> "created_at DESC, id DESC";
     default -> "id ASC";
 };
+PageHelper.startPage(1, 20);
 PageHelper.orderBy(orderBy);
-// 作用：PageHelper.orderBy(orderBy);；设置受控排序。
-// 输出：排序字段只能来自代码白名单。
-// 说明：白名单把请求 sort=name 映射为数据库表达式 user_name asc，再交给 PageHelper.orderBy；原始请求参数不能直接拼入 ORDER BY。
+List<User> users = userMapper.selectAll();
+// 结果：按创建时间倒序，同时间按 id 倒序。
 ```
+
+不能直接把请求文本拼进排序表达式。该片段与上一节使用相同的 Spring、Mapper 和插件配置。额外的唯一键排序使同值行的顺序更稳定；未知排序键在此回退到 `id ASC`，也可以按业务契约拒绝请求。
 
 ### `PageHelper.clearPage`：清理线程分页状态
 
-用途：用于在查询未正常消费分页状态时主动清理 ThreadLocal，防止影响同线程后续查询。
+用途：清理当前线程尚未使用的分页状态，避免线程池复用时污染下一次查询。
 
 ```java
+import com.github.pagehelper.PageHelper;
+
 try {
     PageHelper.startPage(1, 10);
-// 作用：PageHelper.startPage(1, 10);；清理线程分页状态。
     userMapper.selectAll();
-// 作用：userMapper.selectAll();；清理线程分页状态。
 } finally {
     PageHelper.clearPage();
-// 作用：PageHelper.clearPage();；清理线程分页状态。
 }
-// 输出：当前线程不再保留本次分页参数。
-// 说明：finally 中 PageHelper.clearPage() 删除尚未消费的分页参数，避免线程池复用时把后续 SELECT 误限制为旧页码。
+// 结果：当前线程不再保留本次分页参数。
 ```
+
+适合设置分页之后可能提前返回或抛异常的路径。正常查询通常由插件清理状态；`finally` 还覆盖查询前的异常。它不会撤销已经执行的 SQL，也不能清理其他线程的状态。`userMapper` 是 Spring 注入的项目 Mapper。
 
 ### `PageInfo`：构造分页元数据
 
-用途：用于从一次分页结果构造总数、页码和列表等响应元数据。
+用途：把分页查询结果整理成页码、每页数量、总记录数和当前页列表。
 
 ```java
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import java.util.List;
+
+PageHelper.startPage(2, 20);
+List<User> users = userMapper.selectAll();
 PageInfo<User> page = new PageInfo<>(users);
-// 作用：PageInfo<User> page = new PageInfo<>(users);；构造分页元数据。
 System.out.println(page.getPageNum() + "/" + page.getTotal());
-// 输出：当前页码/符合条件的总记录数。
-// 说明：new PageInfo<>(users) 从 PageHelper 结果读取 pageNum、pageSize、total 和当前页列表；普通 List 本身没有总行数元数据。
+// 输出：2/45（实际总数取决于数据库）。
 ```
+
+此片段需要配置 PageHelper 和注入的 `userMapper`。分页查询结果携带插件产生的元数据；普通 `List` 没有数据库总行数，不能假定包装后会自动再查总数。是否允许空页及客户端响应格式应单独约定。
 
 ### XML `<select>`：声明查询
 

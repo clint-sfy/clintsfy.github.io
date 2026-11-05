@@ -37,7 +37,7 @@ description: 速查 FIFO 队列、双端队列、栈、优先级队列及并发�
 
 ### Queue.offer：安全入队
 
-offer 尝试把元素加入队尾，并用返回值表示是否成功。
+`offer(element)` 尝试入队，成功返回 true；有容量限制且已满时返回 false，适合由调用方决定重试或丢弃。
 
 ```java
 import java.util.ArrayDeque;
@@ -53,9 +53,11 @@ public class QueueOfferDemo {
 }
 ```
 
+队列的顺序由具体实现决定：普通 FIFO 队列追加到队尾，优先队列则按比较顺序安排。
+
 ### Queue.poll：取出队首
 
-poll 返回并删除队首，队列为空时返回 null。
+`poll()` 返回并删除队首，适合循环消费可选任务；队列为空时返回 null。
 
 ```java
 import java.util.ArrayDeque;
@@ -73,9 +75,11 @@ public class QueuePollDemo {
 }
 ```
 
+为了不混淆空队列和 null 元素，常见实现如 `ArrayDeque` 不允许存入 null。
+
 ### Queue.peek：查看队首
 
-peek 返回但不删除队首，队列为空时返回 null。
+`peek()` 适合先观察下一项：它返回队首但不删除，空队列返回 null。
 
 ```java
 import java.util.ArrayDeque;
@@ -93,9 +97,11 @@ public class QueuePeekDemo {
 }
 ```
 
+并发队列中，查看之后队首可能已被其他线程取走，不能把 peek 和后续操作当成原子操作。
+
 ### Queue.add：必须成功地入队
 
-add 在无法加入元素时抛异常，适合把失败视为违背程序约束的场景。
+`add(element)` 成功时返回 true；有容量限制的队列已满时抛 `IllegalStateException`。
 
 ```java
 import java.util.ArrayDeque;
@@ -110,6 +116,8 @@ public class QueueAddDemo {
     }
 }
 ```
+
+当容量不足属于可预期情况时用 `offer`；对不允许 null 的实现传 null 仍会抛异常。
 
 ### Queue.remove：必须成功地取出队首
 
@@ -151,7 +159,7 @@ public class QueueElementDemo {
 
 ### Deque.offerFirst：从头部入队
 
-offerFirst 尝试从双端队列头部加入元素，并返回是否成功。
+`offerFirst(element)` 在头部插入并返回是否成功；有界双端队列满时返回 false。
 
 ```java
 import java.util.ArrayDeque;
@@ -167,9 +175,11 @@ public class DequeOfferFirstDemo {
 }
 ```
 
+适合把紧急任务插到普通任务前面；`ArrayDeque` 不允许 null。
+
 ### Deque.offerLast：从尾部入队
 
-offerLast 尝试从双端队列尾部加入元素，并返回是否成功。
+`offerLast(element)` 在尾部插入并返回是否成功；有界双端队列满时返回 false。
 
 ```java
 import java.util.ArrayDeque;
@@ -184,6 +194,8 @@ public class DequeOfferLastDemo {
     }
 }
 ```
+
+配合 `pollFirst()` 可以按先进先出的顺序处理任务。
 
 ### Deque.pollFirst：从头部取出
 
@@ -328,7 +340,7 @@ public class DequeStackPeekDemo {
 
 ### PriorityQueue.offer：按优先级入队
 
-offer 把元素加入优先级队列，默认由自然顺序决定队首。
+`offer(element)` 把元素加入优先队列并返回 true；默认自然顺序下较小元素先出队。
 
 ```java
 import java.util.PriorityQueue;
@@ -348,9 +360,11 @@ public class PriorityQueueDemo {
 }
 ```
 
+元素必须能相互比较且不能为 null；相同优先级的出队顺序没有保证。
+
 ### PriorityQueue.poll：取出最高优先级元素
 
-poll 删除当前最小元素，遍历顺序本身不代表完整排序结果。
+`poll()` 返回并删除当前队首，空队列返回 null。
 
 ```java
 import java.util.PriorityQueue;
@@ -366,6 +380,8 @@ public class PriorityQueuePollDemo {
     }
 }
 ```
+
+默认自然顺序下队首最小；自定义比较器后按其顺序决定。遍历队列不保证排序，需连续 poll 才按优先级取出。
 
 ### PriorityQueue.peek：查看最高优先级元素
 
@@ -408,15 +424,33 @@ public class CustomPriorityQueueDemo {
 ```
 ## 不常用但需要知道
 
-### BlockingQueue.put、take：阻塞式生产消费
+### BlockingQueue.put：等待容量后入队
 
-put 在容量满时等待，take 在队列空时等待；它适合线程间交接，不要在不需要阻塞的单线程逻辑中使用。
+`put(element)` 用于生产者向有界队列交接任务；队列满时等待有空间，没有返回值。等待期间线程可能被中断并抛出 `InterruptedException`，调用方应传播异常或按线程取消策略处理，不能悄悄忽略。下面容量足够，因此不会等待。
 
 ```java
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-public class BlockingQueueDemo {
+public class BlockingQueuePutDemo {
+    public static void main(String[] args) throws InterruptedException {
+        BlockingQueue<String> queue = new ArrayBlockingQueue<>(2);
+        queue.put("task-1");
+        System.out.println(queue.size());
+        // 输出：1
+    }
+}
+```
+
+### BlockingQueue.take：等待元素后出队
+
+`take()` 返回并删除队首；队列为空时等待生产者放入元素，适合消费者线程。等待期间也可能抛出 `InterruptedException`。不要在没有生产者的单线程流程中对空队列调用它，否则会一直等待。
+
+```java
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+
+public class BlockingQueueTakeDemo {
     public static void main(String[] args) throws InterruptedException {
         BlockingQueue<String> queue = new ArrayBlockingQueue<>(2);
         queue.put("task-1");
@@ -485,7 +519,7 @@ public class ConcurrentQueueDemo {
 
 ### Deque.removeFirstOccurrence：从头部方向删除匹配项
 
-removeFirstOccurrence 按 equals 从头向尾删除第一个匹配元素。
+`removeFirstOccurrence(value)` 按 `equals` 从头向尾删除第一个匹配元素，删除成功返回 true，没有匹配项返回 false。其他重复元素保留，适合只撤销最早的一项。
 
 ```java
 import java.util.ArrayDeque;
@@ -506,7 +540,7 @@ public class DequeRemoveFirstOccurrenceDemo {
 
 ### Deque.removeLastOccurrence：从尾部方向删除匹配项
 
-removeLastOccurrence 按 equals 从尾向头删除第一个匹配元素。
+`removeLastOccurrence(value)` 按 `equals` 从尾向头删除第一个匹配元素，删除成功返回 true，没有匹配项返回 false。适合保留较早的重复项。
 
 ```java
 import java.util.ArrayDeque;

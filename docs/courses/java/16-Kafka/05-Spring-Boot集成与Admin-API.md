@@ -14,7 +14,7 @@ description: 配置 Spring Kafka，创建 Topic，并通过 AdminClient 查询�
 
 ## `NewTopic`：声明实验 Topic
 
-在 Spring 配置类里声明 Topic，启动时由 KafkaAdmin 尝试创建。把下面保存为 `KafkaTopicConfig.java`，放进 Spring Boot 应用的扫描包；`application.properties` 配置 `spring.kafka.bootstrap-servers=localhost:9092`。
+在 Spring 配置类里声明 Topic，启动时由 KafkaAdmin 尝试创建。`TopicBuilder.name` 接收 Topic 名，`.partitions(1)` 指定分区数，`.replicas(1)` 指定每个分区的副本数；单节点实验副本数只能是 1。把下面保存为 `KafkaTopicConfig.java`，放进 Spring Boot 应用的扫描包；`application.properties` 配置 `spring.kafka.bootstrap-servers=localhost:9092`。
 
 ```java
 import org.apache.kafka.clients.admin.NewTopic;
@@ -36,7 +36,7 @@ public class KafkaTopicConfig {
 
 ## `AdminClient.describeTopics()`：查询分区
 
-把下面保存为 `TopicAdminDemo.java` 并运行。它会先确认 Topic 是否存在；不存在时创建，再打印分区数与副本数。这样单独运行一次，也能看到 Admin API 的完整输入和结果。
+把下面保存为 `TopicAdminDemo.java` 并运行。`AdminClient.create` 连接 Broker；`listTopics().names()` 返回当前可见的 Topic 名；若实验 Topic 不存在，`createTopics` 先创建它。随后 `describeTopics` 取回描述对象，从 `partitions()` 中读取分区及副本信息。每一步等待上限为 10 秒，这样单独运行一次也能看到完整输入和结果。
 
 ```java
 import java.util.List;

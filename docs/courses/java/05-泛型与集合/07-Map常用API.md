@@ -37,7 +37,7 @@ Map 的键放入后必须保持 equals/hashCode 或比较关系稳定；修改�
 
 ### Map.put：写入键值对
 
-put 会新增或替换键对应的值，并返回该键原来的值。
+`put(key, value)` 用于登记或更新映射，返回替换前的值；键原本不存在时返回 `null`。
 
 ```java
 import java.util.LinkedHashMap;
@@ -53,9 +53,11 @@ public class MapPutDemo {
 }
 ```
 
+对于允许 null 值的实现，原值为 null 时返回值也为 null，需要用 `containsKey` 区分。
+
 ### Map.get：按键读取值
 
-get 返回键对应的值，键不存在时返回 null。
+`get(key)` 用于按键查询，不会改变 Map；找到时返回对应值，键不存在时返回 `null`。
 
 ```java
 import java.util.LinkedHashMap;
@@ -73,9 +75,11 @@ public class MapGetDemo {
 }
 ```
 
+`HashMap` 允许值本身为 null，因此返回 null 不一定代表键不存在，可再调用 `containsKey(key)`。
+
 ### getOrDefault：读取默认值
 
-getOrDefault 只提供读取时的兜底，不会把默认值写回 Map。
+`getOrDefault(key, defaultValue)` 适合读取缺省配置：键不存在时返回第二个参数，不会把它写回 Map。
 
 ```java
 import java.util.Map;
@@ -88,6 +92,8 @@ public class MapDefaultDemo {
     }
 }
 ```
+
+如果键存在但对应 null，结果仍是 null，而不是默认值。
 
 ### Map.containsKey：判断键是否存在
 
@@ -107,7 +113,7 @@ public class MapContainsKeyDemo {
 
 ### Map.containsValue：判断值是否存在
 
-containsValue 通常需要扫描全部值，不适合放在高频热点循环中。
+`containsValue(value)` 用于判断是否至少有一个值相等，返回 boolean；它不告诉你对应的键。
 
 ```java
 import java.util.Map;
@@ -122,6 +128,8 @@ public class MapContainsValueDemo {
     }
 }
 ```
+
+多数实现需要扫描值，不适合反复在大型 Map 上调用。
 
 ### `Map.remove`：按键或键值对删除
 
@@ -165,7 +173,7 @@ public class MapEntrySetDemo {
 
 ### putIfAbsent：缺失键才写入
 
-键不存在或映射值为 null 时写入，已有非 null 值不覆盖；并发 Map 中它还是单键原子更新工具。
+`putIfAbsent(key, value)` 在键不存在或映射为 null 时写入；返回原有值，原来没有非 null 值时返回 null。
 
 ```java
 import java.util.LinkedHashMap;
@@ -182,9 +190,11 @@ public class MapPutIfAbsentDemo {
 }
 ```
 
+它适合设置首次默认值；需要并发原子性时使用 `ConcurrentHashMap` 等明确提供原子保证的实现。
+
 ### merge：按旧值累加或合并
 
-缺失键直接放入给定值，已有值才执行合并函数；合并结果为 null 时会删除该键。
+`merge(key, value, remappingFunction)` 适合计数或合并：键缺失或原值为 null 时直接写入非 null 的 `value`；否则把旧值和新值传给函数。
 
 ```java
 import java.util.LinkedHashMap;
@@ -201,9 +211,11 @@ public class MapMergeDemo {
 }
 ```
 
+返回更新后的值，函数返回 null 时删除映射。
+
 ### computeIfAbsent：缺失时懒创建
 
-已有非 null 值时不执行计算；计算结果为 null 时不写入，常用于按键创建列表或集合。
+`computeIfAbsent(key, function)` 常用于按键懒创建列表：已有非 null 值时直接返回它，否则把键交给函数计算并返回结果。
 
 ```java
 import java.util.ArrayList;
@@ -220,6 +232,8 @@ public class MapComputeIfAbsentDemo {
     }
 }
 ```
+
+函数返回 null 时不建立映射；不要在计算函数中修改同一个 Map。
 
 ### replace：只替换已存在或匹配旧值的键
 
@@ -242,7 +256,7 @@ public class MapReplaceDemo {
 
 ### Map.keySet：获取键视图
 
-keySet 返回与源 Map 联动的键视图，需要独立结果时显式复制。
+`keySet()` 返回与源 Map 联动的键视图：从视图删除键也会删除对应映射，源 Map 更新也会反映在视图中。
 
 ```java
 import java.util.LinkedHashMap;
@@ -259,6 +273,8 @@ public class MapKeySetDemo {
     }
 }
 ```
+
+它不支持通过 `add` 新增映射；需要独立结果时复制到新 Set。
 
 ### Map.values：获取值视图
 

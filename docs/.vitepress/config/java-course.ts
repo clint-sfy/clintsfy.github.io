@@ -172,6 +172,10 @@ export const JAVA_COURSE_CHAPTERS: readonly JavaCourseChapter[] = [
   ]),
   createChapter('13-设计与项目', '设计与项目', [
     article('01-设计原则模式与综合复习.md', '设计原则、常见模式与综合复习'),
+    article('02-SOLID设计原则.md', 'SOLID 设计原则'),
+    article('03-策略工厂与模板方法.md', '策略、工厂与模板方法'),
+    article('04-装饰器适配器与建造者.md', '装饰器、适配器与建造者'),
+    article('05-观察者与订单项目实践.md', '观察者模式与订单项目实践'),
   ]),
   createChapter('14-后端工程', '后端工程', [
     article('01-Spring-Boot启动与配置.md', 'Spring Boot 启动与配置'),
@@ -213,7 +217,6 @@ export const JAVA_COURSE_CHAPTERS: readonly JavaCourseChapter[] = [
     article('15-性能诊断监控与生产清单.md', '性能诊断、监控与生产清单'),
   ]),
   createChapter('16-Kafka', 'Kafka', [
-    article('01-学习路线与目标.md', '学习路线与目标'),
     article('02-消息队列与MQ核心知识.md', '消息队列与 MQ 核心知识'),
     article('03-Kafka快速入门与安装.md', 'Kafka 快速入门与安装'),
     article('04-命令行生产消费与消息模型.md', '命令行生产消费与消息模型'),
@@ -221,9 +224,8 @@ export const JAVA_COURSE_CHAPTERS: readonly JavaCourseChapter[] = [
     article('06-Producer-API与发送实践.md', 'Producer API 与发送实践'),
     article('07-Consumer-API与消费实践.md', 'Consumer API 与消费实践'),
     article('08-存储复制与可靠性.md', '存储、复制与可靠性'),
-    article('09-高可用与性能.md', '高可用与性能'),
+    article('09-高可用与性能.md', '高可用、性能与总结选型'),
     article('10-Spring-Kafka项目整合.md', 'Spring Kafka 项目整合'),
-    article('11-总结与选型.md', '总结与选型'),
   ]),
 ];
 

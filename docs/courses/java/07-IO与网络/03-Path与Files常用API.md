@@ -33,7 +33,7 @@ description: 直接用 Java 案例速查 Path 与 Files 的路径、读写、复
 
 ## 常用用法
 
-### 创建路径：从字符串得到 `Path`
+### `Path.of`：从字符串得到路径
 
 JDK 11 以后优先写 `Path.of`；`Paths.get` 在旧代码和重载阅读中仍常见。
 
@@ -72,7 +72,7 @@ public class PathResolveDemo {
 }
 ```
 
-### 规范化路径：得到无冗余的绝对路径
+### `Path.normalize`：移除冗余路径片段
 
 `normalize` 只处理 `.` 和 `..`，不会检查文件是否存在，也不会解析符号链接；需要真实路径时使用 `toRealPath`，并准备处理 `IOException`。
 
@@ -107,7 +107,7 @@ public class PathRelativizeDemo {
 }
 ```
 
-### 查询路径组成：读取文件名、父路径或名称元素
+### `Path.getFileName`：读取最后一个名称
 
 这些方法只拆路径字符串结构，不访问磁盘；根路径可能没有父路径，调用结果要允许为 `null`。
 
@@ -124,7 +124,7 @@ public class PathPartsDemo {
 }
 ```
 
-### 检查路径状态：确认存在性、类型与权限
+### `Files.exists`：检查路径是否存在
 
 检查结果可能在返回后立即失效，不能替代真正操作时的异常处理；`exists` 默认跟随符号链接，需要不跟随时传 `LinkOption.NOFOLLOW_LINKS`。
 
@@ -143,7 +143,7 @@ public class FilesCheckDemo {
 }
 ```
 
-### 创建文件系统节点：按需建立目录或文件
+### `Files.createDirectories`：按需建立多级目录
 
 `createDirectories` 会按需创建中间目录；`createFile` 要求目标不存在，避免无意覆盖。
 
@@ -170,7 +170,7 @@ public class FilesCreateDemo {
 
 并发场景仍需处理“检查后被其他进程创建”的异常。
 
-### 读写短文本文件：使用明确字符集
+### `Files.writeString`：写入短文本
 
 这两个方法适合小文本；显式传 `Charset`，避免依赖平台默认编码。
 
@@ -193,7 +193,7 @@ public class FilesTextDemo {
 
 大文件使用它们会增加内存峰值。
 
-### 读写短二进制文件：一次处理全部字节
+### `Files.write`：写入字节数组
 
 二进制小文件可以一次处理；文件大小不受控时改用 `InputStream` 或 `FileChannel` 分块读取。
 
@@ -214,7 +214,7 @@ public class FilesBytesDemo {
 }
 ```
 
-### 流式读写文本：创建带缓冲的字符端点
+### `Files.newBufferedWriter`：流式写入文本
 
 缓冲字符流适合逐行或逐段处理；关闭 writer 才能保证缓冲数据真正写出。
 
@@ -229,13 +229,11 @@ public class FilesBufferedTextDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("java-buffered-", ".txt");
         try (var writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
-        // 输入：try (var writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {；资源变量 writer 接收 Files.newBufferedWriter(file, StandardCharsets.UTF_8)，try 结束时自动关闭。
             writer.write("first");
             writer.newLine();
             writer.write("second");
         }
         try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-        // 输入：try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {；资源变量 reader 接收 Files.newBufferedReader(file, StandardCharsets.UTF_8)，try 结束时自动关闭。
             System.out.println(reader.readLine());
             // 输出：first
         }
@@ -289,7 +287,7 @@ public class FilesMoveDemo {
 }
 ```
 
-### 删除路径：选择严格或幂等语义
+### `Files.delete`：删除必须存在的路径
 
 `delete` 目标不存在会抛异常，`deleteIfExists` 返回是否实际删除；非空目录不能直接删除，要先删除其中内容。
 
@@ -322,7 +320,6 @@ public class FilesLinesDemo {
         Path file = Files.createTempFile("java-lines-", ".txt");
         Files.writeString(file, "java\nsql\njava\n");
         try (var lines = Files.lines(file)) {
-        // 输入：try (var lines = Files.lines(file)) {；资源变量 lines 接收 Files.lines(file)，try 结束时自动关闭。
             System.out.println(lines.filter("java"::equals).count());
             // 输出：2
         }
@@ -331,7 +328,7 @@ public class FilesLinesDemo {
 }
 ```
 
-### 遍历目录：选择单层或递归范围
+### `Files.walk`：递归遍历目录
 
 `list` 只看一层，`walk` 递归遍历；两者都返回持有目录句柄的 Stream，必须关闭，并注意深目录和符号链接循环。
 
@@ -346,7 +343,6 @@ public class FilesWalkDemo {
         Files.writeString(directory.resolve("a.txt"), "a");
         Files.createDirectory(directory.resolve("sub"));
         try (var paths = Files.walk(directory)) {
-        // 输入：try (var paths = Files.walk(directory)) {；资源变量 paths 接收 Files.walk(directory)，try 结束时自动关闭。
             System.out.println(paths.filter(Files::isRegularFile).count());
             // 输出：1
         }
@@ -357,7 +353,7 @@ public class FilesWalkDemo {
 }
 ```
 
-### 读取文件属性：选择单项或批量查询
+### `Files.readAttributes`：批量读取文件属性
 
 需要多个属性时批量读取通常更清楚；属性可能在读取后变化，业务一致性不能靠多次属性查询保证。
 
@@ -377,6 +373,158 @@ public class FilesAttributesDemo {
     }
 }
 ```
+
+### `Paths.get`：兼容旧版 JDK 的路径入口
+
+需要兼容旧版 JDK 的路径入口时可在 JShell 中使用此方法。
+
+```java
+import java.nio.file.*;
+Paths.get("logs", "app.log"); // logs/app.log；分隔符取决于平台
+// 输出：操作结果取决于输入和文件系统状态
+```
+
+`Paths.get(first, more...)` 将路径片段组合为 `Path`，不会访问磁盘。Java 11 起也可用 `Path.of`；两者的相对路径都以进程工作目录为基准。以下是 JShell 示例（先执行 import）。
+
+### `Path.getParent`：取得父路径
+
+需要取得父路径时可在 JShell 中使用此方法。
+
+```java
+import java.nio.file.*;
+Path.of("data", "app.log").getParent(); // data
+Path.of("app.log").getParent(); // null
+// 输出：操作结果取决于输入和文件系统状态
+```
+
+返回去掉最后一个名称后的路径；单个相对名称和根路径可能返回 `null`，不能无条件继续调用。以下为 JShell 示例。
+
+### `Path.getName`：按索引读取名称元素
+
+需要按索引读取名称元素时可在 JShell 中使用此方法。
+
+```java
+import java.nio.file.*;
+Path.of("data", "app.log").getName(0); // data
+// 输出：操作结果取决于输入和文件系统状态
+```
+
+索引从零开始且不包含根；超出 `0` 到 `getNameCount() - 1` 会抛 `IllegalArgumentException`。例如，在 JShell 中执行以下代码。
+
+### `Files.isRegularFile`：检查普通文件
+
+需要检查普通文件时可在 JShell 中使用此方法。
+
+```java
+import java.nio.file.*;
+Files.isRegularFile(Path.of("app.log")); // 结果取决于实际文件系统
+// 输出：操作结果取决于输入和文件系统状态
+```
+
+返回路径是否指向普通文件；不存在或无法确定时也返回 `false`，所以它不能区分“不存在”和“无法访问”。默认跟随符号链接。JShell 示例见下方代码。
+
+### `Files.isReadable`：检查当前进程是否可读
+
+需要检查当前进程是否可读时可在 JShell 中使用此方法。
+
+```java
+import java.nio.file.*;
+Files.isReadable(Path.of("app.log")); // 结果取决于文件和权限
+// 输出：操作结果取决于输入和文件系统状态
+```
+
+返回一次检查的结果，权限或文件可能随时变化；即使返回 `true`，实际读取仍要处理 `IOException`。JShell 示例见下方代码。
+
+### `Files.createFile`：创建一个新文件
+
+需要创建一个新文件时可在 JShell 中使用此方法。
+
+```java
+import java.nio.file.*;
+Files.createFile(Path.of("new-file.txt"));
+// 输出：操作结果取决于输入和文件系统状态
+```
+
+返回创建文件的路径；目标已存在时抛 `FileAlreadyExistsException`，父目录也必须已存在。以下 JShell 示例在当前目录创建文件，重复运行前需删除它。
+
+### `Files.readString`：一次读取短文本
+
+需要一次读取短文本时可在 JShell 中使用此方法。
+
+```java
+import java.nio.file.*;
+import java.nio.charset.StandardCharsets;
+String text = Files.readString(Path.of("notes.txt"), StandardCharsets.UTF_8);
+// 输出：操作结果取决于输入和文件系统状态
+```
+
+返回整个文件内容，默认 UTF-8，也可传字符集；文件不存在或解码失败会抛 `IOException`。只适合大小可控的文件。JShell 示例假设文件已存在。
+
+### `Files.readAllBytes`：一次读取全部字节
+
+需要一次读取全部字节时可在 JShell 中使用此方法。
+
+```java
+import java.nio.file.*;
+byte[] bytes = Files.readAllBytes(Path.of("image.png"));
+// 输出：操作结果取决于输入和文件系统状态
+```
+
+返回包含文件所有字节的数组；大文件可能耗尽内存，文件缺失会抛 `IOException`。JShell 示例假设文件已存在。
+
+### `Files.newBufferedReader`：流式读取文本
+
+需要流式读取文本时可在 JShell 中使用此方法。
+
+```java
+import java.nio.file.*;
+import java.nio.charset.StandardCharsets;
+try (var reader = Files.newBufferedReader(Path.of("notes.txt"), StandardCharsets.UTF_8)) {
+    System.out.println(reader.readLine());
+    // 输出：文件首行；空文件输出 null
+}
+```
+
+返回需要关闭的 `BufferedReader`；可按行读取而无需把整个文件放入内存。读取失败可能发生在打开或后续读取时。JShell 示例假设文件已存在。
+
+### `Files.deleteIfExists`：目标缺失时不报错
+
+需要目标缺失时不报错时可在 JShell 中使用此方法。
+
+```java
+import java.nio.file.*;
+Files.deleteIfExists(Path.of("old-file.txt"));
+// 输出：操作结果取决于输入和文件系统状态
+```
+
+删除成功返回 `true`，目标不存在返回 `false`；非空目录或权限不足仍会抛 `IOException`。JShell 示例见下方代码。
+
+### `Files.list`：只列出目录直接子项
+
+需要只列出目录直接子项时可在 JShell 中使用此方法。
+
+```java
+import java.nio.file.*;
+try (var entries = Files.list(Path.of("."))) {
+    entries.forEach(System.out::println);
+}
+// 输出：操作结果取决于输入和文件系统状态
+```
+
+返回需关闭的 `Stream<Path>`，不会递归，也不保证顺序；遍历过程的 I/O 失败可包装为 `UncheckedIOException`。JShell 示例见下方代码。
+
+### `Files.getAttribute`：读取单个文件属性
+
+需要读取单个文件属性时可在 JShell 中使用此方法。
+
+```java
+import java.nio.file.*;
+long size = (long) Files.getAttribute(Path.of("notes.txt"), "basic:size");
+// 输出：操作结果取决于输入和文件系统状态
+```
+
+属性名由视图和名称组成，如 `basic:size`；返回 `Object`，调用方须按属性类型转换。不支持的属性或访问失败会抛异常。JShell 示例假设文件已存在。
+
 ## 不常用但需要知道
 
 ### `LinkOption.NOFOLLOW_LINKS`：不跟随符号链接
@@ -474,9 +622,9 @@ import java.util.Map;
 public class ZipFileSystemDemo {
     public static void main(String[] args) throws Exception {
         Path zip = Files.createTempFile("java-zip-", ".zip");
+        Files.delete(zip); // Zip 文件系统需要创建新的压缩包，而不是打开空文件
         URI uri = URI.create("jar:" + zip.toUri());
         try (FileSystem fs = FileSystems.newFileSystem(uri, Map.of("create", "true"))) {
-        // 输入：try (FileSystem fs = FileSystems.newFileSystem(uri, Map.of("create", "true"))) {；资源变量 fs 接收 FileSystems.newFileSystem(uri, Map.of("create", "true"))，try 结束时自动关闭。
             Files.writeString(fs.getPath("/inside.txt"), "zip");
             System.out.println(Files.exists(fs.getPath("/inside.txt")));
             // 输出：true
@@ -500,7 +648,6 @@ public class PathFilesDemo {
         Files.writeString(source, "Path + Files", StandardCharsets.UTF_8);
         Files.copy(source, copy);
         try (var paths = Files.list(directory)) {
-        // 输入：try (var paths = Files.list(directory)) {；资源变量 paths 接收 Files.list(directory)，try 结束时自动关闭。
             System.out.println(paths.map(Path::getFileName).count());
             // 输出：2
         }

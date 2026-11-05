@@ -21,6 +21,10 @@ coverage/
 # Temp files
 cache/
 .vite_opt_cache
+docs/.vitepress/.temp/
+
+# Local agent workspace
+.workbuddy-ai/
 
 # Other files
 /src/client/shared.ts
