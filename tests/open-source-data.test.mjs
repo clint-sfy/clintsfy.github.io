@@ -651,9 +651,19 @@ test('GitHub Pages workflow pins a Node-compatible pnpm toolchain', () => {
   const workflow = readFileSync(join(repoRoot, '.github/workflows/deploy.yml'), 'utf8')
   const packageJson = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8'))
 
-  assert.match(workflow, /uses:\s*pnpm\/action-setup@v4/)
+  assert.match(workflow, /uses:\s*pnpm\/action-setup@v6/)
   assert.match(workflow, /version:\s*9\.15\.9/)
-  assert.match(workflow, /uses:\s*actions\/setup-node@v4/)
+  assert.match(workflow, /uses:\s*actions\/setup-node@v7/)
+  // 这些 v4 版本声明 runs.using: node20，在 node24 runner 上会被强制升级并产生弃用告警。
+  for (const deprecated of [
+    'actions/checkout@v4',
+    'actions/setup-node@v4',
+    'actions/upload-artifact@v4',
+    'actions/download-artifact@v4',
+    'pnpm/action-setup@v4',
+  ]) {
+    assert.ok(!workflow.includes(deprecated), `${deprecated} 已声明 node20，应改用 Node 24 版本`)
+  }
   assert.match(workflow, /node-version:\s*22/)
   assert.equal(packageJson.packageManager, 'pnpm@9.15.9')
   assert.equal(packageJson.engines.node, '>=22.13.0')
@@ -676,7 +686,7 @@ test('GitHub Pages validates PRs and gates publishing on audited main builds', (
     /^        run: pnpm test$/mu,
     /^        run: pnpm audit:java-apis$/mu,
     /^        run: pnpm build$/mu,
-    /^        uses: actions\/upload-artifact@v4$/mu,
+    /^        uses: actions\/upload-artifact@v7$/mu,
   ]
   let previous = -1
   for (const gate of gates) {
@@ -695,10 +705,10 @@ test('GitHub Pages validates PRs and gates publishing on audited main builds', (
     "(github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')",
     'only a main push or main manual dispatch may publish',
   )
-  assert.match(deploy, /^        uses: actions\/download-artifact@v4$/mu)
+  assert.match(deploy, /^        uses: actions\/download-artifact@v8$/mu)
   assert.match(deploy, /^          name: validated-site$/mu)
   assert.match(deploy, /^        uses: JamesIves\/github-pages-deploy-action@v4$/mu)
-  assert.ok(deploy.indexOf('actions/download-artifact@v4') < deploy.indexOf('JamesIves/github-pages-deploy-action@v4'))
+  assert.ok(deploy.indexOf('actions/download-artifact@v8') < deploy.indexOf('JamesIves/github-pages-deploy-action@v4'))
   assert.match(deploy, /FOLDER: docs\/\.vitepress\/dist/u)
   assert.doesNotMatch(validate, /JamesIves\/github-pages-deploy-action/u)
 })
