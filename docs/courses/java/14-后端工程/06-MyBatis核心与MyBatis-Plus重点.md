@@ -265,7 +265,6 @@ class User {
     public void setId(Long id) { this.id = id; }
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
-// 作用：public void setUsername(String username) { this.username = username; }；复用通用 CRUD。
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public java.time.Instant getCreatedAt() { return createdAt; }
@@ -283,7 +282,6 @@ class UserReader {
 
     void showName() {
         User user = mapper.selectById(7L);
-// 作用：User user = mapper.selectById(7L);；复用通用 CRUD。
         System.out.println(user.getUsername());
 // 输出：ann
     }
@@ -307,18 +305,13 @@ class UserFacade {
 
     UserFacade(UserService service) {
         this.service = service;
-// 作用：this.service = service;；组织服务层 CRUD。
     }
 
     boolean create() {
         User entity = new User();
-// 作用：User entity = new User();；组织服务层 CRUD。
         entity.setUsername("ann");
-// 作用：entity.setUsername("ann");；组织服务层 CRUD。
         entity.setStatus("ACTIVE");
-// 作用：entity.setStatus("ACTIVE");；组织服务层 CRUD。
         boolean saved = service.save(entity);
-// 作用：boolean saved = service.save(entity);；组织服务层 CRUD。
         System.out.println(saved + "/" + entity.getId());
 // 输出：true/42
         return saved;
@@ -339,7 +332,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 LambdaQueryWrapper<User> query = new LambdaQueryWrapper<User>()
     .eq(User::getStatus, "ACTIVE")
     .orderByDesc(User::getCreatedAt);
-// 作用：LambdaQueryWrapper<User> query = new LambdaQueryWrapper<User>()；表达类型安全的条件查询。
 System.out.println(query.getSqlSegment().contains("status"));
 // 输出：true
 // 说明：wrapper.eq(User::getStatus, "ACTIVE").ge(User::getAge, 18) 生成 status = ? AND age >= ?，绑定值为 ACTIVE 与 18。
@@ -365,9 +357,7 @@ class UserPager {
 
     void show() {
         Page<User> page = new Page<>(2, 20);
-// 作用：Page<User> page = new Page<>(2, 20);；配合拦截器控制结果集。
         IPage<User> result = mapper.selectPage(page, new QueryWrapper<>());
-// 作用：IPage<User> result = mapper.selectPage(page, new QueryWrapper<>());；配合拦截器控制结果集。
         System.out.println(result.getCurrent() + "/" + result.getSize());
 // 输出：2/20
     }
@@ -424,17 +414,12 @@ class TransferService {
     @Transactional
     void transfer(long from, long to, int amount) {
         Account source = mapper.findForUpdate(from);
-// 作用：Account source = mapper.findForUpdate(from);；在复杂 SQL 处保留显式查询。
         Account target = mapper.findForUpdate(to);
-// 作用：Account target = mapper.findForUpdate(to);；在复杂 SQL 处保留显式查询。
         if (source.balance() < amount) {
             throw new IllegalStateException("insufficient balance");
-// 作用：throw new IllegalStateException("insufficient balance");；在复杂 SQL 处保留显式查询。
         }
         mapper.debit(from, amount);
-// 作用：mapper.debit(from, amount);；在复杂 SQL 处保留显式查询。
         mapper.credit(to, amount);
-// 作用：mapper.credit(to, amount);；在复杂 SQL 处保留显式查询。
         System.out.println("transfer=" + from + "->" + to);
 // 输出：transfer=1->2
     }

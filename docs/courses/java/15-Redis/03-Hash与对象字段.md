@@ -157,7 +157,7 @@ HGET lab:{core}:h visits
 
 #### Java 调用：`StringRedisTemplate.opsForHash()`
 
-Hash 适合独立更新对象字段；下面的模板由 Spring 注入，读取不存在的字段会得到 `null`。
+Hash 适合独立更新对象字段；下面的模板由 Spring 注入，读取不存在的字段会得到 `null`。运行前后在独立实验库删除 `lab:user:7`，否则已有字段也会出现在 `entries` 结果中。
 
 ```java
 import org.springframework.data.redis.core.StringRedisTemplate;

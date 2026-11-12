@@ -31,7 +31,9 @@ description: 速查 Map 的读写、视图、复合更新、排序和并发边�
 
 ### 白话解释与边界
 
-Map 的键放入后必须保持 equals/hashCode 或比较关系稳定；修改可变键参与比较的字段会导致条目存在却找不到。get 后再 put 是两个步骤，并发场景优先 merge 或 computeIfAbsent。Map 的视图会跟随源 Map 变化，不要误当作副本。
+可以把 Map 想成一本按姓名查分数的通讯录：姓名是键，分数是值。同一个姓名只能对应一个当前值，再次写入会替换原值；如果查不到姓名，或姓名对应的值恰好为 null，`get` 都会返回 null，因此需要用 `containsKey` 区分。
+
+Map 的键放入后必须保持 equals/hashCode 或比较关系稳定；修改可变键参与比较的字段会导致条目存在却找不到。get 后再 put 是两个步骤，并发更新时可能丢失结果。需要原子更新时，可使用 ConcurrentHashMap 的 merge 或 computeIfAbsent；普通 Map 的同名方法不保证原子性。Map 的视图会跟随源 Map 变化，不要误当作副本。
 
 ## 常用用法
 
@@ -133,7 +135,7 @@ public class MapContainsValueDemo {
 
 ### `Map.remove`：按键或键值对删除
 
-remove(key) 按键删除；remove(key, value) 只有键和值同时匹配才删除，适合避免覆盖他人更新后的值。
+remove(key) 按键删除；remove(key, value) 只有键和值同时匹配才删除，需要并发原子性时应使用明确保证该操作原子的并发 Map。
 
 ```java
 import java.util.LinkedHashMap;
@@ -604,7 +606,9 @@ public class SynchronizedMapDemo {
 ```
 ## 简单案例
 
-### `Map.size`：统计映射条目数量
+下面的短片段可在 JDK 17 或更高版本的 JShell 中运行；完整类可按类名保存并编译。
+
+### Map.size：统计映射条目数量
 
 它统计键值条目而不是不同值的数量，同一个键重复写入不会增加结果。
 

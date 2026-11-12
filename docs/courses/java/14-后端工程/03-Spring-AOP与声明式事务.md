@@ -50,7 +50,6 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 
 @Aspect
-// 作用：@Aspect；声明切面类。
 @Component
 class AuditAspect {
     String name() { return "audit"; }
@@ -74,7 +73,6 @@ import org.aspectj.lang.annotation.Pointcut;
 @Aspect
 class AuditPointcuts {
     @Pointcut("execution(* com.example.service..*(..))")
-// 作用：@Pointcut("execution(* com.example.service..*(..))")；声明可复用切点。
     void serviceOperation() {}
 }
 
@@ -97,18 +95,14 @@ import org.aspectj.lang.annotation.Aspect;
 @Aspect
 class TimingAspect {
     @Around("execution(* com.example.service..*(..))")
-// 作用：@Around("execution(* com.example.service..*(..))")；包裹目标调用。
     Object time(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.nanoTime();
-// 作用：long start = System.nanoTime();；包裹目标调用。
         Object result = joinPoint.proceed();
-// 作用：Object result = joinPoint.proceed();；包裹目标调用。
         System.out.println("elapsed=" + (System.nanoTime() - start >= 0));
 // 输出：elapsed=true
         return result;
     }
 }
-// 作用：用于在目标方法前后统一计时、记录结果或转换异常；正常路径必须调用 `proceed` 并保留返回值。
 ```
 
 不要在通知里吞掉目标异常或无条件改写返回类型；异步方法还要确认计时点是提交任务还是任务真正完成。通知中访问参数时注意敏感数据脱敏和大对象开销。
@@ -128,7 +122,6 @@ class Guard {
             return null;
         }
         return joinPoint.proceed();
-// 作用：return joinPoint.proceed();；继续执行目标方法。
     }
 }
 // 说明：joinPoint.proceed() 才把调用交给目标方法并返回其 Object 结果；省略它会让目标方法完全不执行，调用两次则会重复业务副作用。
@@ -147,7 +140,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 class TransferService {
     @Transactional
-// 作用：@Transactional；声明事务边界。
     public void transfer() {
         System.out.println("debit then credit");
 // 输出：debit then credit
@@ -193,7 +185,6 @@ import org.springframework.transaction.annotation.Transactional;
 class OrderService {
     void submit() {
         this.writeAudit();
-// 作用：this.writeAudit();；识别代理绕过。
         System.out.println("self call completed");
 // 输出：self call completed
     }
@@ -204,7 +195,6 @@ class OrderService {
 // 输出：audit
     }
 }
-// 作用：用于定位“注解存在但事务/切面没生效”的问题；同一对象内的 `this` 调用不会重新经过 Spring 代理。
 ```
 
 把事务方法拆到另一个 Bean 是首选修复；也可以从外部注入代理调用，但不要让业务代码依赖 `AopContext.currentProxy()` 这种隐式约束。私有方法和最终限制也可能无法被代理拦截。
@@ -222,7 +212,6 @@ import org.springframework.core.annotation.Order;
 
 @Aspect
 @Order(1)
-// 作用：@Order(1)；确定多个通知顺序。
 class SecurityAspect {
     @Before("execution(* com.example..service..*(..))")
     void check() {
@@ -247,12 +236,10 @@ class ImportService {
 
     ImportService(TransactionTemplate template) {
         this.template = template;
-// 作用：this.template = template;；程序化事务。
     }
 
     String importOne() {
         return template.execute(status -> {
-// 作用：return template.execute(status -> {；程序化事务。
             System.out.println("imported");
 // 输出：imported
             return "ok";
@@ -278,7 +265,6 @@ class BillingService {
 // 输出：charge in transaction
     }
 }
-// 作用：用于决定哪些异常触发数据库回滚；回滚只影响当前事务资源，不会自动撤销邮件、远程调用或文件写入。
 ```
 
 `noRollbackFor` 会覆盖特定异常的默认行为，规则越多越要写测试验证。跨资源副作用应使用事务事件、可靠消息或补偿流程，不能把数据库回滚当作全局撤销按钮。
@@ -295,9 +281,7 @@ class BillingService {
 class OrderService {
     void refreshAll() {
         OrderService proxy = (OrderService) AopContext.currentProxy();
-// 作用：OrderService proxy = (OrderService) AopContext.currentProxy();；显式穿过当前代理。
         proxy.refreshOne(42L);
-// 作用：proxy.refreshOne(42L);；显式穿过当前代理。
     }
     @Transactional
     public void refreshOne(long id) {
@@ -318,12 +302,10 @@ class OrderService {
 // 结果：匹配切点的 Bean 被代理，`AopContext.currentProxy()` 可在代理调用内取值。
 @Configuration
 @EnableAspectJAutoProxy(exposeProxy = true)
-// 作用：@EnableAspectJAutoProxy(exposeProxy = true)；开启基于代理的 AOP。
 class AopConfiguration {
     @Bean
     AuditAspect auditAspect() {
         return new AuditAspect();
-// 作用：return new AuditAspect();；开启基于代理的 AOP。
     }
     String mode() { return "proxy"; }
 }
@@ -355,15 +337,12 @@ class PaymentService {
 
     PaymentService(Ledger ledger) {
         this.ledger = ledger;
-// 作用：this.ledger = ledger;；开启基于代理的 AOP。
     }
 
     @Transactional(rollbackFor = IllegalStateException.class)
     public void transfer(String from, String to, int amount) {
         ledger.debit(from, amount);
-// 作用：ledger.debit(from, amount);；开启基于代理的 AOP。
         ledger.credit(to, amount);
-// 作用：ledger.credit(to, amount);；开启基于代理的 AOP。
         System.out.println("transfer committed");
 // 输出：transfer committed
     }

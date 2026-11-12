@@ -42,6 +42,8 @@ Cron 表达式通常包含秒、分、时、日、月、星期（可选年），
 
 本文按 Java 17、Spring Boot 4.1.0 与 Spring Framework 7 的项目基线组织示例；直接使用 Quartz 时依赖 `org.quartz-scheduler:quartz:2.x`，由 Spring Boot 集成时通常使用 `org.springframework.boot:spring-boot-starter-quartz:4.1.0` 并让 BOM 管理 Quartz patch 版本。Quartz 2.x 使用 `JobBuilder`、`TriggerBuilder` 和 `CronScheduleBuilder`，旧 Quartz 1.x 常见的构造器/`StatefulJob` 写法不能直接照抄；Boot 4 周边 Servlet 配置使用 `jakarta.*`，也不要和旧 `javax.*` 依赖混用。下文的属性键名来自 Quartz 2.x 配置 API，实际数据库方言和 Spring Boot 绑定方式仍要以锁定的依赖版本为准。
 
+前面的短片段放在声明 `throws Exception` 的方法中，需导入 `org.quartz.*` 与 `java.util.Date`。其中 `CleanupJob` 为后文 Job 示例，`detail` 为 `JobBuilder` 构造的任务，`trigger` 为绑定该任务的触发器；涉及 `scheduler` 时，需要已创建并启动的独立测试调度器，且任务是否已注册会影响返回值。删除、暂停和恢复示例只在隔离调度器中执行。
+
 ## 常用用法
 
 ### `JobBuilder.newJob`：创建 JobDetail 构建器
@@ -51,7 +53,6 @@ Cron 表达式通常包含秒、分、时、日、月、星期（可选年），
 ```java
 JobDetail detail = JobBuilder.newJob(CleanupJob.class)
     .withIdentity("cleanup", "maintenance").build();
-// 作用：JobDetail detail = JobBuilder.newJob(CleanupJob.class)；创建 JobDetail 构建器。
 System.out.println(detail.getKey());
 // 输出：maintenance.cleanup
 // 说明：以 CleanupJob.class 构建 JobDetail，任务键固定为组 maintenance、名称 cleanup，打印 maintenance.cleanup；这里只构造定义，尚未注册 Scheduler。
@@ -64,7 +65,6 @@ System.out.println(detail.getKey());
 ```java
 Trigger trigger = TriggerBuilder.newTrigger()
     .withIdentity("cleanup-trigger", "maintenance").forJob(detail).startNow().build();
-// 作用：Trigger trigger = TriggerBuilder.newTrigger()；创建 Trigger 构建器。
 System.out.println(trigger.getJobKey());
 // 输出：maintenance.cleanup
 // 说明：TriggerKey 为 maintenance.cleanup-trigger，forJob(detail) 绑定 JobKey maintenance.cleanup，startNow 表示注册后尽快首次触发。
@@ -76,7 +76,6 @@ System.out.println(trigger.getJobKey());
 
 ```java
 CronScheduleBuilder schedule = CronScheduleBuilder.cronSchedule("0 0 2 * * ?");
-// 作用：CronScheduleBuilder schedule = CronScheduleBuilder.cronSchedule("0 0 2 * * ?");；创建 Cron 调度规则。
 System.out.println(schedule != null);
 // 输出：true
 // 说明："0 0 2 * * ?" 表示每天 02:00:00；cronSchedule 解析失败会抛异常，创建 builder 本身还没有向 Scheduler 注册 Trigger。
@@ -88,7 +87,6 @@ System.out.println(schedule != null);
 
 ```java
 CronExpression expression = new CronExpression("0 0/5 * * * ?");
-// 作用：CronExpression expression = new CronExpression("0 0/5 * * * ?");；校验 Cron 表达式。
 System.out.println(expression.getNextValidTimeAfter(new Date()) != null);
 // 输出：true
 // 说明："0 0/5 * * * ?" 是 Quartz 六字段表达式，表示每 5 分钟的第 0 秒；getNextValidTimeAfter 从当前 Date 计算下一次触发时间。
@@ -100,9 +98,7 @@ System.out.println(expression.getNextValidTimeAfter(new Date()) != null);
 
 ```java
 JobDataMap data = new JobDataMap();
-// 作用：JobDataMap data = new JobDataMap();；构造任务参数映射。
 data.put("batchSize", 100);
-// 作用：data.put("batchSize", 100);；构造任务参数映射。
 System.out.println(data.getInt("batchSize"));
 // 输出：100
 // 说明：JobDataMap 以 key=batchSize 保存整数 100，getInt("batchSize") 返回 100；持久化 JobStore 下该值必须可序列化且不应包含服务对象。
@@ -114,9 +110,7 @@ System.out.println(data.getInt("batchSize"));
 
 ```java
 JobDataMap data = new JobDataMap();
-// 作用：JobDataMap data = new JobDataMap();；写入任务参数。
 data.put("tenantId", "acme");
-// 作用：data.put("tenantId", "acme");；写入任务参数。
 System.out.println(data.getString("tenantId"));
 // 输出：acme
 // 说明：put("tenantId", "acme") 写入任务参数 tenantId=acme，执行端用同一键 getString 读取；键名是任务数据契约的一部分。
@@ -128,7 +122,6 @@ System.out.println(data.getString("tenantId"));
 
 ```java
 JobKey key = JobKey.jobKey("cleanup", "maintenance");
-// 作用：JobKey key = JobKey.jobKey("cleanup", "maintenance");；构造任务身份。
 System.out.println(key);
 // 输出：maintenance.cleanup
 // 说明：JobKey.jobKey("cleanup", "maintenance") 构造组 maintenance、名称 cleanup 的身份，toString 输出 maintenance.cleanup，供暂停、恢复和删除精确定位。
@@ -140,7 +133,6 @@ System.out.println(key);
 
 ```java
 boolean exists = scheduler.checkExists(JobKey.jobKey("cleanup", "maintenance"));
-// 作用：boolean exists = scheduler.checkExists(JobKey.jobKey("cleanup", "maintenance"));；检查任务是否存在。
 System.out.println(exists);
 // 输出：true 或 false。
 // 作用：用于在创建或更新前判断指定 JobKey 是否已注册。
@@ -152,7 +144,6 @@ System.out.println(exists);
 
 ```java
 boolean deleted = scheduler.deleteJob(JobKey.jobKey("cleanup", "maintenance"));
-// 作用：boolean deleted = scheduler.deleteJob(JobKey.jobKey("cleanup", "maintenance"));；删除指定任务。
 System.out.println(deleted);
 // 输出：找到并删除时为 true。
 // 说明：deleteJob(maintenance.cleanup) 返回 true 表示 JobDetail 及关联 Trigger 已删除，false 表示该 key 不存在；不会撤销已经开始的执行。
@@ -164,7 +155,6 @@ System.out.println(deleted);
 
 ```java
 Date firstFireTime = scheduler.scheduleJob(detail, trigger);
-// 作用：Date firstFireTime = scheduler.scheduleJob(detail, trigger);；注册任务与触发器。
 System.out.println(firstFireTime != null);
 // 输出：true
 // 说明：scheduleJob(detail, trigger) 注册 maintenance.cleanup 及其绑定触发器，返回首次计划触发 Date；键冲突通常抛 ObjectAlreadyExistsException。
@@ -176,7 +166,6 @@ System.out.println(firstFireTime != null);
 
 ```java
 scheduler.pauseJob(JobKey.jobKey("cleanup", "maintenance"));
-// 作用：scheduler.pauseJob(JobKey.jobKey("cleanup", "maintenance"));；暂停任务触发。
 System.out.println("paused");
 // 输出：paused
 // 说明：pauseJob(maintenance.cleanup) 阻止该 JobKey 后续触发，但不会中断正在运行的 CleanupJob；恢复时如何处理错过时间由 Trigger 的 misfire 策略决定。
@@ -188,7 +177,6 @@ System.out.println("paused");
 
 ```java
 scheduler.resumeJob(JobKey.jobKey("cleanup", "maintenance"));
-// 作用：scheduler.resumeJob(JobKey.jobKey("cleanup", "maintenance"));；恢复任务触发。
 System.out.println("resumed");
 // 输出：resumed
 // 说明：resumeJob(maintenance.cleanup) 重新允许后续触发；暂停期间错过的运行不会无条件全部补跑，而按绑定 Trigger 的 misfire 策略处理。
@@ -202,11 +190,10 @@ System.out.println("resumed");
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 
-final class CleanupJob implements Job {
+public final class CleanupJob implements Job {
     @Override
     public void execute(JobExecutionContext context) {
         String name = context.getJobDetail().getKey().getName();
-// 作用：String name = context.getJobDetail().getKey().getName();；实现一次执行单元，返回读取结果。
         System.out.println("job=" + name + ":done");
 // 输出：job=cleanup:done
     }
@@ -215,7 +202,7 @@ final class CleanupJob implements Job {
 // 作用：用于实现一段可被 Quartz 调度的工作，并从 `JobExecutionContext` 读取受控参数、输出稳定结果。
 ```
 
-`execute` 运行时可能由 Quartz 工作线程调用，不能依赖请求线程、ThreadLocal 或未传播的 MDC。任务应设置超时、记录关联 ID，并对重复执行和部分成功设计幂等处理；抛出异常要让调度层看见，而不是悄悄吞掉。
+将 `CleanupJob` 保存为 `CleanupJob.java`；Quartz 创建任务时需要可访问的公共类与无参构造器。`execute` 运行时可能由 Quartz 工作线程调用，不能依赖请求线程、ThreadLocal 或未传播的 MDC。任务应设置超时、记录关联 ID，并对重复执行和部分成功设计幂等处理；抛出异常要让调度层看见，而不是悄悄吞掉。
 
 ### JobDetail：声明身份与数据
 
@@ -230,7 +217,6 @@ JobDetail detail = JobBuilder.newJob(CleanupJob.class)
     .usingJobData("batch", "nightly")
     .storeDurably()
     .build();
-// 作用：JobDetail detail = JobBuilder.newJob(CleanupJob.class)；声明身份与数据。
 
 System.out.println(detail.getKey());
 // 输出：maintenance.cleanup
@@ -255,7 +241,6 @@ CronTrigger trigger = TriggerBuilder.newTrigger()
         .inTimeZone(java.util.TimeZone.getTimeZone(ZoneId.of("Asia/Shanghai"))))
     .forJob("cleanup", "maintenance")
     .build();
-// 作用：CronTrigger trigger = TriggerBuilder.newTrigger()；按日历调度。
 
 System.out.println(trigger.getCronExpression());
 // 输出：0 0/5 * * * ?
@@ -272,7 +257,6 @@ CronTrigger 只表达触发计划，实际任务仍可能失败或超时；时�
 import org.quartz.CronExpression;
 
 String expression = "0 30 9 ? * MON-FRI";
-// 作用：String expression = "0 30 9 ? * MON-FRI";；表达时间规则。
 System.out.println(CronExpression.isValidExpression(expression));
 // 输出：true
 // 说明："0 30 9 ? * MON-FRI" 表示周一至周五 09:30:00，isValidExpression 返回 true；是否符合本地业务时间仍取决于 Trigger 时区。
@@ -290,7 +274,6 @@ import org.quartz.CronScheduleBuilder;
 
 var schedule = CronScheduleBuilder.cronSchedule("0 0/5 * * * ?")
     .withMisfireHandlingInstructionDoNothing();
-// 作用：var schedule = CronScheduleBuilder.cronSchedule("0 0/5 * * * ?")；补偿错过的触发。
 System.out.println("misfire=skip-old-run");
 // 输出：misfire=skip-old-run
 ```
@@ -307,13 +290,10 @@ import org.quartz.Scheduler;
 
 void maintenance(Scheduler scheduler) throws Exception {
     JobKey key = JobKey.jobKey("cleanup", "maintenance");
-// 作用：JobKey key = JobKey.jobKey("cleanup", "maintenance");；key 的组为 maintenance、名称为 cleanup。
     scheduler.pauseJob(key);
-// 作用：scheduler.pauseJob(key);；key 对应作业状态变为 paused。
     System.out.println("state=paused");
 // 输出：state=paused
     scheduler.resumeJob(key);
-// 作用：scheduler.resumeJob(key);；key 对应作业状态变为 resumed。
     System.out.println("state=resumed");
 // 输出：state=resumed
 }
@@ -335,8 +315,7 @@ import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 
 @DisallowConcurrentExecution
-// 作用：@DisallowConcurrentExecution；避免同一 JobKey 重叠。
-final class RebuildJob implements Job {
+public final class RebuildJob implements Job {
     @Override public void execute(JobExecutionContext context) {
         System.out.println("overlap=blocked");
 // 输出：overlap=blocked
@@ -356,31 +335,18 @@ import java.util.Objects;
 import java.util.Properties;
 
 Properties quartz = new Properties();
-// 作用：Properties quartz = new Properties();；使用 JDBCJobStore。
 quartz.setProperty("org.quartz.scheduler.instanceName", "app-scheduler");
-// 作用：quartz.setProperty("org.quartz.scheduler.instanceName", "app-scheduler");；使用 JDBCJobStore。
 quartz.setProperty("org.quartz.scheduler.instanceId", "AUTO");
-// 作用：quartz.setProperty("org.quartz.scheduler.instanceId", "AUTO");；使用 JDBCJobStore。
 quartz.setProperty("org.quartz.threadPool.threadCount", "10");
-// 作用：quartz.setProperty("org.quartz.threadPool.threadCount", "10");；使用 JDBCJobStore。
 quartz.setProperty("org.quartz.jobStore.class", "org.quartz.impl.jdbcjobstore.JobStoreTX");
-// 作用：quartz.setProperty("org.quartz.jobStore.class", "org.quartz.impl.jdbcjobstore.JobStoreTX");；使用 JDBCJobStore。
 quartz.setProperty("org.quartz.jobStore.driverDelegateClass", "org.quartz.impl.jdbcjobstore.StdJDBCDelegate");
-// 作用：quartz.setProperty("org.quartz.jobStore.driverDelegateClass", "org.quartz.impl.jdbcjobstore.StdJDBCDelegate");；使用 JDBCJobStore。
 quartz.setProperty("org.quartz.jobStore.dataSource", "main");
-// 作用：quartz.setProperty("org.quartz.jobStore.dataSource", "main");；使用 JDBCJobStore。
 quartz.setProperty("org.quartz.jobStore.tablePrefix", "QRTZ_");
-// 作用：quartz.setProperty("org.quartz.jobStore.tablePrefix", "QRTZ_");；使用 JDBCJobStore。
 quartz.setProperty("org.quartz.jobStore.isClustered", "true");
-// 作用：quartz.setProperty("org.quartz.jobStore.isClustered", "true");；使用 JDBCJobStore。
 quartz.setProperty("org.quartz.dataSource.main.driver", "com.mysql.cj.jdbc.Driver");
-// 作用：quartz.setProperty("org.quartz.dataSource.main.driver", "com.mysql.cj.jdbc.Driver");；使用 JDBCJobStore。
 quartz.setProperty("org.quartz.dataSource.main.URL", Objects.requireNonNull(System.getenv("QUARTZ_DB_URL")));
-// 作用：quartz.setProperty("org.quartz.dataSource.main.URL", Objects.requireNonNull(System.getenv("QUARTZ_DB_URL")));；使用 JDBCJobStore。
 quartz.setProperty("org.quartz.dataSource.main.user", Objects.requireNonNull(System.getenv("QUARTZ_DB_USER")));
-// 作用：quartz.setProperty("org.quartz.dataSource.main.user", Objects.requireNonNull(System.getenv("QUARTZ_DB_USER")));；使用 JDBCJobStore。
 quartz.setProperty("org.quartz.dataSource.main.password", Objects.requireNonNull(System.getenv("QUARTZ_DB_PASSWORD")));
-// 作用：quartz.setProperty("org.quartz.dataSource.main.password", Objects.requireNonNull(System.getenv("QUARTZ_DB_PASSWORD")));；使用 JDBCJobStore。
 System.out.println("store=" + quartz.getProperty("org.quartz.jobStore.class")
     + ",prefix=" + quartz.getProperty("org.quartz.jobStore.tablePrefix"));
 // 输出：store=org.quartz.impl.jdbcjobstore.JobStoreTX,prefix=QRTZ_
@@ -402,15 +368,11 @@ void executeWithBound(JobExecutionContext context) throws JobExecutionException 
     int maxRefires = 2;
     if (context.getRefireCount() < maxRefires) {
         JobExecutionException retry = new JobExecutionException("temporary failure");
-// 作用：JobExecutionException retry = new JobExecutionException("temporary failure");；区分立即 refire 与有界指数退避 Trigger。
         retry.setRefireImmediately(true);
-// 作用：retry.setRefireImmediately(true);；区分立即 refire 与有界指数退避 Trigger。
         throw retry;
     }
     System.err.println("retry=exhausted, job=" + context.getJobDetail().getKey());
-// 作用：System.err.println("retry=exhausted, job=" + context.getJobDetail().getKey());；区分立即 refire 与有界指数退避 Trigger。
     throw new JobExecutionException("retry limit exceeded");
-// 作用：throw new JobExecutionException("retry limit exceeded");；区分立即 refire 与有界指数退避 Trigger。
 }
 // 作用：用于限制 Quartz 立即 refire 的次数，并把需要延迟的重试用有界指数退避显式建成新的 Trigger，避免把两种语义混成一个开关。
 // 结果：refireCount 为 0 或 1 时任务立即重试；达到 2 时输出 retry=exhausted 并以 JobExecutionException 失败结束
@@ -429,36 +391,23 @@ Trigger delayedRetry(JobExecutionContext context, int attempt) throws Exception 
     int maxAttempts = 5;
     if (attempt < 0 || attempt >= maxAttempts) {
         throw new IllegalArgumentException("retry attempts exhausted");
-// 作用：throw new IllegalArgumentException("retry attempts exhausted");；区分立即 refire 与有界指数退避 Trigger。
     }
     long baseSeconds = 30L;
     long maxSeconds = 15L * 60L;
     long multiplier = 1L << Math.min(attempt, 5);
-// 作用：long multiplier = 1L << Math.min(attempt, 5);；区分立即 refire 与有界指数退避 Trigger。
     long delaySeconds = Math.min(baseSeconds * multiplier, maxSeconds);
-// 作用：long delaySeconds = Math.min(baseSeconds * multiplier, maxSeconds);；区分立即 refire 与有界指数退避 Trigger。
     String jobKey = context.getJobDetail().getKey().toString();
-// 作用：String jobKey = context.getJobDetail().getKey().toString();；区分立即 refire 与有界指数退避 Trigger，返回读取结果。
     String fireInstanceId = context.getFireInstanceId();
-// 作用：String fireInstanceId = context.getFireInstanceId();；区分立即 refire 与有界指数退避 Trigger，返回读取结果。
     String runId = fireInstanceId == null || fireInstanceId.isBlank()
         ? UUID.randomUUID().toString()
         : fireInstanceId;
-// 作用：String runId = fireInstanceId == null || fireInstanceId.isBlank()；区分立即 refire 与有界指数退避 Trigger，返回读取结果。
-// 作用：? UUID.randomUUID().toString()；区分立即 refire 与有界指数退避 Trigger。
     Trigger retry = TriggerBuilder.newTrigger()
         .withIdentity("cleanup-retry-" + jobKey + "-" + runId + "-" + attempt, "maintenance")
         .forJob(context.getJobDetail())
         .startAt(DateBuilder.futureDate(Math.toIntExact(delaySeconds), IntervalUnit.SECOND))
         .withSchedule(SimpleScheduleBuilder.simpleSchedule().withRepeatCount(0))
         .build();
-// 作用：.build();；区分立即 refire 与有界指数退避 Trigger。
-// 作用：Trigger retry = TriggerBuilder.newTrigger()；区分立即 refire 与有界指数退避 Trigger。
-// 作用：.forJob(context.getJobDetail())；区分立即 refire 与有界指数退避 Trigger。
-// 作用：.startAt(DateBuilder.futureDate(Math.toIntExact(delaySeconds), IntervalUnit.SECOND))；区分立即 refire 与有界指数退避 Trigger。
-// 作用：.withSchedule(SimpleScheduleBuilder.simpleSchedule().withRepeatCount(0))；区分立即 refire 与有界指数退避 Trigger。
     context.getScheduler().scheduleJob(retry);
-// 作用：context.getScheduler().scheduleJob(retry);；区分立即 refire 与有界指数退避 Trigger，返回读取结果。
     System.out.println("retry=delayed-trigger,delay=" + delaySeconds + "s");
 // 输出：retry=delayed-trigger,delay=30s
     return retry;
@@ -478,15 +427,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-// 作用：ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);；轻量内存调度对照。
 try {
     var done = scheduler.schedule(() -> System.out.println("memory=once"), 1, TimeUnit.MILLISECONDS);
 // 输出：memory=once
     done.get();
-// 作用：done.get();；轻量内存调度对照，返回读取结果。
 } finally {
     scheduler.shutdown();
-// 作用：scheduler.shutdown();；轻量内存调度对照。
 }
 // 说明：ScheduledExecutorService 以进程内存保存任务，示例 initialDelay 与 period 只在当前 JVM 存活时有效；重启后不会恢复 task key、历史触发或 misfire 状态。
 ```
@@ -512,23 +458,14 @@ void schedule(Scheduler scheduler) throws Exception {
         var detail = JobBuilder.newJob(CleanupJob.class)
             .withIdentity("cleanup", "maintenance")
             .build();
-// 作用：var detail = JobBuilder.newJob(CleanupJob.class)；轻量内存调度对照。
         var trigger = TriggerBuilder.newTrigger()
             .withIdentity("cleanup-trigger", "maintenance")
             .forJob(detail)
             .withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?")
                 .withMisfireHandlingInstructionDoNothing())
             .build();
-// 作用：var trigger = TriggerBuilder.newTrigger()；轻量内存调度对照。
-// 作用：.withIdentity("cleanup-trigger", "maintenance")；轻量内存调度对照。
-// 作用：.forJob(detail)；轻量内存调度对照。
-// 作用：.withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?")；轻量内存调度对照。
-// 作用：.withMisfireHandlingInstructionDoNothing())；轻量内存调度对照。
-// 作用：.build();；轻量内存调度对照。
         scheduler.scheduleJob(detail, trigger);
-// 作用：scheduler.scheduleJob(detail, trigger);；轻量内存调度对照。
         scheduler.start();
-// 作用：scheduler.start();；轻量内存调度对照。
         System.out.println("schedule=started");
 // 输出：schedule=started
     } finally {

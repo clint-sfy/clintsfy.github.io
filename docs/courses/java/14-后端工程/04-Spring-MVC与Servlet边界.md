@@ -50,7 +50,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-// 作用：@RestController；声明 JSON 控制器。
 class HealthController {
     @GetMapping("/health")
     String health() {
@@ -76,7 +75,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/users")
-// 作用：@RequestMapping("/users")；声明共享路径前缀。
 class UserController {
     String basePath() { return "/users"; }
 }
@@ -100,7 +98,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 class UserQueryController {
     @GetMapping("/users/{id}")
-// 作用：@GetMapping("/users/{id}")；匹配 GET 请求。
     String find(@PathVariable long id) { return "user-" + id; }
 }
 
@@ -128,9 +125,7 @@ record CreateUser(String name) {}
 class CreateUserController {
     @PostMapping("/users")
     String create(@RequestBody CreateUser request) {
-// 作用：String create(@RequestBody CreateUser request) {；读取 JSON 请求体。
         return "created:" + request.name();
-// 作用：return "created:" + request.name();；读取 JSON 请求体。
     }
 }
 
@@ -151,15 +146,12 @@ System.out.println(new CreateUserController().create(new CreateUser("Ann")));
 record ApiResponse<T>(String code, T data) {
     static <T> ApiResponse<T> ok(T data) {
         return new ApiResponse<>("OK", data);
-// 作用：return new ApiResponse<>("OK", data);；让返回值表达协议。
     }
 }
 
 ApiResponse<String> response = ApiResponse.ok("ready");
-// 作用：ApiResponse<String> response = ApiResponse.ok("ready");；让返回值表达协议。
 System.out.println(response.code() + "/" + response.data());
 // 输出：OK/ready
-// 作用：用于区分业务数据、HTTP 状态和错误信息；响应模型应保持稳定，避免把内部异常对象直接暴露给客户端。
 ```
 
 统一响应包装不是强制规范；文件流、分页和错误响应可能需要不同的协议。先确定状态码、Content-Type 和错误字段，再选择 DTO、`ResponseEntity` 或流式响应。
@@ -180,7 +172,6 @@ class ApiErrors {
     @ExceptionHandler(IllegalArgumentException.class)
     String badRequest(IllegalArgumentException ex) {
         return ex.getMessage();
-// 作用：return ex.getMessage();；统一错误边界，返回读取结果。
     }
 }
 
@@ -198,7 +189,6 @@ System.out.println(new ApiErrors().badRequest(new IllegalArgumentException("inva
 ```java
 import jakarta.servlet.Filter;
 Filter servletFilter = (request, response, chain) -> chain.doFilter(request, response);
-// 作用：Filter servletFilter = (request, response, chain) -> chain.doFilter(request, response);；拦截 Servlet 请求。
 System.out.println(servletFilter != null);
 // 输出：true
 // 说明：Filter 读取 X-Trace-Id、写入 request 属性 traceId 后调用 chain.doFilter；漏调会在此终止请求，直接 new 不验证容器映射或链顺序。
@@ -214,7 +204,6 @@ Filter 必须通过 `FilterChain` 继续请求，否则会短路；它不知道�
 import org.springframework.web.servlet.HandlerInterceptor;
 
 HandlerInterceptor interceptor = new HandlerInterceptor() {};
-// 作用：HandlerInterceptor interceptor = new HandlerInterceptor() {};；拦截 MVC Handler。
 System.out.println(interceptor.preHandle(null, null, new Object()));
 // 输出：true
 // 说明：HandlerInterceptor.preHandle 在目标 Controller 前检查 X-User-Id；返回 true 才继续。只有 addInterceptors 注册后生效，直接 new 不会拦截请求。
@@ -235,8 +224,6 @@ ResponseEntity<String> response = ResponseEntity
     .status(201)
     .header("X-Request-Id", "req-7")
     .body("created");
-// 作用：.status(201)；显式设置状态和响应头。
-// 作用：ResponseEntity<String> response = ResponseEntity；显式设置状态和响应头。
 System.out.println(response.getStatusCode().value() + "/" + response.getBody());
 // 输出：201/created
 // 说明：ResponseEntity 同时携带示例 body、明确状态码和响应头；例如 X-Request-Id=req-1 会随响应返回，而不是写进 JSON 对象。
@@ -262,9 +249,7 @@ class RequestIdFilter extends OncePerRequestFilter {
         HttpServletRequest request, HttpServletResponse response, FilterChain chain)
         throws ServletException, IOException {
         response.setHeader("X-Request-Id", "generated");
-// 作用：response.setHeader("X-Request-Id", "generated");；每次请求一次的 Servlet Filter。
         chain.doFilter(request, response);
-// 作用：chain.doFilter(request, response);；每次请求一次的 Servlet Filter。
         System.out.println("filter-finished");
 // 输出：filter-finished
     }
@@ -286,7 +271,6 @@ class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new RequestTraceInterceptor()).order(10);
-// 作用：registry.addInterceptor(new RequestTraceInterceptor()).order(10);；注册与执行方向。
         System.out.println("trace-order=10");
 // 输出：trace-order=10
     }
@@ -308,17 +292,12 @@ import jakarta.servlet.http.HttpServletResponse;
 
 void inspect(HttpServletRequest request, HttpServletResponse response) throws Exception {
     request.setAttribute("trace", "req-7");
-// 作用：request.setAttribute("trace", "req-7");；理解响应提交边界。
     response.setContentType("text/plain;charset=UTF-8");
-// 作用：response.setContentType("text/plain;charset=UTF-8");；理解响应提交边界。
     response.getWriter().write("ok");
-// 作用：response.getWriter().write("ok");；理解响应提交边界。
     response.flushBuffer();
-// 作用：response.flushBuffer();；理解响应提交边界。
     System.out.println(request.getAttribute("trace") + "/" + response.isCommitted());
 // 输出：req-7/true
 }
-// 作用：用于定位 request 属性、输入流和 response 缓冲的时序问题；一次请求结束后不要保存容器对象到异步长期任务。
 ```
 
 `getWriter` 或 `getOutputStream` 的选择应与响应体类型一致；flush、缓冲区溢出或容器提交后，状态码和头部可能不能再改。异步 Servlet 场景还要使用异步上下文并保证超时、取消和资源释放。
@@ -336,11 +315,9 @@ void inspect(HttpServletRequest request, HttpServletResponse response) throws Ex
 @RequestMapping("/orders")
 class OrderController {
     @PostMapping
-// 作用：@PostMapping；接收创建命令。
     ResponseEntity<Long> create(@RequestBody CreateOrder body) {
         long id = 42L;
         return ResponseEntity.status(201).body(id);
-// 作用：return ResponseEntity.status(201).body(id);；接收创建命令。
     }
     record CreateOrder(String sku) {}
 }
@@ -358,10 +335,8 @@ class OrderController {
 @RestController
 class ProfileController {
     @PutMapping("/profiles/{id}")
-// 作用：@PutMapping("/profiles/{id}")；处理可幂等更新。
     Profile replace(@PathVariable long id, @RequestBody Profile body) {
         return new Profile(id, body.name());
-// 作用：return new Profile(id, body.name());；处理可幂等更新。
     }
     record Profile(long id, String name) {}
     String route() { return "PUT /profiles/{id}"; }
@@ -379,12 +354,10 @@ class ProfileController {
 @RestController
 class SessionController {
     @DeleteMapping("/sessions/{id}")
-// 作用：@DeleteMapping("/sessions/{id}")；处理删除命令。
     ResponseEntity<Void> delete(@PathVariable String id) {
         System.out.println("delete " + id);
 // 输出：DELETE `/sessions/a1` 打印 `delete a1` 并返回 `204`。
         return ResponseEntity.noContent().build();
-// 作用：return ResponseEntity.noContent().build();；处理删除命令。
     }
     String route() { return "DELETE /sessions/{id}"; }
 }
@@ -403,7 +376,6 @@ class SessionController {
 class UserController {
     @GetMapping("/users/{id}")
     String find(@PathVariable("id") long userId) {
-// 作用：String find(@PathVariable("id") long userId) {；读取路径变量。
         if (userId <= 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         return "user:" + userId;
     }
@@ -425,11 +397,8 @@ class SearchController {
     @GetMapping("/search")
     List<String> search(
             @RequestParam(defaultValue = "10") int limit) {
-// 作用：@RequestParam(defaultValue = "10") int limit) {；读取查询或表单参数。
         int safeLimit = Math.min(limit, 100);
-// 作用：int safeLimit = Math.min(limit, 100);；读取查询或表单参数。
         return List.of("limit=" + safeLimit);
-// 作用：return List.of("limit=" + safeLimit);；读取查询或表单参数。
     }
 }
 ```
@@ -447,10 +416,8 @@ class SearchController {
 class HealthController {
     @GetMapping("/health")
     @ResponseBody
-// 作用：@ResponseBody；将返回值写入响应体。
     Map<String, String> health() {
         return Map.of("status", "UP");
-// 作用：return Map.of("status", "UP");；将返回值写入响应体。
     }
     String mediaType() { return "application/json"; }
 }
@@ -468,12 +435,9 @@ class HealthController {
 @RestControllerAdvice
 class ApiErrors {
     @ExceptionHandler(IllegalArgumentException.class)
-// 作用：@ExceptionHandler(IllegalArgumentException.class)；映射已知异常。
     ResponseEntity<Map<String, String>> badInput(IllegalArgumentException ex) {
         return ResponseEntity.badRequest()
             .body(Map.of("code", "BAD_INPUT"));
-// 作用：return ResponseEntity.badRequest()；映射已知异常。
-// 作用：.body(Map.of("code", "BAD_INPUT"));；映射已知异常。
     }
     String boundary() { return "validation"; }
 }
@@ -489,14 +453,11 @@ class ApiErrors {
 // 作用：通过 @RestControllerAdvice 集中处理 REST 异常。
 // 结果：未找到资源时返回 `404` Problem Detail。
 @RestControllerAdvice
-// 作用：@RestControllerAdvice；集中处理 REST 异常。
 class GlobalErrors {
     @ExceptionHandler(NoSuchElementException.class)
     ProblemDetail notFound(NoSuchElementException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(404);
-// 作用：ProblemDetail detail = ProblemDetail.forStatus(404);；集中处理 REST 异常。
         detail.setTitle("resource not found");
-// 作用：detail.setTitle("resource not found");；集中处理 REST 异常。
         return detail;
     }
     String format() { return "problem+json"; }
@@ -515,11 +476,8 @@ final class RequestIdFilter implements Filter {
     public void doFilter(ServletRequest request,
                          ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
-// 作用：public void doFilter(ServletRequest request,；放行到下一个过滤器。
         request.setAttribute("requestId", UUID.randomUUID().toString());
-// 作用：request.setAttribute("requestId", UUID.randomUUID().toString());；放行到下一个过滤器。
         chain.doFilter(request, response);
-// 作用：chain.doFilter(request, response);；放行到下一个过滤器。
         System.out.println("response completed");
 // 输出：下游处理完成后打印 `response completed`。
     }
@@ -541,7 +499,6 @@ class WebConfiguration implements WebMvcConfigurer {
         registry.addInterceptor(new LocaleInterceptor())
             .addPathPatterns("/api/**")
             .excludePathPatterns("/api/public/**");
-// 作用：registry.addInterceptor(new LocaleInterceptor())；注册 MVC 拦截器。
     }
     String scope() { return "handler"; }
 }
@@ -562,7 +519,6 @@ class StaticConfiguration implements WebMvcConfigurer {
         registry.addResourceHandler("/assets/**")
             .addResourceLocations("classpath:/public/")
             .setCachePeriod(3600);
-// 作用：registry.addResourceHandler("/assets/**")；注册静态资源 URL。
     }
     String publicPath() { return "/assets/**"; }
 }
@@ -580,15 +536,10 @@ class StaticConfiguration implements WebMvcConfigurer {
 @Bean
 CorsConfiguration apiCors() {
     CorsConfiguration cors = new CorsConfiguration();
-// 作用：CorsConfiguration cors = new CorsConfiguration();；声明 CORS 白名单。
     cors.setAllowedOrigins(List.of("https://app.example.com"));
-// 作用：cors.setAllowedOrigins(List.of("https://app.example.com"));；声明 CORS 白名单，只接受来自 https://app.example.com 的请求。
     cors.setAllowedMethods(List.of("GET", "POST"));
-// 作用：cors.setAllowedMethods(List.of("GET", "POST"));；声明 CORS 白名单，返回读取结果。
     cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-// 作用：cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));；声明 CORS 白名单。
     cors.setAllowCredentials(true);
-// 作用：cors.setAllowCredentials(true);；声明 CORS 白名单。
     return cors;
 }
 ```
@@ -606,15 +557,10 @@ CorsConfiguration apiCors() {
 UrlBasedCorsConfigurationSource corsSource(CorsConfiguration apiCors) {
     UrlBasedCorsConfigurationSource source =
         new UrlBasedCorsConfigurationSource();
-// 作用：new UrlBasedCorsConfigurationSource();；按 URL 注册 CORS。
     source.registerCorsConfiguration("/api/**", apiCors);
-// 作用：source.registerCorsConfiguration("/api/**", apiCors);；按 URL 注册 CORS。
     CorsConfiguration open = new CorsConfiguration();
-// 作用：CorsConfiguration open = new CorsConfiguration();；按 URL 注册 CORS。
     open.setAllowedOrigins(List.of("https://docs.example.com"));
-// 作用：open.setAllowedOrigins(List.of("https://docs.example.com"));；按 URL 注册 CORS，只接受来自 https://docs.example.com 的请求。
     source.registerCorsConfiguration("/docs/**", open);
-// 作用：source.registerCorsConfiguration("/docs/**", open);；按 URL 注册 CORS。
     return source;
 }
 ```
@@ -631,7 +577,6 @@ UrlBasedCorsConfigurationSource corsSource(CorsConfiguration apiCors) {
 @Bean
 CorsFilter corsFilter(UrlBasedCorsConfigurationSource source) {
     CorsFilter filter = new CorsFilter(source);
-// 作用：CorsFilter filter = new CorsFilter(source);；在 Servlet 链前置处理 CORS。
     return filter;
 }
 
@@ -651,15 +596,11 @@ String preflightMethod() {
 // 结果：响应包含两个 `Vary` 值和一个下载文件名。
 void writeDownloadHeaders(HttpServletResponse response) {
     response.setContentType("application/octet-stream");
-// 作用：response.setContentType("application/octet-stream");；追加可重复响应头。
     response.addHeader("Vary", "Origin");
-// 作用：response.addHeader("Vary", "Origin");；追加可重复响应头。
     response.addHeader("Vary", "Access-Control-Request-Method");
-// 作用：response.addHeader("Vary", "Access-Control-Request-Method");；追加可重复响应头。
     response.setHeader(
         "Content-Disposition",
         "attachment; filename=report.csv");
-// 作用：response.setHeader(；追加可重复响应头。
 }
 ```
 
@@ -675,14 +616,11 @@ void writeDownloadHeaders(HttpServletResponse response) {
 void requireApiKey(HttpServletRequest request,
                    HttpServletResponse response) throws IOException {
     String apiKey = request.getHeader("X-Api-Key");
-// 作用：String apiKey = request.getHeader("X-Api-Key");；交给容器生成错误响应。
     if (apiKey == null) {
         response.sendError(401, "missing api key");
-// 作用：response.sendError(401, "missing api key");；交给容器生成错误响应。
         return;
     }
     response.setStatus(204);
-// 作用：response.setStatus(204);；交给容器生成错误响应。
 }
 ```
 
@@ -699,12 +637,9 @@ final class ByteArrayServletInputStream extends ServletInputStream {
     private final ByteArrayInputStream delegate;
     ByteArrayServletInputStream(byte[] body) {
         this.delegate = new ByteArrayInputStream(body);
-// 作用：this.delegate = new ByteArrayInputStream(body);；适配 Servlet 请求体字节流。
     }
     public int read() { return delegate.read(); }
-// 作用：public int read() { return delegate.read(); }；适配 Servlet 请求体字节流。
     public boolean isFinished() { return delegate.available() == 0; }
-// 作用：public boolean isFinished() { return delegate.available() == 0; }；适配 Servlet 请求体字节流。
     public boolean isReady() { return true; }
     public void setReadListener(ReadListener listener) {}
 }
@@ -737,11 +672,9 @@ class NoteController {
     @PostMapping("/notes")
     ResponseEntity<NoteView> create(@Valid @RequestBody CreateNote request) {
         var view = new NoteView(1L, request.title().strip());
-// 作用：var view = new NoteView(1L, request.title().strip());；适配 Servlet 请求体字节流。
         System.out.println("note=" + view.id());
 // 输出：note=1
         return ResponseEntity.status(201).body(view);
-// 作用：return ResponseEntity.status(201).body(view);；适配 Servlet 请求体字节流。
     }
 }
 ```

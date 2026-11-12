@@ -192,7 +192,7 @@ class MessageDemo {
 
     void send() {
         Long subscribers = redis.convertAndSend("lab:notice", "created");
-        // 返回当前收到消息的订阅客户端数量；没有订阅者时为 0。
+        // 返回服务端报告的接收者数量；没有匹配订阅时为 0，不代表业务处理成功。
 
         var id = redis.opsForStream().add(StreamRecords.newRecord()
             .in("lab:events").ofMap(Map.of("type", "created")));

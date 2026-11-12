@@ -33,6 +33,8 @@ description: 按增删改查、遍历、排序和视图边界速查 List 与 Arr
 
 ## 常用用法
 
+完整类可按类名保存并编译；没有类和 main 的片段可在 JDK 17 或更高版本的 JShell 中逐段运行，也可将导入放在文件开头、执行语句放进 main。不同片段请分别运行。
+
 ### 创建可变 List
 
 需要增删改时使用 ArrayList；从已有集合复制到 ArrayList 可以获得独立的可变容器。
@@ -470,7 +472,7 @@ System.out.println(count);
 
 ### `ArrayList.add`：向可变数组列表追加元素
 
-它在容量足够时摊销为常数时间，并返回集合是否发生变化。
+末尾追加的摊销时间为常数，但扩容时需要复制元素；它返回集合是否发生变化。
 
 ```java
 import java.util.ArrayList;

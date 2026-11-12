@@ -22,7 +22,7 @@ description: 用 happens-before、volatile、锁和安全发布推理 Java 并�
 ### 专业术语
 
 - **Java Memory Model（JMM）**：规定线程读写共享变量时可见性、有序性和同步语义的抽象模型。
-- **happens-before**：如果 A happens-before B，A 的结果对 B 可见，且 A 的执行顺序先于 B。
+- **happens-before**：如果 A happens-before B，A 的写入受到对 B 的可见性和顺序约束；这不要求机器按源码顺序执行所有指令。
 - **可见性（visibility）**：一个线程写入后，其他线程能观察到最新值。
 - **有序性（ordering）**：同步边界约束了编译器、JIT 和处理器重排对观察结果的影响。
 - **原子性（atomicity）**：一个操作不会被其他线程观察到中间状态。
@@ -31,7 +31,7 @@ description: 用 happens-before、volatile、锁和安全发布推理 Java 并�
 
 JMM 不是“每个线程都有一份永久独立内存”的实现承诺，而是给出跨线程观察规则。单线程里看起来顺序正确的代码，跨线程没有同步时可能看不到最新值，也可能看到不完整的复合状态。
 
-常见 happens-before 边包括：同一锁的解锁先于后续加锁；volatile 写先于后续读；`Thread.start()` 先于新线程动作；线程中的动作先于成功的 `join()` 返回；Future 完成先于 `get()` 返回。它们建立可见性，但是否足以保证整个业务不变式还要看原子边界。
+常见 happens-before 边包括：同一锁的解锁先于后续加锁；volatile 写先于后续读；`Thread.start()` 先于新线程动作；线程中的动作先于成功的 `join()` 返回；异步任务中的操作先于对应 `Future.get()` 返回之后的操作。它们建立可见性，但是否足以保证整个业务不变式还要看原子边界。
 
 ## 常用用法
 
@@ -46,7 +46,6 @@ public class VolatileFlagDemo {
 
     public static void main(String[] args) {
         stopped = false;
-// 作用：stopped = false;；发布状态标志。
         stopped = true;
         if (stopped) {
             System.out.println("stop requested");
@@ -69,7 +68,6 @@ public class SynchronizedVisibilityDemo {
 
     synchronized void set(int value) {
         this.value = value;
-// 作用：this.value = value;；用锁建立可见性与互斥。
     }
 
     synchronized int get() {
@@ -78,9 +76,7 @@ public class SynchronizedVisibilityDemo {
 
     public static void main(String[] args) {
         var box = new SynchronizedVisibilityDemo();
-// 作用：var box = new SynchronizedVisibilityDemo();；用锁建立可见性与互斥。
         box.set(42);
-// 作用：box.set(42);；用锁建立可见性与互斥。
         System.out.println(box.get());
 // 输出：42
     }
@@ -101,11 +97,8 @@ public class ThreadHappensBeforeDemo {
     public static void main(String[] args) throws InterruptedException {
         value = 41;
         Thread worker = new Thread(() -> value++);
-// 作用：Thread worker = new Thread(() -> value++);；启动后等待完成。
         worker.start();
-// 作用：worker.start();；启动后等待完成。
         worker.join();
-// 作用：worker.join();；启动后等待完成。
         System.out.println(value);
 // 输出：42
     }
@@ -125,9 +118,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicCasDemo {
     public static void main(String[] args) {
         AtomicInteger version = new AtomicInteger(1);
-// 作用：AtomicInteger version = new AtomicInteger(1);；CAS 保证单变量更新。
         boolean updated = version.compareAndSet(1, 2);
-// 作用：boolean updated = version.compareAndSet(1, 2);；CAS 保证单变量更新。
         System.out.println(updated + ", version=" + version.get());
 // 输出：true, version=2
     }
@@ -145,7 +136,6 @@ CAS 适合无锁更新独立状态，不代表任意多字段操作都能无锁�
 public class SafePublicationDemo {
     record Config(String host, int port) { }
     private static volatile Config config = new Config("localhost", 8080);
-// 作用：private static volatile Config config = new Config("localhost", 8080);；用不可变对象传递快照。
 
     public static void main(String[] args) {
         Config snapshot = config;
@@ -168,9 +158,7 @@ import java.util.concurrent.Executors;
 public class FutureHappensBeforeDemo {
     public static void main(String[] args) throws Exception {
         try (var executor = Executors.newSingleThreadExecutor()) {
-// 作用：try (var executor = Executors.newSingleThreadExecutor()) {；等待完成并取得可见结果。
             var future = executor.submit(() -> "ready");
-// 作用：var future = executor.submit(() -> "ready");；等待完成并取得可见结果。
             System.out.println(future.get());
 // 输出：ready
         }
@@ -220,11 +208,8 @@ public class VarHandleDemo {
     public static void main(String[] args) throws Exception {
         VarHandle handle = MethodHandles.lookup().findVarHandle(
                 VarHandleDemo.class, "value", int.class);
-// 作用：VarHandle handle = MethodHandles.lookup().findVarHandle(；低层次内存访问工具，返回读取结果。
         var box = new VarHandleDemo();
-// 作用：var box = new VarHandleDemo();；低层次内存访问工具。
         handle.set(box, 42);
-// 作用：handle.set(box, 42);；低层次内存访问工具。
         System.out.println(handle.get(box));
 // 输出：42
     }
@@ -233,7 +218,7 @@ public class VarHandleDemo {
 
 ### lazySet：较弱的最终发布
 
-`lazySet` 允许延迟传播，适合不需要立即同步观察的状态清理；若后续代码依赖写入马上对其他线程可见，使用普通 `set` 更直白。
+`lazySet` 使用 release 语义，适合明确理解该内存顺序的发布或状态清理；普通 `set` 使用 volatile 写语义，但两者都不保证其他线程在指定时间内观察到更新。
 
 ```java
 // 说明：state.lazySet(1) 以 release 语义发布最终值；它不承诺另一线程立即观察到 1。
@@ -242,9 +227,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class LazySetDemo {
     public static void main(String[] args) {
         AtomicInteger state = new AtomicInteger();
-// 作用：AtomicInteger state = new AtomicInteger();；较弱的最终发布。
         state.lazySet(1);
-// 作用：state.lazySet(1);；较弱的最终发布。
         System.out.println(state.get());
 // 输出：1
     }
@@ -274,9 +257,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class StopSignalDemo {
     public static void main(String[] args) {
         AtomicBoolean running = new AtomicBoolean(true);
-// 作用：AtomicBoolean running = new AtomicBoolean(true);；没有同步就没有可靠推理。
         running.set(false);
-// 作用：running.set(false);；没有同步就没有可靠推理。
         System.out.println("running=" + running.get());
 // 输出：running=false
     }
@@ -287,11 +268,11 @@ public class StopSignalDemo {
 
 ## 易混点
 
-- volatile 解决“看见最新值”，不解决“多个线程同时改值”的互斥和复合原子性。
+- volatile 写与后续读建立可见性，不解决“多个线程同时改值”的互斥和复合原子性。
 - happens-before 是可见性与顺序关系，不是所有业务动作自动串行。
 - `Thread.start()`/`join()` 的边界只覆盖对应线程生命周期，普通轮询没有同等保证。
 - final 字段有初始化安全语义，但对象内部的集合、数组和可变字段仍可能被并发修改。
-- Atomic 的 CAS 失败表示竞争发生了，不应把“无锁”误解成“永远不会重试”。
+- 强 CAS 失败表示当前值与期望值不相等，不应把“无锁”误解成“永远不会重试”。
 
 ## 课后小问
 

@@ -48,10 +48,8 @@ import java.util.concurrent.Executors;
 public class SupplyAsyncDemo {
     public static void main(String[] args) {
         try (var executor = Executors.newSingleThreadExecutor()) {
-// 作用：try (var executor = Executors.newSingleThreadExecutor()) {；启动异步供应任务。
             CompletableFuture<String> future = CompletableFuture
                     .supplyAsync(() -> "java", executor);
-// 作用：.supplyAsync(() -> "java", executor);；启动异步供应任务。
             System.out.println(future.join());
 // 输出：java
         }
@@ -72,8 +70,6 @@ public class ThenApplyDemo {
         String result = CompletableFuture.completedFuture("java")
                 .thenApply(String::toUpperCase)
                 .join();
-// 作用：.thenApply(String::toUpperCase)；转换上一步结果。
-// 作用：String result = CompletableFuture.completedFuture("java")；转换上一步结果。
         System.out.println(result);
 // 输出：JAVA
     }
@@ -91,15 +87,12 @@ import java.util.concurrent.CompletableFuture;
 public class ThenComposeDemo {
     static CompletableFuture<String> loadName(int id) {
         return CompletableFuture.completedFuture("user-" + id);
-// 作用：return CompletableFuture.completedFuture("user-" + id);；串联两个异步阶段。
     }
 
     public static void main(String[] args) {
         String result = CompletableFuture.completedFuture(7)
                 .thenCompose(ThenComposeDemo::loadName)
                 .join();
-// 作用：.thenCompose(ThenComposeDemo::loadName)；串联两个异步阶段。
-// 作用：String result = CompletableFuture.completedFuture(7)；串联两个异步阶段。
         System.out.println(result);
 // 输出：user-7
     }
@@ -117,11 +110,8 @@ import java.util.concurrent.CompletableFuture;
 public class ThenCombineDemo {
     public static void main(String[] args) {
         CompletableFuture<String> user = CompletableFuture.completedFuture("Ann");
-// 作用：CompletableFuture<String> user = CompletableFuture.completedFuture("Ann");；汇合两个独立结果。
         CompletableFuture<Integer> score = CompletableFuture.completedFuture(100);
-// 作用：CompletableFuture<Integer> score = CompletableFuture.completedFuture(100);；汇合两个独立结果。
         String result = user.thenCombine(score, (name, value) -> name + ":" + value).join();
-// 作用：String result = user.thenCombine(score, (name, value) -> name + ":" + value).join();；汇合两个独立结果。
         System.out.println(result);
 // 输出：Ann:100
     }
@@ -142,13 +132,8 @@ public class AllOfDemo {
         List<CompletableFuture<String>> futures = List.of(
                 CompletableFuture.completedFuture("a"),
                 CompletableFuture.completedFuture("b"));
-// 作用：List<CompletableFuture<String>> futures = List.of(；等待多个异步任务。
-// 作用：CompletableFuture.completedFuture("a"),；等待多个异步任务。
-// 作用：CompletableFuture.completedFuture("b"));；等待多个异步任务。
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
-// 作用：CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();；等待多个异步任务。
         List<String> results = futures.stream().map(CompletableFuture::join).toList();
-// 作用：List<String> results = futures.stream().map(CompletableFuture::join).toList();；等待多个异步任务。
         System.out.println(results);
 // 输出：[a, b]
     }
@@ -171,8 +156,6 @@ public class ExceptionallyDemo {
                         new IllegalStateException("down"))
                 .exceptionally(error -> "fallback")
                 .join();
-// 作用：.exceptionally(error -> "fallback")；失败时降级。
-// 作用：String result = CompletableFuture.<String>failedFuture(；失败时降级。
         System.out.println(result);
 // 输出：fallback
     }
@@ -193,8 +176,6 @@ public class HandleDemo {
                         new IllegalArgumentException("bad input"))
                 .handle((value, error) -> error == null ? value : "handled")
                 .join();
-// 作用：.handle((value, error) -> error == null ? value : "handled")；同时处理成功和失败。
-// 作用：String result = CompletableFuture.<String>failedFuture(；同时处理成功和失败。
         System.out.println(result);
 // 输出：handled
     }
@@ -203,7 +184,7 @@ public class HandleDemo {
 
 ### orTimeout：超时并让阶段失败
 
-orTimeout 在期限内未完成时以 TimeoutException 异常完成阶段；它是结果协议的一部分，底层 I/O 是否真的取消要看连接客户端和任务实现。
+orTimeout 在期限内未完成时以 TimeoutException 异常完成当前 CompletableFuture，并返回同一个对象；它是结果协议的一部分，底层 I/O 是否真的取消要看连接客户端和任务实现。
 
 ```java
 // 说明：orTimeout：超时并让阶段失败。
@@ -215,8 +196,6 @@ public class OrTimeoutDemo {
         String result = CompletableFuture.completedFuture("fast")
                 .orTimeout(1, TimeUnit.SECONDS)
                 .join();
-// 作用：.orTimeout(1, TimeUnit.SECONDS)；超时并让阶段失败。
-// 作用：String result = CompletableFuture.completedFuture("fast")；超时并让阶段失败。
         System.out.println(result);
 // 输出：fast
     }
@@ -225,7 +204,7 @@ public class OrTimeoutDemo {
 
 ### completeOnTimeout：超时返回默认值
 
-completeOnTimeout 以默认值完成阶段，适合允许降级的查询；它同样不保证取消底层任务，不能用默认值掩盖下游持续超载。
+completeOnTimeout 在超时后以默认值完成当前 CompletableFuture，并返回同一个对象，适合允许降级的查询；它同样不保证取消底层任务，不能用默认值掩盖下游持续超载。
 
 ```java
 // 说明：completeOnTimeout：超时返回默认值。
@@ -237,8 +216,6 @@ public class CompleteOnTimeoutDemo {
         String result = new CompletableFuture<String>()
                 .completeOnTimeout("default", 1, TimeUnit.MILLISECONDS)
                 .join();
-// 作用：.completeOnTimeout("default", 1, TimeUnit.MILLISECONDS)；超时返回默认值。
-// 作用：String result = new CompletableFuture<String>()；超时返回默认值。
         System.out.println(result);
 // 输出：default
     }
@@ -258,7 +235,6 @@ public class ThenAcceptDemo {
         CompletableFuture.completedFuture("saved")
                 .thenAccept(System.out::println)
                 .join();
-// 作用：.thenAccept(System.out::println)；异步流程末端消费结果。
         // 输出：saved
     }
 }
@@ -277,11 +253,9 @@ import java.util.concurrent.Executors;
 public class ThenApplyAsyncDemo {
     public static void main(String[] args) {
         try (var executor = Executors.newSingleThreadExecutor()) {
-// 作用：try (var executor = Executors.newSingleThreadExecutor()) {；把变换交给指定执行器。
             String result = CompletableFuture.completedFuture("java")
                     .thenApplyAsync(String::toUpperCase, executor)
                     .join();
-// 作用：.thenApplyAsync(String::toUpperCase, executor)；把变换交给指定执行器。
             System.out.println(result);
 // 输出：JAVA
         }
@@ -300,15 +274,12 @@ import java.util.concurrent.CompletableFuture;
 public class ExceptionallyComposeDemo {
     static CompletableFuture<String> backup() {
         return CompletableFuture.completedFuture("backup");
-// 作用：return CompletableFuture.completedFuture("backup");；异步降级分支。
     }
 
     public static void main(String[] args) {
         String value = CompletableFuture.<String>failedFuture(new RuntimeException())
                 .exceptionallyCompose(error -> backup())
                 .join();
-// 作用：.exceptionallyCompose(error -> backup())；异步降级分支。
-// 作用：String value = CompletableFuture.<String>failedFuture(new RuntimeException())；异步降级分支。
         System.out.println(value);
 // 输出：backup
     }
@@ -317,10 +288,10 @@ public class ExceptionallyComposeDemo {
 
 ### applyToEither：两个结果谁先完成用谁
 
-完成顺序由实际调度决定，结果是“可能”为 primary 或 backup；要把它用于竞速请求，必须取消慢分支并处理重复副作用。
+该操作使用先正常完成的结果，但当一方异常完成时，不能依赖它一定等待另一方成功；竞速请求需要单独设计异常、慢分支取消和重复副作用的处理。
 
 ```java
-// 说明：applyToEither 在 primary 与 backup 中任一正常完成时应用 value -> value；已完成的两个阶段不保证谁被选中。
+// 说明：applyToEither 在 primary 与 backup 中任一正常完成时应用 value -> value；示例中两个阶段在调用时都已完成。
 import java.util.concurrent.CompletableFuture;
 
 public class ApplyToEitherDemo {
@@ -328,9 +299,8 @@ public class ApplyToEitherDemo {
         String result = CompletableFuture.completedFuture("primary")
                 .applyToEither(CompletableFuture.completedFuture("backup"), value -> value)
                 .join();
-// 作用：.applyToEither(CompletableFuture.completedFuture("backup"), value -> value)；两个结果谁先完成用谁。
         System.out.println(result);
-// 输出：可能是 primary，也可能是 backup
+// 输出：primary
     }
 }
 ```
@@ -346,9 +316,7 @@ import java.util.concurrent.CompletableFuture;
 public class MinimalStageDemo {
     public static void main(String[] args) {
         CompletableFuture<String> source = CompletableFuture.completedFuture("value");
-// 作用：CompletableFuture<String> source = CompletableFuture.completedFuture("value");；只暴露完成阶段接口。
         var view = source.minimalCompletionStage();
-// 作用：var view = source.minimalCompletionStage();；只暴露完成阶段接口。
         System.out.println(view.toCompletableFuture().join());
 // 输出：value
     }
@@ -363,14 +331,12 @@ import java.util.concurrent.Executors;
 public class CompletablePipelineDemo {
     public static void main(String[] args) {
         try (var executor = Executors.newFixedThreadPool(2)) {
-// 作用：try (var executor = Executors.newFixedThreadPool(2)) {；只暴露完成阶段接口。
             var result = CompletableFuture
                     .supplyAsync(() -> "java", executor)
                     .thenApply(String::toUpperCase)
                     .thenCombine(CompletableFuture.completedFuture(" API"), String::concat)
                     .exceptionally(error -> "fallback")
                     .join();
-// 作用：.supplyAsync(() -> "java", executor)；只暴露完成阶段接口。
             System.out.println(result);
 // 输出：JAVA API
         }

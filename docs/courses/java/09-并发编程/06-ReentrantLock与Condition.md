@@ -46,15 +46,12 @@ import java.util.concurrent.locks.ReentrantLock;
 public class LockFinallyDemo {
     public static void main(String[] args) {
         ReentrantLock lock = new ReentrantLock();
-// 作用：ReentrantLock lock = new ReentrantLock();；获得后在 finally 释放。
         lock.lock();
-// 作用：lock.lock();；获得后在 finally 释放。
         try {
             System.out.println("inside lock");
 // 输出：inside lock
         } finally {
             lock.unlock();
-// 作用：lock.unlock();；获得后在 finally 释放。
         }
     }
 }
@@ -74,15 +71,12 @@ import java.util.concurrent.locks.ReentrantLock;
 public class TryLockDemo {
     public static void main(String[] args) throws InterruptedException {
         ReentrantLock lock = new ReentrantLock();
-// 作用：ReentrantLock lock = new ReentrantLock();；有界地尝试获得锁。
         if (lock.tryLock(10, TimeUnit.MILLISECONDS)) {
-// 作用：if (lock.tryLock(10, TimeUnit.MILLISECONDS)) {；有界地尝试获得锁。
             try {
                 System.out.println("acquired");
 // 输出：acquired
             } finally {
                 lock.unlock();
-// 作用：lock.unlock();；有界地尝试获得锁。
             }
         } else {
             System.out.println("busy");
@@ -103,15 +97,12 @@ import java.util.concurrent.locks.ReentrantLock;
 public class InterruptibleLockDemo {
     public static void main(String[] args) throws InterruptedException {
         ReentrantLock lock = new ReentrantLock();
-// 作用：ReentrantLock lock = new ReentrantLock();；可响应中断地等待锁。
         lock.lockInterruptibly();
-// 作用：lock.lockInterruptibly();；可响应中断地等待锁。
         try {
             System.out.println("interruptible lock");
 // 输出：interruptible lock
         } finally {
             lock.unlock();
-// 作用：lock.unlock();；可响应中断地等待锁。
         }
     }
 }
@@ -128,45 +119,34 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ConditionDemo {
     private final ReentrantLock lock = new ReentrantLock();
-// 作用：private final ReentrantLock lock = new ReentrantLock();；释放锁并广播唤醒。
     private final Condition ready = lock.newCondition();
-// 作用：private final Condition ready = lock.newCondition();；释放锁并广播唤醒。
     private boolean available;
 
     void awaitReady() throws InterruptedException {
         lock.lock();
-// 作用：lock.lock();；释放锁并广播唤醒。
         try {
             while (!available) {
                 ready.await();
-// 作用：ready.await();；释放锁并广播唤醒。
             }
         } finally {
             lock.unlock();
-// 作用：lock.unlock();；释放锁并广播唤醒。
         }
     }
 
     void markReady() {
         lock.lock();
-// 作用：lock.lock();；释放锁并广播唤醒。
         try {
             available = true;
             ready.signalAll();
-// 作用：ready.signalAll();；释放锁并广播唤醒。
         } finally {
             lock.unlock();
-// 作用：lock.unlock();；释放锁并广播唤醒。
         }
     }
 
     public static void main(String[] args) throws InterruptedException {
         var state = new ConditionDemo();
-// 作用：var state = new ConditionDemo();；释放锁并广播唤醒。
         state.markReady();
-// 作用：state.markReady();；释放锁并广播唤醒。
         state.awaitReady();
-// 作用：state.awaitReady();；释放锁并广播唤醒。
         System.out.println("ready");
 // 输出：ready
     }
@@ -186,15 +166,12 @@ import java.util.concurrent.locks.ReentrantLock;
 public class FairLockDemo {
     public static void main(String[] args) {
         ReentrantLock fair = new ReentrantLock(true);
-// 作用：ReentrantLock fair = new ReentrantLock(true);；创建公平锁。
         fair.lock();
-// 作用：fair.lock();；创建公平锁。
         try {
             System.out.println("fair lock configured=" + fair.isFair());
 // 输出：fair lock configured=true
         } finally {
             fair.unlock();
-// 作用：fair.unlock();；创建公平锁。
         }
     }
 }
@@ -211,22 +188,17 @@ import java.util.concurrent.locks.ReentrantLock;
 public class HoldCountDemo {
     public static void main(String[] args) {
         ReentrantLock lock = new ReentrantLock();
-// 作用：ReentrantLock lock = new ReentrantLock();；查看当前线程的重入次数。
         lock.lock();
-// 作用：lock.lock();；查看当前线程的重入次数。
         try {
             lock.lock();
-// 作用：lock.lock();；查看当前线程的重入次数。
             try {
                 System.out.println(lock.getHoldCount());
 // 输出：2
             } finally {
                 lock.unlock();
-// 作用：lock.unlock();；查看当前线程的重入次数。
             }
         } finally {
             lock.unlock();
-// 作用：lock.unlock();；查看当前线程的重入次数。
         }
     }
 }
@@ -247,19 +219,14 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ConditionTimeoutDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new ReentrantLock();
-// 作用：var lock = new ReentrantLock();；带剩余时间的等待。
         var condition = lock.newCondition();
-// 作用：var condition = lock.newCondition();；带剩余时间的等待。
         lock.lock();
-// 作用：lock.lock();；带剩余时间的等待。
         try {
             long remaining = condition.awaitNanos(TimeUnit.MILLISECONDS.toNanos(1));
-// 作用：long remaining = condition.awaitNanos(TimeUnit.MILLISECONDS.toNanos(1));；带剩余时间的等待。
             System.out.println("timed wait finished=" + (remaining <= 0));
 // 输出：通常是 timed wait finished=true；也可能是 false（提前唤醒）
         } finally {
             lock.unlock();
-// 作用：lock.unlock();；带剩余时间的等待。
         }
     }
 }
@@ -276,15 +243,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ReadWriteLockLowFrequencyDemo {
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
-// 作用：var lock = new ReentrantReadWriteLock();；读写锁。
         lock.readLock().lock();
-// 作用：lock.readLock().lock();；读写锁。
         try {
             System.out.println("shared read");
 // 输出：shared read
         } finally {
             lock.readLock().unlock();
-// 作用：lock.readLock().unlock();；读写锁。
         }
     }
 }
@@ -301,18 +265,14 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedLockLowFrequencyDemo {
     public static void main(String[] args) {
         StampedLock lock = new StampedLock();
-// 作用：StampedLock lock = new StampedLock();；乐观读并校验。
         long stamp = lock.tryOptimisticRead();
-// 作用：long stamp = lock.tryOptimisticRead();；乐观读并校验。
         int result = 7;
         if (!lock.validate(stamp)) {
             stamp = lock.readLock();
-// 作用：stamp = lock.readLock();；乐观读并校验。
             try {
                 result = 7;
             } finally {
                 lock.unlockRead(stamp);
-// 作用：lock.unlockRead(stamp);；乐观读并校验。
             }
         }
         System.out.println(result);
@@ -327,38 +287,30 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class LockCounterDemo {
     private final ReentrantLock lock = new ReentrantLock();
-// 作用：private final ReentrantLock lock = new ReentrantLock();；乐观读并校验。
     private int count;
 
     void increment() {
         lock.lock();
-// 作用：lock.lock();；乐观读并校验。
         try {
             count++;
         } finally {
             lock.unlock();
-// 作用：lock.unlock();；乐观读并校验。
         }
     }
 
     int count() {
         lock.lock();
-// 作用：lock.lock();；乐观读并校验。
         try {
             return count;
         } finally {
             lock.unlock();
-// 作用：lock.unlock();；乐观读并校验。
         }
     }
 
     public static void main(String[] args) {
         var counter = new LockCounterDemo();
-// 作用：var counter = new LockCounterDemo();；乐观读并校验。
         counter.increment();
-// 作用：counter.increment();；乐观读并校验。
         counter.increment();
-// 作用：counter.increment();；乐观读并校验。
         System.out.println(counter.count());
 // 输出：2
     }

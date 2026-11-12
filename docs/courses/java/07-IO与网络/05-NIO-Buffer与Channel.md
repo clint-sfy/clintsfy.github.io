@@ -33,12 +33,11 @@ Buffer 不是“自动增长的集合”，写入前要留意容量，读写模�
 
 ## 常用用法
 
-### 写入缓冲区：分配容量并推进游标
+### `ByteBuffer.allocate`：分配缓冲区
 
 `allocate` 创建堆缓冲区，`position` 会随着写入前进；写入超出容量会抛 `BufferOverflowException`，容量要按协议或分块策略规划。
 
 ```java
-// 说明：写入缓冲区：分配容量并推进游标。
 import java.nio.ByteBuffer;
 
 public class ByteBufferPutDemo {
@@ -56,7 +55,6 @@ public class ByteBufferPutDemo {
 `flip` 把当前 position 变成 limit，再把 position 归零；每次写完准备读都要正确切换，否则读到的可能是空区间。
 
 ```java
-// 说明：flip：从写模式切换到读模式。
 import java.nio.ByteBuffer;
 
 public class ByteBufferFlipDemo {
@@ -70,12 +68,11 @@ public class ByteBufferFlipDemo {
 }
 ```
 
-### 读取缓冲区：消费有效区间
+### `ByteBuffer.get`：读取有效区间
 
 `hasRemaining` 判断 position 是否小于 limit；相对 `get()` 会推进 position，绝对 `get(index)` 不会改变游标。
 
 ```java
-// 说明：读取缓冲区：消费有效区间。
 import java.nio.ByteBuffer;
 
 public class ByteBufferGetDemo {
@@ -89,12 +86,11 @@ public class ByteBufferGetDemo {
 }
 ```
 
-### 复用缓冲区：丢弃或保留未读数据
+### `ByteBuffer.compact`：保留未读数据
 
 `clear` 丢弃尚未读取的内容并准备全量重写；`compact` 保留剩余内容并把它移到缓冲区开头，适合处理半包协议。
 
 ```java
-// 说明：复用缓冲区：丢弃或保留未读数据。
 import java.nio.ByteBuffer;
 
 public class ByteBufferReuseDemo {
@@ -112,12 +108,11 @@ public class ByteBufferReuseDemo {
 }
 ```
 
-### 回看缓冲区：重置或恢复读取位置
+### `ByteBuffer.mark`：记录读取位置
 
 `rewind` 只把 position 归零并保留 limit，`mark/reset` 用于短暂回看；调用 `clear`、`flip` 等状态操作后 mark 可能失效。
 
 ```java
-// 说明：回看缓冲区：重置或恢复读取位置。
 import java.nio.ByteBuffer;
 
 public class ByteBufferMarkDemo {
@@ -138,7 +133,6 @@ public class ByteBufferMarkDemo {
 `read` 返回实际读到的字节数，`-1` 表示 EOF；不能假设一次 read 会填满 Buffer 或读完文件。
 
 ```java
-// 说明：FileChannel.read：分块读取文件。
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -150,7 +144,6 @@ public class FileChannelReadDemo {
         Path file = Files.createTempFile("channel-read-", ".txt");
         Files.writeString(file, "java");
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
-        // 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.READ)，try 结束时自动关闭。
             ByteBuffer buffer = ByteBuffer.allocate(8);
             int count = channel.read(buffer);
             System.out.println(count);
@@ -166,7 +159,6 @@ public class FileChannelReadDemo {
 `write` 也可能只消费部分 Buffer；循环 `hasRemaining` 是可靠写出模式。
 
 ```java
-// 说明：FileChannel.write：循环写出 Buffer。
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -177,7 +169,6 @@ public class FileChannelWriteDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("channel-write-", ".txt");
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {
-        // 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.WRITE)，try 结束时自动关闭。
             ByteBuffer buffer = ByteBuffer.wrap("java".getBytes());
             while (buffer.hasRemaining()) {
                 channel.write(buffer);
@@ -197,7 +188,6 @@ public class FileChannelWriteDemo {
 随机访问适合固定格式文件和分块任务；多个线程共享同一 Channel 时要明确 position 是否共享，必要时使用带 position 参数的读写方法。
 
 ```java
-// 说明：FileChannel.position 与随机访问。
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -209,7 +199,6 @@ public class FileChannelPositionDemo {
         Path file = Files.createTempFile("channel-position-", ".bin");
         Files.write(file, new byte[]{10, 20, 30});
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
-        // 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.READ)，try 结束时自动关闭。
             channel.position(1);
             ByteBuffer buffer = ByteBuffer.allocate(1);
             channel.read(buffer);
@@ -222,12 +211,11 @@ public class FileChannelPositionDemo {
 }
 ```
 
-### 通道间传输：减少用户态复制
+### `FileChannel.transferTo`：向另一个通道传输
 
 通道传输可减少用户态复制，但返回值仍可能小于请求长度，跨平台和大文件场景要循环传输。
 
 ```java
-// 说明：通道间传输：减少用户态复制。
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -239,7 +227,6 @@ public class FileChannelTransferDemo {
         Path target = Files.createTempFile("channel-target-", ".bin");
         Files.write(source, new byte[]{1, 2, 3});
         try (var in = FileChannel.open(source, StandardOpenOption.READ);
-        // 输入：try (var in = FileChannel.open(source, StandardOpenOption.READ);；资源变量 in 接收 FileChannel.open(source, StandardOpenOption.READ，try 结束时自动关闭。
              var out = FileChannel.open(target, StandardOpenOption.WRITE)) {
             long copied = in.transferTo(0, in.size(), out);
             System.out.println(copied);
@@ -256,7 +243,6 @@ public class FileChannelTransferDemo {
 映射适合随机访问大文件，但会占用虚拟地址空间，生命周期和刷盘语义也更复杂；不要把它当成所有文件读取的默认方案。
 
 ```java
-// 说明：FileChannel.map：内存映射文件。
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -267,7 +253,6 @@ public class MappedByteBufferDemo {
         Path file = Files.createTempFile("channel-map-", ".bin");
         Files.write(file, new byte[]{7});
         try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {
-        // 输入：try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.READ)，try 结束时自动关闭。
             var mapped = channel.map(FileChannel.MapMode.READ_ONLY, 0, 1);
             System.out.println(mapped.get(0));
             // 输出：7
@@ -282,7 +267,6 @@ public class MappedByteBufferDemo {
 Selector 只对支持非阻塞模式的网络 Channel 有意义；事件循环必须处理 key 失效、异常、读写部分完成和唤醒。
 
 ```java
-// 说明：Selector：注册非阻塞 Channel。
 import java.nio.channels.Selector;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -290,7 +274,6 @@ import java.nio.channels.SocketChannel;
 public class SelectorRegisterDemo {
     public static void main(String[] args) throws Exception {
         try (Selector selector = Selector.open(); SocketChannel channel = SocketChannel.open()) {
-        // 输入：try (Selector selector = Selector.open(); SocketChannel channel = SocketChannel.open()) {；资源变量 selector 接收 Selector.open(); SocketChannel channel = SocketChannel.open()，try 结束时自动关闭。
             channel.configureBlocking(false);
             channel.register(selector, SelectionKey.OP_CONNECT);
             System.out.println(selector.keys().size());
@@ -299,6 +282,74 @@ public class SelectorRegisterDemo {
     }
 }
 ```
+### `ByteBuffer.clear`：准备覆盖缓冲区
+
+这个方法让缓冲区准备好从头覆盖旧内容；`clear()` 将 position 设为 0、limit 设为 capacity，但不会擦除内存；后续写入会覆盖旧内容；未读数据不再被保留；与上面的 `compact()` 相比，它适合不再需要旧数据时复用缓冲区。
+
+```java
+import java.nio.ByteBuffer;
+
+class Example {
+    public static void main(String[] args) {
+        ByteBuffer b = ByteBuffer.wrap(new byte[]{1, 2});
+        b.get(); b.clear();
+        System.out.println(b.position() + "/" + b.limit());
+        // 输出：0/2
+    }
+}
+```
+
+### `ByteBuffer.rewind`：从头重读
+
+这个方法让已有的有效数据可以从头再读一次；`rewind()` 将 position 设为 0，保留当前 limit，并丢弃 mark；它适合重新读取同一段有效数据；如果刚完成写入，应先用 `flip()` 设置有效边界。
+
+```java
+import java.nio.ByteBuffer;
+
+class Example {
+    public static void main(String[] args) {
+        ByteBuffer b = ByteBuffer.wrap(new byte[]{1, 2});
+        b.get(); b.rewind();
+        System.out.println(b.get());
+        // 输出：1
+    }
+}
+```
+
+### `ByteBuffer.reset`：回到标记位置
+
+这个方法让读取位置回到之前保存的标记；`reset()` 把 position 恢复到上次 `mark()` 保存的位置；尚未标记或标记已失效时会抛出 `InvalidMarkException`；上面的标记示例读取第二个字节两次。
+
+```java
+import java.nio.ByteBuffer;
+
+class Example {
+    public static void main(String[] args) {
+        ByteBuffer b = ByteBuffer.wrap(new byte[]{1, 2});
+        b.mark(); b.get(); b.reset();
+        System.out.println(b.get());
+        // 输出：1
+    }
+}
+```
+
+### `ByteBuffer.hasRemaining`：检查是否还有数据
+
+这个方法判断当前位置到有效边界之间是否还有数据；当 position 小于 limit 时返回 `true`；读取循环可据此避免越过有效边界；上面的 `ByteBuffer.get` 示例展示了这一用法。
+
+```java
+import java.nio.ByteBuffer;
+
+class Example {
+    public static void main(String[] args) {
+        ByteBuffer b = ByteBuffer.wrap(new byte[]{1, 2});
+        b.get(); b.get();
+        System.out.println(b.hasRemaining());
+        // 输出：false
+    }
+}
+```
+
 ## 不常用但需要知道
 
 ### `ByteBuffer.allocateDirect`：堆外缓冲
@@ -318,7 +369,7 @@ public class DirectBufferDemo {
 }
 ```
 
-### 创建缓冲区视图：共享数据并隔离游标
+### `ByteBuffer.slice`：创建共享数据的视图
 
 `slice` 和 `duplicate` 共享底层数据但有独立游标；视图变化会影响源 Buffer 的内容，线程共享时尤其要明确所有权。
 
@@ -333,6 +384,24 @@ public class BufferViewDemo {
         slice.put(0, (byte) 9);
         System.out.println(source.get(1));
         // 输出：9
+    }
+}
+```
+
+### `ByteBuffer.duplicate`：共享内容但独立游标
+
+`duplicate()` 的视图与原缓冲区共享内容，却有独立的 position、limit 和 mark。修改视图中的字节会影响原缓冲区；移动视图的 position 不会移动原缓冲区的 position。
+
+```java
+import java.nio.ByteBuffer;
+
+class Example {
+    public static void main(String[] args) {
+        ByteBuffer b = ByteBuffer.wrap(new byte[]{1, 2});
+        ByteBuffer copy = b.duplicate();
+        copy.get(); copy.put(0, (byte) 9);
+        System.out.println(b.position() + "/" + b.get(0));
+        // 输出：0/9
     }
 }
 ```
@@ -368,7 +437,6 @@ public class ScatterGatherDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("scatter-gather-", ".bin");
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {
-        // 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.WRITE)，try 结束时自动关闭。
             long count = channel.write(new ByteBuffer[]{ByteBuffer.wrap(new byte[]{1}), ByteBuffer.wrap(new byte[]{2})});
             System.out.println(count);
             // 输出：2
@@ -394,7 +462,6 @@ public class AsyncFileChannelDemo {
         Path file = Files.createTempFile("async-channel-", ".txt");
         Files.writeString(file, "java");
         try (var channel = AsynchronousFileChannel.open(file, StandardOpenOption.READ)) {
-        // 输入：try (var channel = AsynchronousFileChannel.open(file, StandardOpenOption.READ)) {；资源变量 channel 接收 AsynchronousFileChannel.open(file, StandardOpenOption.READ)，try 结束时自动关闭。
             var result = channel.read(ByteBuffer.allocate(4), 0).get();
             System.out.println(result);
             // 输出：4
@@ -416,7 +483,6 @@ public class BufferChannelDemo {
     public static void main(String[] args) throws Exception {
         Path file = Files.createTempFile("buffer-channel-", ".txt");
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
-        // 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.READ)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.READ)，try 结束时自动关闭。
             ByteBuffer write = ByteBuffer.wrap("NIO".getBytes());
             while (write.hasRemaining()) {
                 channel.write(write);

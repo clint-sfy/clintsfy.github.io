@@ -38,7 +38,6 @@ description: 直接用 Java 案例速查 HttpClient 的请求、响应、超时�
 连接超时覆盖建立连接阶段，DNS、TLS、服务器处理和响应读取仍可能耗时；不要把它当成完整请求超时。
 
 ```java
-// 说明：HttpClient.newBuilder：设置连接超时。
 import java.net.http.HttpClient;
 import java.time.Duration;
 
@@ -58,7 +57,6 @@ public class HttpClientTimeoutDemo {
 `NORMAL` 遵循常见浏览器式重定向规则，`ALWAYS` 更激进，`NEVER` 交给业务处理；跨域重定向还要重新审视凭证和敏感请求头。
 
 ```java
-// 说明：HttpClient.Redirect：配置重定向。
 import java.net.http.HttpClient;
 
 public class HttpRedirectDemo {
@@ -77,7 +75,6 @@ public class HttpRedirectDemo {
 Request 是不可变对象，构建后可以安全地交给同步或异步发送；URI 要在边界校验 scheme、host、端口和允许的重定向范围。
 
 ```java
-// 说明：构建 GET 请求：设置 URI 后完成请求。
 import java.net.URI;
 import java.net.http.HttpRequest;
 
@@ -98,7 +95,6 @@ public class HttpGetRequestDemo {
 请求体字符串默认使用 UTF-8；真实 JSON 仍需使用可信序列化器并设置正确 Content-Type。
 
 ```java
-// 说明：构建文本 POST 请求：发布字符串请求体。
 import java.net.URI;
 import java.net.http.HttpRequest;
 
@@ -121,7 +117,6 @@ POST 等非幂等方法不能无条件自动重试。
 `send` 会阻塞当前线程，适合简单同步流程；必须先检查状态码，再决定是否解析响应字符串，且要防止不受控大响应占满内存。
 
 ```java
-// 说明：同步发送请求：把响应体读取为字符串。
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -144,7 +139,6 @@ public class HttpSendDemo {
 响应头名称不区分大小写，但一个名称可能有多个值；`body` 的类型由 BodyHandler 决定，状态码和业务 JSON 要分开验证。
 
 ```java
-// 说明：检查 HTTP 响应：读取状态、响应头与正文。
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -168,7 +162,6 @@ public class HttpResponseDemo {
 请求超时是一次 Request 的等待边界，触发时通常以 `HttpTimeoutException` 表示；重试前仍要判断操作是否幂等。
 
 ```java
-// 说明：HttpRequest.timeout：请求级超时。
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.time.Duration;
@@ -189,7 +182,6 @@ public class HttpRequestTimeoutDemo {
 `sendAsync` 返回 `CompletableFuture`，`join` 会重新抛出包装后的异常；生产代码要在链上使用 `exceptionally`/`handle`，不要无条件阻塞等待所有 Future。
 
 ```java
-// 说明：sendAsync：异步请求与结果链。
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -213,7 +205,6 @@ public class HttpAsyncDemo {
 二进制响应不要强行转 String；图片、压缩数据和协议字节应使用 byte[] 或文件 BodyHandler，并设置大小保护。
 
 ```java
-// 说明：BodyHandlers.ofByteArray：处理二进制响应。
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -235,7 +226,6 @@ public class HttpBytesResponseDemo {
 `ofFile` 适合下载大响应，目标文件的覆盖、权限、磁盘空间和失败清理仍由调用方负责。
 
 ```java
-// 说明：BodyHandlers.ofFile：直接写入文件。
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -261,7 +251,6 @@ public class HttpFileResponseDemo {
 响应行 Stream 也要关闭；它适合边读边处理，但不应在没有协议限制时无限累积到集合。
 
 ```java
-// 说明：BodyHandlers.ofLines：按行处理响应。
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -273,7 +262,6 @@ public class HttpLinesResponseDemo {
                 .GET().build();
         var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofLines());
         try (var lines = response.body()) {
-        // 输入：try (var lines = response.body()) {；资源变量 lines 接收 response.body()，try 结束时自动关闭。
             System.out.println(lines.findFirst().isPresent());
             // 输出：true
         }
@@ -286,7 +274,6 @@ public class HttpLinesResponseDemo {
 认证、Cookie、Trace ID 等头必须有明确的信任边界；不要把密码、Token 或内部地址写进日志。
 
 ```java
-// 说明：处理 HTTP 标头：写入请求并读取响应。
 import java.net.URI;
 import java.net.http.HttpRequest;
 

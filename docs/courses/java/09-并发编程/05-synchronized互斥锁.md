@@ -43,7 +43,6 @@ synchronized 同时提供互斥和释放/获得锁之间的内存可见性。实
 // 说明：两次 increment() 都必须先持有私有 final lock，因此不同线程对 count++ 的读-改-写不会丢失更新。
 public class SynchronizedBlockDemo {
     private final Object lock = new Object();
-// 作用：private final Object lock = new Object();；锁住指定对象。
     private int count;
 
     void increment() {
@@ -54,11 +53,8 @@ public class SynchronizedBlockDemo {
 
     public static void main(String[] args) {
         var counter = new SynchronizedBlockDemo();
-// 作用：var counter = new SynchronizedBlockDemo();；锁住指定对象。
         counter.increment();
-// 作用：counter.increment();；锁住指定对象。
         counter.increment();
-// 作用：counter.increment();；锁住指定对象。
         System.out.println(counter.count);
 // 输出：2
     }
@@ -88,9 +84,7 @@ public class SynchronizedMethodDemo {
 
     public static void main(String[] args) {
         var account = new SynchronizedMethodDemo();
-// 作用：var account = new SynchronizedMethodDemo();；保护对象状态。
         account.withdraw(30);
-// 作用：account.withdraw(30);；保护对象状态。
         System.out.println(account.balance());
 // 输出：70
     }
@@ -145,9 +139,7 @@ public class ClassAndObjectLockDemo {
 
     public static void main(String[] args) {
         var demo = new ClassAndObjectLockDemo();
-// 作用：var demo = new ClassAndObjectLockDemo();；明确锁的身份。
         demo.instancePart();
-// 作用：demo.instancePart();；明确锁的身份。
         classPart();
         System.out.println(demo.value);
 // 输出：1
@@ -173,7 +165,6 @@ public class ReentrantMonitorDemo {
 
     public static void main(String[] args) {
         new ReentrantMonitorDemo().outer();
-// 作用：new ReentrantMonitorDemo().outer();；同一线程可以再次获得同一把锁。
     }
 }
 ```
@@ -188,14 +179,12 @@ public class ReentrantMonitorDemo {
 // 说明：等待监视器条件：释放锁并广播唤醒。
 public class WaitNotifyDemo {
     private final Object lock = new Object();
-// 作用：private final Object lock = new Object();；释放锁并广播唤醒。
     private boolean ready;
 
     void awaitReady() throws InterruptedException {
         synchronized (lock) {
             while (!ready) {
                 lock.wait();
-// 作用：lock.wait();；释放锁并广播唤醒。
             }
         }
     }
@@ -204,17 +193,13 @@ public class WaitNotifyDemo {
         synchronized (lock) {
             ready = true;
             lock.notifyAll();
-// 作用：lock.notifyAll();；释放锁并广播唤醒。
         }
     }
 
     public static void main(String[] args) throws InterruptedException {
         var state = new WaitNotifyDemo();
-// 作用：var state = new WaitNotifyDemo();；释放锁并广播唤醒。
         state.markReady();
-// 作用：state.markReady();；释放锁并广播唤醒。
         state.awaitReady();
-// 作用：state.awaitReady();；释放锁并广播唤醒。
         System.out.println("ready");
 // 输出：ready
     }
@@ -225,19 +210,17 @@ public class WaitNotifyDemo {
 
 ### 唤醒监视器等待者：选择单个或全部通知
 
-多个条件共用一个监视器时优先 `notifyAll()`，让每个线程重新检查自己的条件；只有能证明任意一个等待者都能继续、且误唤醒成本可接受时才用 `notify()`。
+下面没有等待线程，因此通知不会保留给未来的等待者；多个条件共用一个监视器时优先 `notifyAll()`，让每个线程重新检查自己的条件；只有能证明任意一个等待者都能继续、且误唤醒成本可接受时才用 `notify()`。
 
 ```java
 // 说明：唤醒监视器等待者：选择单个或全部通知。
 public class NotifyChoiceDemo {
     public static void main(String[] args) {
         Object lock = new Object();
-// 作用：Object lock = new Object();；选择单个或全部通知。
         synchronized (lock) {
             lock.notifyAll();
-// 作用：lock.notifyAll();；选择单个或全部通知。
-            System.out.println("all waiters notified");
-// 输出：all waiters notified
+            System.out.println("notification sent");
+// 输出：notification sent
         }
     }
 }
@@ -253,14 +236,10 @@ public class NotifyChoiceDemo {
 public class TimedWaitDemo {
     public static void main(String[] args) throws InterruptedException {
         Object lock = new Object();
-// 作用：Object lock = new Object();；带超时的条件等待。
         synchronized (lock) {
-            long start = System.nanoTime();
-// 作用：long start = System.nanoTime();；带超时的条件等待。
             lock.wait(1);
-// 作用：lock.wait(1);；带超时的条件等待。
-            System.out.println("wait returned=" + (System.nanoTime() >= start));
-// 输出：wait returned=true
+            System.out.println("wait returned");
+// 输出：wait returned（也可能提前或虚假唤醒）
         }
     }
 }
@@ -275,10 +254,8 @@ public class TimedWaitDemo {
 public class NotifyOneDemo {
     public static void main(String[] args) {
         Object lock = new Object();
-// 作用：Object lock = new Object();；只唤醒一个等待者。
         synchronized (lock) {
             lock.notify();
-// 作用：lock.notify();；只唤醒一个等待者。
             System.out.println("one waiter may wake");
 // 输出：one waiter may wake
         }
@@ -295,13 +272,10 @@ public class NotifyOneDemo {
 public class WaitMonitorRuleDemo {
     public static void main(String[] args) {
         Object lock = new Object();
-// 作用：Object lock = new Object();；创建监视器对象 lock，当前线程尚未持有它。
         try {
             lock.wait();
-// 作用：lock.wait();；未持有 lock 时调用 wait，会抛出 IllegalMonitorStateException。
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-// 作用：Thread.currentThread().interrupt();；恢复当前线程的中断状态。
         } catch (IllegalMonitorStateException ex) {
             System.out.println(ex.getClass().getSimpleName());
 // 输出：IllegalMonitorStateException
@@ -324,7 +298,6 @@ public class MonitorBlockingBoundaryDemo {
 
     public static void main(String[] args) {
         new MonitorBlockingBoundaryDemo().shortWork();
-// 作用：new MonitorBlockingBoundaryDemo().shortWork();；调用 shortWork()，打印完成消息。
     }
 }
 ```
@@ -344,11 +317,8 @@ public class SynchronizedStateDemo {
 
     public static void main(String[] args) {
         var state = new SynchronizedStateDemo();
-// 作用：var state = new SynchronizedStateDemo();；创建 value=0 的状态对象 state。
         state.add(2);
-// 作用：state.add(2);；state.value 变为 2。
         state.add(3);
-// 作用：state.add(3);；state.value 变为 5，最终输出 5。
         System.out.println(state.value());
 // 输出：5
     }

@@ -48,10 +48,12 @@ Jackson 2 的核心依赖通常包含 `com.fasterxml.jackson.core:jackson-databi
 用途：用于声明 Fastjson2 序列化和反序列化时使用的字段名。
 
 ```java
+import com.alibaba.fastjson2.JSON;
+
 record User(@com.alibaba.fastjson2.annotation.JSONField(name = "user_name") String name) {}
 System.out.println(JSON.toJSONString(new User("Ann")));
 // 输出：{"user_name":"Ann"}
-// 说明：Java 字段 userName 在 Fastjson2 输入输出中使用 user_name；直接 new 对象不会验证注解，需调用 JSON 序列化/反序列化 API。
+// 说明：字段 name 在 JSON 中使用 user_name。
 ```
 
 ### `JSONObject.containsKey`：判断动态字段是否存在
@@ -59,8 +61,10 @@ System.out.println(JSON.toJSONString(new User("Ann")));
 用途：用于区分 JSON 字段缺失与字段存在但值为 `null`。
 
 ```java
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
+
 JSONObject object = JSON.parseObject("{\"enabled\":null}");
-// 作用：JSONObject object = JSON.parseObject("{\"enabled\":null}");；判断动态字段是否存在。
 System.out.println(object.containsKey("enabled"));
 // 输出：true
 // 作用：用于区分 JSON 字段缺失与字段存在但值为 `null`。
@@ -71,11 +75,12 @@ System.out.println(object.containsKey("enabled"));
 用途：用于在字段结构尚不固定时把 JSON 文本解析为可按键读取的对象。
 
 ```java
+import com.alibaba.fastjson2.JSONObject;
+
 JSONObject object = JSONObject.parseObject("{\"mode\":\"safe\"}");
-// 作用：JSONObject object = JSONObject.parseObject("{\"mode\":\"safe\"}");；把 JSON 文本解析为动态对象。
 System.out.println(object.getString("mode"));
 // 输出：safe
-// 说明：JSONObject.parseObject 解析 {"user_id":7}，getLong("user_id") 返回 7；未知结构仍需限制输入大小并检查字段类型。
+// 说明：未知结构仍需限制输入大小并检查字段类型。
 ```
 
 ### `@JsonProperty`：重命名 Jackson 协议字段
@@ -83,10 +88,12 @@ System.out.println(object.getString("mode"));
 用途：用于让 Java 属性名与对外 JSON 字段名保持显式映射。
 
 ```java
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 record User(@com.fasterxml.jackson.annotation.JsonProperty("user_name") String name) {}
 System.out.println(new ObjectMapper().writeValueAsString(new User("Ann")));
 // 输出：{"user_name":"Ann"}
-// 说明：Jackson 把 Java 属性 userId 写成协议字段 user_id，也从 user_id 读回；直接 new record 不经过 ObjectMapper，因此不验证注解。
+// 说明：Jackson 把 name 写成协议字段 user_name。
 ```
 
 ### `@JsonIgnore`：忽略内部字段
@@ -94,10 +101,12 @@ System.out.println(new ObjectMapper().writeValueAsString(new User("Ann")));
 用途：用于阻止内部字段参与 Jackson 序列化和反序列化。
 
 ```java
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 record Session(String id, @com.fasterxml.jackson.annotation.JsonIgnore String secret) {}
 System.out.println(new ObjectMapper().writeValueAsString(new Session("s-1", "token")));
 // 输出：{"id":"s-1"}
-// 说明：标注 @JsonIgnore 的 passwordHash 不会出现在输出，也不会从输入赋值；它不是访问控制，字段仍存在于 Java 对象内。
+// 说明：secret 不会出现在输出中；它仍存在于 Java 对象内。
 ```
 
 ### `@JacksonAnnotationsInside`：组合 Jackson 注解
@@ -108,7 +117,6 @@ System.out.println(new ObjectMapper().writeValueAsString(new Session("s-1", "tok
 @com.fasterxml.jackson.annotation.JacksonAnnotationsInside
 @com.fasterxml.jackson.annotation.JsonIgnore
 @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
-// 作用：@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)；组合 Jackson 注解。
 @interface InternalOnly {}
 // 输出：标注 @InternalOnly 的属性按 @JsonIgnore 处理。
 // 说明：@JacksonAnnotationsInside 让 @InternalOnly 汇总其上的 @JsonIgnore；Jackson 会忽略被标注属性，直接反射读取则不会执行映射规则。
@@ -116,41 +124,72 @@ System.out.println(new ObjectMapper().writeValueAsString(new Session("s-1", "tok
 
 ### `@JsonSerialize`：指定自定义序列化器
 
-用途：用于把字段或类型交给明确的 Jackson 序列化器处理。
+用途：使用 Jackson 3.1.4 为单个字段指定序列化逻辑。
 
 ```java
-record Contact(@tools.jackson.databind.annotation.JsonSerialize(using = MaskSerializer.class)
-               String phone) {}
-System.out.println("Contact.phone 使用 MaskSerializer 写出");
-// 输出：Contact.phone 使用 MaskSerializer 写出
-// 说明：@JsonSerialize(using = MaskingSerializer.class) 让 Jackson 输出该字段时调用 MaskingSerializer；直接 getter 或字符串拼接不会脱敏。
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.annotation.JsonSerialize;
+
+class MaskSerializer extends ValueSerializer<String> {
+    @Override
+    public void serialize(String value, JsonGenerator gen, SerializationContext context) {
+        gen.writeString("***");
+    }
+}
+record Contact(@JsonSerialize(using = MaskSerializer.class) String phone) {}
+System.out.println(new ObjectMapper().writeValueAsString(new Contact("123456")));
+// 输出：{"phone":"***"}
 ```
 
 ### `Jwts.builder`：创建待签名 JWT
 
-用途：用于建立 JWT 构建器并设置必要声明，最终必须使用受控密钥签名。
+用途：使用 JJWT 0.12.6 生成签名令牌。
 
 ```java
+import io.jsonwebtoken.Jwts;
+import javax.crypto.SecretKey;
+
+SecretKey signingKey = Jwts.SIG.HS256.key().build();
 String token = Jwts.builder().subject("user-7").signWith(signingKey).compact();
-// 作用：String token = Jwts.builder().subject("user-7").signWith(signingKey).compact();；创建待签名 JWT。
 System.out.println(token.split("\\.").length);
 // 输出：3
-// 说明：Jwts.builder() 写入 subject=user-42 和签发/过期时间，signWith(key) 后 compact 才产生可传输令牌；未签名构建器不是可接受的访问令牌。
 ```
 
-### `Claims.put`：写入自定义 JWT 声明
+示例需要 `jjwt-api`、运行时的 `jjwt-impl` 和 `jjwt-jackson`；临时密钥仅供演示，实际系统应使用密钥管理服务并配置签发者、受众和过期时间。三段分别是头部、载荷和签名；签名不加密载荷，不要放密码等秘密。
 
-用途：用于向声明集合写入最少且非敏感的业务属性。
+### `Claims.put`：JJWT 0.9.1 的可变声明
+
+用途：在阅读使用 JJWT 0.9.1 的旧代码时识别自定义声明的写入。
 
 ```java
-Claims claims = Jwts.claims().add("tenant", "acme").build();
-// 作用：Claims claims = Jwts.claims().add("tenant", "acme").build();；写入自定义 JWT 声明。
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+
+Claims claims = Jwts.claims();
 claims.put("role", "reader");
-// 作用：claims.put("role", "reader");；写入自定义 JWT 声明。
 System.out.println(claims.get("role"));
 // 输出：reader
-// 说明：claims.put("tenant_id", "t-7") 写入自定义声明 tenant_id=t-7；解析端必须在验签后按 String 读取，且不能把密码或密钥放进 claim。
 ```
+
+此片段使用 `jjwt:0.9.1`，不能与下面的 0.12.6 依赖混用；新版声明不可变，迁移时改用构建器。
+
+### `ClaimsBuilder.add`：构建 JJWT 0.12.6 声明
+
+用途：理解 JJWT 0.12.6 声明的构建与读取边界。
+
+```java
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+
+Claims claims = Jwts.claims().add("tenant", "acme").add("role", "reader").build();
+System.out.println(claims.get("role"));
+// 输出：reader
+```
+
+JJWT 0.12.6 的 `Claims` 不可变，调用 `put` 会抛异常，应在构建阶段使用 `ClaimsBuilder.add`，详见 [官方 API](https://javadoc.io/static/io.jsonwebtoken/jjwt-api/0.12.6/io/jsonwebtoken/Claims.html)。将声明放入令牌后，接收方应先验证签名及有效期，再读取和授权；不要把可见的声明当作机密存储。
 
 ### `ObjectMapper.writeValueAsString`：序列化对象
 
@@ -162,9 +201,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 record UserView(String name, int age) {}
 
 ObjectMapper mapper = new ObjectMapper();
-// 作用：ObjectMapper mapper = new ObjectMapper();；序列化对象。
 String json = mapper.writeValueAsString(new UserView("Ann", 18));
-// 作用：String json = mapper.writeValueAsString(new UserView("Ann", 18));；序列化对象。
 System.out.println(json);
 // 输出：{"name":"Ann","age":18}
 // 说明：ObjectMapper.writeValueAsString(user) 生成包含协议字段的 JSON 文本；输出字段名、null 策略和日期格式由 UserDto 注解及 mapper 配置共同决定。
@@ -181,7 +218,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 record UserInput(String name, int age) {}
 UserInput input = new ObjectMapper().readValue("{\"name\":\"Ann\",\"age\":18}", UserInput.class);
-// 作用：UserInput input = new ObjectMapper().readValue("{\"name\":\"Ann\",\"age\":18}", UserInput.class);；反序列化 JSON，返回读取结果。
 System.out.println(input.name() + "/" + input.age());
 // 输出：Ann/18
 // 说明：ObjectMapper.readValue(json, UserDto.class) 把输入字段绑定到 UserDto；未知字段、类型错误或构造约束会按 mapper 配置报错，而不是静默成为可信对象。
@@ -199,7 +235,6 @@ import java.time.OffsetDateTime;
 
 record EventView(@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX") OffsetDateTime occurredAt) {}
 // 输入：occurredAt 初始值来自 OffsetDateTime.parse("2026-10-01T09:00:00+08:00")，保留 +08:00 偏移。
-// 作用：record EventView(@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX") OffsetDateTime occurredAt) {}；约定日期表现。
 
 System.out.println(new EventView(OffsetDateTime.parse("2026-10-01T09:00:00+08:00")).occurredAt());
 // 输出：2026-10-01T09:00+08:00
@@ -216,7 +251,6 @@ pattern、时区和 Java Time 模块要与客户端协议一起测试；`LocalDa
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-// 作用：@JsonInclude(JsonInclude.Include.NON_NULL)；省略可选字段。
 record ResultView(String id, String note) {}
 System.out.println(new ResultView("e-1", null).note() == null);
 // 输出：true
@@ -235,7 +269,6 @@ import com.alibaba.fastjson2.JSON;
 record UserView(String name, int age) {}
 
 String json = JSON.toJSONString(new UserView("Ann", 18));
-// 作用：String json = JSON.toJSONString(new UserView("Ann", 18));；用 Fastjson2 序列化。
 System.out.println(json.contains("\"name\":\"Ann\"") && json.contains("\"age\":18"));
 // 输出：true
 // 作用：用于在明确边界内用 Fastjson2 把对象序列化为 JSON。
@@ -252,7 +285,6 @@ import com.alibaba.fastjson2.JSON;
 
 record UserInput(String name, int age) {}
 UserInput input = JSON.parseObject("{\"name\":\"Ann\",\"age\":18}", UserInput.class);
-// 作用：UserInput input = JSON.parseObject("{\"name\":\"Ann\",\"age\":18}", UserInput.class);；用 Fastjson2 反序列化，返回读取结果。
 System.out.println(input.name() + "/" + input.age());
 // 输出：Ann/18
 // 作用：用于把受控大小的 JSON 输入解析为指定类型。
@@ -283,18 +315,13 @@ final class MaskedEmailSerializer extends JsonSerializer<String> {
         throws IOException {
         if (value == null) {
             gen.writeNull();
-// 作用：gen.writeNull();；隐藏或重排敏感字段。
             return;
         }
         int at = value.indexOf('@');
-// 作用：int at = value.indexOf('@');；隐藏或重排敏感字段。
         String masked = at > 0 && at < value.length() - 1
             ? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)
             : value;
-// 作用：String masked = at > 0 && at < value.length() - 1；隐藏或重排敏感字段。
-// 作用：? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)；隐藏或重排敏感字段。
         gen.writeString(masked);
-// 作用：gen.writeString(masked);；隐藏或重排敏感字段。
     }
 }
 
@@ -303,7 +330,6 @@ final class EmailDeserializer extends JsonDeserializer<String> {
     public String deserialize(JsonParser parser, DeserializationContext context)
         throws IOException {
         return parser.getValueAsString().trim();
-// 作用：return parser.getValueAsString().trim();；隐藏或重排敏感字段。
     }
 }
 
@@ -315,16 +341,12 @@ record PublicUser(
 
 com.fasterxml.jackson.databind.ObjectMapper mapper =
     new com.fasterxml.jackson.databind.ObjectMapper();
-// 作用：new com.fasterxml.jackson.databind.ObjectMapper();；隐藏或重排敏感字段。
 String json = mapper.writeValueAsString(new PublicUser("ann@example.test", "Ann"));
-// 作用：String json = mapper.writeValueAsString(new PublicUser("ann@example.test", "Ann"));；隐藏或重排敏感字段。
 System.out.println(json);
 // 输出：{"email":"a***@example.test","displayName":"Ann"}
 String singleCharLocal = mapper.writeValueAsString(new PublicUser("a@example.test", "Ann"));
-// 作用：String singleCharLocal = mapper.writeValueAsString(new PublicUser("a@example.test", "Ann"));；隐藏或重排敏感字段。
 System.out.println(singleCharLocal);
 // 输出：{"email":"*@example.test","displayName":"Ann"}
-// 作用：用于把领域类型映射成稳定的公开协议，或在输出前遮蔽敏感值；自定义代码必须有反向解析、版本兼容和脱敏测试。
 ```
 
 `@JsonSerialize` 和 `@JsonDeserialize` 把具体实现绑定到字段或类型，示例中的 `EmailDeserializer` 代表项目自己的反序列化器；这里使用字段级 serializer 并由 `ObjectMapper.writeValueAsString` 实际调用，不会全局替换所有 `String` 的序列化。脱敏条件从 `at > 0` 开始：单字符本地部（如 `a@example.test`）输出 `*@example.test`，更长本地部保留首字符；不含 `@` 或缺少域部分的值安全透传，未绑定 serializer 的 `displayName` 也保持 `Ann`。这个代码块使用 Jackson 2 API，因此 serializer 的 core/databind 类型来自 `com.fasterxml.jackson.*`；迁移 Jackson 3 时分别改为 `tools.jackson.core.*`、`tools.jackson.databind.*` 与 `tools.jackson.databind.annotation.*`，而 `@JsonFormat`/`@JsonInclude` 仍保留 `com.fasterxml.jackson.annotation.*`。敏感字段还应在日志、错误响应和缓存 key 中分别检查，单一注解覆盖不了所有输出路径。
@@ -345,14 +367,10 @@ final class MaskedEmailValueSerializer extends ValueSerializer<String> {
     public void serialize(String value, JsonGenerator gen, SerializationContext ctxt)
             throws JacksonException {
         int at = value.indexOf('@');
-// 作用：int at = value.indexOf('@');；at 为邮箱中 @ 的索引。
         String masked = at > 0 && at < value.length() - 1
                 ? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)
                 : value;
-// 作用：String masked = at > 0 && at < value.length() - 1；ValueSerializer/ValueDeserializer，返回读取结果。
-// 作用：? (at == 1 ? "*" : value.charAt(0) + "***") + value.substring(at)；at=1 时脱敏为 "*"，否则保留首字符并追加 "***"。
         gen.writeString(masked);
-// 作用：gen.writeString(masked);；将 masked 写入 JSON 字符串。
     }
 }
 
@@ -361,7 +379,6 @@ record PublicUserOutputV3(
     String email) {}
 
 // 输出：ann@example.test 序列化为 a***@example.test
-// 作用：用于在 Jackson 3.1.4 中为单个协议字段实现脱敏和反向解析；Jackson 3 的自定义 handler 已将 Jackson 2 的 `JsonSerializer`/`JsonDeserializer` 更名为 `ValueSerializer`/`ValueDeserializer`。
 ```
 
 Jackson 3.1.4 的 `ValueSerializer.serialize` 使用 `SerializationContext`，异常统一从 `tools.jackson.core.JacksonException` 传播。`@JsonSerialize` 将它限定在 `email` 字段，不会全局改写所有 `String`。
@@ -382,7 +399,6 @@ final class EmailValueDeserializer extends ValueDeserializer<String> {
     public String deserialize(JsonParser parser, DeserializationContext ctxt)
             throws JacksonException {
         return parser.getString().trim();
-// 作用：return parser.getString().trim();；ValueDeserializer，返回读取结果。
     }
 }
 
@@ -391,7 +407,6 @@ record PublicUserV3(
     String email) {}
 
 // 输出：" ann@example.test " 反序列化为 ann@example.test
-// 作用：用于在 Jackson 3.1.4 中将单个 JSON 字段转换成领域值；字段规范化后仍要继续执行业务校验。
 ```
 
 `ValueDeserializer.deserialize` 使用 `DeserializationContext`，`JsonParser.getString()` 是 3.x 的文本访问 API。Jackson 2 的对照仍使用上一个片段中的 `JsonSerializer`/`JsonDeserializer` 和 `com.fasterxml.jackson.*` 包，不能混用两代类型。实际项目通过 3.x `ObjectMapper`/`JsonMapper` 注册 DTO，并用 BOM 锁定整组版本。
@@ -412,21 +427,13 @@ class RedisSerializationConfig {
     @Bean
     RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, String> redis = new RedisTemplate<>();
-// 作用：RedisTemplate<String, String> redis = new RedisTemplate<>();；限定缓存值的类型边界。
         redis.setConnectionFactory(connectionFactory);
-// 作用：redis.setConnectionFactory(connectionFactory);；限定缓存值的类型边界。
         var strings = new StringRedisSerializer();
-// 作用：var strings = new StringRedisSerializer();；限定缓存值的类型边界。
         redis.setKeySerializer(strings);
-// 作用：redis.setKeySerializer(strings);；限定缓存值的类型边界。
         redis.setValueSerializer(strings);
-// 作用：redis.setValueSerializer(strings);；限定缓存值的类型边界。
         redis.setHashKeySerializer(strings);
-// 作用：redis.setHashKeySerializer(strings);；限定缓存值的类型边界。
         redis.setHashValueSerializer(strings);
-// 作用：redis.setHashValueSerializer(strings);；限定缓存值的类型边界。
         redis.afterPropertiesSet();
-// 作用：redis.afterPropertiesSet();；限定缓存值的类型边界。
         return redis;
     }
 }
@@ -455,7 +462,6 @@ import java.time.OffsetDateTime;
 record CreateEvent(String name, OffsetDateTime occurredAt) {}
 
 ObjectMapper mapper = new ObjectMapper();
-// 作用：ObjectMapper mapper = new ObjectMapper();；限定缓存值的类型边界。
 String input = "{\"name\":\"release\",\"occurredAt\":\"2026-10-01T09:00:00+08:00\"}";
 // 实际项目需注册 Java Time module；这里展示 DTO 与转换边界。
 System.out.println(input.contains("occurredAt") ? "json-boundary=explicit" : "invalid");

@@ -43,7 +43,6 @@ description: 掌握不可变字符串、字符编码、StringBuilder 和常用�
 
 ```java
 String value = " Java ";
-// 作用：需要快速完成文本清理与规范化时使用这段最小示例。
 String normalized = value.strip().toLowerCase();
 // 返回：value.strip().toLowerCase() 去掉两端空格并转小写，normalized 为 "java"。
 System.out.println(normalized);
@@ -93,7 +92,6 @@ import java.nio.charset.StandardCharsets;
 byte[] bytes = {74, 97, 118, 97};
 String decoded = new String(bytes, StandardCharsets.UTF_8);
 // 返回：new String(bytes, StandardCharsets.UTF_8) 将 {74,97,118,97} 按 UTF-8 解码为 "Java"。
-// 作用：已有外部字节时用带字符集的构造器解码，并显式指定字符集。
 System.out.println(decoded);
 // 输出：Java
 System.out.println(decoded.length());

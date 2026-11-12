@@ -92,7 +92,7 @@ public class SealedOverviewDemo {
 
 ### 使用 record pattern 拆出 record 组件（JDK 20 预览）
 
-需要在 JDK 20 中直接拆出 record 组件时可使用预览版 record pattern，并为编译与运行同时启用预览特性。
+需要在 JDK 20 中直接拆出 record 组件时可使用预览版 record pattern，并为编译与运行同时启用预览特性；JDK 21 起该语法已正式发布，不再需要预览参数。
 
 ```java
 record User(String name, int age) {}

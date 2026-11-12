@@ -38,7 +38,6 @@ ServiceLoader 是“按约定发现实现”，不是依赖注入容器，也不
 接口模块只发布稳定能力，不依赖任何具体实现；实现模块或 JAR 反向依赖服务接口。
 
 ```java
-// 说明：定义服务接口。
 public interface Formatter {
     String format(String value);
 }
@@ -50,7 +49,6 @@ public interface Formatter {
 `load` 只创建发现器，不保证已经实例化提供方；要看到实现必须在 classpath 配置 `META-INF/services/Formatter`，或在模块中声明 `uses/provides`。
 
 ```java
-// 说明：ServiceLoader.load：查找服务。
 import java.util.ServiceLoader;
 
 interface Formatter { String format(String value); }
@@ -58,7 +56,6 @@ interface Formatter { String format(String value); }
 public class ServiceLoadDemo {
     public static void main(String[] args) {
         ServiceLoader<Formatter> loader = ServiceLoader.load(Formatter.class);
-// 作用：ServiceLoader<Formatter> loader = ServiceLoader.load(Formatter.class);；查找服务。
         System.out.println(loader != null);
 // 输出：true
     }
@@ -70,7 +67,6 @@ public class ServiceLoadDemo {
 配置文件每行写一个实现类全名，空行和 `#` 注释会被忽略；文件必须放进提供方 JAR 的正确资源路径，类名拼写和可见构造器都要能被运行时加载。
 
 ```java
-// 说明：META-INF/services：classpath 提供方配置。
 // 文件：META-INF/services/com.example.spi.Formatter
 com.example.json.JsonFormatter
 
@@ -88,7 +84,6 @@ public class JsonFormatter implements com.example.spi.Formatter {
 增强 for 会按发现顺序惰性创建实例；不要假设遍历顺序就是优先级，多个实现要在业务层按能力、版本或配置选择。
 
 ```java
-// 说明：loader 按 META-INF/services 发现 Encoder 提供方；每次 for 取出 encoder 时才可能创建实例，count 记录成功遍历数。
 import java.util.ServiceLoader;
 
 interface Encoder { String encode(String value); }
@@ -96,11 +91,8 @@ interface Encoder { String encode(String value); }
 public class ServiceIteratorDemo {
     public static void main(String[] args) {
         ServiceLoader<Encoder> loader = ServiceLoader.load(Encoder.class);
-// 作用：ServiceLoader<Encoder> loader = ServiceLoader.load(Encoder.class);；遍历并实例化提供方。
         int count = 0;
-// 作用：int count = 0;；遍历并实例化提供方。
         for (Encoder encoder : loader) {
-// 作用：for (Encoder encoder : loader) {；遍历并实例化提供方。
             System.out.println(encoder.encode("java"));
 // 输出：由具体提供方决定
             count++;
@@ -116,7 +108,6 @@ public class ServiceIteratorDemo {
 `findFirst` 只适合“任意一个实现都能工作”的协议；若有多个实现，要明确选择规则并把缺失服务当成配置错误还是可选能力。
 
 ```java
-// 说明：findFirst：选择第一个可用实现。
 import java.util.ServiceLoader;
 
 interface ClockSource { String now(); }
@@ -124,7 +115,6 @@ interface ClockSource { String now(); }
 public class ServiceFirstDemo {
     public static void main(String[] args) {
         var first = ServiceLoader.load(ClockSource.class).findFirst();
-// 作用：var first = ServiceLoader.load(ClockSource.class).findFirst();；选择第一个可用实现。
         System.out.println(first.isPresent());
 // 输出：true 或 false
     }
@@ -136,7 +126,6 @@ public class ServiceFirstDemo {
 `Provider.type()` 可在实例化前读取提供方类型；只有调用 `Provider.get()` 才创建对象，适合先按注解、类名或能力筛选。
 
 ```java
-// 说明：延迟实例化服务：先筛选提供方元数据。
 import java.util.ServiceLoader;
 
 interface Parser { String parse(String value); }
@@ -146,9 +135,6 @@ public class ServiceProviderDemo {
         long providers = ServiceLoader.load(Parser.class).stream()
                 .filter(provider -> provider.type().getSimpleName().endsWith("Parser"))
                 .count();
-// 作用：.count();；先筛选提供方元数据。
-// 作用：long providers = ServiceLoader.load(Parser.class).stream()；先筛选提供方元数据。
-// 作用：.filter(provider -> provider.type().getSimpleName().endsWith("Parser"))；先筛选提供方元数据。
         System.out.println(providers >= 0);
 // 输出：true
     }
@@ -160,9 +146,9 @@ public class ServiceProviderDemo {
 模块路径下优先用声明式服务关系；服务接口所在模块不必 `requires` 每个实现模块，运行时由模块层解析提供方。
 
 ```java
-// 说明：声明模块服务：连接使用方与提供方。
 // 使用方 module-info.java
 module app.main {
+    requires app.spi;
     uses com.example.spi.Formatter;
 }
 
@@ -180,7 +166,6 @@ module app.json {
 插件式应用常使用上下文类加载器；类加载器层级错误会出现“配置存在但发现不到”的问题，框架应明确谁负责设置和恢复上下文加载器。
 
 ```java
-// 说明：ServiceLoader.load 指定类加载器。
 import java.util.ServiceLoader;
 
 interface Plugin { String name(); }
@@ -188,9 +173,7 @@ interface Plugin { String name(); }
 public class ServiceClassLoaderDemo {
     public static void main(String[] args) {
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
-// 作用：ClassLoader loader = Thread.currentThread().getContextClassLoader();；读取当前线程上下文 ClassLoader 到 loader。
         ServiceLoader<Plugin> services = ServiceLoader.load(Plugin.class, loader);
-// 作用：ServiceLoader<Plugin> services = ServiceLoader.load(Plugin.class, loader);；按 Plugin.class 和 loader 创建服务加载器，后续检查非 null。
         System.out.println(services != null);
 // 输出：true
     }
@@ -203,7 +186,6 @@ public class ServiceClassLoaderDemo {
 `reload` 清除已缓存的提供方信息，下一次遍历会重新查找；它不是热更新机制，已创建的实例和类加载器生命周期仍由应用管理。
 
 ```java
-// 作用：通过 reload 刷新发现结果。
 import java.util.ServiceLoader;
 
 interface Reloadable { }
@@ -211,9 +193,7 @@ interface Reloadable { }
 public class ServiceReloadDemo {
     public static void main(String[] args) {
         ServiceLoader<Reloadable> loader = ServiceLoader.load(Reloadable.class);
-// 作用：ServiceLoader<Reloadable> loader = ServiceLoader.load(Reloadable.class);；刷新发现结果。
         loader.reload();
-// 作用：loader.reload();；刷新发现结果。
         System.out.println(loader != null);
 // 输出：true
     }
@@ -225,7 +205,6 @@ public class ServiceReloadDemo {
 Provider 过滤后再 get 可以减少无关实例化；如果构造器失败，异常会在 get/遍历阶段暴露，调用方应记录提供方类型和配置来源。
 
 ```java
-// 作用：通过 Provider.get 按需创建单个实现。
 import java.util.ServiceLoader;
 
 interface Renderer { String render(); }
@@ -233,9 +212,8 @@ interface Renderer { String render(); }
 public class ServiceProviderGetDemo {
     public static void main(String[] args) {
         var provider = ServiceLoader.load(Renderer.class).stream().findFirst();
-// 作用：var provider = ServiceLoader.load(Renderer.class).stream().findFirst();；按需创建单个实现。
         if (provider.isPresent()) {
-            System.out.println(provider.get().getClass().getSimpleName());
+            System.out.println(provider.get().get().getClass().getSimpleName());
 // 输出：由配置的实现类决定
         } else {
             System.out.println("none");
@@ -250,7 +228,6 @@ public class ServiceProviderGetDemo {
 配置文件不存在通常只是没有实现，类名错误、构造器失败或类型不匹配则可能抛 `ServiceConfigurationError`；可选插件可隔离失败，核心服务不应静默吞掉。
 
 ```java
-// 作用：通过 ServiceConfigurationError 处理服务配置错误。
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 
@@ -261,11 +238,11 @@ public class ServiceErrorDemo {
         try {
             for (BrokenService ignored : ServiceLoader.load(BrokenService.class)) {
                 System.out.println(ignored);
-// 输出：ServiceConfigurationError
+// 输出：由已配置的服务实现决定
             }
         } catch (ServiceConfigurationError e) {
             System.out.println(e.getClass().getSimpleName());
-// 输出：e.getClass().getSimpleName()
+// 输出：ServiceConfigurationError（配置错误时）
         }
     }
 }
@@ -273,7 +250,7 @@ public class ServiceErrorDemo {
 
 ### 提供者工厂方法
 
-服务机制可识别符合约定的 provider 工厂；工厂适合隐藏构造细节，但仍需让模块声明和接口类型正确，不能把任意静态方法当成服务提供者。
+具名模块中的服务提供方可声明符合约定的 provider 工厂；classpath 的 META-INF/services 提供方仍须有公开无参构造器。工厂适合隐藏构造细节，但仍需让模块声明和接口类型正确，不能把任意静态方法当成服务提供者。
 
 ```java
 // 提供方可以声明静态 provider() 工厂，而不必暴露公开构造器
@@ -282,7 +259,6 @@ public final class FactoryFormatter implements com.example.spi.Formatter {
 
     public static FactoryFormatter provider() {
         return new FactoryFormatter();
-// 作用：return new FactoryFormatter();；创建 FactoryFormatter，provider() 返回该实例。
     }
 
     public String format(String value) { return "factory:" + value; }
@@ -302,7 +278,6 @@ interface ThreadService { }
 public class ServiceThreadBoundaryDemo {
     public static void main(String[] args) {
         ServiceLoader<ThreadService> loader = ServiceLoader.load(ThreadService.class);
-// 作用：ServiceLoader<ThreadService> loader = ServiceLoader.load(ThreadService.class);；按 ThreadService.class 创建加载器，非 null 表示加载器可用。
         System.out.println(loader != null);
 // 输出：true
         // 不应让多个线程无协调地共享同一个 ServiceLoader 迭代器
@@ -315,13 +290,11 @@ public class ServiceThreadBoundaryDemo {
 自定义 ModuleLayer 适合插件隔离和版本并存，但涉及模块解析、类加载器和生命周期；普通应用优先使用 boot layer 或 classpath ServiceLoader。
 
 ```java
-// 作用：通过 ModuleLayer 从模块层加载服务。
 import java.util.ServiceLoader;
 
 public class ModuleLayerServiceDemo {
     public static void main(String[] args) {
         ServiceLoader<Object> loader = ServiceLoader.load(ModuleLayer.boot(), Object.class);
-// 作用：ServiceLoader<Object> loader = ServiceLoader.load(ModuleLayer.boot(), Object.class);；从模块层加载服务。
         System.out.println(loader != null);
 // 输出：true
     }
@@ -337,9 +310,7 @@ interface Formatter { String format(String value); }
 public class ServiceLoaderDemo {
     public static void main(String[] args) {
         ServiceLoader<Formatter> services = ServiceLoader.load(Formatter.class);
-// 作用：ServiceLoader<Formatter> services = ServiceLoader.load(Formatter.class);；从模块层加载服务。
         Formatter formatter = services.findFirst().orElse(value -> "default:" + value);
-// 作用：Formatter formatter = services.findFirst().orElse(value -> "default:" + value);；从模块层加载服务，返回读取结果。
         System.out.println(formatter.format("java"));
 // 输出：由配置的实现决定，未配置时为 default:java
     }

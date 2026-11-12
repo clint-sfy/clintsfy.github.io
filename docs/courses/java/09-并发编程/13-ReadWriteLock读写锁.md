@@ -50,7 +50,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ReadWriteLockCreateDemo {
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
-// 作用：var lock = new ReentrantReadWriteLock();；创建非公平读写锁。
         System.out.println("fair=" + lock.isFair());
 // 输出：fair=false
     }
@@ -69,23 +68,19 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ReadLockDemo {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-// 作用：private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();；用读锁保护只读临界区。
     private int value = 42;
 
     int read() {
         lock.readLock().lock();
-// 作用：lock.readLock().lock();；用读锁保护只读临界区。
         try {
             return value;
         } finally {
             lock.readLock().unlock();
-// 作用：lock.readLock().unlock();；用读锁保护只读临界区。
         }
     }
 
     public static void main(String[] args) {
         var state = new ReadLockDemo();
-// 作用：var state = new ReadLockDemo();；用读锁保护只读临界区。
         System.out.println(state.read());
 // 输出：42
     }
@@ -104,25 +99,20 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class WriteLockDemo {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-// 作用：private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();；用写锁保护独占更新。
     private int value;
 
     void add(int delta) {
         lock.writeLock().lock();
-// 作用：lock.writeLock().lock();；用写锁保护独占更新。
         try {
             value += delta;
         } finally {
             lock.writeLock().unlock();
-// 作用：lock.writeLock().unlock();；用写锁保护独占更新。
         }
     }
 
     public static void main(String[] args) {
         var state = new WriteLockDemo();
-// 作用：var state = new WriteLockDemo();；用写锁保护独占更新。
         state.add(5);
-// 作用：state.add(5);；用写锁保护独占更新。
         System.out.println("updated");
 // 输出：updated
     }
@@ -141,32 +131,26 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class LockDowngradeDemo {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-// 作用：private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();；写锁转为读锁。
     private int version;
 
     int refreshAndRead() {
         lock.writeLock().lock();
-// 作用：lock.writeLock().lock();；写锁转为读锁。
         try {
             version++;
             lock.readLock().lock();
-// 作用：lock.readLock().lock();；写锁转为读锁。
         } finally {
             lock.writeLock().unlock();
-// 作用：lock.writeLock().unlock();；写锁转为读锁。
         }
 
         try {
             return version;
         } finally {
             lock.readLock().unlock();
-// 作用：lock.readLock().unlock();；写锁转为读锁。
         }
     }
 
     public static void main(String[] args) {
         var state = new LockDowngradeDemo();
-// 作用：var state = new LockDowngradeDemo();；写锁转为读锁。
         System.out.println(state.refreshAndRead());
 // 输出：1
     }
@@ -186,7 +170,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class FairReadWriteLockDemo {
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock(true);
-// 作用：var lock = new ReentrantReadWriteLock(true);；创建公平读写锁。
         System.out.println("fair=" + lock.isFair());
 // 输出：fair=true
     }
@@ -207,17 +190,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class LockUpgradeRiskDemo {
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
-// 作用：var lock = new ReentrantReadWriteLock();；不要在读锁内直接申请写锁。
         lock.readLock().lock();
-// 作用：lock.readLock().lock();；不要在读锁内直接申请写锁。
         try {
             boolean upgraded = lock.writeLock().tryLock();
-// 作用：boolean upgraded = lock.writeLock().tryLock();；不要在读锁内直接申请写锁。
             System.out.println("upgraded=" + upgraded);
 // 输出：upgraded=false
         } finally {
             lock.readLock().unlock();
-// 作用：lock.readLock().unlock();；不要在读锁内直接申请写锁。
         }
     }
 }
@@ -236,16 +215,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ReadLockTimeoutDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new ReentrantReadWriteLock();
-// 作用：var lock = new ReentrantReadWriteLock();；有界等待读锁。
         boolean acquired = lock.readLock().tryLock(1, TimeUnit.MILLISECONDS);
-// 作用：boolean acquired = lock.readLock().tryLock(1, TimeUnit.MILLISECONDS);；有界等待读锁。
         try {
             System.out.println("acquired=" + acquired);
 // 输出：acquired=true（没有其他线程持有写锁时）
         } finally {
             if (acquired) {
                 lock.readLock().unlock();
-// 作用：lock.readLock().unlock();；有界等待读锁。
             }
         }
     }
@@ -264,15 +240,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class WriteLockInterruptibleDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new ReentrantReadWriteLock();
-// 作用：var lock = new ReentrantReadWriteLock();；可中断地等待写锁。
         lock.writeLock().lockInterruptibly();
-// 作用：lock.writeLock().lockInterruptibly();；可中断地等待写锁。
         try {
             System.out.println("write lock acquired");
 // 输出：write lock acquired
         } finally {
             lock.writeLock().unlock();
-// 作用：lock.writeLock().unlock();；可中断地等待写锁。
         }
     }
 }
@@ -291,15 +264,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ReadLockCountDemo {
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
-// 作用：var lock = new ReentrantReadWriteLock();；只用于诊断当前读者数量。
         lock.readLock().lock();
-// 作用：lock.readLock().lock();；只用于诊断当前读者数量。
         try {
             System.out.println(lock.getReadLockCount());
 // 输出：1
         } finally {
             lock.readLock().unlock();
-// 作用：lock.readLock().unlock();；只用于诊断当前读者数量。
         }
     }
 }
@@ -317,10 +287,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ReadLockConditionDemo {
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
-// 作用：var lock = new ReentrantReadWriteLock();；读锁不支持 Condition。
         try {
             lock.readLock().newCondition();
-// 作用：lock.readLock().newCondition();；读锁不支持 Condition。
         } catch (UnsupportedOperationException ex) {
             System.out.println(ex.getClass().getSimpleName());
 // 输出：UnsupportedOperationException
@@ -344,39 +312,29 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ReadWriteCacheDemo {
     private final Map<String, String> cache = new HashMap<>();
-// 作用：private final Map<String, String> cache = new HashMap<>();；读写路径分离。
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-// 作用：private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();；读写路径分离。
 
     String get(String key) {
         lock.readLock().lock();
-// 作用：lock.readLock().lock();；读写路径分离，返回读取结果。
         try {
             return cache.get(key);
-// 作用：return cache.get(key);；读写路径分离，返回读取结果。
         } finally {
             lock.readLock().unlock();
-// 作用：lock.readLock().unlock();；读写路径分离，返回读取结果。
         }
     }
 
     void put(String key, String value) {
         lock.writeLock().lock();
-// 作用：lock.writeLock().lock();；读写路径分离。
         try {
             cache.put(key, value);
-// 作用：cache.put(key, value);；读写路径分离。
         } finally {
             lock.writeLock().unlock();
-// 作用：lock.writeLock().unlock();；读写路径分离。
         }
     }
 
     public static void main(String[] args) {
         var cache = new ReadWriteCacheDemo();
-// 作用：var cache = new ReadWriteCacheDemo();；读写路径分离，返回读取结果。
         cache.put("language", "Java");
-// 作用：cache.put("language", "Java");；读写路径分离。
         System.out.println(cache.get("language"));
 // 输出：Java
     }

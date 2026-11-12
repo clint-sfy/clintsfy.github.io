@@ -18,7 +18,7 @@ description: 为 HTTP 调用配置资源预算、错误映射和受控重试，�
 
 RestClient 是同步客户端（Framework 6.1+），适合普通 MVC 调用；WebClient 使用 Reactor，适合响应式组合和流式读取。非阻塞不等于无限并发，`.block()` 也不会把链路变成免费等待。OpenFeign 适合声明式接口与 Spring Cloud 生态，应单独确认 Cloud BOM、底层客户端和重试配置，不能再叠加未知次数的重试。
 
-本文使用 JDK 20、Spring Boot 3.4 / Framework 6.2、Reactor Netty 1.2、Resilience4j 2.x；RestClient 属于 spring-web，WebClient 需 WebFlux starter，Resilience4j 是可选第三方库。采用 JDK HttpClient 示例避免混淆 Apache HttpClient 的 API 版本。依据：[Spring REST 客户端](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html)、[Reactor Netty HTTP](https://projectreactor.io/docs/netty/release/reference/http-client.html)、[Resilience4j Retry](https://resilience4j.readme.io/docs/retry)。代码片段用于方法体，网络 URL 为教学测试服务器地址，不是已验证线上服务。
+本文使用 JDK 20、Spring Boot 3.4 / Framework 6.2、Reactor Netty 1.2、Resilience4j 2.x；RestClient 属于 spring-web，WebClient 需 WebFlux starter，Resilience4j 是可选第三方库。采用 JDK HttpClient 示例避免混淆 Apache HttpClient 的 API 版本。依据：[Spring REST 客户端](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html)、[Reactor Netty HTTP](https://projectreactor.io/docs/netty/release/reference/http-client.html)、[Resilience4j Retry](https://resilience4j.readme.io/docs/retry)。代码片段用于声明 `throws Exception` 的测试方法，断言需要 JUnit Jupiter；网络示例需要受控测试服务器在 127.0.0.1:18080 提供 `/orders/7`，返回包含 PAID 的响应，不是已验证线上服务。
 
 超时是一组预算：连接建立、池等待、响应读取、整体业务截止时间不同；一次调用最多两次尝试时必须把两次等待和退避都算进总预算。池上限要匹配下游承载能力。取消可能关闭/释放本地资源，却不证明服务器没有提交。响应体有大小限制，错误体也应限长、脱敏。
 

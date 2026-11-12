@@ -86,7 +86,7 @@ try (org.testcontainers.containers.GenericContainer<?> redis =
 }
 ```
 
-Redis 测试使用唯一前缀 `test:<run-id>:`，在 finally 中只清理自己创建的已知键，不用清空共享实例。连接、命令、序列化的完整测试安排在第 15 章《RedisTemplate 序列化与连接管理》，规范路径为 `/courses/java/15-Redis/13-RedisTemplate序列化与连接管理`；该后续章节上线后再提供可点击入口。
+Redis 测试使用唯一前缀 `test:<run-id>:`，在 finally 中只清理自己创建的已知键，不用清空共享实例。连接、命令和序列化的完整示例见 [RedisTemplate 序列化与连接管理](/courses/java/15-Redis/13-RedisTemplate序列化与连接管理)。
 
 ### `@DynamicPropertySource`：注入动态连接属性
 

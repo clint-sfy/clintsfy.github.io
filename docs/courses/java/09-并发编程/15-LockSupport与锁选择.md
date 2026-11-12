@@ -52,18 +52,13 @@ import java.util.concurrent.locks.LockSupport;
 public class ParkUnparkDemo {
     public static void main(String[] args) throws InterruptedException {
         Thread worker = new Thread(() -> {
-// 作用：Thread worker = new Thread(() -> {；阻塞并唤醒指定线程。
             LockSupport.park();
-// 作用：LockSupport.park();；阻塞并唤醒指定线程。
             System.out.println("worker resumed");
 // 输出：worker resumed
         });
         worker.start();
-// 作用：worker.start();；阻塞并唤醒指定线程。
         LockSupport.unpark(worker);
-// 作用：LockSupport.unpark(worker);；阻塞并唤醒指定线程。
         worker.join();
-// 作用：worker.join();；阻塞并唤醒指定线程。
     }
 }
 ```
@@ -81,9 +76,7 @@ import java.util.concurrent.locks.LockSupport;
 public class PermitBeforeParkDemo {
     public static void main(String[] args) {
         LockSupport.unpark(Thread.currentThread());
-// 作用：LockSupport.unpark(Thread.currentThread());；为当前线程设置许可，下一次 park 会立即返回。
         LockSupport.park();
-// 作用：LockSupport.park();；消费当前线程已有许可后立即返回，没有许可才会阻塞。
         System.out.println("passed without blocking");
 // 输出：passed without blocking
     }
@@ -104,7 +97,6 @@ import java.util.concurrent.locks.LockSupport;
 public class ParkNanosDemo {
     public static void main(String[] args) {
         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1));
-// 作用：LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1));；限制阻塞时间。
         System.out.println("park returned");
 // 输出：park returned（可能因超时、unpark 或中断返回）
     }
@@ -124,13 +116,10 @@ import java.util.concurrent.locks.LockSupport;
 public class ParkInterruptDemo {
     public static void main(String[] args) {
         Thread.currentThread().interrupt();
-// 作用：Thread.currentThread().interrupt();；返回但保留中断状态。
         LockSupport.park();
-// 作用：LockSupport.park();；返回但保留中断状态。
         System.out.println("interrupted=" + Thread.currentThread().isInterrupted());
 // 输出：interrupted=true
         Thread.interrupted();
-// 作用：Thread.interrupted();；返回但保留中断状态。
     }
 }
 ```
@@ -149,15 +138,11 @@ import java.util.concurrent.locks.LockSupport;
 public class ParkConditionLoopDemo {
     public static void main(String[] args) throws InterruptedException {
         var ready = new AtomicBoolean(false);
-// 作用：var ready = new AtomicBoolean(false);；防止虚假返回。
         Thread worker = new Thread(() -> {
-// 作用：Thread worker = new Thread(() -> {；防止虚假返回。
             while (!ready.get()) {
                 LockSupport.park();
-// 作用：LockSupport.park();；防止虚假返回。
                 if (Thread.currentThread().isInterrupted()) {
                     Thread.currentThread().interrupt();
-// 作用：Thread.currentThread().interrupt();；防止虚假返回。
                     return;
                 }
             }
@@ -165,13 +150,9 @@ public class ParkConditionLoopDemo {
 // 输出：condition met
         });
         worker.start();
-// 作用：worker.start();；防止虚假返回。
         ready.set(true);
-// 作用：ready.set(true);；防止虚假返回。
         LockSupport.unpark(worker);
-// 作用：LockSupport.unpark(worker);；防止虚假返回。
         worker.join();
-// 作用：worker.join();；防止虚假返回。
     }
 }
 ```
@@ -190,19 +171,14 @@ public class ParkBlockerDemo {
     public static void main(String[] args) throws InterruptedException {
         Object blocker = "demo-blocker";
         Thread worker = new Thread(() -> LockSupport.park(blocker));
-// 作用：Thread worker = new Thread(() -> LockSupport.park(blocker));；携带并读取 blocker。
         worker.start();
-// 作用：worker.start();；携带并读取 blocker。
         while (LockSupport.getBlocker(worker) == null) {
             Thread.yield();
-// 作用：Thread.yield();；携带并读取 blocker。
         }
         System.out.println(LockSupport.getBlocker(worker));
 // 输出：demo-blocker
         LockSupport.unpark(worker);
-// 作用：LockSupport.unpark(worker);；携带并读取 blocker。
         worker.join();
-// 作用：worker.join();；携带并读取 blocker。
     }
 }
 ```
@@ -222,7 +198,6 @@ import java.util.concurrent.locks.LockSupport;
 public class ParkUntilDemo {
     public static void main(String[] args) {
         LockSupport.parkUntil(System.currentTimeMillis() + 1);
-// 作用：LockSupport.parkUntil(System.currentTimeMillis() + 1);；按绝对时间等待。
         System.out.println("deadline reached or signal received");
 // 输出：deadline reached or signal received
     }
@@ -246,9 +221,7 @@ public class SynchronizedChoiceDemo {
 
     public static void main(String[] args) {
         var counter = new SynchronizedChoiceDemo();
-// 作用：var counter = new SynchronizedChoiceDemo();；简单互斥的默认选择。
         counter.increment();
-// 作用：counter.increment();；简单互斥的默认选择。
         System.out.println(counter.count);
 // 输出：1
     }
@@ -269,14 +242,12 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ReentrantLockChoiceDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new ReentrantLock();
-// 作用：var lock = new ReentrantLock();；需要中断、超时或 Condition。
         if (lock.tryLock(1, TimeUnit.MILLISECONDS)) {
             try {
                 System.out.println("lock acquired");
 // 输出：lock acquired
             } finally {
                 lock.unlock();
-// 作用：lock.unlock();；需要中断、超时或 Condition。
             }
         } else {
             System.out.println("busy");
@@ -299,15 +270,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ReadWriteChoiceDemo {
     public static void main(String[] args) {
         var lock = new ReentrantReadWriteLock();
-// 作用：var lock = new ReentrantReadWriteLock();；读多写少时分离访问。
         lock.readLock().lock();
-// 作用：lock.readLock().lock();；读多写少时分离访问，返回读取结果。
         try {
             System.out.println("shared read");
 // 输出：shared read
         } finally {
             lock.readLock().unlock();
-// 作用：lock.readLock().unlock();；读多写少时分离访问，返回读取结果。
         }
     }
 }
@@ -326,11 +294,8 @@ import java.util.concurrent.locks.StampedLock;
 public class StampedChoiceDemo {
     public static void main(String[] args) {
         var lock = new StampedLock();
-// 作用：var lock = new StampedLock();；低冲突读场景的乐观校验。
         long stamp = lock.tryOptimisticRead();
-// 作用：long stamp = lock.tryOptimisticRead();；低冲突读场景的乐观校验。
         boolean valid = lock.validate(stamp);
-// 作用：boolean valid = lock.validate(stamp);；低冲突读场景的乐观校验。
         System.out.println("snapshot valid=" + valid);
 // 输出：snapshot valid=true（校验期间无写入时）
     }
@@ -350,9 +315,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CasChoiceDemo {
     public static void main(String[] args) {
         var count = new AtomicInteger(0);
-// 作用：var count = new AtomicInteger(0);；独立变量的原子更新，不是普通互斥锁。
         boolean updated = count.compareAndSet(0, 1);
-// 作用：boolean updated = count.compareAndSet(0, 1);；独立变量的原子更新，不是普通互斥锁。
         System.out.println("updated=" + updated + ", value=" + count.get());
 // 输出：updated=true, value=1
     }
@@ -372,15 +335,12 @@ import java.util.concurrent.Semaphore;
 public class SemaphoreChoiceDemo {
     public static void main(String[] args) throws InterruptedException {
         var permits = new Semaphore(2);
-// 作用：var permits = new Semaphore(2);；并发名额，不是普通互斥锁。
         permits.acquire();
-// 作用：permits.acquire();；并发名额，不是普通互斥锁。
         try {
             System.out.println("remaining=" + permits.availablePermits());
 // 输出：remaining=1
         } finally {
             permits.release();
-// 作用：permits.release();；并发名额，不是普通互斥锁。
         }
     }
 }
@@ -398,9 +358,7 @@ public class ImmutableChoiceDemo {
 
     public static void main(String[] args) {
         Snapshot current = new Snapshot(1, "ready");
-// 作用：Snapshot current = new Snapshot(1, "ready");；消除共享写入。
         Snapshot next = new Snapshot(current.version() + 1, "done");
-// 作用：Snapshot next = new Snapshot(current.version() + 1, "done");；消除共享写入。
         System.out.println(next);
 // 输出：Snapshot[version=2, value=done]
     }
@@ -420,9 +378,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ConcurrentContainerChoiceDemo {
     public static void main(String[] args) {
         var cache = new ConcurrentHashMap<String, Integer>();
-// 作用：var cache = new ConcurrentHashMap<String, Integer>();；用并发容器代替手写容器锁。
         cache.merge("java", 1, Integer::sum);
-// 作用：cache.merge("java", 1, Integer::sum);；用并发容器代替手写容器锁。
         System.out.println(cache.get("java"));
 // 输出：1
     }
@@ -458,7 +414,6 @@ public class LockNeedDecisionDemo {
 
     public static void main(String[] args) {
         UserView view = new UserView("Ada", 3);
-// 作用：UserView view = new UserView("Ada", 3);；创建 name="Ada"、level=3 的 UserView。
         System.out.println(view.name() + ":" + view.level());
 // 输出：Ada:3
     }
@@ -477,14 +432,12 @@ import java.util.concurrent.locks.ReentrantLock;
 public class LockRequirementDemo {
     public static void main(String[] args) throws InterruptedException {
         var lock = new ReentrantLock();
-// 作用：var lock = new ReentrantLock();；创建 lock，tryLock 最多等待 1 毫秒。
         if (lock.tryLock(1, java.util.concurrent.TimeUnit.MILLISECONDS)) {
             try {
                 System.out.println("bounded wait is available");
 // 输出：bounded wait is available
             } finally {
                 lock.unlock();
-// 作用：lock.unlock();；释放当前线程持有的 ReentrantLock。
             }
         }
     }
@@ -502,27 +455,21 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class LockChoiceCaseDemo {
     private final ReentrantLock lock = new ReentrantLock();
-// 作用：private final ReentrantLock lock = new ReentrantLock();；创建 lock 保护 count 字段。
     private int count;
 
     void increment() {
         lock.lock();
-// 作用：lock.lock();；获取 lock 后进入 count++ 临界区。
         try {
             count++;
         } finally {
             lock.unlock();
-// 作用：lock.unlock();；finally 中释放 lock，避免锁泄漏。
         }
     }
 
     public static void main(String[] args) {
         var counter = new LockChoiceCaseDemo();
-// 作用：var counter = new LockChoiceCaseDemo();；创建 count 初始为 0 的计数器。
         counter.increment();
-// 作用：counter.increment();；第一次加锁后 count 变为 1。
         counter.increment();
-// 作用：counter.increment();；第二次加锁后 count 变为 2。
         System.out.println(counter.count);
 // 输出：2
     }

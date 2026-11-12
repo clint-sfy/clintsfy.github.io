@@ -264,7 +264,7 @@ XRANGE lab:{core}:stream - +
 
 #### Java 调用：Bitmap、HyperLogLog、GEO 和 Stream
 
-这几种结构使用不同操作视图；`StringRedisTemplate` 由 Spring 注入，以下实验键相互独立。
+这几种结构使用不同操作视图；`StringRedisTemplate` 由 Spring 注入。运行前后在独立实验库删除 `lab:visits`、`lab:unique`、`lab:places`、`lab:events`，避免旧成员影响近似计数和示例结果。
 
 ```java
 import org.springframework.data.redis.core.StringRedisTemplate;

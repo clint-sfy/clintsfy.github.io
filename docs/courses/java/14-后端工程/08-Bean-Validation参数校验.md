@@ -47,7 +47,6 @@ Bean Validation 只回答“输入是否满足声明的格式和规则”，不�
 import jakarta.validation.constraints.NotBlank;
 record CreateNote(@NotBlank String title) {}
 // 输入：title 初始值为 "hello"，验证器收到非空标题。
-// 作用：record CreateNote(@NotBlank String title) {}；拒绝空白文本。
 
 System.out.println(new CreateNote("hello").title());
 // 输出：hello
@@ -65,7 +64,6 @@ import jakarta.validation.constraints.Size;
 
 record NoteBody(@Size(min = 1, max = 200) String body) {}
 // 输入：body 初始值为 "text"，字符长度为 4。
-// 作用：record NoteBody(@Size(min = 1, max = 200) String body) {}；限制容器长度。
 System.out.println(new NoteBody("text").body().length());
 // 输出：4
 // 说明：@Size(min=2, max=20) 按字符序列长度检查 nickname，长度 1 或 21 失败；null 是否允许由 @NotNull/@NotBlank 另行决定。
@@ -85,9 +83,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 class NoteController {
     @PostMapping("/notes")
     String create(@Valid @RequestBody CreateNote request) {
-// 作用：String create(@Valid @RequestBody CreateNote request) {；触发对象校验。
         return "accepted:" + request.title();
-// 作用：return "accepted:" + request.title();；触发对象校验。
     }
 }
 
@@ -107,7 +103,6 @@ import org.springframework.validation.annotation.Validated;
 
 interface OnCreate {}
 @Validated(OnCreate.class)
-// 作用：@Validated(OnCreate.class)；选择校验分组。
 class CreateNoteService {}
 System.out.println(CreateNoteService.class.isAnnotationPresent(Validated.class));
 // 输出：true
@@ -130,7 +125,6 @@ record Order(@Valid Address address, List<@Valid Address> stops) {}
 
 System.out.println(new Order(new Address("Shanghai"), List.of(new Address("Beijing"))).stops().size());
 // 输出：1
-// 作用：用于让父 DTO 的验证继续进入地址、明细和集合元素；没有 `@Valid` 时，嵌套对象上的约束可能不会被触发。
 ```
 
 容器元素约束需要兼容的 Bean Validation 版本和 value extractor；级联集合还要明确空集合是否允许。校验嵌套对象不等于检查对象是否属于当前用户，所有者授权仍由 Security 或领域服务完成。
@@ -150,7 +144,6 @@ record Account(
 
 System.out.println("groups=" + OnCreate.class.getSimpleName() + "/" + Default.class.getSimpleName());
 // 输出：groups=OnCreate/Default
-// 作用：用于让创建、更新等操作选择不同约束集合；分组解决校验时机，不应被用来模拟角色授权或业务状态机。
 ```
 
 调用方必须明确传入哪个分组；多个分组的组合顺序要有测试，避免新增约束后某个入口静默跳过。若规则有先后依赖，可以定义组序列，但跨字段业务条件仍放在服务层。
@@ -186,7 +179,6 @@ import java.lang.annotation.Target;
 class StrongCodeValidator implements ConstraintValidator<StrongCode, String> {
     @Override public boolean isValid(String value, ConstraintValidatorContext context) {
         return value == null || value.matches("[A-Z]{2}-\\d{4}");
-// 作用：return value == null || value.matches("[A-Z]{2}-\\d{4}");；实现自定义约束。
     }
 }
 
@@ -211,9 +203,6 @@ List<FieldViolation> fieldErrors(BindingResult result) {
     List<FieldViolation> errors = result.getFieldErrors().stream()
         .map(error -> new FieldViolation(error.getField(), error.getDefaultMessage()))
         .toList();
-// 作用：.toList();；稳定输出 FieldError。
-// 作用：List<FieldViolation> errors = result.getFieldErrors().stream()；稳定输出 FieldError，返回读取结果。
-// 作用：.map(error -> new FieldViolation(error.getField(), error.getDefaultMessage()))；稳定输出 FieldError。
     return errors;
 }
 
@@ -232,12 +221,9 @@ System.out.println(List.of(new FieldViolation("title", "must not be blank")));
 record RequestBoundary(String rawJson, boolean valid, boolean authorized) {}
 
 RequestBoundary boundary = new RequestBoundary("{...}", true, false);
-// 作用：RequestBoundary boundary = new RequestBoundary("{...}", true, false);；分离请求边界。
 String result = boundary.authorized() ? "service-call" : "403";
-// 作用：String result = boundary.authorized() ? "service-call" : "403";；分离请求边界。
 System.out.println(result);
 // 输出：403
-// 作用：用于在代码审查和故障排查时明确三层责任：转换器创建类型、Validation 检查输入、Security/领域策略决定权限；每层只返回自己的错误。
 ```
 
 JSON 文本不能因为“能解析”就直接写入数据库；校验通过也不能跳过对象所有者和权限判断；授权通过更不能替代字段类型转换。把三步拆开能让 400、401/403 与业务失败分别可观测、可测试。
@@ -264,7 +250,6 @@ class SearchController {
 
 System.out.println("7/0");
 // 输出：7/0
-// 作用：用于保护不在请求 body 中的查询参数和路径参数；方法级校验需要 `@Validated` 触发，且转换失败与约束失败应分别处理。
 ```
 
 字符串到 `long` 的转换失败通常先于 `@Min` 发生；不要把“类型转换成功”当作“值域合法”。路径参数、分页大小和排序字段仍要限制上限，授权要在确定资源主体后单独执行。
@@ -281,12 +266,10 @@ System.out.println("7/0");
 record CreateTask(
     @NotNull LocalDate dueDate,
     @NotBlank String title) {}
-// 作用：@NotNull LocalDate dueDate,；拒绝 null 值。
 
 class TaskFactory {
     CreateTask valid() {
         return new CreateTask(LocalDate.of(2030, 1, 1), "ship");
-// 作用：return new CreateTask(LocalDate.of(2030, 1, 1), "ship");；拒绝 null 值。
     }
 }
 ```
@@ -303,13 +286,11 @@ class TaskFactory {
 record SignupRequest(
     @NotBlank
     @Email
-// 作用：@Email；检查邮箱形式。
     String email) {}
 
 class SignupExample {
     SignupRequest sample() {
         return new SignupRequest("dev@example.com");
-// 作用：return new SignupRequest("dev@example.com");；检查邮箱形式。
     }
 }
 ```
@@ -327,12 +308,10 @@ record LocaleRequest(
     @Pattern(
         regexp = "[a-z]{2}(-[A-Z]{2})?",
         message = "must be ll or ll-CC")
-// 作用：@Pattern(；限制文本格式。
     String locale) {}
 
 class LocaleExample {
     LocaleRequest sample() { return new LocaleRequest("zh-CN"); }
-// 作用：LocaleRequest sample() { return new LocaleRequest("zh-CN"); }；限制文本格式。
 }
 ```
 
@@ -347,7 +326,6 @@ class LocaleExample {
 // 结果：标注 `@Slug` 的值由 `SlugValidator` 检查，失败时输出 `invalid slug`。
 @Documented
 @Constraint(validatedBy = SlugValidator.class)
-// 作用：@Constraint(validatedBy = SlugValidator.class)；声明自定义约束。
 @Target({ ElementType.FIELD, ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Slug {
@@ -382,7 +360,6 @@ record RegisterRequest(
 class RegistrationService {
     String accept(@Valid RegisterRequest request) {
         return "created:" + request.name();
-// 作用：return "created:" + request.name();；声明自定义约束，返回读取结果。
     }
 }
 

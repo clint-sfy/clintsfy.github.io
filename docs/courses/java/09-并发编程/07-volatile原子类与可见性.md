@@ -44,7 +44,6 @@ CAS 失败时通常重试，竞争激烈会消耗 CPU。LongAdder 的总和适�
 // 说明：main 线程将 volatile running 从 true 改为 false，读取该标志的工作线程不需额外锁即可看到停止请求。
 public class VolatileStopDemo {
     private static volatile boolean running = true;
-// 作用：private static volatile boolean running = true;；可见的停止标志。
 
     public static void main(String[] args) {
         running = false;
@@ -67,9 +66,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicIncrementDemo {
     public static void main(String[] args) {
         AtomicInteger count = new AtomicInteger(0);
-// 作用：AtomicInteger count = new AtomicInteger(0);；原子计数。
         int current = count.incrementAndGet();
-// 作用：int current = count.incrementAndGet();；原子计数。
         System.out.println(current + ", stored=" + count.get());
 // 输出：1, stored=1
     }
@@ -80,7 +77,7 @@ public class AtomicIncrementDemo {
 
 ### AtomicInteger.compareAndSet：条件更新
 
-CAS 失败说明当前值已经被其他路径改变，调用方可以重试、放弃或走冲突处理。
+强 CAS 失败说明当前值与期望值不相等，调用方可以重试、放弃或走冲突处理。
 
 ```java
 // 说明：AtomicInteger.compareAndSet：条件更新。
@@ -89,11 +86,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicCompareDemo {
     public static void main(String[] args) {
         AtomicInteger state = new AtomicInteger(0);
-// 作用：AtomicInteger state = new AtomicInteger(0);；条件更新。
         boolean first = state.compareAndSet(0, 1);
-// 作用：boolean first = state.compareAndSet(0, 1);；条件更新。
         boolean second = state.compareAndSet(0, 2);
-// 作用：boolean second = state.compareAndSet(0, 2);；条件更新。
         System.out.println(first + ", " + second + ", state=" + state.get());
 // 输出：true, false, state=1
     }
@@ -115,9 +109,7 @@ public class AtomicReferenceDemo {
 
     public static void main(String[] args) {
         AtomicReference<Config> ref = new AtomicReference<>(new Config("a", 80));
-// 作用：AtomicReference<Config> ref = new AtomicReference<>(new Config("a", 80));；原子替换不可变快照。
         ref.updateAndGet(old -> new Config(old.host(), old.port() + 1));
-// 作用：ref.updateAndGet(old -> new Config(old.host(), old.port() + 1));；原子替换不可变快照。
         System.out.println(ref.get());
 // 输出：Config[host=a, port=81]
     }
@@ -137,11 +129,8 @@ import java.util.concurrent.atomic.AtomicLongArray;
 public class AtomicArrayDemo {
     public static void main(String[] args) {
         AtomicLongArray values = new AtomicLongArray(2);
-// 作用：AtomicLongArray values = new AtomicLongArray(2);；原子更新数组元素。
         values.incrementAndGet(1);
-// 作用：values.incrementAndGet(1);；原子更新数组元素。
         values.addAndGet(1, 4);
-// 作用：values.addAndGet(1, 4);；原子更新数组元素。
         System.out.println(values.get(1));
 // 输出：5
     }
@@ -161,11 +150,8 @@ import java.util.concurrent.atomic.LongAdder;
 public class LongAdderCounterDemo {
     public static void main(String[] args) {
         LongAdder hits = new LongAdder();
-// 作用：LongAdder hits = new LongAdder();；并发统计总量。
         hits.add(2);
-// 作用：hits.add(2);；并发统计总量。
         hits.increment();
-// 作用：hits.increment();；并发统计总量。
         System.out.println(hits.sum());
 // 输出：3
     }
@@ -174,7 +160,7 @@ public class LongAdderCounterDemo {
 
 ### AtomicBoolean：一次性状态转换
 
-CAS 可以表达“只有第一个线程成功初始化”的状态迁移；初始化失败时要定义是否允许回滚或重试。
+CAS 可以让一个线程取得初始化资格；它本身不代表初始化已经完成，其他线程需要单独的完成状态或同步机制，失败时还要定义回滚或重试。
 
 ```java
 // 说明：AtomicBoolean：一次性状态转换。
@@ -183,11 +169,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class AtomicBooleanDemo {
     public static void main(String[] args) {
         AtomicBoolean started = new AtomicBoolean(false);
-// 作用：AtomicBoolean started = new AtomicBoolean(false);；一次性状态转换。
         boolean first = started.compareAndSet(false, true);
-// 作用：boolean first = started.compareAndSet(false, true);；一次性状态转换。
         boolean second = started.compareAndSet(false, true);
-// 作用：boolean second = started.compareAndSet(false, true);；一次性状态转换。
         System.out.println(first + ", " + second);
 // 输出：true, false
     }
@@ -205,9 +188,7 @@ import java.util.concurrent.atomic.AtomicStampedReference;
 public class StampedReferenceDemo {
     public static void main(String[] args) {
         var ref = new AtomicStampedReference<>("A", 1);
-// 作用：var ref = new AtomicStampedReference<>("A", 1);；让引用与版本号共同更新。
         boolean changed = ref.compareAndSet("A", "B", 1, 2);
-// 作用：boolean changed = ref.compareAndSet("A", "B", 1, 2);；让引用与版本号共同更新。
         System.out.println(changed + ", value=" + ref.getReference() + ", stamp=" + ref.getStamp());
 // 输出：true, value=B, stamp=2
     }
@@ -225,11 +206,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class WeakCasDemo {
     public static void main(String[] args) {
         AtomicInteger value = new AtomicInteger();
-// 作用：AtomicInteger value = new AtomicInteger();；弱 CAS 边界。
         boolean changed;
         do {
             changed = value.weakCompareAndSet(0, 1);
-// 作用：changed = value.weakCompareAndSet(0, 1);；弱 CAS 边界。
         } while (!changed);
         System.out.println(changed + ", value=" + value.get());
 // 输出：true, value=1
@@ -248,11 +227,8 @@ import java.util.concurrent.atomic.LongAccumulator;
 public class LongAccumulatorDemo {
     public static void main(String[] args) {
         LongAccumulator max = new LongAccumulator(Math::max, Long.MIN_VALUE);
-// 作用：LongAccumulator max = new LongAccumulator(Math::max, Long.MIN_VALUE);；自定义结合运算。
         max.accumulate(7);
-// 作用：max.accumulate(7);；自定义结合运算。
         max.accumulate(3);
-// 作用：max.accumulate(3);；自定义结合运算。
         System.out.println(max.get());
 // 输出：7
     }
@@ -266,7 +242,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AtomicStateDemo {
     public static void main(String[] args) {
         AtomicInteger state = new AtomicInteger(0);
-// 作用：AtomicInteger state = new AtomicInteger(0);；自定义结合运算。
         if (state.compareAndSet(0, 1)) {
             System.out.println("initialized=" + state.get());
 // 输出：initialized=1
@@ -275,14 +250,14 @@ public class AtomicStateDemo {
 }
 ```
 
-把“从未初始化到已初始化”表达成一次 CAS，比使用 volatile 再分开判断和赋值更安全；若初始化过程本身很长，还要考虑失败重试和发布完整对象。
+把“未开始到由一个线程负责初始化”表达成一次 CAS，比使用 volatile 再分开判断和赋值更安全；若初始化过程本身很长，还要考虑失败重试和发布完整对象。
 
 ## 易混点
 
 - volatile 保证可见性和有序性，不保证 `++`、检查再写入等复合操作的原子性。
 - Atomic 是单变量边界，不会自动把多个字段绑成一个事务。
 - LongAdder 的 `sum()` 适合统计，不适合需要严格线性一致读写的余额。
-- CAS 失败不是异常，而是并发冲突信号；自旋重试过多也会浪费 CPU。
+- CAS 失败不是异常，而是当前值与期望值不符的信号；自旋重试过多也会浪费 CPU。
 - ABA 是值相同但中间发生过变化，必要时使用版本号或更高层的锁协议。
 
 ## 课后小问

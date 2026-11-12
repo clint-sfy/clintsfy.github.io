@@ -49,12 +49,10 @@ MDC 通常是线程局部上下文；进入请求或任务时 `put`，在 `final
 import java.util.regex.Pattern;
 
 private static final Pattern CONTEXT_ID = Pattern.compile("[A-Za-z0-9._:-]{1,64}");
-// 作用：private static final Pattern CONTEXT_ID = Pattern.compile("[A-Za-z0-9._:-]{1,64}");；长度为 1-64，且只匹配安全上下文字符。
 
 static String safeContextId(String raw) {
     if (raw == null || raw.length() > 64 || raw.indexOf('\r') >= 0 || raw.indexOf('\n') >= 0
             || !CONTEXT_ID.matcher(raw).matches()) return "invalid";
-// 作用：|| !CONTEXT_ID.matcher(raw).matches()) return "invalid";；raw 不匹配时返回 "invalid"。
     return raw;
 }
 // 结果：safeContextId("trace-01") 返回 "trace-01"，传入换行符或超过 64 个字符时返回 "invalid"
@@ -72,13 +70,10 @@ import org.slf4j.LoggerFactory;
 
 final class ImportService {
     private static final Logger log = LoggerFactory.getLogger(ImportService.class);
-// 作用：private static final Logger log = LoggerFactory.getLogger(ImportService.class);；获取门面 Logger。
 
     void run(String jobId) {
         String safeJobId = safeContextId(jobId);
-// 作用：String safeJobId = safeContextId(jobId);；获取门面 Logger。
         log.info("job={} started", safeJobId);
-// 作用：log.info("job={} started", safeJobId);；获取门面 Logger。
         System.out.println("logged=" + safeJobId);
 // 输出：logged=job-1
     }
@@ -101,7 +96,6 @@ import org.slf4j.Logger;
 
 void process(Logger log, String taskId) {
     log.info("task={} state={}", taskId, "running");
-// 作用：log.info("task={} state={}", taskId, "running");；记录参数化事件。
     System.out.println("logged=" + taskId);
 // 输出：logged=task-7
 }
@@ -118,10 +112,8 @@ void process(Logger log, String taskId) {
 ```java
 try {
     throw new IllegalStateException("temporary failure");
-// 作用：throw new IllegalStateException("temporary failure");；保留异常堆栈。
 } catch (RuntimeException ex) {
     log.error("task={} failed", "task-7", ex);
-// 作用：log.error("task={} failed", "task-7", ex);；保留异常堆栈。
     System.out.println("handled=" + ex.getClass().getSimpleName());
 // 输出：handled=IllegalStateException
 }
@@ -136,7 +128,6 @@ try {
 
 ```java
 String appender = "RollingFileAppender";
-// 作用：String appender = "RollingFileAppender";；限制日志占用。
 String policy = "SizeAndTimeBasedRollingPolicy";
 String pattern = "%d %-5level [%X{traceId}] %logger - %msg%n";
 System.out.println(appender + "/" + policy + ":" + pattern);
@@ -155,13 +146,11 @@ import org.slf4j.MDC;
 
 void handle(String traceId) {
     MDC.put("traceId", safeContextId(traceId));
-// 作用：MDC.put("traceId", safeContextId(traceId));；为请求附加 traceId。
     try {
         System.out.println("trace=" + MDC.get("traceId"));
 // 输出：trace=req-7
     } finally {
         MDC.remove("traceId");
-// 作用：MDC.remove("traceId");；为请求附加 traceId。
     }
 }
 // 作用：用于让同一请求的日志带上 `traceId`，并在复用线程返回池前清理上下文。
@@ -179,7 +168,6 @@ Logback pattern 中用 `%X{traceId}` 读取 MDC；没有 `finally` 清理时，�
 String maskToken(String token) {
     if (token == null || token.length() < 8) return "***";
     return token.substring(0, 2) + "***" + token.substring(token.length() - 2);
-// 作用：return token.substring(0, 2) + "***" + token.substring(token.length() - 2);；日志字段白名单与遮蔽。
 }
 
 System.out.println(maskToken("token-123456"));
@@ -207,7 +195,6 @@ class OperationLogAspect {
     @Around("serviceBoundary()")
     Object logOperation(ProceedingJoinPoint joinPoint) throws Throwable {
         Object result = joinPoint.proceed();
-// 作用：Object result = joinPoint.proceed();；只记录业务边界。
         System.out.println("audit=success:" + joinPoint.getSignature().getName());
 // 输出：audit=success:update
         return result;
@@ -249,13 +236,10 @@ void record(Logger log, boolean sampled, Throwable failure) {
 final class CacheReader {
     private static final Logger log =
         LoggerFactory.getLogger(CacheReader.class);
-// 作用：LoggerFactory.getLogger(CacheReader.class);；记录可按需开启的调试细节，返回读取结果。
     String read(String key) {
         log.debug("reading cache key={}", key);
-// 作用：log.debug("reading cache key={}", key);；记录可按需开启的调试细节。
         String value = "hit";
         log.debug("cache result key={} present={}", key, value != null);
-// 作用：log.debug("cache result key={} present={}", key, value != null);；记录可按需开启的调试细节。
         return value;
     }
 }
@@ -273,13 +257,11 @@ final class CacheReader {
 final class RemoteLookup {
     private static final Logger log =
         LoggerFactory.getLogger(RemoteLookup.class);
-// 作用：LoggerFactory.getLogger(RemoteLookup.class);；记录可恢复的异常状态。
     String lookup(String id) {
         try {
             return callRemote(id);
         } catch (TimeoutException ex) {
             log.warn("remote timeout id={}; using fallback", id, ex);
-// 作用：log.warn("remote timeout id={}; using fallback", id, ex);；记录可恢复的异常状态。
             return "fallback";
         }
     }
@@ -304,27 +286,20 @@ import org.slf4j.MDC;
 
 final class JobRunner {
     private static final Logger log = LoggerFactory.getLogger(JobRunner.class);
-// 作用：private static final Logger log = LoggerFactory.getLogger(JobRunner.class);；记录可恢复的异常状态。
 
     static String run(String traceId, String jobId) {
         String safeJobId = safeContextId(jobId);
-// 作用：String safeJobId = safeContextId(jobId);；记录可恢复的异常状态。
         MDC.put("traceId", safeContextId(traceId));
-// 作用：MDC.put("traceId", safeContextId(traceId));；记录可恢复的异常状态。
         try {
             log.info("job={} state={}", safeJobId, "started");
-// 作用：log.info("job={} state={}", safeJobId, "started");；记录可恢复的异常状态。
             if (safeJobId.equals("invalid")) throw new IllegalArgumentException("job id required");
             log.info("job={} state={}", safeJobId, "done");
-// 作用：log.info("job={} state={}", safeJobId, "done");；记录可恢复的异常状态。
             return "success";
         } catch (RuntimeException ex) {
             log.error("job={} state={}", safeJobId, "failed", ex);
-// 作用：log.error("job={} state={}", safeJobId, "failed", ex);；记录可恢复的异常状态。
             return "failure";
         } finally {
             MDC.remove("traceId");
-// 作用：MDC.remove("traceId");；记录可恢复的异常状态。
         }
     }
 }

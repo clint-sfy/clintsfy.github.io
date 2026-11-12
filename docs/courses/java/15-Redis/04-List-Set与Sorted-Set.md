@@ -346,7 +346,7 @@ GEO 索引也使用 ZREM 删除地点，但不要对 GEO 索引任意改写 scor
 
 #### Java 调用：List、Set 与 Sorted Set
 
-列表保留顺序，Set 去重，Sorted Set 按分数排序；示例使用 Spring 注入的 `StringRedisTemplate`。
+列表保留顺序，Set 去重，Sorted Set 按分数排序；示例使用 Spring 注入的 `StringRedisTemplate`。运行前后在独立实验库删除 `lab:queue`、`lab:tags`、`lab:scores`，否则队列中旧任务可能先被弹出。
 
 ```java
 import org.springframework.data.redis.core.StringRedisTemplate;

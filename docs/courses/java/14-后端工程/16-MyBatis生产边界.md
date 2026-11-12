@@ -278,7 +278,7 @@ try (org.apache.ibatis.session.SqlSession session = factory.openSession(org.apac
 }
 ```
 
-`testFactory` 是测试 fixture 提供的变量。BATCH 的 insert 返回值不等于受影响行数；查看 BatchResult 和 JDBC `SUCCESS_NO_INFO`/`EXECUTE_FAILED`，失败可能部分执行。回滚必须处理异常并保留根因；批量生成键应实测驱动，不按连续 ID 猜测。映射 `useGeneratedKeys="true" keyProperty="id"` 使用 JDBC 生成键；`selectKey order="BEFORE|AFTER"` 是另一方案，不能用并发不安全的 MAX(id)+1。参见[JDBC 批量](/courses/java/11-MySQL-8/12-Java-JDBC与MyBatis衔接)。Spring 管理的 Mapper 应由同一事务资源和匹配的 BATCH SqlSessionTemplate 驱动，不能手工 commit Spring 管理 session。
+`testFactory` 是测试 fixture 提供的变量：它连接隔离数据库并注册 `lesson.Writer.insert` 映射，插入 `orders(id,state)`；运行前确认 701、702 不存在，并在另一连接验证回滚结果。BATCH 的 insert 返回值不等于受影响行数；查看 BatchResult 和 JDBC `SUCCESS_NO_INFO`/`EXECUTE_FAILED`，失败可能部分执行。回滚必须处理异常并保留根因；批量生成键应实测驱动，不按连续 ID 猜测。映射 `useGeneratedKeys="true" keyProperty="id"` 使用 JDBC 生成键；`selectKey order="BEFORE|AFTER"` 是另一方案，不能用并发不安全的 MAX(id)+1。参见[JDBC 批量](/courses/java/11-MySQL-8/12-Java-JDBC与MyBatis衔接)。Spring 管理的 Mapper 应由同一事务资源和匹配的 BATCH SqlSessionTemplate 驱动，不能手工 commit Spring 管理 session。
 
 ### `SqlSession.clearCache`：识别一级缓存边界
 
@@ -296,7 +296,7 @@ try (org.apache.ibatis.session.SqlSession session = factory.openSession()) {
 }
 ```
 
-一级缓存默认 SESSION，`localCacheScope=STATEMENT` 可限制为语句范围；更新、提交、回滚和关闭也影响缓存。二级缓存需要 Mapper `<cache/>` 等配置，在事务完成时传播并按 namespace 失效，多个 namespace 联表或外部写入可能导致陈旧结果；高一致性业务通常禁用二级缓存并显式设计缓存。缓存对象不要随意修改后再复用。
+本例需要 `testFactory` 注册上文 `lesson.OrderMapper.find`，并准备订单 7 及其关联表；两次查询处于同一 session。一级缓存默认 SESSION，`localCacheScope=STATEMENT` 可限制为语句范围；更新、提交、回滚和关闭也影响缓存。二级缓存需要 Mapper `<cache/>` 等配置，在事务完成时传播并按 namespace 失效，多个 namespace 联表或外部写入可能导致陈旧结果；高一致性业务通常禁用二级缓存并显式设计缓存。缓存对象不要随意修改后再复用。
 
 ### `PaginationInnerInterceptor`：分页数据库行
 

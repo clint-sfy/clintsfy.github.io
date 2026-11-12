@@ -38,7 +38,6 @@ description: 从 I/O 类型选择开始，串起 Path、Files、字节流、字�
 需要用多个路径片段构造与操作系统分隔符兼容的文件路径时使用 `Path.of`。
 
 ```java
-// 说明：Path.of：构造文件系统路径。
 import java.nio.file.Path;
 
 Path path = Path.of("docs", "guide.txt");
@@ -51,7 +50,6 @@ System.out.println(path.getFileName());
 需要一次写入能够放进内存的短文本时使用 `Files.writeString`，并应显式选择业务所需字符集。
 
 ```java
-// 说明：Files.writeString：写入短文本文件。
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
@@ -67,13 +65,11 @@ Files.deleteIfExists(file);
 需要按行处理文本或避免一次载入整个文件时使用 `Files.lines`，并用 try-with-resources 关闭返回的流。
 
 ```java
-// 说明：Files.lines：按行流式读取文本。
 import java.nio.file.Files;
 
 var file = Files.createTempFile("java-lines-", ".txt");
 Files.writeString(file, "java\napi\n");
 try (var lines = Files.lines(file)) {
-// 输入：try (var lines = Files.lines(file)) {；资源变量 lines 接收 Files.lines(file)，try 结束时自动关闭。
     System.out.println(lines.count());
     // 输出：2
 }
@@ -87,7 +83,6 @@ Files.deleteIfExists(file);
 二进制协议从 `InputStream`/`OutputStream` 开始，文本再叠加 `Charset` 和 `Reader`/`Writer`；缓冲层只改善访问方式，不会替你修正错误编码。
 
 ```java
-// 说明：字节、字符与缓冲层的组合。
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -99,7 +94,6 @@ public class IoLayerChoiceDemo {
         Path file = Files.createTempFile("java-text-", ".txt");
         Files.writeString(file, "你好", StandardCharsets.UTF_8);
         try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-        // 输入：try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {；资源变量 reader 接收 Files.newBufferedReader(file, StandardCharsets.UTF_8)，try 结束时自动关闭。
             System.out.println(reader.readLine());
             // 输出：你好
         }
@@ -115,7 +109,6 @@ public class IoLayerChoiceDemo {
 需要为 NIO 分块读写准备内存区域时使用 `ByteBuffer`，写入数据后必须调用 `flip()` 才能按有效范围读取。
 
 ```java
-// 说明：ByteBuffer：承载分块读写的数据。
 import java.nio.ByteBuffer;
 
 ByteBuffer buffer = ByteBuffer.allocate(4);
@@ -130,7 +123,6 @@ System.out.println(buffer.get() + ", " + buffer.get());
 需要通过 NIO 通道分块读取文件时使用 `FileChannel`，并在资源边界关闭通道和处理未读完的数据。
 
 ```java
-// 说明：FileChannel：在文件与缓冲区之间交换数据。
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -139,7 +131,6 @@ import java.nio.file.StandardOpenOption;
 var file = Files.createTempFile("java-channel-", ".txt");
 Files.writeString(file, "OK");
 try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
-// 输入：try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {；资源变量 channel 接收 FileChannel.open(file, StandardOpenOption.READ)，try 结束时自动关闭。
     ByteBuffer buffer = ByteBuffer.allocate(2);
     System.out.println(channel.read(buffer));
     // 输出：2
@@ -155,7 +146,6 @@ Files.deleteIfExists(file);
 `File` 仍存在于旧库和旧签名中，但它的异常、属性和符号链接表达能力较弱；新代码从 `Path` 开始，需要兼容旧 API 时用 `toPath()` 或 `toFile()` 做边界转换。
 
 ```java
-// 说明：legacy 指向当前工作目录下的 notes.txt；toPath() 只转换路径表示，不会读取文件字节。
 import java.io.File;
 import java.nio.file.Path;
 
@@ -184,11 +174,9 @@ public class SerializationBoundaryDemo {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         var bytes = new ByteArrayOutputStream();
         try (var out = new ObjectOutputStream(bytes)) {
-        // 输入：try (var out = new ObjectOutputStream(bytes)) {；资源变量 out 接收 new ObjectOutputStream(bytes)，try 结束时自动关闭。
             out.writeObject("java");
         }
         try (var in = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
-        // 输入：try (var in = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {；资源变量 in 接收 new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))，try 结束时自动关闭。
             System.out.println(in.readObject());
             // 输出：java
         }

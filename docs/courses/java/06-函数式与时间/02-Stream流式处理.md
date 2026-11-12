@@ -467,7 +467,6 @@ import java.util.stream.Stream;
 
 List<String> events = new ArrayList<>();
 try (Stream<String> stream = Stream.of("a").onClose(() -> events.add("closed"))) {
-// 输入：try (Stream<String> stream = Stream.of("a").onClose(() -> events.add("closed"))) {；资源变量 stream 接收 Stream.of("a").onClose(() -> events.add("closed"))，try 结束时自动关闭。
     System.out.println(stream.count());
     // 输出：1
 }
@@ -485,7 +484,6 @@ import java.nio.file.Path;
 import java.util.stream.Stream;
 
 try (Stream<String> lines = Files.lines(Path.of("data.txt"))) {
-// 输入：try (Stream<String> lines = Files.lines(Path.of("data.txt"))) {；资源变量 lines 接收 Files.lines(Path.of("data.txt"))，try 结束时自动关闭。
     lines.findFirst();
 }
 // 结果：try 代码块结束后 lines 自动关闭。

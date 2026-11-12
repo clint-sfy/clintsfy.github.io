@@ -18,7 +18,7 @@ description: 从受控管理端点到指标、追踪与日志关联，建立有�
 
 Actuator 提供管理端点，Micrometer 给指标/观测接口，registry 或 tracing bridge 才把数据送到后端。Metric 汇总数量和分布，Trace 串联一次调用，Log 保留事件细节；三者各有采样、成本和隐私边界。correlation ID 不必等同 trace ID，但同一请求应能可靠关联。
 
-本文沿 JDK 20、Spring Boot 3.4、Micrometer 1.14 与 Micrometer Tracing 1.x；使用 actuator starter，Prometheus 另加 `micrometer-registry-prometheus`，追踪另选匹配的 bridge/exporter，不自动假定已上报。结构化日志配置按 Boot 3.4 的 ECS 支持；旧 Boot 不具有相同属性。参考 [管理端点](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html)、[指标](https://docs.spring.io/spring-boot/reference/actuator/metrics.html)、[Micrometer 观测](https://docs.micrometer.io/micrometer/reference/observation.html)。方法体示例用 SimpleMeterRegistry 做本地确定性验证。
+本文沿 JDK 20、Spring Boot 3.4、Micrometer 1.14 与 Micrometer Tracing 1.x；使用 actuator starter，Prometheus 另加 `micrometer-registry-prometheus`，追踪另选匹配的 bridge/exporter，不自动假定已上报。结构化日志配置按 Boot 3.4 的 ECS 支持；旧 Boot 不具有相同属性。参考 [管理端点](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html)、[指标](https://docs.spring.io/spring-boot/reference/actuator/metrics.html)、[Micrometer 观测](https://docs.micrometer.io/micrometer/reference/observation.html)。方法体示例放在声明 `throws Exception` 的 JUnit 测试方法中，断言需要 JUnit Jupiter；指标示例用 SimpleMeterRegistry 做本地确定性验证。
 
 部署时优先只暴露 health 与 prometheus，管理网络、TLS 和身份授权共同限制访问。`management.endpoints.web.exposure.include` 只是选择端点，不是认证；配置自定义 SecurityFilterChain 时 Boot 默认规则会退让，应显式保护 actuator。env、heapdump、loggers、shutdown 等可能泄露/改变状态，不能通配公开。
 

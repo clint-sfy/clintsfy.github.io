@@ -31,9 +31,11 @@ description: 速查 HashSet、LinkedHashSet、TreeSet、EnumSet 的去重、排�
 
 ### 白话解释与边界
 
-去重的依据不是对象地址，而是 equals 和 hashCode；自定义对象放入 HashSet 后，不要修改参与这两个方法的字段。因此要保留输入顺序用 LinkedHashSet，要排序或找大于等于某值的元素用 TreeSet。Set 不支持按索引读取，若业务需要位置语义应选 List。
+HashSet 用 equals 和 hashCode 判重，TreeSet 则以比较结果为准；自定义对象放入 HashSet 后，不要修改参与这两个方法的字段。因此要保留输入顺序用 LinkedHashSet，要排序或找大于等于某值的元素用 TreeSet。Set 不支持按索引读取，若业务需要位置语义应选 List。
 
 ## 常用用法
+
+完整类可按类名保存并编译；没有类和 main 的片段可以在 JDK 17 或更高版本的 JShell 中单独运行，也可把导入放到文件开头、执行语句放入 main。
 
 ### `HashSet()`：构造空的哈希集合
 
@@ -139,7 +141,7 @@ import java.util.Set;
 
 public class SetUnionDemo {
     public static void main(String[] args) {
-        Set<String> all = new LinkedHashSet<>(Set.of("java", "sql"));
+        Set<String> all = new LinkedHashSet<>(java.util.List.of("java", "sql"));
         all.addAll(Set.of("sql", "web"));
         System.out.println(all);
         // 输出：[java, sql, web]
@@ -157,7 +159,7 @@ import java.util.Set;
 
 public class SetIntersectionDemo {
     public static void main(String[] args) {
-        Set<String> common = new LinkedHashSet<>(Set.of("java", "sql", "web"));
+        Set<String> common = new LinkedHashSet<>(java.util.List.of("java", "sql", "web"));
         common.retainAll(Set.of("java", "web"));
         System.out.println(common);
         // 输出：[java, web]
@@ -177,7 +179,7 @@ import java.util.Set;
 
 public class SetDifferenceDemo {
     public static void main(String[] args) {
-        Set<String> onlyLeft = new LinkedHashSet<>(Set.of("java", "sql", "web"));
+        Set<String> onlyLeft = new LinkedHashSet<>(java.util.List.of("java", "sql", "web"));
         onlyLeft.removeAll(Set.of("sql"));
         System.out.println(onlyLeft);
         // 输出：[java, web]

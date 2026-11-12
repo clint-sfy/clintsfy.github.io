@@ -16,7 +16,7 @@ description: 用所有权令牌安全释放和续期，并在受保护资源端�
 
 本篇采用 JDK 20、Redis 8 基础语义和 Redisson 3.52.0；官方文档核对日期 2026-10-06。[Redis 锁协议](https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/)描述单节点及 Redlock 的假设；[Redisson 锁](https://redisson.pro/docs/data-and-services/locks-and-synchronizers/)描述客户端行为。Redis 8.4 的 DELEX IFEQ 不作为 Redis 8 全版本可用命令，下面保持 Lua 兼容路径。事务/脚本的一般规则见[事务与 Lua](./07-事务Watch-Pipeline与Lua)，重建场景见[缓存一致性](./09-缓存穿透击穿雪崩与一致性)。框架选择见[后端缓存选型](../14-后端工程/19-Spring-Cache-Caffeine与Redisson)。
 
-学习命令仅在本机独立可丢弃 Redis 8 的 DB 0 执行：`redis-cli -h 127.0.0.1 -p 6379`；有 ACL 使用 `--user lab_user --askpass`。每次实验换新的 owner 值，下文两个 UUID 是固定教学输入，生产不得重复使用。租约从服务器成功写入时开始，客户端等待响应也消耗时间；应用截止时间需用单调时钟预算并预留安全余量。超时不能证明获取失败；不确定时不进入临界区，尝试按 token 释放并等待有界恢复。
+学习命令仅在本机独立可丢弃 Redis 8 的 DB 0 执行：`redis-cli -h 127.0.0.1 -p 6379`；有 ACL 使用 `--user lab_user --askpass`。每节开始前确认该节的实验锁键不存在，实验结束后只清理文末列出的学习键；不要删除业务锁。每次实验换新的 owner 值，下文两个 UUID 是固定教学输入，生产不得重复使用。租约从服务器成功写入时开始，客户端等待响应也消耗时间；应用截止时间需用单调时钟预算并预留安全余量。超时不能证明获取失败；不确定时不进入临界区，尝试按 token 释放并等待有界恢复。
 
 ### `SET NX PX`：故障模型与有限互斥
 

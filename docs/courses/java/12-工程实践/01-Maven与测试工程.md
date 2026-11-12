@@ -41,13 +41,11 @@ mvn verify
 用 `@Test` 标记可由 JUnit 5 独立执行的测试方法。
 
 ```java
-// 说明：@Test：声明单元测试 的具体调用为 class PriceTest {
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 class PriceTest {
     @Test
-// 作用：@Test；声明单元测试。
     void totalsTwoItems() {
         assertEquals(30, 10 + 20);
     }
@@ -102,12 +100,10 @@ class OrderService {
 容器管理的 Bean 可用它声明关闭回调；不要依赖它处理必须立即提交的业务数据。
 
 ```java
-// 说明：@PreDestroy：在容器销毁前释放资源 的具体调用为 class Worker {
 import jakarta.annotation.PreDestroy;
 class Worker {
     private boolean closed;
     @PreDestroy void close() { closed = true; }
-// 作用：@PreDestroy void close() { closed = true; }；在容器销毁前释放资源。
     boolean isClosed() { return closed; }
 }
 // 结果：Spring/Jakarta 容器销毁 Worker 前调用 close()
@@ -118,14 +114,11 @@ class Worker {
 它是 Jakarta 标准注解；显式指定 `name` 可把注入点与 Bean 名称对齐。
 
 ```java
-// 说明：@Resource：按名称或类型注入依赖 的具体调用为 class ReportService {
 import jakarta.annotation.Resource;
 class ReportService {
     @Resource(name = "auditClock")
-// 作用：@Resource(name = "auditClock")；按名称或类型注入依赖。
     java.time.Clock clock;
     long now() { return clock.millis(); }
-// 作用：long now() { return clock.millis(); }；按名称或类型注入依赖。
 }
 // 结果：容器把名为 auditClock 的 Bean 注入 clock
 ```
@@ -137,10 +130,8 @@ class ReportService {
 名称来自外部配置时可能抛出不支持异常；固定 UTF-8 优先使用 `StandardCharsets.UTF_8`。
 
 ```java
-// 说明：Charset.forName：按规范名称查找字符集 的具体调用为 Charset utf8 = Charset.forName("UTF-8");
 import java.nio.charset.Charset;
 Charset utf8 = Charset.forName("UTF-8");
-// 作用：Charset utf8 = Charset.forName("UTF-8");；按规范名称查找字符集。
 System.out.println(utf8.name());
 // 输出：UTF-8
 System.out.println(utf8.equals(Charset.forName("utf8")));
@@ -154,10 +145,8 @@ System.out.println(utf8.newEncoder().canEncode('中'));
 默认值由运行环境决定，协议与持久化格式不应依赖它。
 
 ```java
-// 说明：Charset.defaultCharset：读取平台默认字符集 的具体调用为 Charset current = Charset.defaultCharset();
 import java.nio.charset.Charset;
 Charset current = Charset.defaultCharset();
-// 作用：Charset current = Charset.defaultCharset();；读取平台默认字符集。
 System.out.println(current != null);
 // 输出：true
 System.out.println(current.name().isBlank());
@@ -171,12 +160,9 @@ System.out.println(Charset.isSupported(current.name()));
 `nextInt(bound)` 返回 `[0, bound)`；它不适合密码、令牌等安全用途。
 
 ```java
-// 说明：Random.nextInt：生成有上界的伪随机整数 的具体调用为 var random = new Random(42);
 import java.util.Random;
 var random = new Random(42);
-// 作用：var random = new Random(42);；生成有上界的伪随机整数。
 int value = random.nextInt(10);
-// 作用：int value = random.nextInt(10);；生成有上界的伪随机整数。
 System.out.println(value >= 0);
 // 输出：true
 System.out.println(value < 10);
@@ -190,10 +176,8 @@ System.out.println(value);
 它适合非连续标识符；文本形式固定为带连字符的 36 个字符。
 
 ```java
-// 说明：UUID.randomUUID：生成随机 UUID 的具体调用为 UUID id = UUID.randomUUID();
 import java.util.UUID;
 UUID id = UUID.randomUUID();
-// 作用：UUID id = UUID.randomUUID();；生成随机 UUID。
 System.out.println(id.version());
 // 输出：版本 4
 System.out.println(id.toString().length());

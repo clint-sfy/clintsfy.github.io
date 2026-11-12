@@ -198,7 +198,7 @@ java --enable-preview RecordPatternDemo
 
 ### 使用嵌套 record pattern 读取嵌套数据
 
-嵌套模式适合小型、结构稳定的数据树；当校验逻辑复杂或需要多处复用时，先显式转换为局部变量通常更容易调试。
+嵌套模式适合小型、结构稳定的数据树；本例在 JDK 20 需使用上一节的 preview 参数（类名改为 NestedRecordPatternDemo），JDK 21 起可直接编译运行。
 
 ```java
 record Address(String city) {}
@@ -267,24 +267,15 @@ public class RecordMethodDemo {
 
 ### 自定义 equals/hashCode：改变值语义前要谨慎
 
-可以覆盖自动生成的方法，但必须同时保持 equals 与 hashCode 契约；除非领域确实需要，否则优先使用默认的组件值比较。
+可以覆盖自动生成的方法，但必须同时保持 equals 与 hashCode 契约。下面选择先用 `Locale.ROOT` 规范化，再沿用生成的两个方法；该规则不等同于所有语言的大小写折叠，具体业务应定义自己的文本比较规则。
 
 ```java
 record CaseInsensitiveName(String value) {
-    @Override
-    public boolean equals(Object other) {
-        return other instanceof CaseInsensitiveName that
-            && value.equalsIgnoreCase(that.value);
-    }
-
-    @Override
-    public int hashCode() {
-// 作用：hashCode 将 value.toLowerCase(java.util.Locale.ROOT) 的规范化文本转换为哈希码，保证 equals 相等的对象拥有相同哈希。
-        return value.toLowerCase(java.util.Locale.ROOT).hashCode();
-// 返回：把 value 规范化为小写后计算哈希；"JAVA" 与 "java" 得到相同 hashCode。
+    public CaseInsensitiveName {
+        value = java.util.Objects.requireNonNull(value, "value")
+                .toLowerCase(java.util.Locale.ROOT);
     }
 }
-
 public class RecordEqualityDemo {
     public static void main(String[] args) {
         CaseInsensitiveName upper = new CaseInsensitiveName("JAVA");
